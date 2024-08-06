@@ -170,7 +170,7 @@ function parseLangtagsJson() {
             name: uncomma(scriptNames[scriptCode]),
           } as IScript;
         }),
-        names: [...langData.names].join(COMMA_SEPARATOR),
+        names: [...langData.names],
         alternativeTags: [...langData.alternativeTags],
       } as ILanguage;
     }

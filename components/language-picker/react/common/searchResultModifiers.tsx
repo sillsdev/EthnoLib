@@ -54,7 +54,7 @@ function simplifyEnglishResult(
           exonym: result.exonym, // "English",
           code: "eng",
           regionNames: "",
-          names: "",
+          names: [],
           scripts: [latinScriptData],
           variants: "",
           alternativeTags: [],
@@ -75,7 +75,7 @@ function simplifyFrenchResult(
           exonym: result.exonym, // "French"
           code: "fra",
           regionNames: "",
-          names: "",
+          names: [],
           scripts: [latinScriptData],
           variants: "",
           alternativeTags: [],
@@ -174,8 +174,8 @@ function demarcateExactMatches(searchString: string, result: ILanguage) {
   // I think we'll live with only exact matches for this
   const lowerCasedSearchString = searchString.toLowerCase();
   for (const field of fieldsToSearch) {
-    //TODO better to look like index.fieldsToSearch
-    if (!result[field]) {
+    //TODO maybe we should do imports differently so this looks like index.fieldsToSearch
+    if (typeof result[field] !== "string") {
       continue;
     }
     const lowerCasedValue = result[field].toLowerCase();

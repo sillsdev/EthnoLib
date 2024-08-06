@@ -15,7 +15,7 @@ export interface ILanguage {
   exonym: string;
   code: string; // ISO 639-3
   regionNames: "";
-  names: string; // comma-joined
+  names: [];
   scripts: IScript[];
   variants?: string; // comma-joined
   alternativeTags: string[];

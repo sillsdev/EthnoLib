@@ -1,9 +1,6 @@
 import { cloneDeep } from "lodash";
 import { FuseResult } from "fuse.js";
-import {
-    ILanguage
-  } from "@ethnolib/find-language";
-  
+import { ILanguage } from "@ethnolib/find-language";
 
 // for marking/bolding the substrings which match the search string
 export const START_OF_MATCH_MARKER = "[";
@@ -23,15 +20,25 @@ export function demarcateResults(results: FuseResult<ILanguage>[]) {
         lastTrasnferredIndex = matchEnd + 1;
       }
       newValue.push(match.value.slice(lastTrasnferredIndex));
-      result.item[match.key] = newValue.join("");
+      if (match.refIndex !== undefined) {
+        // this is a match to an element in an array
+        result.item[match.key][match.refIndex] = newValue.join("");
+      } else {
+        result.item[match.key] = newValue.join("");
+      }
     }
   }
   return resultsCopy;
 }
 
+// TODO some version has built in replaceAll 
 export function stripDemarcation(str: string): string {
   if (!str) return str;
-  return str
-    .replaceAll(START_OF_MATCH_MARKER, "")
-    .replaceAll(END_OF_MATCH_MARKER, "");
+  let strippedStr = replaceAll(str, END_OF_MATCH_MARKER, "");
+  strippedStr = replaceAll(strippedStr, START_OF_MATCH_MARKER, "");
+  return strippedStr;
+}
+
+function replaceAll(str: string, search: string, replacement: string): string {
+    return str.split(search).join(replacement);
 }

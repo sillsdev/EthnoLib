@@ -32,7 +32,7 @@ export const UNLISTED_LANGUAGE_NODE = {
     regionNames: "",
     scripts: [],
     alternativeTags: [],
-    names: "",
+    names: [],
   } as ILanguage,
   id: UNLISTED_LANGUAGE_NODE_ID,
   nodeType: NodeType.Language,

@@ -12,6 +12,13 @@ interface LanguageCardProps extends EthnolibCardProps {
 
 export const LanguageCard: React.FunctionComponent<LanguageCardProps> = memo(
   (props) => {
+    // const names = props.languageCardData.names as string[];
+    // console.log(names);
+    // console.log(typeof names);
+    // if (typeof names !== "string") {
+    // console.log((names.length > 0 ? names.join("") : ""));
+    // }
+    // console.log(names?.join(''));
     return (
       <>
         <EthnolibCard {...props}>
@@ -53,14 +60,14 @@ export const LanguageCard: React.FunctionComponent<LanguageCardProps> = memo(
               dangerouslySetDemarcatedText={`A language of ${props.languageCardData.regionNames}`}
             />
           )}
-          {props.languageCardData.names && (
+          {props.languageCardData.names.length > 0 && (
             <PartiallyBoldedTypography
               variant="body2"
               // Always show all the names
               css={css`
                 text-wrap: balance;
               `}
-              dangerouslySetDemarcatedText={props.languageCardData.names}
+              dangerouslySetDemarcatedText={props.languageCardData.names.join(", ")} // TODO
             />
           )}
         </EthnolibCard>
