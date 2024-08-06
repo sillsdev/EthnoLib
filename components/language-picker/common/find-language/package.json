@@ -1,0 +1,35 @@
+{
+  "name": "@ethnolib/find-language",
+  "version": "1.2.0",
+  "type": "module",
+  "description": "",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "langtag-processing": "ts-node-esm ./langtagProcessing.tsx",
+    "build": "tsup ./index.tsx --format esm --dts --external react",
+    "dev": "tsup ./index.tsx --format esm --watch --dts --external react",
+    "typecheck": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fuse.js": "^7.0.0",
+    "iso-15924": "^3.2.0",
+    "iso-3166-1": "^2.1.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-lazyload": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.11",
+    "ts-node": "^10.9.2",
+    "tsup": "6.2.2",
+    "typescript": "^4.6.4"
+  }
+}

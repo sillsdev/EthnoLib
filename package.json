@@ -1,0 +1,24 @@
+{
+  "name": "@ethnolib/source",
+  "workspaces": [
+    "components/language-picker/common/*",
+    "components/language-picker/react/*"
+  ],
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "TODO",
+  "devDependencies": {
+    "nx": "19.1.2"
+  },
+  "dependencies": {
+    "@emotion/css": "^11.11.2",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/material": "^5.15.19",
+    "lodash": "^4.17.21"
+  }
+}
