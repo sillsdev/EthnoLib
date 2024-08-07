@@ -31,7 +31,7 @@ export function demarcateResults(results: FuseResult<ILanguage>[]) {
   return resultsCopy;
 }
 
-// TODO some version has built in replaceAll 
+// TODO some version has built in replaceAll
 export function stripDemarcation(str: string): string {
   if (!str) return str;
   let strippedStr = replaceAll(str, END_OF_MATCH_MARKER, "");
@@ -40,5 +40,5 @@ export function stripDemarcation(str: string): string {
 }
 
 function replaceAll(str: string, search: string, replacement: string): string {
-    return str.split(search).join(replacement);
+  return str.split(search).join(replacement);
 }

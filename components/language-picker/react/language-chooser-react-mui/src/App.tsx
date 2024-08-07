@@ -1,10 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import {
-  ILanguage,
-  IScript,
-  IRegion,
-} from "@ethnolib/find-language";
+import { ILanguage, IScript, IRegion } from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import {
   AppBar,
@@ -55,12 +51,14 @@ function App() {
   const [customizeLanguageDialogOpen, setCustomizeLanguageDialogOpen] =
     useState(false);
 
-  const currentTagPreview = createTag(
-    selectedLanguageNode?.nodeData.code,
-    selectedScriptNode?.nodeData.code,
-    CustomizableLanguageDetails?.region?.code,
-    selectedLanguageNode ? CustomizableLanguageDetails?.dialect : searchString
-  );
+  const currentTagPreview = createTag({
+    languageCode: selectedLanguageNode?.nodeData.code,
+    scriptCode: selectedScriptNode?.nodeData.code,
+    regionCode: CustomizableLanguageDetails?.region?.code,
+    dialectCode: selectedLanguageNode
+      ? CustomizableLanguageDetails?.dialect
+      : searchString,
+  });
 
   const theme = createTheme({
     palette: {
@@ -224,9 +222,7 @@ function App() {
                             min-height: 125px;
                             flex-direction: column;
                           `}
-                          languageCardData={
-                            languageNode.nodeData as ILanguage
-                          }
+                          languageCardData={languageNode.nodeData as ILanguage}
                           isSelected={
                             languageNode.id === selectedLanguageNode?.id
                           }

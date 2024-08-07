@@ -7,12 +7,15 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "vitest"
+  },
   "keywords": [],
   "author": "",
   "license": "TODO",
   "devDependencies": {
-    "nx": "19.1.2"
+    "nx": "19.1.2",
+    "vitest": "^2.0.5"
   },
   "dependencies": {
     "@emotion/css": "^11.11.2",

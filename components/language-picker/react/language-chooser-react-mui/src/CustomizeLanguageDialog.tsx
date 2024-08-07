@@ -8,7 +8,7 @@ import { shouldShowUnlistedLanguageControls } from "../../common/useLanguagePick
 import {
   CustomizableLanguageDetails,
   OptionNode,
-} from "../../common/utils";
+} from "../../common/useLanguagePicker";
 import { createTag } from "../../common/languageTagUtils";
 import {
   Autocomplete,
@@ -222,12 +222,12 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                 font-weight: bold;
               `}
             >
-              {createTag(
-                props.selectedLanguageNode?.nodeData.code,
-                dialogSelectedScript?.id,
-                dialogSelectedRegion?.id,
-                dialogSelectedDialect
-              )}
+              {createTag({
+                languageCode: props.selectedLanguageNode?.nodeData.code,
+                scriptCode: dialogSelectedScript?.id,
+                regionCode: dialogSelectedRegion?.id,
+                dialectCode: dialogSelectedDialect,
+              })}
             </span>
           </Typography>
         </DialogContent>
