@@ -10,9 +10,9 @@
     "dist/**"
   ],
   "scripts": {
-    "langtag-processing": "ts-node-esm ./langtagProcessing.tsx",
-    "build": "tsup ./index.tsx --format esm --dts --external react",
-    "dev": "tsup ./index.tsx --format esm --watch --dts --external react",
+    "langtag-processing": "ts-node-esm ./langtagProcessing.ts",
+    "build": "tsup ./index.ts --format esm --dts --external react",
+    "dev": "tsup ./index.ts --format esm --watch --dts --external react",
     "typecheck": "tsc"
   },
   "keywords": [],
