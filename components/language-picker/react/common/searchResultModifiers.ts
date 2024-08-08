@@ -1,8 +1,4 @@
-import {
-  ILanguage,
-  IScript,
-  fieldsToSearch,
-} from "@ethnolib/find-language";
+import { ILanguage, IScript, fieldsToSearch } from "@ethnolib/find-language";
 import { FuseResult } from "fuse.js";
 import {
   demarcateResults,
@@ -169,12 +165,10 @@ function prioritizeLangByKeywords(
   return results;
 }
 
-// TODO ask reviewer about modifying vs copying results
 function demarcateExactMatches(searchString: string, result: ILanguage) {
   // I think we'll live with only exact matches for this
   const lowerCasedSearchString = searchString.toLowerCase();
   for (const field of fieldsToSearch) {
-    //TODO maybe we should do imports differently so this looks like index.fieldsToSearch
     if (typeof result[field] !== "string") {
       continue;
     }
@@ -196,12 +190,15 @@ function demarcateExactMatches(searchString: string, result: ILanguage) {
   return result;
 }
 
+// demarcateResults starts by making a deep clone so we aren't modifying the original results
+// Other implementations will probably also want to ensure a deep copy before modifying
 export function bloomSearchResultModifier(
   results: FuseResult<ILanguage>[],
   searchString: string
 ): ILanguage[] {
-  let modifiedResults = demarcateResults(results);
-  modifiedResults = stripResultMetadata(modifiedResults);
+  let modifiedResults: ILanguage[] = stripResultMetadata(
+    demarcateResults(results)
+  );
   modifiedResults = prioritizeLangByKeywords(
     ["english"],
     searchString,

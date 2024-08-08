@@ -1,11 +1,13 @@
-import { TextField, Typography } from "@mui/material";
+import { TextField, TextFieldProps, Typography } from "@mui/material";
 import { css } from "@emotion/react";
 import { COLORS } from "./Colors";
 
-export const EthnolibTextInput: React.FunctionComponent<{
-  id: string;
-  label: string;
-}> = ({ id, label, ...otherInputProps }) => {
+export const EthnolibTextInput: React.FunctionComponent<
+  {
+    id: string;
+    label: string;
+  } & TextFieldProps
+> = ({ id, label, ...textFieldProps }) => {
   return (
     <div>
       <label htmlFor={id}>
@@ -27,7 +29,7 @@ export const EthnolibTextInput: React.FunctionComponent<{
           margin-bottom: 10px;
         `}
         id={id}
-        {...otherInputProps}
+        {...textFieldProps}
       />
     </div>
   );

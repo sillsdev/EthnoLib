@@ -73,11 +73,14 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   const [dialogSelectedDialect, setDialogSelectedDialectCode] =
     React.useState<string>(""); // Will be set by the useEffect below
   React.useEffect(() => {
+    const scriptNodeData = props.selectedScriptNode?.nodeData as
+      | IScript
+      | undefined;
     setDialogSelectedScriptCode(
-      props.selectedScriptNode?.nodeData.code
+      scriptNodeData?.code
         ? {
-            label: props.selectedScriptNode.nodeData.name,
-            id: props.selectedScriptNode.nodeData.code,
+            label: scriptNodeData.name,
+            id: scriptNodeData.code,
           }
         : autocompleteOptionPlaceholder
     );
@@ -161,7 +164,9 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               event,
               newValue: { label: string; id: string } | null
             ) => {
-              setDialogSelectedScriptCode(newValue);
+              setDialogSelectedScriptCode(
+                newValue || autocompleteOptionPlaceholder
+              );
             }}
             disablePortal
             id="combo-box-language-chooser-react-mui"

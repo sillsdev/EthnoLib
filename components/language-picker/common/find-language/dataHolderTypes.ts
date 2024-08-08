@@ -21,4 +21,5 @@ export interface ILanguage {
   alternativeTags: string[];
   isForMacrolanguageDisambiguation?: boolean;
   isMacrolanguage?: boolean;
+  [key: string]: any; // allow indexing by string
 }

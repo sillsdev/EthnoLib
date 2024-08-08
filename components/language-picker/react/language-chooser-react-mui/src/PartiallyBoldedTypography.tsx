@@ -1,10 +1,15 @@
-import { Typography } from "@mui/material";
-import { START_OF_MATCH_MARKER, END_OF_MATCH_MARKER } from "../../common/matchingSubstringDemarcation";
+import { Typography, TypographyProps } from "@mui/material";
+import {
+  START_OF_MATCH_MARKER,
+  END_OF_MATCH_MARKER,
+} from "../../common/matchingSubstringDemarcation";
 import React from "react";
 
-export const PartiallyBoldedTypography: React.FunctionComponent<{
-  dangerouslySetDemarcatedText: string;
-}> = ({ dangerouslySetDemarcatedText, children, ...props }) => {
+export const PartiallyBoldedTypography: React.FunctionComponent<
+  {
+    dangerouslySetDemarcatedText: string;
+  } & TypographyProps
+> = ({ dangerouslySetDemarcatedText, children, ...typographyProps }) => {
   if (children) {
     // Typography cannot take both children and dangerouslySetInnerHTML
     console.error(
@@ -18,7 +23,7 @@ export const PartiallyBoldedTypography: React.FunctionComponent<{
   return (
     <Typography
       dangerouslySetInnerHTML={{ __html: htmlString }}
-      {...props}
+      {...typographyProps}
     ></Typography>
   );
 };

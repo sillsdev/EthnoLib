@@ -5,73 +5,62 @@ import { ILanguage } from "@ethnolib/find-language";
 import { memo } from "react";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
 
-// inherits from EthnolibCardProps
-interface LanguageCardProps extends EthnolibCardProps {
-  languageCardData: ILanguage;
-}
-
-export const LanguageCard: React.FunctionComponent<LanguageCardProps> = memo(
-  (props) => {
-    // const names = props.languageCardData.names as string[];
-    // console.log(names);
-    // console.log(typeof names);
-    // if (typeof names !== "string") {
-    // console.log((names.length > 0 ? names.join("") : ""));
-    // }
-    // console.log(names?.join(''));
-    return (
-      <>
-        <EthnolibCard {...props}>
+// TODO is this memo still useful?
+export const LanguageCard: React.FunctionComponent<
+  { languageCardData: ILanguage } & EthnolibCardProps
+> = memo(({ languageCardData, ...ethnolibCardProps }) => {
+  return (
+    <>
+      <EthnolibCard {...ethnolibCardProps}>
+        <PartiallyBoldedTypography
+          variant="h5"
+          dangerouslySetDemarcatedText={
+            languageCardData.autonym || languageCardData.exonym
+          }
+        />
+        {languageCardData.autonym && (
+          <PartiallyBoldedTypography
+            variant="body2"
+            dangerouslySetDemarcatedText={languageCardData.exonym}
+          />
+        )}
+        <PartiallyBoldedTypography
+          css={css`
+            right: 0;
+            top: 0;
+            position: absolute;
+            margin: 16px; // what should this be? To match the padding of the card
+            font-family: "Roboto Mono", monospace;
+          `}
+          variant="body2"
+          dangerouslySetDemarcatedText={languageCardData.code}
+        />
+        {languageCardData.regionNames?.length > 0 && (
           <PartiallyBoldedTypography
             variant="h5"
-            dangerouslySetDemarcatedText={
-              props.languageCardData.autonym || props.languageCardData.exonym
-            }
-          />
-          {props.languageCardData.autonym && (
-            <PartiallyBoldedTypography
-              variant="body2"
-              dangerouslySetDemarcatedText={props.languageCardData.exonym}
-            />
-          )}
-          <PartiallyBoldedTypography
+            gutterBottom
             css={css`
-              right: 0;
-              top: 0;
-              position: absolute;
-              margin: 16px; // what should this be? To match the padding of the card
-              font-family: "Roboto Mono", monospace;
+              margin-top: 8px; // above elements don't have bottom-gutters because one is optional
+              // TODO Copilot did this and I don't understand it but it works
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
             `}
-            variant="body2"
-            dangerouslySetDemarcatedText={props.languageCardData.code}
+            dangerouslySetDemarcatedText={`A language of ${languageCardData.regionNames}`}
           />
-          {props.languageCardData.regionNames?.length > 0 && (
-            <PartiallyBoldedTypography
-              variant="h5"
-              gutterBottom
-              css={css`
-                margin-top: 8px; // above elements don't have bottom-gutters because one is optional
-                // TODO Copilot did this and I don't understand it but it works
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-              `}
-              dangerouslySetDemarcatedText={`A language of ${props.languageCardData.regionNames}`}
-            />
-          )}
-          {props.languageCardData.names.length > 0 && (
-            <PartiallyBoldedTypography
-              variant="body2"
-              // Always show all the names
-              css={css`
-                text-wrap: balance;
-              `}
-              dangerouslySetDemarcatedText={props.languageCardData.names.join(", ")} // TODO
-            />
-          )}
-        </EthnolibCard>
-      </>
-    );
-  }
-);
+        )}
+        {languageCardData.names.length > 0 && (
+          <PartiallyBoldedTypography
+            variant="body2"
+            // Always show all the names
+            css={css`
+              text-wrap: balance;
+            `}
+            dangerouslySetDemarcatedText={languageCardData.names.join(", ")} // TODO
+          />
+        )}
+      </EthnolibCard>
+    </>
+  );
+});

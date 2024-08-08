@@ -1,18 +1,19 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { Button, Tooltip, Typography } from "@mui/material";
+import { Button, ButtonProps, Tooltip, Typography } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { COLORS } from "./Colors";
 
-export const CustomizeLanguageButton: React.FunctionComponent<{
-  currentTagPreview: string;
-  showAsUnlistedLanguage: boolean;
-}> = ({ currentTagPreview, showAsUnlistedLanguage, ...props }) => {
+export const CustomizeLanguageButton: React.FunctionComponent<
+  {
+    currentTagPreview: string;
+    showAsUnlistedLanguage: boolean;
+  } & ButtonProps
+> = ({ currentTagPreview, showAsUnlistedLanguage, ...buttonProps }) => {
   return (
     <Button
       variant="outlined"
-      {...props}
       color="primary"
       css={css`
         // background-color: white;
@@ -25,6 +26,7 @@ export const CustomizeLanguageButton: React.FunctionComponent<{
         text-transform: none;
         padding: 5px 10px;
       `}
+      {...buttonProps}
     >
       <Typography
         variant="body1"

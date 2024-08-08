@@ -1,4 +1,9 @@
-import { ILanguage, IRegion, IScript, searchForLanguage } from "@ethnolib/find-language";
+import {
+  ILanguage,
+  IRegion,
+  IScript,
+  searchForLanguage,
+} from "@ethnolib/find-language";
 import { useMemo, useState } from "react";
 import { stripResultMetadata } from "./searchResultModifiers";
 import { FuseResult } from "fuse.js";
@@ -14,14 +19,13 @@ export interface OptionNode {
   id: string;
   nodeType: NodeType;
   childNodes: OptionNode[]; // In a language node, this will have all the relevant scripts as nodes
-};
-
+}
 export interface CustomizableLanguageDetails {
   displayName?: string;
   scriptOverride?: IScript | null;
   region?: IRegion | null;
   dialect?: string;
-};
+}
 
 export const UNLISTED_LANGUAGE_NODE_ID = "unlisted-language";
 export const UNLISTED_LANGUAGE_NODE = {
@@ -39,7 +43,6 @@ export const UNLISTED_LANGUAGE_NODE = {
   childNodes: [],
 } as OptionNode;
 export const SCRIPT_OVERRIDE_NODE_ID = "script-override";
-
 
 export const useLanguagePicker = (
   searchResultModifier?: (
@@ -195,6 +198,7 @@ export const useLanguagePicker = (
       console.error("no node selected");
       return;
     } else if (node.nodeType === NodeType.Language) {
+      const languageNodeData = node.nodeData as ILanguage;
       if (node.id === selectedLanguageNode?.id) {
         // Clicking on the selected language node unselects it and clears data specific to that language
         setSelectedLanguageNode(undefined);
@@ -208,7 +212,7 @@ export const useLanguagePicker = (
         );
         setCustomizableLanguageDetails({
           displayName: stripDemarcation(
-            node.nodeData.autonym || node.nodeData.exonym || ""
+            languageNodeData.autonym || languageNodeData.exonym || ""
           ),
         } as CustomizableLanguageDetails);
         return;
@@ -251,7 +255,6 @@ export const useLanguagePicker = (
     reopenTo,
   };
 };
-
 
 // We show the unlisted language controls unles a language is selected
 export function shouldShowUnlistedLanguageControls(

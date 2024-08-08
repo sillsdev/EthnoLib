@@ -7,7 +7,6 @@ import { ClickAwayListener } from "@mui/base/ClickAwayListener";
 
 export interface EthnolibCardProps {
   isSelected: boolean;
-  //   childrenWhenSelected: React.ReactNode[];
   colorWhenNotSelected: string;
   colorWhenSelected: string;
   className?: string;

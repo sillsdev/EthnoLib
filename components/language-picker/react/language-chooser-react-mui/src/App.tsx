@@ -78,7 +78,7 @@ function App() {
       // } as IScript,
       region: {
         code: "US",
-        name: "United States",
+        name: "United States of America",
       } as IRegion,
       dialect: "testDialectName",
     });
