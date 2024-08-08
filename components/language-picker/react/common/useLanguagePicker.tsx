@@ -21,10 +21,16 @@ export interface OptionNode {
   childNodes: OptionNode[]; // In a language node, this will have all the relevant scripts as nodes
 }
 export interface CustomizableLanguageDetails {
-  displayName?: string;
+  displayName: string | undefined;
   scriptOverride?: IScript | null;
   region?: IRegion | null;
   dialect?: string;
+}
+
+export interface ILanguagePickerInitialState {
+  languageCode: string;
+  scriptCode?: string;
+  customDetails?: CustomizableLanguageDetails;
 }
 
 export const UNLISTED_LANGUAGE_NODE_ID = "unlisted-language";
@@ -90,11 +96,11 @@ export const useLanguagePicker = (
   // such that the selected language is visible
   // *Note that if the desired script is a script of the desired language, it must be
   // passed in the scriptCode argument rather than as a script override
-  function reopenTo(
-    languageCode: string,
-    scriptCode?: string,
-    customDetails?: CustomizableLanguageDetails
-  ) {
+  function reopenTo({
+    languageCode,
+    scriptCode,
+    customDetails,
+  }: ILanguagePickerInitialState) {
     // TODO what if there is a language code that is also the start of so many language names
     // that the language card with that code isn't initially visible and one must scroll to see it?
     // Do we need to make the language picker scroll to it? Seems like overkill to me
@@ -120,7 +126,9 @@ export const useLanguagePicker = (
         }
       }
     }
-    saveCustomizableLanguageDetails(customDetails || {});
+    saveCustomizableLanguageDetails(
+      customDetails || ({} as CustomizableLanguageDetails)
+    );
   }
 
   // details should only include the properties it wants to modify
