@@ -161,7 +161,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
           <Autocomplete
             value={dialogSelectedScript}
             onChange={(
-              event,
+              _event,
               newValue: { label: string; id: string } | null
             ) => {
               setDialogSelectedScriptCode(
@@ -190,10 +190,12 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
           <Autocomplete
             value={dialogSelectedRegion}
             onChange={(
-              event,
+              _event,
               newValue: { label: string; id: string } | null
             ) => {
-              setDialogSelectedRegionCode(newValue);
+              setDialogSelectedRegionCode(
+                newValue || autocompleteOptionPlaceholder
+              );
             }}
             disablePortal
             id="combo-box-language-chooser-react-mui"

@@ -9,22 +9,24 @@ export const END_OF_MATCH_MARKER = "]";
 export function demarcateResults(results: FuseResult<ILanguage>[]) {
   const resultsCopy = cloneDeep(results);
   for (const result of resultsCopy) {
-    for (const match of result.matches) {
+    for (const match of result.matches || []) {
       let lastTrasnferredIndex = 0;
       const newValue = [] as string[];
       for (const [matchStart, matchEnd] of match.indices) {
-        newValue.push(match.value.slice(lastTrasnferredIndex, matchStart));
+        newValue.push(
+          match.value?.slice(lastTrasnferredIndex, matchStart) || ""
+        );
         newValue.push(START_OF_MATCH_MARKER);
-        newValue.push(match.value.slice(matchStart, matchEnd + 1));
+        newValue.push(match.value?.slice(matchStart, matchEnd + 1) || "");
         newValue.push(END_OF_MATCH_MARKER);
         lastTrasnferredIndex = matchEnd + 1;
       }
-      newValue.push(match.value.slice(lastTrasnferredIndex));
+      newValue.push(match.value?.slice(lastTrasnferredIndex) || "");
       if (match.refIndex !== undefined) {
         // this is a match to an element in an array
-        result.item[match.key][match.refIndex] = newValue.join("");
+        result.item[match.key || ""][match.refIndex] = newValue.join("");
       } else {
-        result.item[match.key] = newValue.join("");
+        result.item[match.key || ""] = newValue.join("");
       }
     }
   }
