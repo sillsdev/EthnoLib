@@ -1,6 +1,5 @@
 import { stripDemarcation } from "./matchingSubstringDemarcation";
 
-// TODO put this somewhere else?
 export function createTag({
   languageCode,
   scriptCode,

@@ -9,7 +9,7 @@ import {
   CustomizableLanguageDetails,
   OptionNode,
 } from "../../common/useLanguagePicker";
-import { createTag } from "../../common/languageTagUtils";
+import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import {
   Autocomplete,
   DialogActions,
@@ -275,7 +275,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                   name: dialogSelectedRegion?.label,
                 } as IRegion,
                 dialect: dialogSelectedDialect,
-              });
+              } as CustomizableLanguageDetails);
               props.onClose();
             }}
           >

@@ -23,7 +23,7 @@ import {
   ILanguagePickerInitialState,
 } from "../../common/useLanguagePicker";
 import { OptionNode, NodeType } from "../../common/useLanguagePicker";
-import { createTag } from "../../common/languageTagUtils";
+import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import { debounce } from "lodash";
 import "./styles.css";
 import { CustomizeLanguageButton } from "./CustomizeLanguageButton";

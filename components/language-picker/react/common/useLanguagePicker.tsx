@@ -5,10 +5,9 @@ import {
   searchForLanguage,
 } from "@ethnolib/find-language";
 import { useMemo, useState } from "react";
-import { stripResultMetadata } from "./searchResultModifiers";
+import { stripResultMetadata } from "@ethnolib/find-language";
 import { FuseResult } from "fuse.js";
-import { stripDemarcation } from "./matchingSubstringDemarcation";
-
+import { stripDemarcation } from "@ethnolib/find-language";
 export enum NodeType {
   Language = "language",
   Script = "script",
@@ -21,7 +20,7 @@ export interface OptionNode {
   childNodes: OptionNode[]; // In a language node, this will have all the relevant scripts as nodes
 }
 export interface CustomizableLanguageDetails {
-  displayName: string | undefined;
+  displayName?: string;
   scriptOverride?: IScript | null;
   region?: IRegion | null;
   dialect?: string;

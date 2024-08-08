@@ -5,7 +5,7 @@ import { ThemeProvider, createTheme } from "@mui/material";
 import { COLORS } from "./Colors";
 import { ILanguagePickerInitialState } from "../../common/useLanguagePicker";
 import "./styles.css";
-import { bloomSearchResultModifier } from "../../common/searchResultModifiers";
+import { defaultSearchResultModifier } from "@ethnolib/find-language/searchResultModifiers";
 import { LanguagePicker } from "./LanguagePicker";
 
 function Demo() {
@@ -49,7 +49,7 @@ function Demo() {
         `}
       >
         <LanguagePicker
-          searchResultModifier={bloomSearchResultModifier}
+          searchResultModifier={defaultSearchResultModifier}
           getInitialState={getDemoInitialState}
         />
       </div>

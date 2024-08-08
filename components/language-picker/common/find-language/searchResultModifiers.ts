@@ -6,7 +6,6 @@ import {
   START_OF_MATCH_MARKER,
   stripDemarcation,
 } from "./matchingSubstringDemarcation";
-
 export function stripResultMetadata(
   results: FuseResult<ILanguage>[]
 ): ILanguage[] {
@@ -192,7 +191,7 @@ function demarcateExactMatches(searchString: string, result: ILanguage) {
 
 // demarcateResults starts by making a deep clone so we aren't modifying the original results
 // Other implementations will probably also want to ensure a deep copy before modifying
-export function bloomSearchResultModifier(
+export function defaultSearchResultModifier(
   results: FuseResult<ILanguage>[],
   searchString: string
 ): ILanguage[] {
