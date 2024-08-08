@@ -1,17 +1,17 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { EthnolibCard, EthnolibCardProps } from "./EthnolibCard";
+import { OptionCard, OptionCardProps } from "./OptionCard";
 import { ILanguage } from "@ethnolib/find-language";
 import { memo } from "react";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
 
 // TODO is this memo still useful?
 export const LanguageCard: React.FunctionComponent<
-  { languageCardData: ILanguage } & EthnolibCardProps
-> = memo(({ languageCardData, ...ethnolibCardProps }) => {
+  { languageCardData: ILanguage } & OptionCardProps
+> = memo(({ languageCardData, ...optionCardProps }) => {
   return (
     <>
-      <EthnolibCard {...ethnolibCardProps}>
+      <OptionCard {...optionCardProps}>
         <PartiallyBoldedTypography
           variant="h5"
           dangerouslySetDemarcatedText={
@@ -60,7 +60,7 @@ export const LanguageCard: React.FunctionComponent<
             dangerouslySetDemarcatedText={languageCardData.names.join(", ")} // TODO
           />
         )}
-      </EthnolibCard>
+      </OptionCard>
     </>
   );
 });

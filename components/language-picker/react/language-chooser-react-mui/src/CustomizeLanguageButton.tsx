@@ -3,7 +3,7 @@ import { css } from "@emotion/react";
 import { Button, ButtonProps, Tooltip, Typography } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { COLORS } from "./Colors";
+import { COLORS } from "./colors";
 
 export const CustomizeLanguageButton: React.FunctionComponent<
   {

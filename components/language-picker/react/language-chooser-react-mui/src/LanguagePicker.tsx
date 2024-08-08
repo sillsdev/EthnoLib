@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { ScriptCard } from "./ScriptCard";
-import { COLORS } from "./Colors";
+import { COLORS } from "./colors";
 import {
   useLanguagePicker,
   shouldShowUnlistedLanguageControls,

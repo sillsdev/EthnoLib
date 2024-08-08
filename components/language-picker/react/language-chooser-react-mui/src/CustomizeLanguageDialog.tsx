@@ -16,10 +16,10 @@ import {
   DialogContent,
   TextField,
 } from "@mui/material";
-import { EthnolibTextInput } from "./EthnolibTextInput";
+import { TextInput } from "./TextInput";
 import iso3166 from "iso-3166-1";
 import { iso15924 } from "iso-15924";
-import { COLORS } from "./Colors";
+import { COLORS } from "./colors";
 import { IRegion, IScript } from "@ethnolib/find-language";
 
 function getAllRegionOptions() {
@@ -125,7 +125,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
 
       {isUnlistedLanguageDialog && (
         <DialogContent>
-          <EthnolibTextInput
+          <TextInput
             id="unlisted-lang-name-field"
             label="Name"
             value={dialogSelectedDialect}
@@ -214,7 +214,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
 
           // 1.  Variant subtags that begin with a letter (a-z, A-Z) MUST be
           //     at least five characters long. */}
-          <EthnolibTextInput
+          <TextInput
             id="customize-variant-field"
             label="Variant (dialect)"
             value={dialogSelectedDialect}

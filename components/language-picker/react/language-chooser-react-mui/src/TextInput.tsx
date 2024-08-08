@@ -1,8 +1,8 @@
 import { TextField, TextFieldProps, Typography } from "@mui/material";
 import { css } from "@emotion/react";
-import { COLORS } from "./Colors";
+import { COLORS } from "./colors";
 
-export const EthnolibTextInput: React.FunctionComponent<
+export const TextInput: React.FunctionComponent<
   {
     id: string;
     label: string;

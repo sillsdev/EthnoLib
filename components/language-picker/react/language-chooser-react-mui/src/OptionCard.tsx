@@ -2,10 +2,10 @@
 import { css } from "@emotion/react";
 import { CardContent, Card } from "@mui/material";
 import React, { PropsWithChildren } from "react";
-import { COLORS } from "./Colors";
+import { COLORS } from "./colors";
 import { ClickAwayListener } from "@mui/base/ClickAwayListener";
 
-export interface EthnolibCardProps {
+export interface OptionCardProps {
   isSelected: boolean;
   colorWhenNotSelected: string;
   colorWhenSelected: string;
@@ -13,8 +13,8 @@ export interface EthnolibCardProps {
   onClickAway?: () => void;
 }
 
-export const EthnolibCard: React.FunctionComponent<
-  PropsWithChildren<EthnolibCardProps>
+export const OptionCard: React.FunctionComponent<
+  PropsWithChildren<OptionCardProps>
 > = (props) => {
   const backgroundColor = props.isSelected
     ? props.colorWhenSelected
