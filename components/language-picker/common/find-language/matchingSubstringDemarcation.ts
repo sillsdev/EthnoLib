@@ -1,6 +1,6 @@
 import { cloneDeep } from "lodash";
 import { FuseResult } from "fuse.js";
-import { ILanguage } from "@ethnolib/find-language";
+import { fieldsToSearch, ILanguage } from "@ethnolib/find-language";
 
 // for marking/bolding the substrings which match the search string
 export const START_OF_MATCH_MARKER = "[";
@@ -43,4 +43,30 @@ export function stripDemarcation(str: string): string {
 
 function replaceAll(str: string, search: string, replacement: string): string {
   return str.split(search).join(replacement);
+}
+
+// For when we don't have fuse results which give us match indexes, and are okay
+// with only finding exact matches. Look for matches ourselvs and mark them
+// Currently this onnly finds the first match fo the field.
+export function demarcateExactMatches(searchString: string, result: ILanguage) {
+  const lowerCasedSearchString = searchString.toLowerCase();
+  for (const field of fieldsToSearch) {
+    if (typeof result[field] !== "string") {
+      continue;
+    }
+    const lowerCasedValue = result[field].toLowerCase();
+    const indexOfSearchString = lowerCasedValue.indexOf(lowerCasedSearchString);
+    if (indexOfSearchString !== -1) {
+      result[field] =
+        result[field].slice(0, indexOfSearchString) +
+        START_OF_MATCH_MARKER +
+        result[field].slice(
+          indexOfSearchString,
+          indexOfSearchString + searchString.length
+        ) +
+        END_OF_MATCH_MARKER +
+        result[field].slice(indexOfSearchString + searchString.length);
+    }
+  }
+  return result;
 }

@@ -1,9 +1,8 @@
-import { ILanguage, IScript, fieldsToSearch } from "@ethnolib/find-language";
 import { FuseResult } from "fuse.js";
+import { ILanguage, IScript } from "@ethnolib/find-language";
 import {
+  demarcateExactMatches,
   demarcateResults,
-  END_OF_MATCH_MARKER,
-  START_OF_MATCH_MARKER,
   stripDemarcation,
 } from "./matchingSubstringDemarcation";
 export function stripResultMetadata(
@@ -42,20 +41,18 @@ function simplifyEnglishResult(
   searchString: string,
   results: ILanguage[]
 ): ILanguage[] {
-  return results.map((result) =>
-    codeMatches(result.code, "eng")
-      ? demarcateExactMatches(searchString, {
-          autonym: undefined, // because exonym is mandatory and we don't want to repeat it
-          exonym: result.exonym, // "English",
-          code: "eng",
-          regionNames: "",
-          names: [],
-          scripts: [latinScriptData],
-          variants: "",
-          alternativeTags: [],
-        } as ILanguage)
-      : result
-  );
+  const getSpecialEntry = (result) =>
+    demarcateExactMatches(searchString, {
+      autonym: undefined, // because exonym is mandatory and we don't want to repeat it
+      exonym: result.exonym, // "English",
+      code: "eng",
+      regionNames: "",
+      names: [],
+      scripts: [latinScriptData],
+      variants: "",
+      alternativeTags: [],
+    } as ILanguage);
+  return substituteInSpecialEntry("eng", getSpecialEntry, results);
 }
 
 // Replace the French result with a simpler version that only has "Francais", "French" and the code on it
@@ -63,24 +60,22 @@ function simplifyFrenchResult(
   searchString: string,
   results: ILanguage[]
 ): ILanguage[] {
-  return results.map((result) =>
-    codeMatches(result.code, "fra")
-      ? demarcateExactMatches(searchString, {
-          autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
-          exonym: result.exonym, // "French"
-          code: "fra",
-          regionNames: "",
-          names: [],
-          scripts: [latinScriptData],
-          variants: "",
-          alternativeTags: [],
-        } as ILanguage)
-      : result
-  );
+  const getSpecialEntry = (result) =>
+    demarcateExactMatches(searchString, {
+      autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
+      exonym: result.exonym, // "French"
+      code: "fra",
+      regionNames: "",
+      names: [],
+      scripts: [latinScriptData],
+      variants: "",
+      alternativeTags: [],
+    } as ILanguage);
+  return substituteInSpecialEntry("fra", getSpecialEntry, results);
 }
 
 // Compare codes, ignoring any demarcation or casing
-function codeMatches(code1: string, code2: string) {
+export function codeMatches(code1: string, code2: string) {
   return (
     stripDemarcation(code1).toUpperCase() ===
     stripDemarcation(code2).toUpperCase()
@@ -88,11 +83,12 @@ function codeMatches(code1: string, code2: string) {
 }
 
 export function substituteInSpecialEntry(
-  specialEntry: ILanguage,
+  targetCode: string,
+  getSpecialEntry: (result: ILanguage) => ILanguage,
   results: ILanguage[]
 ): ILanguage[] {
   return results.map((result) =>
-    result.code === specialEntry.code ? specialEntry : result
+    codeMatches(result.code, targetCode) ? getSpecialEntry(result) : result
   );
 }
 
@@ -128,7 +124,9 @@ const OTHER_EXCLUDED_LANGUAGE_CODES = new Set([
   // TODO need to confirm this is okay to exclude, but seems like it will cause confusion otherwise
 ]);
 
-export function filterSpecialEntries(results: ILanguage[]): ILanguage[] {
+export function filterOutDefaultExcludedLanguages(
+  results: ILanguage[]
+): ILanguage[] {
   return filterLangCodes(
     (code) =>
       !NOT_A_LANGUAGE_ENTRY_CODES.has(code) &&
@@ -139,7 +137,7 @@ export function filterSpecialEntries(results: ILanguage[]): ILanguage[] {
 }
 
 // if user starts typing keyword, lang should come up first. Note that this re-orders results but does not add any new results; if lang is not in the fuzzy-match results no change will be made
-function prioritizeLangByKeywords(
+export function prioritizeLangByKeywords(
   keywords: string[],
   searchString: string,
   langCodeToPrioritize: string,
@@ -162,31 +160,6 @@ function prioritizeLangByKeywords(
     }
   }
   return results;
-}
-
-function demarcateExactMatches(searchString: string, result: ILanguage) {
-  // I think we'll live with only exact matches for this
-  const lowerCasedSearchString = searchString.toLowerCase();
-  for (const field of fieldsToSearch) {
-    if (typeof result[field] !== "string") {
-      continue;
-    }
-    const lowerCasedValue = result[field].toLowerCase();
-    // TODO is it worth it to find additional matches? probably not
-    const indexOfSearchString = lowerCasedValue.indexOf(lowerCasedSearchString);
-    if (indexOfSearchString !== -1) {
-      result[field] =
-        result[field].slice(0, indexOfSearchString) +
-        START_OF_MATCH_MARKER +
-        result[field].slice(
-          indexOfSearchString,
-          indexOfSearchString + searchString.length
-        ) +
-        END_OF_MATCH_MARKER +
-        result[field].slice(indexOfSearchString + searchString.length);
-    }
-  }
-  return result;
 }
 
 // demarcateResults starts by making a deep clone so we aren't modifying the original results
@@ -212,7 +185,7 @@ export function defaultSearchResultModifier(
   );
   modifiedResults = simplifyEnglishResult(searchString, modifiedResults);
   modifiedResults = simplifyFrenchResult(searchString, modifiedResults);
-  modifiedResults = filterSpecialEntries(modifiedResults);
+  modifiedResults = filterOutDefaultExcludedLanguages(modifiedResults);
   modifiedResults = filterScripts(scriptFilter, modifiedResults);
   return modifiedResults;
 }

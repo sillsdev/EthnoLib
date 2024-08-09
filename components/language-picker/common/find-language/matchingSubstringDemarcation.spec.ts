@@ -1,5 +1,6 @@
 import { beforeEach, expect, it, describe } from "vitest";
 import {
+  demarcateExactMatches,
   demarcateResults,
   END_OF_MATCH_MARKER,
   START_OF_MATCH_MARKER,
@@ -8,6 +9,7 @@ import {
 import { FuseResult } from "fuse.js";
 import { ILanguage } from "@ethnolib/find-language";
 import { cloneDeep } from "lodash";
+import { testLanguageEntry } from "./testUtils";
 
 describe("Adding match demarcation", () => {
   let rawResults: FuseResult<ILanguage>[] = [];
@@ -114,5 +116,27 @@ describe("Stripping demarcation", () => {
         `${START_OF_MATCH_MARKER}We wish yo${START_OF_MATCH_MARKER}${START_OF_MATCH_MARKER}${END_OF_MATCH_MARKER}u a merry Ch${END_OF_MATCH_MARKER}ristma${END_OF_MATCH_MARKER}s!${END_OF_MATCH_MARKER}`
       )
     ).toEqual("We wish you a merry Christmas!");
+  });
+});
+
+describe("find and demarcate exact matches", () => {
+  // note this does not test all the fields, just a sampling
+  it("should find and demarcate exact matches", () => {
+    let originalResult = testLanguageEntry({
+      code: "aBc",
+      exonym: "Xxxabcxxx",
+      autonym: "no matches here",
+      names: "Foobar, ABCFoobar",
+    });
+    let expectedResult = testLanguageEntry({
+      code: "[aBc]",
+      exonym: "Xxx[abc]xxx",
+      autonym: "no matches here",
+      names: "Foobar, [ABC]Foobar",
+    });
+
+    expect(demarcateExactMatches("abc", originalResult)).toEqual(
+      expectedResult
+    );
   });
 });
