@@ -1,9 +1,3 @@
-# TODO
-
-npm run langtag-processing
-nx run @ethnolib/find-language:build
-nx run @ethnolib/language-chooser-react-mui:dev
-
 # About macrolanguage handling
 
 - See
