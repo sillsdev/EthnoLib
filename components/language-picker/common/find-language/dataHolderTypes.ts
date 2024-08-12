@@ -11,7 +11,7 @@ export interface IScript {
 }
 
 export interface ILanguage {
-  autonym: string | undefined;
+  autonym?: string;
   exonym: string;
   code: string; // ISO 639-3
   regionNames: string;

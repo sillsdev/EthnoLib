@@ -58,7 +58,10 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   );
 
   // TODO replace all the { label: "", id: "" } with something else? just don't make uncontrolled inputs
-  const autocompleteOptionPlaceholder = { label: "", id: "" };
+  const autocompleteOptionPlaceholder = React.useMemo(
+    () => ({ label: "", id: "" }),
+    []
+  );
 
   // Store dialog state. Used to create a tag preview just inside the dialog, before saving anything
   // but these should not persist when the dialog is closed
@@ -72,6 +75,8 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   }>(autocompleteOptionPlaceholder); // Will be set by the useEffect below
   const [dialogSelectedDialect, setDialogSelectedDialectCode] =
     React.useState<string>(""); // Will be set by the useEffect below
+
+  // To reset the dialog if the user closes and reopens it and maybe changes the language or script selection in between
   React.useEffect(() => {
     const scriptNodeData = props.selectedScriptNode?.nodeData as
       | IScript
@@ -100,14 +105,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
         ? props.customizableLanguageDetails.dialect || ""
         : props.searchString
     );
-  }, [
-    // TODO would it be better to make this just props?
-    props.selectedScriptNode,
-    props.open,
-    props.selectedLanguageNode,
-    props.customizableLanguageDetails.dialect,
-    props.searchString,
-  ]);
+  }, [props, autocompleteOptionPlaceholder]);
 
   return (
     <Dialog
@@ -264,7 +262,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               if (isUnlistedLanguageDialog) {
                 props.selectUnlistedLanguage();
               }
-              // save unlisted language
+
               props.saveCustomizableLanguageDetails({
                 scriptOverride: {
                   code: dialogSelectedScript?.id,

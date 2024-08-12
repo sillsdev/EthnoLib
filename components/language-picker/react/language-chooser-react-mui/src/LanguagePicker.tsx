@@ -61,13 +61,16 @@ export const LanguagePicker: React.FunctionComponent<{
   const [customizeLanguageDialogOpen, setCustomizeLanguageDialogOpen] =
     useState(false);
 
+  // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTag({
     languageCode: selectedLanguageNode?.nodeData.code,
     scriptCode: selectedScriptNode?.nodeData.code,
     regionCode: CustomizableLanguageDetails?.region?.code,
     dialectCode: selectedLanguageNode
       ? CustomizableLanguageDetails?.dialect
-      : searchString,
+      : searchString, // we put the searchString in only when there is no language selected.
+    // And in that case we don't show a language tag preview on the right panel anyway. Therefore the
+    // search string never shows up in the right panel tag preview
   });
 
   return (
@@ -284,54 +287,53 @@ export const LanguagePicker: React.FunctionComponent<{
             padding: 15px 25px 25px 15px;
           `}
         >
-          <div
-            id="language-name-bar-container"
-            css={css`
-              // padding: 10px 25px;
-              // width: 50%;
-              // height: 100%;
-              // position: relative;
-            `}
-          >
-            <label htmlFor="language-name-bar">
+          {selectedLanguageNode !== undefined && (
+            <div
+              id="right-pane-language-details=section"
+              css={css`
+                // padding: 10px 25px;
+                // width: 50%;
+                // height: 100%;
+                // position: relative;
+              `}
+            >
+              <label htmlFor="language-name-bar">
+                <Typography
+                  css={css`
+                    color: ${COLORS.greys[3]};
+                    font-weight: bold;
+                  `}
+                >
+                  Display this language this way
+                </Typography>
+              </label>
+              <OutlinedInput
+                type="text"
+                css={css`
+                  background-color: white;
+                  margin-right: 16px;
+                  margin-bottom: 10px;
+                `}
+                id="language-name-bar"
+                fullWidth
+                value={CustomizableLanguageDetails.displayName}
+                onChange={(e) => {
+                  saveCustomizableLanguageDetails({
+                    displayName: e.target.value,
+                  });
+                }}
+              />
               <Typography
                 css={css`
                   color: ${COLORS.greys[3]};
-                  font-weight: bold;
+                  font-family: "Roboto Mono", monospace;
                 `}
               >
-                Display this language this way
+                {currentTagPreview}
               </Typography>
-            </label>
-            <OutlinedInput
-              type="text"
-              css={css`
-                background-color: white;
-                margin-right: 16px;
-                margin-bottom: 10px;
-              `}
-              id="language-name-bar"
-              fullWidth
-              value={CustomizableLanguageDetails.displayName}
-              onChange={(e) => {
-                saveCustomizableLanguageDetails({
-                  displayName: e.target.value,
-                });
-              }}
-            />
-          </div>
-          <Typography
-            css={css`
-              color: ${COLORS.greys[3]};
-              font-family: "Roboto Mono", monospace;
-            `}
-          >
-            {/* If no language has been selected, the tag preview is qaa-x. 
-                We don't want to show this unless the user has specifically 
-                selected/modified the unlsited language (which sets selectedLanguageNode 
-                to unlisted language).*/}
-            {selectedLanguageNode !== undefined && currentTagPreview}
-          </Typography>
+            </div>
+          )}
+
           <div
             id="buttons-container"
             css={css`

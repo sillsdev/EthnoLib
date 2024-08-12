@@ -41,7 +41,7 @@ function simplifyEnglishResult(
   searchString: string,
   results: ILanguage[]
 ): ILanguage[] {
-  const getSpecialEntry = (result) =>
+  const getSpecialEntry = (result: ILanguage) =>
     demarcateExactMatches(searchString, {
       autonym: undefined, // because exonym is mandatory and we don't want to repeat it
       exonym: result.exonym, // "English",
@@ -60,7 +60,7 @@ function simplifyFrenchResult(
   searchString: string,
   results: ILanguage[]
 ): ILanguage[] {
-  const getSpecialEntry = (result) =>
+  const getSpecialEntry = (result: any) =>
     demarcateExactMatches(searchString, {
       autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
       exonym: result.exonym, // "French"

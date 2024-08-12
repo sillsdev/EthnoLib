@@ -21,13 +21,13 @@ export interface OptionNode {
 }
 export interface CustomizableLanguageDetails {
   displayName?: string;
-  scriptOverride?: IScript | null;
-  region?: IRegion | null;
+  scriptOverride?: IScript;
+  region?: IRegion;
   dialect?: string;
 }
 
 export interface ILanguagePickerInitialState {
-  languageCode: string;
+  languageCode?: string;
   scriptCode?: string;
   customDetails?: CustomizableLanguageDetails;
 }
@@ -63,18 +63,15 @@ export const useLanguagePicker = (
     OptionNode | undefined
   >();
 
-  // So we don't flip things between controlled and uncontrolled inputs
   const EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS = {
-    displayName: "",
-    scriptOverride: null,
-    region: null,
-    dialect: "",
+    displayName: undefined,
+    scriptOverride: undefined,
+    region: undefined,
+    dialect: undefined,
   } as CustomizableLanguageDetails;
 
   const [CustomizableLanguageDetails, setCustomizableLanguageDetails] =
     useState<CustomizableLanguageDetails>(EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS);
-
-  EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS;
 
   const clearCustomizableLanguageDetails = () => {
     setCustomizableLanguageDetails(EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS);
@@ -93,13 +90,23 @@ export const useLanguagePicker = (
 
   // For reopening to a specific selection. We should then also set the search string
   // such that the selected language is visible
-  // *Note that if the desired script is a script of the desired language, it must be
+  // *Note that if the desired script is a normal script option for the desired language
+  // (i.e. there is an entry in langtags.json with that language and script combo), it must be
   // passed in the scriptCode argument rather than as a script override
   function reopenTo({
     languageCode,
     scriptCode,
     customDetails,
   }: ILanguagePickerInitialState) {
+    // clear everything
+    setSelectedLanguageNode(undefined);
+    setSelectedScriptNode(undefined);
+    clearCustomizableLanguageDetails();
+
+    if (!languageCode) {
+      return;
+    }
+
     // TODO what if there is a language code that is also the start of so many language names
     // that the language card with that code isn't initially visible and one must scroll to see it?
     // Do we need to make the language picker scroll to it? Seems like overkill to me
