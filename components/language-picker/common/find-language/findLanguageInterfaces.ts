@@ -1,5 +1,3 @@
-// TODO rename this file
-
 export interface IRegion {
   name: string;
   code: string;
@@ -13,7 +11,7 @@ export interface IScript {
 export interface ILanguage {
   autonym?: string;
   exonym: string;
-  code: string; // ISO 639-3
+  code: string; // ISO 639-3 code
   regionNames: string;
   names: string[];
   scripts: IScript[];

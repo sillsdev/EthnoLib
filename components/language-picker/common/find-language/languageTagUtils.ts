@@ -1,5 +1,4 @@
-import { stripDemarcation } from "./matchingSubstringDemarcation";
-
+// TODO do stripDemarcation in all the usages
 export function createTag({
   languageCode,
   scriptCode,
@@ -25,5 +24,7 @@ export function createTag({
   if (dialectCode) {
     tag += `-${dialectCode}`;
   }
-  return stripDemarcation(tag);
+  return tag;
 }
+
+// TODO https://issues.bloomlibrary.org/youtrack/issue/BL-13704/Rescue-qaa-books

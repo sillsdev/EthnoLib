@@ -13,7 +13,7 @@
   "devDependencies": {
     "@types/lodash": "^4.17.7",
     "@types/react-lazyload": "^3.2.3",
-    "nx": "19.1.2",
+    "nx": "^19.1.2",
     "vitest": "^2.0.5"
   },
   "dependencies": {

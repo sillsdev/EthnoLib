@@ -1,5 +1,5 @@
 import { searchForLanguage } from "./searchForLanguage";
-import { ILanguage } from "./dataHolderTypes";
+import { ILanguage } from "./findLanguageInterfaces";
 import { describe, expect, it } from "vitest";
 import { expectTypeOf } from "vitest";
 import { FuseResult } from "fuse.js";
@@ -60,14 +60,15 @@ describe("searchForLanguage", () => {
     searchFindsLanguage("Canada", "alq");
   });
   it("should rank better matches before worse matches", () => {
-    // "Ese" comes before "Mese"
+    // "Ese" (mcq) comes before "Mese" (mci)
+    // TODO what is happening here???
     const eseQuery = "ese";
     expect(
       indexOfLanguageInSearchResults(eseQuery, "mcq") >
         indexOfLanguageInSearchResults(eseQuery, "mci")
     );
 
-    // "chorasmian" comes before "ch'orti'"
+    // "chorasmian"(xco) comes before "ch'orti'" (caa)
     const choQuery = "cho";
     expect(
       indexOfLanguageInSearchResults(choQuery, "xco") >

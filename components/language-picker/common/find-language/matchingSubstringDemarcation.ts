@@ -6,34 +6,37 @@ import { fieldsToSearch, ILanguage } from "@ethnolib/find-language";
 export const START_OF_MATCH_MARKER = "[";
 export const END_OF_MATCH_MARKER = "]";
 
+// Mark the matching part of the string with square brackets so we can highlight it
+// e.g. if the search string was "ngl" then any instance of "English" would be marked as "E[ngl]ish"
 export function demarcateResults(results: FuseResult<ILanguage>[]) {
   const resultsCopy = cloneDeep(results);
   for (const result of resultsCopy) {
     for (const match of result.matches || []) {
-      let lastTrasnferredIndex = 0;
+      let lastTransferredIndex = 0;
       const newValue = [] as string[];
       for (const [matchStart, matchEnd] of match.indices) {
         newValue.push(
-          match.value?.slice(lastTrasnferredIndex, matchStart) || ""
+          match.value?.slice(lastTransferredIndex, matchStart) || ""
         );
         newValue.push(START_OF_MATCH_MARKER);
         newValue.push(match.value?.slice(matchStart, matchEnd + 1) || "");
         newValue.push(END_OF_MATCH_MARKER);
-        lastTrasnferredIndex = matchEnd + 1;
+        lastTransferredIndex = matchEnd + 1;
       }
-      newValue.push(match.value?.slice(lastTrasnferredIndex) || "");
+      newValue.push(match.value?.slice(lastTransferredIndex) || "");
+      const newValueString = newValue.join("");
       if (match.refIndex !== undefined) {
-        // this is a match to an element in an array
-        result.item[match.key || ""][match.refIndex] = newValue.join("");
+        // this is a match to an element in an array. Fuse uses refIndex to indicate which element in the array
+        result.item[match.key || ""][match.refIndex] = newValueString;
       } else {
-        result.item[match.key || ""] = newValue.join("");
+        result.item[match.key || ""] = newValueString;
       }
     }
   }
   return resultsCopy;
 }
 
-// TODO some version has built in replaceAll
+// TODO switch to built in replaceAll
 export function stripDemarcation(str: string): string {
   if (!str) return str;
   let strippedStr = replaceAll(str, END_OF_MATCH_MARKER, "");
@@ -45,9 +48,10 @@ function replaceAll(str: string, search: string, replacement: string): string {
   return str.split(search).join(replacement);
 }
 
-// For when we don't have fuse results which give us match indexes, and are okay
-// with only finding exact matches. Look for matches ourselvs and mark them
-// Currently this onnly finds the first match fo the field.
+// Normally, we get the locations of hte match from fuse and use that to demarcate the part of the string that matches.
+// Use this only when we don't have fuse results which give us match indexes, but when we nonetheless want to demarcate the matching
+// parts of the string, and are okay with demarcating only the exact matches (no fuzzy match finding). Look for matches ourselves and mark them.
+// Currently this only finds the first match in the field,
 export function demarcateExactMatches(searchString: string, result: ILanguage) {
   const lowerCasedSearchString = searchString.toLowerCase();
   for (const field of fieldsToSearch) {

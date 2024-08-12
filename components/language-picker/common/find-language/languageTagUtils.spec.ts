@@ -19,11 +19,12 @@ describe("Language tag utils", () => {
   expect(createTag({ languageCode: "eng", regionCode: "IN" })).toEqual(
     "eng-IN"
   );
+
   it("should create qaa-x-dialect tag if no language tag is provided", () => {
     expect(createTag({ dialectCode: "foobar" })).toEqual("qaa-x-foobar");
-    // we are currently not adding script or region to qaa tags, though I'm not sure if we will always want this behavior
+    // we are currently not adding script to qaa tags, though I'm not sure if we will always want this behavior
     expect(
       createTag({ dialectCode: "foobar", scriptCode: "Latn", regionCode: "US" })
-    ).toEqual("qaa-x-foobar");
+    ).toEqual("qaa-US-x-foobar");
   });
 });

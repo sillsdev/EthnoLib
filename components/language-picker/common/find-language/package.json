@@ -10,7 +10,7 @@
     "dist/**"
   ],
   "scripts": {
-    "langtag-processing": "ts-node-esm ./langtagProcessing.ts",
+    "langtag-processing": "ts-node-esm ./language-data/langtagProcessing.ts",
     "build": "tsup ./index.ts --format esm --dts --external react",
     "dev": "tsup ./index.ts --format esm --watch --dts --external react",
     "typecheck": "tsc",

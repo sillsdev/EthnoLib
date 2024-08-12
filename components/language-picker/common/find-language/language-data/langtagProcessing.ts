@@ -1,7 +1,7 @@
 import { iso15924 } from "iso-15924";
 import langtags from "./langtags.json" assert { type: "json" };
 import * as fs from "fs";
-import { ILanguage, IScript } from "./dataHolderTypes";
+import { ILanguage, IScript } from "../findLanguageInterfaces";
 import iso3166 from "iso-3166-1";
 
 const COMMA_SEPARATOR = ", ";
@@ -54,7 +54,7 @@ interface ILanguageInternal {
   names: Set<string>;
   scripts: Set<string>;
   alternativeTags: Set<string>;
-};
+}
 
 function findPotentialIso639_3Code(languageTag: string): string | undefined {
   const parts = languageTag.split("-");
@@ -76,22 +76,27 @@ function getAllPossibleNames(entry: any) {
   ]);
 }
 
-function bestAutonym(entry: any, fallback: string) {
+function autonymOrFallback(entry: any, fallback: string) {
+  // We are currently ignoring the "localname" field because it appears to be more specific than what we want,
+  // e.g. the "es-Latn-ES" entry of langtags.json has "localname": "español de España" and "localnames": [ "castellano", "español" ]
   return entry.localnames ? entry.localnames[0] : undefined ?? fallback;
 }
 
-function addLangtagsEntry(entry, langs) {
+// We want to have one entry for every ISO 630-3 code, whereas langtags.json sometimes has multiple entries per code
+// Combine entry into the entry with matching code in langs if there is one, otherwise create a new entry
+function addOrCombineLangtagsEntry(entry, langs) {
   if (!entry.iso639_3) {
     // langTags.json has metadata items in the same list mixed in with the data entries
     return;
   }
 
-  // We already have an entry with this code, combine with it
   if (langs[entry.iso639_3]) {
-    langs[entry.iso639_3].autonym = bestAutonym(
+    // We already have an entry with this code, combine with it
+    langs[entry.iso639_3].autonym = autonymOrFallback(
       entry,
       langs[entry.iso639_3].autonym
-    );
+    ); // We want to take an autonym from any of the entries that we are combining and fallback to undefined
+    // only if none of them have autonyms
     langs[entry.iso639_3].regionNames.add(entry.regionname);
     langs[entry.iso639_3].scripts.add(entry.script);
     langs[entry.iso639_3].names = new Set([
@@ -106,8 +111,9 @@ function addLangtagsEntry(entry, langs) {
       langs[entry.iso639_3].isForMacrolanguageDisambiguation &&
       entry.isForMacrolanguageDisambiguation;
   } else {
+    // create a new entry for this language code
     langs[entry.iso639_3] = {
-      autonym: bestAutonym(entry, undefined),
+      autonym: autonymOrFallback(entry, undefined),
       exonym: entry.name,
       code: entry.iso639_3 as string,
       regionNames: new Set([entry.regionname]),
@@ -121,21 +127,21 @@ function addLangtagsEntry(entry, langs) {
 }
 
 function parseLangtagsJson() {
+  // TODO fix variable names
   const langs = {};
   const langTags = langtags as any[];
   const iso639_3CodeDetails = getIso639_3CodeDetails();
   for (const entry of langTags) {
-    addLangtagsEntry(entry, langs);
+    addOrCombineLangtagsEntry(entry, langs);
 
-    // TODO I haven't finished implementing this:
-    // Macrolanguage/specific language handling. See README
+    // TODO I haven't finished implementing Macrolanguage/specific language handling. See README
     if (iso639_3CodeDetails.has(entry.iso639_3)) {
       const iso639_3Codes = new Set([entry.iso639_3]);
       for (const tag of entry.tags || []) {
         const iso639_3Code = findPotentialIso639_3Code(tag);
         if (iso639_3Code && !iso639_3Codes.has(iso639_3Code)) {
           iso639_3Codes.add(iso639_3Code);
-          addLangtagsEntry(
+          addOrCombineLangtagsEntry(
             {
               ...entry,
               code: iso639_3Code,
@@ -152,6 +158,7 @@ function parseLangtagsJson() {
     }
   }
 
+  // Tweak some of the data into the format we want
   const reformattedLangs = Object.values(langs).map(
     (langData: ILanguageInternal) => {
       // Don't repeat the autonym and exonym in the names list
@@ -207,7 +214,7 @@ function parseLangtagsJson() {
 
   //   write langs to a json file
   const data = JSON.stringify(reformattedLangs);
-  fs.writeFileSync("languageData.json", data);
+  fs.writeFileSync("language-data/languageData.json", data);
 }
 
 parseLangtagsJson();

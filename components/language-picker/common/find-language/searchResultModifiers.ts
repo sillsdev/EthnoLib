@@ -5,6 +5,7 @@ import {
   demarcateResults,
   stripDemarcation,
 } from "./matchingSubstringDemarcation";
+
 export function stripResultMetadata(
   results: FuseResult<ILanguage>[]
 ): ILanguage[] {
@@ -42,10 +43,11 @@ function simplifyEnglishResult(
   results: ILanguage[]
 ): ILanguage[] {
   const getSpecialEntry = (result: ILanguage) =>
+    // TODO* remove call to demarcateExactMatches and test that everything still works
     demarcateExactMatches(searchString, {
       autonym: undefined, // because exonym is mandatory and we don't want to repeat it
       exonym: result.exonym, // "English",
-      code: "eng",
+      code: result.code,
       regionNames: "",
       names: [],
       scripts: [latinScriptData],
@@ -64,7 +66,7 @@ function simplifyFrenchResult(
     demarcateExactMatches(searchString, {
       autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
       exonym: result.exonym, // "French"
-      code: "fra",
+      code: result.code,
       regionNames: "",
       names: [],
       scripts: [latinScriptData],
@@ -82,6 +84,7 @@ export function codeMatches(code1: string, code2: string) {
   );
 }
 
+// Replace the result which has targetCode with getSpecialEntry called on that result
 export function substituteInSpecialEntry(
   targetCode: string,
   getSpecialEntry: (result: ILanguage) => ILanguage,
@@ -92,7 +95,7 @@ export function substituteInSpecialEntry(
   );
 }
 
-export function filterLangCodes(
+export function filterLanguageCodes(
   langCodeFilter: (value: string) => boolean,
   results: ILanguage[]
 ): ILanguage[] {
@@ -127,7 +130,7 @@ const OTHER_EXCLUDED_LANGUAGE_CODES = new Set([
 export function filterOutDefaultExcludedLanguages(
   results: ILanguage[]
 ): ILanguage[] {
-  return filterLangCodes(
+  return filterLanguageCodes(
     (code) =>
       !NOT_A_LANGUAGE_ENTRY_CODES.has(code) &&
       !ANCIENT_LANGUAGE_ENTRY_CODES.has(code) &&
@@ -136,14 +139,16 @@ export function filterOutDefaultExcludedLanguages(
   );
 }
 
-// if user starts typing keyword, lang should come up first. Note that this re-orders results but does not add any new results; if lang is not in the fuzzy-match results no change will be made
+// if user starts typing keyword, the language option with code langCodeToPrioritize should come up first.
+// Note that this re-orders results but does not add
+// any new results; if the desired language is not already in the fuzzy-match results, no change will be made
 export function prioritizeLangByKeywords(
   keywords: string[],
   searchString: string,
   langCodeToPrioritize: string,
   results: ILanguage[]
 ): ILanguage[] {
-  // if any of hte keywords (lowercased) start with the searchstring (lowercased), prioritize the lang
+  // if any of the keywords (lowercased) start with the searchstring (lowercased), prioritize the desired language
   if (
     searchString.length > 0 &&
     keywords.some((keyword) =>

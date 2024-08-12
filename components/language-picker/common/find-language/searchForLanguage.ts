@@ -1,6 +1,6 @@
 import Fuse, { FuseResult } from "fuse.js";
-import languages from "./languageData.json";
-import { ILanguage } from "./dataHolderTypes";
+import languages from "./language-data/languageData.json";
+import { ILanguage } from "./findLanguageInterfaces";
 
 const fuseSearchKeys = [
   { name: "autonym", weight: 100 },
@@ -23,10 +23,7 @@ export function searchForLanguage(
 
     // to make matches that start with the query string appear first
     location: 0,
-    distance: 10, // we want match score to fall off very slowly, really use distance from the beginning only as a tie breaker
-    // useExtendedSearch: false,
-    // ignoreFieldNorm: false,
-    // fieldNormWeight: 1,
+    distance: 10,
     keys: fuseSearchKeys,
     ignoreFieldNorm: true,
     useExtendedSearch: true,

@@ -9,14 +9,14 @@ import {
 import { FuseResult } from "fuse.js";
 import { ILanguage } from "@ethnolib/find-language";
 import { cloneDeep } from "lodash";
-import { testLanguageEntry } from "./testUtils";
+import { createTestLanguageEntry } from "./testUtils";
 
 describe("Adding match demarcation", () => {
-  let rawResults: FuseResult<ILanguage>[] = [];
+  let fuseResults: FuseResult<ILanguage>[] = [];
   let demarcatedResults: FuseResult<ILanguage>[] = [];
 
   beforeEach(async () => {
-    rawResults = [
+    fuseResults = [
       {
         item: {
           autonym: "ўзбек тили",
@@ -87,30 +87,26 @@ describe("Adding match demarcation", () => {
   });
 
   it("should not modify the original results", () => {
-    const originalResults = cloneDeep(rawResults);
-    demarcateResults(rawResults);
-    expect(rawResults).toEqual(originalResults);
+    const originalResults = cloneDeep(fuseResults);
+    demarcateResults(fuseResults);
+    expect(fuseResults).toEqual(originalResults);
   });
+
   it("should properly demarcate results", () => {
-    const originalResults = cloneDeep(rawResults);
+    const originalResults = cloneDeep(fuseResults);
     const newlyDemarcatedResults = demarcateResults(originalResults);
     expect(newlyDemarcatedResults[0].item).toEqual(demarcatedResults[0].item);
   });
 });
 
 describe("Stripping demarcation", () => {
-  // TODO ask reviewer about whether to use [ or START_OF_MATCH_MARKER for testing
   it("should remove all demarcation markers", () => {
-    expect(stripDemarcation("[uzb]")).toEqual("uzb");
     expect(
       stripDemarcation(`${START_OF_MATCH_MARKER}uzb${END_OF_MATCH_MARKER}`)
     ).toEqual("uzb");
     expect(stripDemarcation("We wish you a merry Christmas!")).toEqual(
       "We wish you a merry Christmas!"
     );
-    expect(
-      stripDemarcation("[W]e[[]] wi]s]h]]] you a[ merry Chris]tmas!]")
-    ).toEqual("We wish you a merry Christmas!");
     expect(
       stripDemarcation(
         `${START_OF_MATCH_MARKER}We wish yo${START_OF_MATCH_MARKER}${START_OF_MATCH_MARKER}${END_OF_MATCH_MARKER}u a merry Ch${END_OF_MATCH_MARKER}ristma${END_OF_MATCH_MARKER}s!${END_OF_MATCH_MARKER}`
@@ -122,13 +118,13 @@ describe("Stripping demarcation", () => {
 describe("find and demarcate exact matches", () => {
   // note this does not test all the fields, just a sampling
   it("should find and demarcate exact matches", () => {
-    let originalResult = testLanguageEntry({
+    const originalResult = createTestLanguageEntry({
       code: "aBc",
       exonym: "Xxxabcxxx",
       autonym: "no matches here",
       names: "Foobar, ABCFoobar",
     });
-    let expectedResult = testLanguageEntry({
+    const expectedResult = createTestLanguageEntry({
       code: "[aBc]",
       exonym: "Xxx[abc]xxx",
       autonym: "no matches here",
