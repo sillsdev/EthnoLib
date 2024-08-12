@@ -21,4 +21,5 @@ If you make changes to [langtagProcessing.ts](common/find-language/langtagProces
 
 ## Unit tests
 
-Language picker uses vitest for unit tests. To run the tests, run `npm run test` from the language-picker directory.
+Language picker uses vitest for unit tests.
+`npx nx run @ethnolib/find-language:test`

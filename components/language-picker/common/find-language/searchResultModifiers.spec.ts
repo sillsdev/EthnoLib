@@ -104,9 +104,9 @@ describe("substitute special entry into results", () => {
         variants: "yay",
       }),
     ];
-    expect(substituteInSpecialEntry(specialEntry, results)).toEqual(
-      expectedResults
-    );
+    expect(
+      substituteInSpecialEntry("boo", () => specialEntry, results)
+    ).toEqual(expectedResults);
   });
 });
 
