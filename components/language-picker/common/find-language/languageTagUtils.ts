@@ -1,4 +1,3 @@
-// TODO do stripDemarcation in all the usages
 export function createTag({
   languageCode,
   scriptCode,
@@ -12,7 +11,12 @@ export function createTag({
 }) {
   if (!languageCode) {
     // Unlisted language
-    return `qaa-x-${dialectCode}`;
+    let tag = "qaa";
+    if (regionCode) {
+      tag += `-${regionCode}`;
+    }
+    tag += `-x-${dialectCode}`;
+    return tag;
   }
   let tag = languageCode;
   if (scriptCode) {
@@ -26,5 +30,3 @@ export function createTag({
   }
   return tag;
 }
-
-// TODO https://issues.bloomlibrary.org/youtrack/issue/BL-13704/Rescue-qaa-books

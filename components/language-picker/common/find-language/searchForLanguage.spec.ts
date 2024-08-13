@@ -72,7 +72,6 @@ describe("searchForLanguage", () => {
       indexOfLanguageInSearchResults(choQuery, "caa")
     );
   });
-  // TODO make sure I'm not using expects anywhere. Look into vitest has assertions
   it("should find matches regardless of case", () => {
     searchDoesFindLanguage("japanese", "jpn");
     searchDoesFindLanguage("JAPANESE", "jpn");

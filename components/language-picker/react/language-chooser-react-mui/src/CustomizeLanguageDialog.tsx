@@ -230,9 +230,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               `}
             >
               {createTag({
-                languageCode: stripDemarcation(
-                  props.selectedLanguage?.code || ""
-                ),
+                languageCode: stripDemarcation(props.selectedLanguage?.code),
                 scriptCode: stripDemarcation(dialogSelectedScript?.id),
                 regionCode: stripDemarcation(dialogSelectedRegion?.id),
                 dialectCode: stripDemarcation(dialogSelectedDialect),

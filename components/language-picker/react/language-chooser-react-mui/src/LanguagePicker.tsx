@@ -1,6 +1,11 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { codeMatches, ILanguage, IScript } from "@ethnolib/find-language";
+import {
+  codeMatches,
+  ILanguage,
+  IScript,
+  stripDemarcation,
+} from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import {
   AppBar,
@@ -63,9 +68,9 @@ export const LanguagePicker: React.FunctionComponent<{
 
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTag({
-    languageCode: selectedLanguage?.code,
-    scriptCode: selectedScript?.code,
-    regionCode: CustomizableLanguageDetails?.region?.code,
+    languageCode: stripDemarcation(selectedLanguage?.code),
+    scriptCode: stripDemarcation(selectedScript?.code),
+    regionCode: stripDemarcation(CustomizableLanguageDetails?.region?.code),
     dialectCode: selectedLanguage
       ? CustomizableLanguageDetails?.dialect
       : searchString, // we put the searchString in only when there is no language selected.

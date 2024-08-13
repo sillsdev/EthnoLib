@@ -97,7 +97,6 @@ export const useLanguagePicker = (
       languageCode,
       searchResultModifier
     );
-    // TODO replace === with codeMatches
     const desiredLanguage = tempLanguageData.find((language) =>
       codeMatches(language.code, languageCode)
     );

@@ -36,16 +36,16 @@ export function demarcateResults(results: FuseResult<ILanguage>[]) {
   return resultsCopy;
 }
 
-// TODO switch to built in replaceAll
-export function stripDemarcation(str: string): string {
-  if (!str) return str;
-  let strippedStr = replaceAll(str, END_OF_MATCH_MARKER, "");
-  strippedStr = replaceAll(strippedStr, START_OF_MATCH_MARKER, "");
+export function stripDemarcation(
+  demarcatedText: string | undefined
+): string | undefined {
+  if (!demarcatedText) {
+    return demarcatedText;
+  }
+  if (!demarcatedText) return demarcatedText;
+  let strippedStr = demarcatedText.replaceAll(END_OF_MATCH_MARKER, "");
+  strippedStr = strippedStr.replaceAll(START_OF_MATCH_MARKER, "");
   return strippedStr;
-}
-
-function replaceAll(str: string, search: string, replacement: string): string {
-  return str.split(search).join(replacement);
 }
 
 // Normally, we get the locations of hte match from fuse and use that to demarcate the part of the string that matches.
