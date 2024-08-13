@@ -5,10 +5,9 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Dialog from "@mui/material/Dialog";
 import Typography from "@mui/material/Typography";
 import {
-  ILanguageNode,
+  ICustomizableLanguageDetails,
   shouldShowUnlistedLanguageControls,
 } from "../../common/useLanguagePicker";
-import { ICustomizableLanguageDetails } from "../../common/useLanguagePicker";
 import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import {
   Autocomplete,
@@ -20,7 +19,12 @@ import { TextInput } from "./TextInput";
 import iso3166 from "iso-3166-1";
 import { iso15924 } from "iso-15924";
 import { COLORS } from "./colors";
-import { IRegion, IScript, stripDemarcation } from "@ethnolib/find-language";
+import {
+  ILanguage,
+  IRegion,
+  IScript,
+  stripDemarcation,
+} from "@ethnolib/find-language";
 
 function getAllRegionOptions() {
   // TODO Congo is duplicated in this list for some reason
@@ -43,7 +47,7 @@ function getAllScriptOptions() {
 
 export const CustomizeLanguageDialog: React.FunctionComponent<{
   open: boolean;
-  selectedLanguageNode: ILanguageNode | undefined;
+  selectedLanguage: ILanguage | undefined;
   selectedScript: IScript | undefined;
   customizableLanguageDetails: ICustomizableLanguageDetails;
   saveLanguageDetails: (
@@ -55,7 +59,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   onClose: () => void;
 }> = (props) => {
   const isUnlistedLanguageDialog = shouldShowUnlistedLanguageControls(
-    props.selectedLanguageNode
+    props.selectedLanguage
   );
 
   // TODO replace all the { label: "", id: "" } with something else? just don't make uncontrolled inputs
@@ -99,7 +103,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
       // if the user has not selected any language, not even the unlisted language button, then
       // there will be no language details and we suggest the search string as a
       // starting point for the unlisted language name (which is actually stored in the dialect field)
-      props.selectedLanguageNode
+      props.selectedLanguage
         ? props.customizableLanguageDetails.dialect || ""
         : props.searchString
     );
@@ -227,7 +231,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             >
               {createTag({
                 languageCode: stripDemarcation(
-                  props.selectedLanguageNode?.nodeData.code || ""
+                  props.selectedLanguage?.code || ""
                 ),
                 scriptCode: stripDemarcation(dialogSelectedScript?.id),
                 regionCode: stripDemarcation(dialogSelectedRegion?.id),

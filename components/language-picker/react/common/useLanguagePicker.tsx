@@ -10,12 +10,6 @@ import { stripResultMetadata } from "@ethnolib/find-language";
 import { FuseResult } from "fuse.js";
 import { stripDemarcation } from "@ethnolib/find-language";
 
-export interface ILanguageNode {
-  nodeData: ILanguage; // TODO rename nodeData?
-  id: string;
-  scripts: IScript[];
-}
-
 export interface ICustomizableLanguageDetails {
   displayName?: string;
   region?: IRegion;
@@ -28,20 +22,16 @@ export interface ILanguagePickerInitialState {
   customDetails?: ICustomizableLanguageDetails;
 }
 
-export const UNLISTED_LANGUAGE_NODE_ID = "unlisted-language";
-export const UNLISTED_LANGUAGE_NODE = {
-  nodeData: {
-    code: "qaa",
-    autonym: undefined,
-    exonym: "Unknown Language",
-    regionNames: "",
-    scripts: [],
-    alternativeTags: [],
-    names: [],
-  } as ILanguage,
-  id: UNLISTED_LANGUAGE_NODE_ID,
+export const UNLISTED_LANGUAGE_CODE = "qaa";
+export const UNLISTED_LANGUAGE = {
+  code: UNLISTED_LANGUAGE_CODE,
+  autonym: undefined,
+  exonym: "Unknown Language",
+  regionNames: "",
   scripts: [],
-} as ILanguageNode;
+  alternativeTags: [],
+  names: [],
+} as ILanguage;
 
 export const useLanguagePicker = (
   searchResultModifier?: (
@@ -50,8 +40,8 @@ export const useLanguagePicker = (
   ) => ILanguage[]
 ) => {
   const [searchString, setSearchString] = useState("");
-  const [selectedLanguageNode, setSelectedLanguageNode] = useState<
-    ILanguageNode | undefined
+  const [selectedLanguage, setSelectedLanguage] = useState<
+    ILanguage | undefined
   >();
   const [selectedScript, setSelectedScript] = useState<IScript | undefined>();
 
@@ -69,9 +59,9 @@ export const useLanguagePicker = (
   }
 
   const isReadyToSubmit =
-    !!selectedLanguageNode &&
+    !!selectedLanguage &&
     // either a script is selected or there are no scripts for the selected language
-    (!!selectedScript || selectedLanguageNode.scripts?.length === 0);
+    (!!selectedScript || selectedLanguage.scripts?.length === 0);
 
   const languageData = useMemo(() => {
     if (searchString.length < 2) {
@@ -89,7 +79,7 @@ export const useLanguagePicker = (
     customDetails,
   }: ILanguagePickerInitialState) {
     // clear everything
-    setSelectedLanguageNode(undefined);
+    setSelectedLanguage(undefined);
     setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
 
@@ -102,17 +92,17 @@ export const useLanguagePicker = (
     // Do we need to make the language picker scroll to it? Seems like overkill to me
     onSearchStringChange(languageCode);
     // TODO this is inefficient... languageData won't get updated until rerender
-    // and so won't yet have the desired language node, so do a search for it
+    // and so selectedLanguage won't yet have the desired language, so do a search for it
     const tempLanguageData = getModifiedSearchResults(
       languageCode,
       searchResultModifier
     );
-    const desiredLanguageNode = tempLanguageData.find(
-      (langNode) =>
-        stripDemarcation(langNode.nodeData.code || "") === languageCode
+    // TODO replace === with codeMatches
+    const desiredLanguage = tempLanguageData.find((language) =>
+      codeMatches(language.code, languageCode)
     );
-    if (desiredLanguageNode) {
-      setSelectedLanguageNode(desiredLanguageNode);
+    if (desiredLanguage) {
+      setSelectedLanguage(desiredLanguage);
       saveLanguageDetails(
         customDetails || ({} as ICustomizableLanguageDetails),
         script
@@ -141,47 +131,34 @@ export const useLanguagePicker = (
     ) => ILanguage[]
   ) {
     const searchResults = searchForLanguage(searchString);
-    let modifiedSearchResults: ILanguage[];
     if (searchResultModifier) {
-      modifiedSearchResults = searchResultModifier(searchResults, searchString);
+      return searchResultModifier(searchResults, searchString);
     } else {
       // fuse leaves some metadata in the results which search result modifiers might use
-      modifiedSearchResults = stripResultMetadata(searchResults);
+      return stripResultMetadata(searchResults);
     }
-    const languageData = modifiedSearchResults.map((language) => {
-      const languageNode: ILanguageNode = {
-        nodeData: language,
-        id: stripDemarcation(language.code),
-        scripts: [],
-      };
-
-      languageNode.scripts = language.scripts;
-      return languageNode;
-    });
-    return languageData;
   }
 
-  function toggleSelectLanguageNode(languageNode: ILanguageNode) {
-    if (!languageNode) {
-      console.error("no node selected");
+  function toggleSelectLanguage(language: ILanguage) {
+    if (!language) {
+      console.error("no language selected");
       return;
     }
-    // else if node is an ILanguageNode
-    const languageNodeData = languageNode.nodeData as ILanguage;
-    if (languageNode.id === selectedLanguageNode?.id) {
-      // Clicking on the selected language node unselects it and clears data specific to that language
-      setSelectedLanguageNode(undefined);
+    if (codeMatches(language.code, selectedLanguage?.code)) {
+      // Clicking on the selected language unselects it and clears data specific to that language
+      setSelectedLanguage(undefined);
       setSelectedScript(undefined);
       clearCustomizableLanguageDetails();
       return;
     } else {
-      setSelectedLanguageNode(languageNode);
+      setSelectedLanguage(language);
       setSelectedScript(
-        languageNode.scripts.length == 1 ? languageNode.scripts[0] : undefined
+        // If there is only one script option for this language, automatically select it
+        language.scripts.length == 1 ? language.scripts[0] : undefined
       );
       setCustomizableLanguageDetails({
         displayName: stripDemarcation(
-          languageNodeData.autonym || languageNodeData.exonym || ""
+          language.autonym || language.exonym || ""
         ),
       } as ICustomizableLanguageDetails);
       return;
@@ -189,7 +166,7 @@ export const useLanguagePicker = (
   }
   function toggleSelectScript(script: IScript) {
     if (codeMatches(script.code, selectedScript?.code)) {
-      // clicking on the selected script node unselects it
+      // clicking on the selected script unselects it
       setSelectedScript(undefined);
       return;
     } else {
@@ -198,14 +175,14 @@ export const useLanguagePicker = (
   }
 
   function selectUnlistedLanguage() {
-    setSelectedLanguageNode(UNLISTED_LANGUAGE_NODE);
+    setSelectedLanguage(UNLISTED_LANGUAGE);
     setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
   }
 
   const onSearchStringChange = (searchString: string) => {
     setSearchString(searchString);
-    setSelectedLanguageNode(undefined);
+    setSelectedLanguage(undefined);
     setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
   };
@@ -213,12 +190,12 @@ export const useLanguagePicker = (
   return {
     // TODO make this an object
     languageData,
-    selectedLanguageNode,
+    selectedLanguage,
     selectedScript,
     CustomizableLanguageDetails,
     searchString,
     onSearchStringChange,
-    toggleSelectLanguageNode,
+    toggleSelectLanguage,
     toggleSelectScript,
     isReadyToSubmit,
     saveLanguageDetails,
@@ -231,10 +208,10 @@ export const useLanguagePicker = (
 
 // We show the unlisted language controls unless a language is selected
 export function shouldShowUnlistedLanguageControls(
-  selectedLanguageNode: ILanguageNode | undefined
+  selectedLanguage: ILanguage | undefined
 ) {
   return (
-    selectedLanguageNode === undefined ||
-    selectedLanguageNode.id === UNLISTED_LANGUAGE_NODE_ID
+    selectedLanguage === undefined ||
+    codeMatches(selectedLanguage.code, UNLISTED_LANGUAGE_CODE)
   );
 }
