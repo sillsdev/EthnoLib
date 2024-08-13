@@ -11,74 +11,72 @@ describe("searchForLanguage", () => {
     expect(result.length).toBeGreaterThan(0);
   });
   it("should find common languages by common queries", () => {
-    searchFindsLanguage("English", "eng");
-    searchFindsLanguage("eng", "eng");
-    searchFindsLanguage("en", "eng");
-    searchFindsLanguage("fr", "fra");
-    searchFindsLanguage("fre", "fra");
-    searchFindsLanguage("fra", "fra");
-    searchFindsLanguage("french", "fra");
-    searchFindsLanguage("français", "fra");
-    searchFindsLanguage("francais", "fra");
-    searchFindsLanguage("spanish", "spa");
-    searchFindsLanguage("spa", "spa");
-    searchFindsLanguage("español", "spa");
-    searchFindsLanguage("espanol", "spa");
-    searchFindsLanguage("esp", "spa");
+    searchDoesFindLanguage("English", "eng");
+    searchDoesFindLanguage("eng", "eng");
+    searchDoesFindLanguage("en", "eng");
+    searchDoesFindLanguage("fr", "fra");
+    searchDoesFindLanguage("fre", "fra");
+    searchDoesFindLanguage("fra", "fra");
+    searchDoesFindLanguage("french", "fra");
+    searchDoesFindLanguage("français", "fra");
+    searchDoesFindLanguage("francais", "fra");
+    searchDoesFindLanguage("spanish", "spa");
+    searchDoesFindLanguage("spa", "spa");
+    searchDoesFindLanguage("español", "spa");
+    searchDoesFindLanguage("espanol", "spa");
+    searchDoesFindLanguage("esp", "spa");
     // searchFindsLanguage("tok pisin", "tpi"); TODO fix queries with spaces
-    searchFindsLanguage("tokpisin", "tpi");
-    searchFindsLanguage("tok", "tpi");
+    searchDoesFindLanguage("tokpisin", "tpi");
+    searchDoesFindLanguage("tok", "tpi");
   });
 
   it("should find languages by autonym", () => {
-    searchFindsLanguage("ўзбека", "uzb");
-    searchFindsLanguage("Kamarakotos", "aoc");
+    searchDoesFindLanguage("ўзбека", "uzb");
+    searchDoesFindLanguage("Kamarakotos", "aoc");
   });
   it("should find languages by exonym", () => {
-    searchFindsLanguage("luba-katanga", "lub");
-    searchFindsLanguage("ndzwani", "wni");
+    searchDoesFindLanguage("luba-katanga", "lub");
+    searchDoesFindLanguage("ndzwani", "wni");
   });
   it("should find languages by alternative names", () => {
-    searchFindsLanguage("tiatinugua", "ese");
-    searchFindsLanguage("kler", "xrb");
+    searchDoesFindLanguage("tiatinugua", "ese");
+    searchDoesFindLanguage("kler", "xrb");
   });
   it("should find languages by fuzzy match", () => {
-    searchFindsLanguage("Portuguese", "por");
-    searchFindsLanguage("xPortuguese", "por");
-    searchFindsLanguage("Porxtuguese", "por");
-    searchFindsLanguage("ortuguese", "por");
-    searchFindsLanguage("Potuguese", "por");
+    searchDoesFindLanguage("Portuguese", "por");
+    searchDoesFindLanguage("xPortuguese", "por");
+    searchDoesFindLanguage("Porxtuguese", "por");
+    searchDoesFindLanguage("ortuguese", "por");
+    searchDoesFindLanguage("Potuguese", "por");
     // searchFindsLanguage("Po tuguese", "por"); // TODO fix queries with spaces
-    searchFindsLanguage("Porxuguese", "por");
+    searchDoesFindLanguage("Porxuguese", "por");
   });
   it("should find languages by iso639_3 code", () => {
-    searchFindsLanguage("xrb", "xrb");
-    searchFindsLanguage("zhw", "zhw");
+    searchDoesFindLanguage("xrb", "xrb");
+    searchDoesFindLanguage("zhw", "zhw");
   });
   it("should find languages by region name", () => {
-    searchFindsLanguage("Indonesia", "abl");
-    searchFindsLanguage("Canada", "alq");
+    searchDoesFindLanguage("Indonesia", "abl");
+    searchDoesFindLanguage("Canada", "alq");
   });
   it("should rank better matches before worse matches", () => {
-    // "Ese" (mcq) comes before "Mese" (mci)
-    // TODO what is happening here???
+    // "Ese" comes before "Mese"
     const eseQuery = "ese";
-    expect(
-      indexOfLanguageInSearchResults(eseQuery, "mcq") >
-        indexOfLanguageInSearchResults(eseQuery, "mci")
+    expect(indexOfLanguageInSearchResults(eseQuery, "mcq")).toBeLessThan(
+      indexOfLanguageInSearchResults(eseQuery, "mci")
     );
 
-    // "chorasmian"(xco) comes before "ch'orti'" (caa)
+    // "chorasmian" comes before "ch'orti'"
     const choQuery = "cho";
-    expect(
-      indexOfLanguageInSearchResults(choQuery, "xco") >
-        indexOfLanguageInSearchResults(choQuery, "caa")
+    expect(indexOfLanguageInSearchResults(choQuery, "xco")).toBeLessThan(
+      indexOfLanguageInSearchResults(choQuery, "caa")
     );
   });
+  // TODO make sure I'm not using expects anywhere. Look into vitest has assertions
   it("should find matches regardless of case", () => {
-    searchFindsLanguage("japanese", "jpn");
-    searchFindsLanguage("JAPANESE", "jpn");
-    searchFindsLanguage("JaPanEsE", "jpn");
+    searchDoesFindLanguage("japanese", "jpn");
+    searchDoesFindLanguage("JAPANESE", "jpn");
+    searchDoesFindLanguage("JaPanEsE", "jpn");
   });
   it("should find matches that don't start with the query", () => {
     // TODO fine-tune the fuzzy matching so "ohlone" brings up "northern ohlone"
@@ -89,7 +87,7 @@ describe("searchForLanguage", () => {
   });
 });
 
-function searchFindsLanguage(query: string, expectedLanguageCode: string) {
+function searchDoesFindLanguage(query: string, expectedLanguageCode: string) {
   const result = searchForLanguage(query);
   expect(result.length).toBeGreaterThan(0);
   expect(

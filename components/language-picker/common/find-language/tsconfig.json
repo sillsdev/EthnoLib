@@ -12,6 +12,5 @@
     "resolveJsonModule": true
   },
   "include": ["."],
-  "exclude": ["dist", "node_modules", "**/*.spec.ts"],
-  "allowOverwrite": true
+  "exclude": ["./dist/**/*", "node_modules", "**/*.spec.ts"],
 }

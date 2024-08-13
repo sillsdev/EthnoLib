@@ -9,12 +9,12 @@ import {
   filterLangCodes,
   substituteInSpecialEntry,
 } from "@ethnolib/find-language";
-import { testLanguageEntry } from "./testUtils";
+import { createTestLanguageEntry } from "./testUtils";
 
 describe("filter scripts", () => {
   it("should filter out scripts", () => {
     const results = [
-      testLanguageEntry({
+      createTestLanguageEntry({
         exonym: "foo",
         code: "bar",
         scripts: [
@@ -22,19 +22,19 @@ describe("filter scripts", () => {
           { code: "Brai", name: "Braille" },
         ],
       }),
-      testLanguageEntry({
+      createTestLanguageEntry({
         exonym: "baz",
         code: "boo",
         scripts: [{ code: "Brai", name: "Braille" }],
       }),
     ];
     const expectedFilteredResults = [
-      testLanguageEntry({
+      createTestLanguageEntry({
         exonym: "foo",
         code: "bar",
         scripts: [{ code: "Latn", name: "Latin" }],
       }),
-      testLanguageEntry({
+      createTestLanguageEntry({
         exonym: "baz",
         code: "boo",
         scripts: [],
@@ -67,7 +67,7 @@ describe("code match checking", () => {
 describe("substitute special entry into results", () => {
   it("should substitute special entry into results", () => {
     const results = [
-      testLanguageEntry({
+      createTestLanguageEntry({
         exonym: "foo",
         code: "bar",
         scripts: [
@@ -75,13 +75,14 @@ describe("substitute special entry into results", () => {
           { code: "Brai", name: "Braille" },
         ],
       }),
-      testLanguageEntry({
+      createTestLanguageEntry({
         exonym: "baz",
         code: "boo",
         scripts: [{ code: "Brai", name: "Braille" }],
       }),
     ];
-    const specialEntry = testLanguageEntry({
+
+    const specialEntry = createTestLanguageEntry({
       exonym: "special entry exonym",
       code: "boo",
       scripts: [{ code: "specialCode", name: "specialScript" }],
@@ -89,7 +90,7 @@ describe("substitute special entry into results", () => {
     });
 
     const expectedResults = [
-      testLanguageEntry({
+      createTestLanguageEntry({
         exonym: "foo",
         code: "bar",
         scripts: [
@@ -97,7 +98,7 @@ describe("substitute special entry into results", () => {
           { code: "Brai", name: "Braille" },
         ],
       }),
-      testLanguageEntry({
+      createTestLanguageEntry({
         exonym: "special entry exonym",
         code: "boo",
         scripts: [{ code: "specialCode", name: "specialScript" }],
@@ -113,7 +114,7 @@ describe("substitute special entry into results", () => {
 describe("filter out language codes", () => {
   it("should filter out language codes", () => {
     const results = [
-      testLanguageEntry({
+      createTestLanguageEntry({
         exonym: "foo",
         code: "bar",
         scripts: [
@@ -121,14 +122,14 @@ describe("filter out language codes", () => {
           { code: "Brai", name: "Braille" },
         ],
       }),
-      testLanguageEntry({
+      createTestLanguageEntry({
         exonym: "baz",
         code: "boo",
         scripts: [{ code: "Brai", name: "Braille" }],
       }),
     ];
     const expectedResults = [
-      testLanguageEntry({
+      createTestLanguageEntry({
         exonym: "foo",
         code: "bar",
         scripts: [
@@ -143,17 +144,17 @@ describe("filter out language codes", () => {
   });
 });
 
-describe("prioritize lang by keywords", () => {
+describe("reordering entries to prioritize desired language when keywords are searched", () => {
   let originalResults: ILanguage[];
   beforeEach(() => {
     originalResults = [
-      testLanguageEntry({
+      createTestLanguageEntry({
         code: "eng",
       }),
-      testLanguageEntry({
+      createTestLanguageEntry({
         code: "tpi",
       }),
-      testLanguageEntry({
+      createTestLanguageEntry({
         code: "jpn",
       }),
     ];
@@ -161,7 +162,7 @@ describe("prioritize lang by keywords", () => {
   it("should make no changes if search string doesn't match keywords", () => {
     const reorderedResults = prioritizeLangByKeywords(
       ["blahblah", "abcdefg"],
-      "foobar",
+      "nonmatchingSearchString",
       "tpi",
       originalResults
     );

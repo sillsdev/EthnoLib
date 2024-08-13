@@ -21,8 +21,8 @@ import {
   useLanguagePicker,
   shouldShowUnlistedLanguageControls,
   ILanguagePickerInitialState,
+  IScriptNode,
 } from "../../common/useLanguagePicker";
-import { OptionNode, NodeType } from "../../common/useLanguagePicker";
 import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import { debounce } from "lodash";
 import "./styles.css";
@@ -46,7 +46,8 @@ export const LanguagePicker: React.FunctionComponent<{
     CustomizableLanguageDetails,
     searchString,
     onSearchStringChange,
-    toggleSelectNode,
+    toggleSelectLanguageNode,
+    toggleSelectScriptNode,
     isReadyToSubmit,
     saveCustomizableLanguageDetails,
     selectUnlistedLanguage,
@@ -56,7 +57,7 @@ export const LanguagePicker: React.FunctionComponent<{
   useEffect(() => {
     const initialState = props.getInitialState();
     reopenTo(initialState);
-  }, []);
+  }, []); // TODO ask reviewer
 
   const [customizeLanguageDialogOpen, setCustomizeLanguageDialogOpen] =
     useState(false);
@@ -176,13 +177,6 @@ export const LanguagePicker: React.FunctionComponent<{
             `}
           >
             {languageData.map((languageNode, index) => {
-              if (languageNode.nodeType !== NodeType.Language) {
-                console.error(
-                  "unexpected node is not language node: ",
-                  languageNode.id
-                );
-                return <></>;
-              }
               return (
                 <LazyLoad
                   height={"125px"} // the min height we set on the language card
@@ -190,7 +184,7 @@ export const LanguagePicker: React.FunctionComponent<{
                   key={index} // TODO this should be languageNode.id, but that breaks the lazyload for some reason! (try searching "uzb")
                 >
                   <CardActionArea
-                    onClick={() => toggleSelectNode(languageNode)}
+                    onClick={() => toggleSelectLanguageNode(languageNode)}
                     css={css`
                       margin: 10px 0px;
                     `}
@@ -208,7 +202,7 @@ export const LanguagePicker: React.FunctionComponent<{
                     ></LanguageCard>
                   </CardActionArea>
                   {languageNode.id === selectedLanguageNode?.id &&
-                    languageNode.childNodes.length > 1 && (
+                    languageNode.scriptNodes.length > 1 && (
                       <List
                         css={css`
                           width: 100%;
@@ -219,16 +213,8 @@ export const LanguagePicker: React.FunctionComponent<{
                           padding-left: 30px;
                         `}
                       >
-                        {languageNode.childNodes.map(
-                          (scriptNode: OptionNode) => {
-                            if (scriptNode.nodeType !== NodeType.Script) {
-                              // this shouldn't happen
-                              console.error(
-                                "unexpected node is not script: ",
-                                scriptNode.id
-                              );
-                              return;
-                            }
+                        {languageNode.scriptNodes.map(
+                          (scriptNode: IScriptNode) => {
                             return (
                               <ListItem
                                 key={scriptNode.id}
@@ -239,7 +225,9 @@ export const LanguagePicker: React.FunctionComponent<{
                                 `}
                               >
                                 <CardActionArea
-                                  onClick={() => toggleSelectNode(scriptNode)}
+                                  onClick={() =>
+                                    toggleSelectScriptNode(scriptNode)
+                                  }
                                 >
                                   <ScriptCard
                                     css={css`

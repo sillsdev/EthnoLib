@@ -4,11 +4,12 @@ import Button from "@mui/material/Button";
 import DialogTitle from "@mui/material/DialogTitle";
 import Dialog from "@mui/material/Dialog";
 import Typography from "@mui/material/Typography";
-import { shouldShowUnlistedLanguageControls } from "../../common/useLanguagePicker";
 import {
-  CustomizableLanguageDetails,
-  OptionNode,
+  ILanguageNode,
+  IScriptNode,
+  shouldShowUnlistedLanguageControls,
 } from "../../common/useLanguagePicker";
+import { ICustomizableLanguageDetails } from "../../common/useLanguagePicker";
 import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import {
   Autocomplete,
@@ -43,11 +44,11 @@ function getAllScriptOptions() {
 
 export const CustomizeLanguageDialog: React.FunctionComponent<{
   open: boolean;
-  selectedLanguageNode: OptionNode | undefined;
-  selectedScriptNode: OptionNode | undefined;
-  customizableLanguageDetails: CustomizableLanguageDetails;
+  selectedLanguageNode: ILanguageNode | undefined;
+  selectedScriptNode: IScriptNode | undefined;
+  customizableLanguageDetails: ICustomizableLanguageDetails;
   saveCustomizableLanguageDetails: (
-    details: CustomizableLanguageDetails
+    details: ICustomizableLanguageDetails
   ) => void;
   selectUnlistedLanguage: () => void;
   searchString: string;
@@ -275,7 +276,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                   name: dialogSelectedRegion?.label,
                 } as IRegion,
                 dialect: dialogSelectedDialect,
-              } as CustomizableLanguageDetails);
+              } as ICustomizableLanguageDetails);
               props.onClose();
             }}
           >
