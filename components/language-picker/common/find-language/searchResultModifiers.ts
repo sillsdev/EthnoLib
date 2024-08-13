@@ -77,10 +77,16 @@ function simplifyFrenchResult(
 }
 
 // Compare codes, ignoring any demarcation or casing
-export function codeMatches(code1: string, code2: string) {
+// undefined does not match undefined
+export function codeMatches(
+  code1: string | undefined,
+  code2: string | undefined
+): boolean {
   return (
+    !!code1 &&
+    !!code2 &&
     stripDemarcation(code1).toUpperCase() ===
-    stripDemarcation(code2).toUpperCase()
+      stripDemarcation(code2).toUpperCase()
   );
 }
 

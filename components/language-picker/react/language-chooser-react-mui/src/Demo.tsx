@@ -22,13 +22,12 @@ function Demo() {
   function getDemoInitialState() {
     return {
       languageCode: "uzb",
-      scriptCode: "Cyrl",
+      script: {
+        code: "Cyrl",
+        name: "Cyrillic",
+      } as IScript,
       customDetails: {
         displayName: "TestOverridenDisplayName",
-        scriptOverride: {
-          code: "Chrs",
-          name: "Chorasmian",
-        } as IScript,
         region: {
           code: "US",
           name: "United States of America",

@@ -1,4 +1,5 @@
 import {
+  codeMatches,
   ILanguage,
   IRegion,
   IScript,
@@ -12,24 +13,18 @@ import { stripDemarcation } from "@ethnolib/find-language";
 export interface ILanguageNode {
   nodeData: ILanguage; // TODO rename nodeData?
   id: string;
-  scriptNodes: IScriptNode[];
-}
-
-export interface IScriptNode {
-  nodeData: IScript;
-  id: string;
+  scripts: IScript[];
 }
 
 export interface ICustomizableLanguageDetails {
   displayName?: string;
-  scriptOverride?: IScript; // TODO see if this is still necessary
   region?: IRegion;
   dialect?: string;
 }
 
 export interface ILanguagePickerInitialState {
   languageCode?: string;
-  scriptCode?: string;
+  script?: IScript;
   customDetails?: ICustomizableLanguageDetails;
 }
 
@@ -45,9 +40,8 @@ export const UNLISTED_LANGUAGE_NODE = {
     names: [],
   } as ILanguage,
   id: UNLISTED_LANGUAGE_NODE_ID,
-  scriptNodes: [],
+  scripts: [],
 } as ILanguageNode;
-export const SCRIPT_OVERRIDE_NODE_ID = "script-override";
 
 export const useLanguagePicker = (
   searchResultModifier?: (
@@ -59,13 +53,10 @@ export const useLanguagePicker = (
   const [selectedLanguageNode, setSelectedLanguageNode] = useState<
     ILanguageNode | undefined
   >();
-  const [selectedScriptNode, setSelectedScriptNode] = useState<
-    IScriptNode | undefined
-  >();
+  const [selectedScript, setSelectedScript] = useState<IScript | undefined>();
 
   const EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS = {
     displayName: undefined,
-    scriptOverride: undefined,
     region: undefined,
     dialect: undefined,
   } as ICustomizableLanguageDetails;
@@ -80,7 +71,7 @@ export const useLanguagePicker = (
   const isReadyToSubmit =
     !!selectedLanguageNode &&
     // either a script is selected or there are no scripts for the selected language
-    (!!selectedScriptNode || selectedLanguageNode.scriptNodes?.length === 0);
+    (!!selectedScript || selectedLanguageNode.scripts?.length === 0);
 
   const languageData = useMemo(() => {
     if (searchString.length < 2) {
@@ -91,20 +82,15 @@ export const useLanguagePicker = (
 
   // For reopening to a specific selection. We should then also set the search string
   // such that the selected language is visible.
-  // *Note that if the desired script is a normal script option for the desired language
-  // (i.e. there is an entry in langtags.json with that language and script combo), the script must be
-  // passed in the scriptCode argument rather than as a script override
-  // For example, for Uzbek with Latin Script, do reopenTo({languageCode: "uzb", scriptCode: "Latn"}) rather than
-  // reopenTo({languageCode: "uzb", scriptOverride: {code: "Latn", name: "Latin"}}) because "uzb-Latn" is a
-  // language tag
+
   function reopenTo({
     languageCode,
-    scriptCode,
+    script,
     customDetails,
   }: ILanguagePickerInitialState) {
     // clear everything
     setSelectedLanguageNode(undefined);
-    setSelectedScriptNode(undefined);
+    setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
 
     if (!languageCode) {
@@ -127,50 +113,24 @@ export const useLanguagePicker = (
     );
     if (desiredLanguageNode) {
       setSelectedLanguageNode(desiredLanguageNode);
-      if (scriptCode) {
-        const desiredScriptNode = desiredLanguageNode.scriptNodes.find(
-          (scriptNode) => scriptNode.nodeData.code === scriptCode
-        );
-        if (desiredScriptNode) {
-          setSelectedScriptNode(desiredScriptNode);
-        }
-      }
+      saveLanguageDetails(
+        customDetails || ({} as ICustomizableLanguageDetails),
+        script
+      );
     }
-    saveCustomizableLanguageDetails(
-      customDetails || ({} as ICustomizableLanguageDetails)
-    );
   }
 
-  // TODO ask reviewer: within a function, define other functions as functions or consts?
-
   // details should only include the properties it wants to modify
-  const saveCustomizableLanguageDetails = (
-    details: ICustomizableLanguageDetails
+  const saveLanguageDetails = (
+    details: ICustomizableLanguageDetails,
+    script?: IScript
   ) => {
-    // first check if the script override really is an override
-    if (details.scriptOverride) {
-      for (const scriptNode of selectedLanguageNode?.scriptNodes || []) {
-        if (
-          stripDemarcation(scriptNode.nodeData.code || "") ===
-          stripDemarcation(details.scriptOverride?.code || "")
-        ) {
-          // This script is a normal script choice for this language.
-          // Select the script card instead of treating it as an override.
-          setSelectedScriptNode(scriptNode);
-          details.scriptOverride = undefined;
-          break;
-        }
-      }
-    }
-    // If there really is a script override (we didn't clear it in the last block)
-    if (details.scriptOverride) {
-      setSelectedScriptNode({
-        nodeData: details.scriptOverride,
-        id: SCRIPT_OVERRIDE_NODE_ID,
-      });
-    }
-    const updatedDetails = { ...CustomizableLanguageDetails, ...details };
-    setCustomizableLanguageDetails(updatedDetails);
+    setSelectedScript(script);
+    const updatedCustomizableDetails = {
+      ...CustomizableLanguageDetails,
+      ...details,
+    };
+    setCustomizableLanguageDetails(updatedCustomizableDetails);
   };
 
   function getModifiedSearchResults(
@@ -192,17 +152,10 @@ export const useLanguagePicker = (
       const languageNode: ILanguageNode = {
         nodeData: language,
         id: stripDemarcation(language.code),
-        scriptNodes: [],
+        scripts: [],
       };
 
-      const scriptNodes = language.scripts.map((script) => {
-        return {
-          nodeData: script,
-          id: script.code,
-        } as IScriptNode;
-      });
-
-      languageNode.scriptNodes = scriptNodes;
+      languageNode.scripts = language.scripts;
       return languageNode;
     });
     return languageData;
@@ -218,15 +171,13 @@ export const useLanguagePicker = (
     if (languageNode.id === selectedLanguageNode?.id) {
       // Clicking on the selected language node unselects it and clears data specific to that language
       setSelectedLanguageNode(undefined);
-      setSelectedScriptNode(undefined);
+      setSelectedScript(undefined);
       clearCustomizableLanguageDetails();
       return;
     } else {
       setSelectedLanguageNode(languageNode);
-      setSelectedScriptNode(
-        languageNode.scriptNodes.length == 1
-          ? languageNode.scriptNodes[0]
-          : undefined
+      setSelectedScript(
+        languageNode.scripts.length == 1 ? languageNode.scripts[0] : undefined
       );
       setCustomizableLanguageDetails({
         displayName: stripDemarcation(
@@ -236,26 +187,26 @@ export const useLanguagePicker = (
       return;
     }
   }
-  function toggleSelectScriptNode(scriptNode: IScriptNode) {
-    if (scriptNode.id === selectedScriptNode?.id) {
+  function toggleSelectScript(script: IScript) {
+    if (codeMatches(script.code, selectedScript?.code)) {
       // clicking on the selected script node unselects it
-      setSelectedScriptNode(undefined);
+      setSelectedScript(undefined);
       return;
     } else {
-      setSelectedScriptNode(scriptNode);
+      setSelectedScript(script);
     }
   }
 
   function selectUnlistedLanguage() {
     setSelectedLanguageNode(UNLISTED_LANGUAGE_NODE);
-    setSelectedScriptNode(undefined);
+    setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
   }
 
   const onSearchStringChange = (searchString: string) => {
     setSearchString(searchString);
     setSelectedLanguageNode(undefined);
-    setSelectedScriptNode(undefined);
+    setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
   };
 
@@ -263,14 +214,14 @@ export const useLanguagePicker = (
     // TODO make this an object
     languageData,
     selectedLanguageNode,
-    selectedScriptNode,
+    selectedScript,
     CustomizableLanguageDetails,
     searchString,
     onSearchStringChange,
     toggleSelectLanguageNode,
-    toggleSelectScriptNode,
+    toggleSelectScript,
     isReadyToSubmit,
-    saveCustomizableLanguageDetails,
+    saveLanguageDetails,
     selectUnlistedLanguage,
     reopenTo,
   };

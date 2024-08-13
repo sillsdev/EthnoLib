@@ -6,7 +6,6 @@ import Dialog from "@mui/material/Dialog";
 import Typography from "@mui/material/Typography";
 import {
   ILanguageNode,
-  IScriptNode,
   shouldShowUnlistedLanguageControls,
 } from "../../common/useLanguagePicker";
 import { ICustomizableLanguageDetails } from "../../common/useLanguagePicker";
@@ -45,10 +44,11 @@ function getAllScriptOptions() {
 export const CustomizeLanguageDialog: React.FunctionComponent<{
   open: boolean;
   selectedLanguageNode: ILanguageNode | undefined;
-  selectedScriptNode: IScriptNode | undefined;
+  selectedScript: IScript | undefined;
   customizableLanguageDetails: ICustomizableLanguageDetails;
-  saveCustomizableLanguageDetails: (
-    details: ICustomizableLanguageDetails
+  saveLanguageDetails: (
+    details: ICustomizableLanguageDetails,
+    script?: IScript
   ) => void;
   selectUnlistedLanguage: () => void;
   searchString: string;
@@ -66,31 +66,28 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
 
   // Store dialog state. Used to create a tag preview just inside the dialog, before saving anything
   // but these should not persist when the dialog is closed
-  const [dialogSelectedScript, setDialogSelectedScriptCode] = React.useState<{
+  const [dialogSelectedScript, setDialogSelectedScript] = React.useState<{
     label: string;
     id: string;
   }>(autocompleteOptionPlaceholder); // Will be set by the useEffect below
-  const [dialogSelectedRegion, setDialogSelectedRegionCode] = React.useState<{
+  const [dialogSelectedRegion, setDialogSelectedRegion] = React.useState<{
     label: string;
     id: string;
   }>(autocompleteOptionPlaceholder); // Will be set by the useEffect below
-  const [dialogSelectedDialect, setDialogSelectedDialectCode] =
+  const [dialogSelectedDialect, setDialogSelectedDialect] =
     React.useState<string>(""); // Will be set by the useEffect below
 
   // To reset the dialog if the user closes and reopens it and maybe changes the language or script selection in between
   React.useEffect(() => {
-    const scriptNodeData = props.selectedScriptNode?.nodeData as
-      | IScript
-      | undefined;
-    setDialogSelectedScriptCode(
-      scriptNodeData?.code
+    setDialogSelectedScript(
+      props.selectedScript?.code
         ? {
-            label: scriptNodeData.name,
-            id: scriptNodeData.code,
+            label: props.selectedScript.name,
+            id: props.selectedScript.code,
           }
         : autocompleteOptionPlaceholder
     );
-    setDialogSelectedRegionCode(
+    setDialogSelectedRegion(
       props.customizableLanguageDetails.region?.code
         ? {
             label: props.customizableLanguageDetails.region.name,
@@ -98,7 +95,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
           }
         : autocompleteOptionPlaceholder
     );
-    setDialogSelectedDialectCode(
+    setDialogSelectedDialect(
       // if the user has not selected any language, not even the unlisted language button, then
       // there will be no language details and we suggest the search string as a
       // starting point for the unlisted language name (which is actually stored in the dialect field)
@@ -129,7 +126,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             label="Name"
             value={dialogSelectedDialect}
             onChange={(event) => {
-              setDialogSelectedDialectCode(event.target.value);
+              setDialogSelectedDialect(event.target.value);
             }}
           />
           <Typography>
@@ -163,7 +160,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               _event,
               newValue: { label: string; id: string } | null
             ) => {
-              setDialogSelectedScriptCode(
+              setDialogSelectedScript(
                 newValue || autocompleteOptionPlaceholder
               );
             }}
@@ -192,7 +189,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               _event,
               newValue: { label: string; id: string } | null
             ) => {
-              setDialogSelectedRegionCode(
+              setDialogSelectedRegion(
                 newValue || autocompleteOptionPlaceholder
               );
             }}
@@ -218,7 +215,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             label="Variant (dialect)"
             value={dialogSelectedDialect}
             onChange={(event) => {
-              setDialogSelectedDialectCode(event.target.value);
+              setDialogSelectedDialect(event.target.value);
             }}
           />
           <Typography>
@@ -266,17 +263,19 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                 props.selectUnlistedLanguage();
               }
 
-              props.saveCustomizableLanguageDetails({
-                scriptOverride: {
+              props.saveLanguageDetails(
+                {
+                  region: {
+                    code: dialogSelectedRegion?.id,
+                    name: dialogSelectedRegion?.label,
+                  } as IRegion,
+                  dialect: dialogSelectedDialect,
+                } as ICustomizableLanguageDetails,
+                {
                   code: dialogSelectedScript?.id,
                   name: dialogSelectedScript?.label,
-                } as IScript,
-                region: {
-                  code: dialogSelectedRegion?.id,
-                  name: dialogSelectedRegion?.label,
-                } as IRegion,
-                dialect: dialogSelectedDialect,
-              } as ICustomizableLanguageDetails);
+                } as IScript
+              );
               props.onClose();
             }}
           >

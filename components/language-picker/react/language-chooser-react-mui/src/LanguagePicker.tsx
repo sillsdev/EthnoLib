@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { ILanguage, IScript } from "@ethnolib/find-language";
+import { codeMatches, ILanguage, IScript } from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import {
   AppBar,
@@ -21,7 +21,6 @@ import {
   useLanguagePicker,
   shouldShowUnlistedLanguageControls,
   ILanguagePickerInitialState,
-  IScriptNode,
 } from "../../common/useLanguagePicker";
 import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import { debounce } from "lodash";
@@ -42,14 +41,14 @@ export const LanguagePicker: React.FunctionComponent<{
   const {
     languageData,
     selectedLanguageNode,
-    selectedScriptNode,
+    selectedScript,
     CustomizableLanguageDetails,
     searchString,
     onSearchStringChange,
     toggleSelectLanguageNode,
-    toggleSelectScriptNode,
+    toggleSelectScript,
     isReadyToSubmit,
-    saveCustomizableLanguageDetails,
+    saveLanguageDetails,
     selectUnlistedLanguage,
     reopenTo,
   } = useLanguagePicker(props.searchResultModifier);
@@ -65,7 +64,7 @@ export const LanguagePicker: React.FunctionComponent<{
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTag({
     languageCode: selectedLanguageNode?.nodeData.code,
-    scriptCode: selectedScriptNode?.nodeData.code,
+    scriptCode: selectedScript?.code,
     regionCode: CustomizableLanguageDetails?.region?.code,
     dialectCode: selectedLanguageNode
       ? CustomizableLanguageDetails?.dialect
@@ -202,7 +201,7 @@ export const LanguagePicker: React.FunctionComponent<{
                     ></LanguageCard>
                   </CardActionArea>
                   {languageNode.id === selectedLanguageNode?.id &&
-                    languageNode.scriptNodes.length > 1 && (
+                    languageNode.scripts.length > 1 && (
                       <List
                         css={css`
                           width: 100%;
@@ -213,38 +212,35 @@ export const LanguagePicker: React.FunctionComponent<{
                           padding-left: 30px;
                         `}
                       >
-                        {languageNode.scriptNodes.map(
-                          (scriptNode: IScriptNode) => {
-                            return (
-                              <ListItem
-                                key={scriptNode.id}
-                                css={css`
-                                  margin-right: 0;
-                                  padding-right: 0;
-                                  width: fit-content;
-                                `}
+                        {languageNode.scripts.map((script: IScript) => {
+                          return (
+                            <ListItem
+                              key={script.code}
+                              css={css`
+                                margin-right: 0;
+                                padding-right: 0;
+                                width: fit-content;
+                              `}
+                            >
+                              <CardActionArea
+                                onClick={() => toggleSelectScript(script)}
                               >
-                                <CardActionArea
-                                  onClick={() =>
-                                    toggleSelectScriptNode(scriptNode)
-                                  }
-                                >
-                                  <ScriptCard
-                                    css={css`
-                                      min-width: 175px;
-                                    `}
-                                    scriptData={scriptNode.nodeData as IScript}
-                                    isSelected={
-                                      scriptNode.id === selectedScriptNode?.id
-                                    }
-                                    colorWhenNotSelected={COLORS.white}
-                                    colorWhenSelected={COLORS.blues[1]}
-                                  />
-                                </CardActionArea>
-                              </ListItem>
-                            );
-                          }
-                        )}
+                                <ScriptCard
+                                  css={css`
+                                    min-width: 175px;
+                                  `}
+                                  scriptData={script}
+                                  isSelected={codeMatches(
+                                    script.code,
+                                    selectedScript?.code
+                                  )}
+                                  colorWhenNotSelected={COLORS.white}
+                                  colorWhenSelected={COLORS.blues[1]}
+                                />
+                              </CardActionArea>
+                            </ListItem>
+                          );
+                        })}
                       </List>
                     )}
                 </LazyLoad>
@@ -306,7 +302,7 @@ export const LanguagePicker: React.FunctionComponent<{
                 fullWidth
                 value={CustomizableLanguageDetails.displayName}
                 onChange={(e) => {
-                  saveCustomizableLanguageDetails({
+                  saveLanguageDetails({
                     displayName: e.target.value,
                   });
                 }}
@@ -359,9 +355,9 @@ export const LanguagePicker: React.FunctionComponent<{
       <CustomizeLanguageDialog
         open={customizeLanguageDialogOpen}
         selectedLanguageNode={selectedLanguageNode}
-        selectedScriptNode={selectedScriptNode}
+        selectedScript={selectedScript}
         customizableLanguageDetails={CustomizableLanguageDetails}
-        saveCustomizableLanguageDetails={saveCustomizableLanguageDetails}
+        saveLanguageDetails={saveLanguageDetails}
         selectUnlistedLanguage={selectUnlistedLanguage}
         searchString={searchString}
         onClose={() => setCustomizeLanguageDialogOpen(false)}
