@@ -2,7 +2,7 @@ import { iso15924 } from "iso-15924";
 import langTagsJson from "./langtags.json" assert { type: "json" };
 import * as fs from "fs";
 import { ILanguage, IScript } from "../findLanguageInterfaces";
-import iso3166 from "iso-3166-1";
+// import iso3166 from "iso-3166-1";
 
 const COMMA_SEPARATOR = ", ";
 
@@ -11,13 +11,13 @@ const scriptNames = iso15924.reduce(
   {}
 );
 
-const regionNames = iso3166
-  .all()
-  .reduce((acc, entry) => ({ ...acc, [entry.alpha2]: entry.country }), {});
+// const regionNames = iso3166
+//   .all()
+//   .reduce((acc, entry) => ({ ...acc, [entry.alpha2]: entry.country }), {});
 
-function getRegionName(code: string) {
-  return regionNames[code];
-}
+// function getRegionName(code: string) {
+//   return regionNames[code];
+// }
 
 function getIso639_3CodeDetails() {
   const codeDetails = new Set();
@@ -212,10 +212,10 @@ function parseLangtagsJson() {
   //   }
   // }
 
-  const latinScriptData: IScript = {
-    code: "Latn",
-    name: "Latin",
-  };
+  // const latinScriptData: IScript = {
+  //   code: "Latn",
+  //   name: "Latin",
+  // };
 
   //   write langs to a json file
   const data = JSON.stringify(reformattedLangs);
