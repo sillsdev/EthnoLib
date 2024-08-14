@@ -45,7 +45,7 @@ function simplifyEnglishResult(
     ({
       autonym: undefined, // because exonym is mandatory and we don't want to repeat it
       exonym: result.exonym, // "English",
-      code: result.code,
+      iso639_3_code: result.iso639_3_code,
       displayCode: result.displayCode,
       regionNames: "",
       names: [],
@@ -65,7 +65,7 @@ function simplifyFrenchResult(
     ({
       autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
       exonym: result.exonym, // "French"
-      code: result.code,
+      iso639_3_code: result.code,
       displayCode: result.displayCode,
       regionNames: "",
       names: [],
@@ -97,7 +97,9 @@ export function substituteInSpecialEntry(
   results: ILanguage[]
 ): ILanguage[] {
   return results.map((result) =>
-    codeMatches(result.code, targetCode) ? getSpecialEntry(result) : result
+    codeMatches(result.iso639_3_code, targetCode)
+      ? getSpecialEntry(result)
+      : result
   );
 }
 
@@ -105,7 +107,7 @@ export function filterLanguageCodes(
   langCodeFilter: (value: string) => boolean,
   results: ILanguage[]
 ): ILanguage[] {
-  return results.filter((result) => langCodeFilter(result.code));
+  return results.filter((result) => langCodeFilter(result.iso639_3_code));
 }
 
 const NOT_A_LANGUAGE_ENTRY_CODES = new Set([
@@ -162,7 +164,7 @@ export function prioritizeLangByKeywords(
     )
   ) {
     const indexOfLang = results.findIndex((result) =>
-      codeMatches(result.code, langCodeToPrioritize)
+      codeMatches(result.iso639_3_code, langCodeToPrioritize)
     );
     if (indexOfLang !== -1) {
       const lang = results[indexOfLang];

@@ -24,7 +24,7 @@ export interface ILanguagePickerInitialState {
 
 export const UNLISTED_LANGUAGE_CODE = "qaa";
 export const UNLISTED_LANGUAGE = {
-  code: UNLISTED_LANGUAGE_CODE,
+  iso639_3_code: UNLISTED_LANGUAGE_CODE,
   displayCode: UNLISTED_LANGUAGE_CODE,
   autonym: undefined,
   exonym: "Unknown Language",
@@ -99,7 +99,7 @@ export const useLanguagePicker = (
       searchResultModifier
     );
     const desiredLanguage = tempLanguageData.find((language) =>
-      codeMatches(language.code, languageCode)
+      codeMatches(language.iso639_3_code, languageCode)
     );
     if (desiredLanguage) {
       setSelectedLanguage(desiredLanguage);
@@ -144,7 +144,7 @@ export const useLanguagePicker = (
       console.error("no language selected");
       return;
     }
-    if (codeMatches(language.code, selectedLanguage?.code)) {
+    if (codeMatches(language.iso639_3_code, selectedLanguage?.iso639_3_code)) {
       // Clicking on the selected language unselects it and clears data specific to that language
       setSelectedLanguage(undefined);
       setSelectedScript(undefined);
@@ -212,6 +212,6 @@ export function shouldShowUnlistedLanguageControls(
 ) {
   return (
     selectedLanguage === undefined ||
-    codeMatches(selectedLanguage.code, UNLISTED_LANGUAGE_CODE)
+    codeMatches(selectedLanguage.iso639_3_code, UNLISTED_LANGUAGE_CODE)
   );
 }

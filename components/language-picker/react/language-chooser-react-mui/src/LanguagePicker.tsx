@@ -201,14 +201,17 @@ export const LanguagePicker: React.FunctionComponent<{
                       `}
                       languageCardData={language}
                       isSelected={codeMatches(
-                        language.code,
-                        selectedLanguage?.code
+                        language.iso639_3_code,
+                        selectedLanguage?.iso639_3_code
                       )}
                       colorWhenNotSelected={COLORS.white}
                       colorWhenSelected={COLORS.blues[0]}
                     ></LanguageCard>
                   </CardActionArea>
-                  {codeMatches(language.code, selectedLanguage?.code) &&
+                  {codeMatches(
+                    language.iso639_3_code,
+                    selectedLanguage?.iso639_3_code
+                  ) &&
                     language.scripts.length > 1 && (
                       <List
                         css={css`

@@ -49,7 +49,7 @@ function uncomma(str: string) {
 interface ILanguageInternal {
   autonym: string;
   exonym: string;
-  code: string;
+  iso639_3_code: string;
   displayCode: string;
   regionNames: Set<string>; // ISO 3166 codes
   names: Set<string>;
@@ -116,7 +116,7 @@ function addOrCombineLangtagsEntry(entry, langs) {
     langs[entry.iso639_3] = {
       autonym: autonymOrFallback(entry, undefined),
       exonym: entry.name,
-      code: entry.iso639_3 as string,
+      iso639_3_code: entry.iso639_3 as string,
       // TODO decide if we should work with the display codes on the backend, see how it interacts with macrolanguage situations
       // TODO probably also rename "code" with "iso639_3"
       displayCode: entry.tag.split("-")[0], // may be 2-letter. BCP-47 cannonical code
@@ -148,7 +148,7 @@ function parseLangtagsJson() {
           addOrCombineLangtagsEntry(
             {
               ...entry,
-              code: iso639_3Code,
+              iso639_3_code: iso639_3Code,
               isForMacrolanguageDisambiguation: true,
             },
             consolidatedLangTags
@@ -173,7 +173,7 @@ function parseLangtagsJson() {
       return {
         autonym: uncomma(langData.autonym),
         exonym: uncomma(langData.exonym),
-        code: langData.code,
+        iso639_3_code: langData.iso639_3_code,
         displayCode: langData.displayCode,
         regionNames: [...langData.regionNames].join(COMMA_SEPARATOR),
         scripts: [...new Set([...langData.scripts])].map((scriptCode) => {

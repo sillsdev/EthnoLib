@@ -3,7 +3,7 @@ import { ILanguage } from "./findLanguageInterfaces";
 interface ILanguageTestEntry {
   autonym?: string;
   exonym?: string;
-  code?: string;
+  iso639_3_code?: string;
   displayCode?: string;
   regionNames?: string;
   names?: string[];
@@ -18,7 +18,7 @@ export function createTestLanguageEntry(
   return {
     autonym: undefined,
     exonym: "",
-    code: "",
+    iso639_3_code: "",
     displayCode: "",
     regionNames: "",
     names: [],

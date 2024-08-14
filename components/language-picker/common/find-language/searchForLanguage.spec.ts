@@ -90,7 +90,7 @@ function searchDoesFindLanguage(query: string, expectedLanguageCode: string) {
   const result = searchForLanguage(query);
   expect(result.length).toBeGreaterThan(0);
   expect(
-    result.some((result) => result.item.code === expectedLanguageCode)
+    result.some((result) => result.item.iso639_3_code === expectedLanguageCode)
   ).toBe(true);
 }
 
@@ -100,7 +100,7 @@ function searchDoesNotFindLanguage(
 ) {
   const result = searchForLanguage(query);
   expect(
-    result.some((result) => result.item.code === expectedLanguageCode)
+    result.some((result) => result.item.iso639_3_code === expectedLanguageCode)
   ).toBe(false);
 }
 
@@ -110,7 +110,7 @@ function indexOfLanguageInSearchResults(
 ) {
   const result = searchForLanguage(query);
   const index = result.findIndex(
-    (result) => result.item.code === expectedLanguageCode
+    (result) => result.item.iso639_3_code === expectedLanguageCode
   );
   return index;
 }

@@ -11,7 +11,7 @@ export interface IScript {
 export interface ILanguage {
   autonym?: string;
   exonym: string;
-  code: string; // ISO 639-3 code
+  iso639_3_code: string; // ISO 639-3 code
   displayCode: string; // BCP-47 cannonical code
   regionNames: string;
   names: string[];

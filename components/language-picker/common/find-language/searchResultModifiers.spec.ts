@@ -6,7 +6,7 @@ import {
 } from "./searchResultModifiers";
 import {
   ILanguage,
-  filterLangCodes,
+  filterLanguageCodes,
   substituteInSpecialEntry,
 } from "@ethnolib/find-language";
 import { createTestLanguageEntry } from "./testUtils";
@@ -16,7 +16,7 @@ describe("filter scripts", () => {
     const results = [
       createTestLanguageEntry({
         exonym: "foo",
-        code: "bar",
+        iso639_3_code: "bar",
         scripts: [
           { code: "Latn", name: "Latin" },
           { code: "Brai", name: "Braille" },
@@ -24,19 +24,19 @@ describe("filter scripts", () => {
       }),
       createTestLanguageEntry({
         exonym: "baz",
-        code: "boo",
+        iso639_3_code: "boo",
         scripts: [{ code: "Brai", name: "Braille" }],
       }),
     ];
     const expectedFilteredResults = [
       createTestLanguageEntry({
         exonym: "foo",
-        code: "bar",
+        iso639_3_code: "bar",
         scripts: [{ code: "Latn", name: "Latin" }],
       }),
       createTestLanguageEntry({
         exonym: "baz",
-        code: "boo",
+        iso639_3_code: "boo",
         scripts: [],
       }),
     ];
@@ -69,7 +69,7 @@ describe("substitute special entry into results", () => {
     const results = [
       createTestLanguageEntry({
         exonym: "foo",
-        code: "bar",
+        iso639_3_code: "bar",
         scripts: [
           { code: "Latn", name: "Latin" },
           { code: "Brai", name: "Braille" },
@@ -77,14 +77,14 @@ describe("substitute special entry into results", () => {
       }),
       createTestLanguageEntry({
         exonym: "baz",
-        code: "boo",
+        iso639_3_code: "boo",
         scripts: [{ code: "Brai", name: "Braille" }],
       }),
     ];
 
     const specialEntry = createTestLanguageEntry({
       exonym: "special entry exonym",
-      code: "boo",
+      iso639_3_code: "boo",
       scripts: [{ code: "specialCode", name: "specialScript" }],
       variants: "yay",
     });
@@ -92,7 +92,7 @@ describe("substitute special entry into results", () => {
     const expectedResults = [
       createTestLanguageEntry({
         exonym: "foo",
-        code: "bar",
+        iso639_3_code: "bar",
         scripts: [
           { code: "Latn", name: "Latin" },
           { code: "Brai", name: "Braille" },
@@ -100,7 +100,7 @@ describe("substitute special entry into results", () => {
       }),
       createTestLanguageEntry({
         exonym: "special entry exonym",
-        code: "boo",
+        iso639_3_code: "boo",
         scripts: [{ code: "specialCode", name: "specialScript" }],
         variants: "yay",
       }),
@@ -116,7 +116,7 @@ describe("filter out language codes", () => {
     const results = [
       createTestLanguageEntry({
         exonym: "foo",
-        code: "bar",
+        iso639_3_code: "bar",
         scripts: [
           { code: "Latn", name: "Latin" },
           { code: "Brai", name: "Braille" },
@@ -124,21 +124,21 @@ describe("filter out language codes", () => {
       }),
       createTestLanguageEntry({
         exonym: "baz",
-        code: "boo",
+        iso639_3_code: "boo",
         scripts: [{ code: "Brai", name: "Braille" }],
       }),
     ];
     const expectedResults = [
       createTestLanguageEntry({
         exonym: "foo",
-        code: "bar",
+        iso639_3_code: "bar",
         scripts: [
           { code: "Latn", name: "Latin" },
           { code: "Brai", name: "Braille" },
         ],
       }),
     ];
-    expect(filterLangCodes((code) => code !== "boo", results)).toEqual(
+    expect(filterLanguageCodes((code) => code !== "boo", results)).toEqual(
       expectedResults
     );
   });
@@ -149,13 +149,13 @@ describe("reordering entries to prioritize desired language when keywords are se
   beforeEach(() => {
     originalResults = [
       createTestLanguageEntry({
-        code: "eng",
+        iso639_3_code: "eng",
       }),
       createTestLanguageEntry({
-        code: "tpi",
+        iso639_3_code: "tpi",
       }),
       createTestLanguageEntry({
-        code: "jpn",
+        iso639_3_code: "jpn",
       }),
     ];
   });
@@ -175,6 +175,6 @@ describe("reordering entries to prioritize desired language when keywords are se
       "tpi",
       originalResults
     );
-    expect(reorderedResults[0].code).toEqual("tpi");
+    expect(reorderedResults[0].iso639_3_code).toEqual("tpi");
   });
 });
