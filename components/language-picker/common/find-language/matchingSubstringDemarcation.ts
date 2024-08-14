@@ -53,24 +53,36 @@ export function stripDemarcation(
 // parts of the string, and are okay with demarcating only the exact matches (no fuzzy match finding). Look for matches ourselves and mark them.
 // Currently this only finds the first match in the field,
 export function demarcateExactMatches(searchString: string, result: ILanguage) {
-  const lowerCasedSearchString = searchString.toLowerCase();
   for (const field of fieldsToSearch) {
-    if (typeof result[field] !== "string") {
-      continue;
-    }
-    const lowerCasedValue = result[field].toLowerCase();
-    const indexOfSearchString = lowerCasedValue.indexOf(lowerCasedSearchString);
-    if (indexOfSearchString !== -1) {
-      result[field] =
-        result[field].slice(0, indexOfSearchString) +
-        START_OF_MATCH_MARKER +
-        result[field].slice(
-          indexOfSearchString,
-          indexOfSearchString + searchString.length
-        ) +
-        END_OF_MATCH_MARKER +
-        result[field].slice(indexOfSearchString + searchString.length);
+    if (Array.isArray(result[field])) {
+      result[field] = result[field].map((value) =>
+        demarcateExactMatchString(searchString, value)
+      );
+    } else if (typeof result[field] === "string") {
+      result[field] = demarcateExactMatchString(searchString, result[field]);
     }
   }
   return result;
+}
+
+function demarcateExactMatchString(
+  searchString: string,
+  stringToDemarcate: string
+) {
+  const lowerCasedSearchString = searchString.toLowerCase();
+  const lowerCasedValue = stringToDemarcate.toLowerCase();
+  const indexOfSearchString = lowerCasedValue.indexOf(lowerCasedSearchString);
+  if (indexOfSearchString !== -1) {
+    return (
+      stringToDemarcate.slice(0, indexOfSearchString) +
+      START_OF_MATCH_MARKER +
+      stringToDemarcate.slice(
+        indexOfSearchString,
+        indexOfSearchString + searchString.length
+      ) +
+      END_OF_MATCH_MARKER +
+      stringToDemarcate.slice(indexOfSearchString + searchString.length)
+    );
+  }
+  return stringToDemarcate;
 }

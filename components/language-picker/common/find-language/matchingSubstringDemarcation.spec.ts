@@ -22,7 +22,7 @@ describe("Adding match demarcation", () => {
           autonym: "ўзбек тили",
           exonym: "Uzbek",
           iso639_3_code: "uzb",
-          displayCode: "uz",
+          displayCode: "uzb",
           regionNames: "Uzbekistan, Afghanistan, China",
           scripts: [
             {
@@ -43,7 +43,7 @@ describe("Adding match demarcation", () => {
           {
             indices: [[0, 2]],
             value: "uzb",
-            key: "code",
+            key: "displayCode",
           },
           {
             indices: [[9, 11]],
@@ -71,8 +71,8 @@ describe("Adding match demarcation", () => {
         item: {
           autonym: "ўзбек тили",
           exonym: "[Uzb]ek",
-          iso639_3_code: "[uzb]",
-          displayCode: "uz",
+          iso639_3_code: "uzb",
+          displayCode: "[uzb]",
           regionNames: "[Uzb]ekistan, Afghanistan, China",
           scripts: [
             {
@@ -121,13 +121,13 @@ describe("find and demarcate exact matches", () => {
   // note this does not test all the fields, just a sampling
   it("should find and demarcate exact matches", () => {
     const originalResult = createTestLanguageEntry({
-      iso639_3_code: "aBc",
+      displayCode: "aBc",
       exonym: "Xxxabcxxx",
       autonym: "no matches here",
       names: ["Foobar", "ABCFoobar"],
     });
     const expectedResult = createTestLanguageEntry({
-      iso639_3_code: "[aBc]",
+      displayCode: "[aBc]",
       exonym: "Xxx[abc]xxx",
       autonym: "no matches here",
       names: ["Foobar", "[ABC]Foobar"],

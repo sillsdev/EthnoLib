@@ -77,10 +77,10 @@ describe("searchForLanguage", () => {
     searchDoesFindLanguage("JAPANESE", "jpn");
     searchDoesFindLanguage("JaPanEsE", "jpn");
   });
-  it("should find matches that don't start with the query", () => {
-    // TODO fine-tune the fuzzy matching so "ohlone" brings up "northern ohlone"
-    // searchFindsLanguage("ohlone", "cst");
-  });
+  // it("should find matches that don't start with the query", () => {
+  // TODO fine-tune the fuzzy matching so "ohlone" brings up "northern ohlone"
+  // searchFindsLanguage("ohlone", "cst");
+  // });
   it("does not find languages that completely don't match the query", () => {
     searchDoesNotFindLanguage("zzzz", "jpn");
   });

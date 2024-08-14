@@ -3,12 +3,10 @@ import {
   filterScripts,
   codeMatches,
   prioritizeLangByKeywords,
-} from "./searchResultModifiers";
-import {
-  ILanguage,
   filterLanguageCodes,
   substituteInSpecialEntry,
-} from "@ethnolib/find-language";
+} from "./searchResultModifiers";
+import { ILanguage } from "./findLanguageInterfaces";
 import { createTestLanguageEntry } from "./testUtils";
 
 describe("filter scripts", () => {
