@@ -9,6 +9,11 @@ This is a small collection Browser components for language apps. Each is publish
 
 EthnoLib is a [monorepo](https://nx.dev/concepts/decisions/why-monorepos) using Nx.
 
+We recommend installing nx globally.
+`npm i -g nx`
+
+But if you don't, you can just prefix all the commands with `npx`
+
 Nx caches builds for efficiency. If at any point you need to clear your local cache, run `npx nx reset`
 
 ## Language Picker

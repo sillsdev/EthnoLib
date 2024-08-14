@@ -11,13 +11,16 @@ For discussion of macrolanguage handling, see [macrolanguageNotes.md](macrolangu
 ## Development
 
 First, set up nx if you haven't already. (See [README.md](../../README.md)).
-To locally run a hot-reloading demo of the mui language chooser: `npx nx run @ethnolib/language-chooser-react-mui:dev`
 
-If you make changes to the `find-language` package, you will need to run `npx nx run @ethnolib/find-language:build` every time for the frontend (e.g. react mui language chooser demo) to pick up those changes. TODO NX should have a way to make changes in find-language hot-reload in language-chooser-react-mui but I haven't figured it out yet.
+We recommend installing nx globally, but if you haven't, you can just prefix all the commands with `npx`
+
+To locally run a hot-reloading demo of the mui language chooser: `nx dev @ethnolib/language-chooser-react-mui`
+
+If you make changes to the `find-language` package, you will need to run `nx build @ethnolib/find-language` every time for the frontend (e.g. react mui language chooser demo) to pick up those changes. TODO NX should have a way to make changes in find-language hot-reload in language-chooser-react-mui but I haven't figured it out yet.
 
 If you make changes to [langtagProcessing.ts](common/find-language/langtagProcessing.ts), run `npm run find-language/common/langtag-processing` to update [languageData.json](common/find-language/languageData.json).
 
 ## Unit tests
 
 Language picker uses vitest for unit tests.
-`npx nx run @ethnolib/find-language:test`
+`nx test @ethnolib/find-language`
