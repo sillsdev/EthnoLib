@@ -22,6 +22,24 @@ export interface ILanguagePickerInitialState {
   customDetails?: ICustomizableLanguageDetails;
 }
 
+export interface ILanguagePicker {
+  languageData: ILanguage[];
+  selectedLanguage: ILanguage | undefined;
+  selectedScript: IScript | undefined;
+  CustomizableLanguageDetails: ICustomizableLanguageDetails;
+  searchString: string;
+  onSearchStringChange: (searchString: string) => void;
+  toggleSelectLanguage: (language: ILanguage) => void;
+  toggleSelectScript: (script: IScript) => void;
+  isReadyToSubmit: boolean;
+  saveLanguageDetails: (
+    details: ICustomizableLanguageDetails,
+    script?: IScript
+  ) => void;
+  selectUnlistedLanguage: () => void;
+  reopenTo: (initialState: ILanguagePickerInitialState) => void;
+}
+
 export const UNLISTED_LANGUAGE_CODE = "qaa";
 export const UNLISTED_LANGUAGE = {
   iso639_3_code: UNLISTED_LANGUAGE_CODE,
@@ -188,7 +206,6 @@ export const useLanguagePicker = (
   };
 
   return {
-    // TODO make this an object
     languageData,
     selectedLanguage,
     selectedScript,
@@ -201,7 +218,7 @@ export const useLanguagePicker = (
     saveLanguageDetails,
     selectUnlistedLanguage,
     reopenTo,
-  };
+  } as ILanguagePicker;
 };
 
 // TODO consts to functions

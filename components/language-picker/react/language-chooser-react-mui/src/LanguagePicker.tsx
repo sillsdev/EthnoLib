@@ -26,6 +26,7 @@ import {
   useLanguagePicker,
   shouldShowUnlistedLanguageControls,
   ILanguagePickerInitialState,
+  ILanguagePicker,
 } from "../../common/useLanguagePicker";
 import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import { debounce } from "lodash";
@@ -43,24 +44,11 @@ export const LanguagePicker: React.FunctionComponent<{
   ) => ILanguage[];
   getInitialState: () => ILanguagePickerInitialState;
 }> = (props) => {
-  const {
-    languageData,
-    selectedLanguage,
-    selectedScript,
-    CustomizableLanguageDetails,
-    searchString,
-    onSearchStringChange,
-    toggleSelectLanguage,
-    toggleSelectScript,
-    isReadyToSubmit,
-    saveLanguageDetails,
-    selectUnlistedLanguage,
-    reopenTo,
-  } = useLanguagePicker(props.searchResultModifier);
+  const lp: ILanguagePicker = useLanguagePicker(props.searchResultModifier);
 
   useEffect(() => {
     const initialState = props.getInitialState();
-    reopenTo(initialState);
+    lp.reopenTo(initialState);
   }, []); // TODO ask reviewer
 
   const [customizeLanguageDialogOpen, setCustomizeLanguageDialogOpen] =
@@ -68,12 +56,12 @@ export const LanguagePicker: React.FunctionComponent<{
 
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTag({
-    languageCode: stripDemarcation(selectedLanguage?.displayCode),
-    scriptCode: stripDemarcation(selectedScript?.code),
-    regionCode: stripDemarcation(CustomizableLanguageDetails?.region?.code),
-    dialectCode: selectedLanguage
-      ? CustomizableLanguageDetails?.dialect
-      : searchString, // we put the searchString in only when there is no language selected.
+    languageCode: stripDemarcation(lp.selectedLanguage?.displayCode),
+    scriptCode: stripDemarcation(lp.selectedScript?.code),
+    regionCode: stripDemarcation(lp.CustomizableLanguageDetails?.region?.code),
+    dialectCode: lp.selectedLanguage
+      ? lp.CustomizableLanguageDetails?.dialect
+      : lp.searchString, // we put the searchString in only when there is no language selected.
     // And in that case we don't show a language tag preview on the right panel anyway. Therefore the
     // search string never shows up in the right panel tag preview
   });
@@ -167,7 +155,7 @@ export const LanguagePicker: React.FunctionComponent<{
             fullWidth
             onChange={(e) => {
               debounce(async () => {
-                onSearchStringChange(e.target.value);
+                lp.onSearchStringChange(e.target.value);
               }, 0)();
             }}
           />
@@ -180,7 +168,7 @@ export const LanguagePicker: React.FunctionComponent<{
               flex-grow: 1;
             `}
           >
-            {languageData.map((language, index) => {
+            {lp.languageData.map((language, index) => {
               return (
                 <LazyLoad
                   height={"125px"} // the min height we set on the language card
@@ -188,7 +176,7 @@ export const LanguagePicker: React.FunctionComponent<{
                   key={index} // TODO this should be stripDemarcation(language.code), but that breaks the lazyload for some reason! (try searching "uzb")
                 >
                   <CardActionArea
-                    onClick={() => toggleSelectLanguage(language)}
+                    onClick={() => lp.toggleSelectLanguage(language)}
                     css={css`
                       margin: 10px 0px;
                     `}
@@ -202,7 +190,7 @@ export const LanguagePicker: React.FunctionComponent<{
                       languageCardData={language}
                       isSelected={codeMatches(
                         language.iso639_3_code,
-                        selectedLanguage?.iso639_3_code
+                        lp.selectedLanguage?.iso639_3_code
                       )}
                       colorWhenNotSelected={COLORS.white}
                       colorWhenSelected={COLORS.blues[0]}
@@ -210,7 +198,7 @@ export const LanguagePicker: React.FunctionComponent<{
                   </CardActionArea>
                   {codeMatches(
                     language.iso639_3_code,
-                    selectedLanguage?.iso639_3_code
+                    lp.selectedLanguage?.iso639_3_code
                   ) &&
                     language.scripts.length > 1 && (
                       <List
@@ -234,7 +222,7 @@ export const LanguagePicker: React.FunctionComponent<{
                               `}
                             >
                               <CardActionArea
-                                onClick={() => toggleSelectScript(script)}
+                                onClick={() => lp.toggleSelectScript(script)}
                               >
                                 <ScriptCard
                                   css={css`
@@ -243,7 +231,7 @@ export const LanguagePicker: React.FunctionComponent<{
                                   scriptData={script}
                                   isSelected={codeMatches(
                                     script.code,
-                                    selectedScript?.code
+                                    lp.selectedScript?.code
                                   )}
                                   colorWhenNotSelected={COLORS.white}
                                   colorWhenSelected={COLORS.blues[1]}
@@ -261,7 +249,7 @@ export const LanguagePicker: React.FunctionComponent<{
           <CustomizeLanguageButton
             currentTagPreview={currentTagPreview}
             showAsUnlistedLanguage={shouldShowUnlistedLanguageControls(
-              selectedLanguage
+              lp.selectedLanguage
             )}
             css={css`
               min-width: 300px;
@@ -282,7 +270,7 @@ export const LanguagePicker: React.FunctionComponent<{
             padding: 15px 25px 25px 15px;
           `}
         >
-          {selectedLanguage !== undefined && (
+          {lp.selectedLanguage !== undefined && (
             <div
               id="right-pane-language-details=section"
               css={css`
@@ -311,9 +299,9 @@ export const LanguagePicker: React.FunctionComponent<{
                 `}
                 id="language-name-bar"
                 fullWidth
-                value={CustomizableLanguageDetails.displayName}
+                value={lp.CustomizableLanguageDetails.displayName}
                 onChange={(e) => {
-                  saveLanguageDetails({
+                  lp.saveLanguageDetails({
                     displayName: e.target.value,
                   });
                 }}
@@ -347,7 +335,7 @@ export const LanguagePicker: React.FunctionComponent<{
               `}
               variant="contained"
               color="primary"
-              disabled={!isReadyToSubmit}
+              disabled={!lp.isReadyToSubmit}
             >
               OK
             </Button>
@@ -365,12 +353,12 @@ export const LanguagePicker: React.FunctionComponent<{
       </div>
       <CustomizeLanguageDialog
         open={customizeLanguageDialogOpen}
-        selectedLanguage={selectedLanguage}
-        selectedScript={selectedScript}
-        customizableLanguageDetails={CustomizableLanguageDetails}
-        saveLanguageDetails={saveLanguageDetails}
-        selectUnlistedLanguage={selectUnlistedLanguage}
-        searchString={searchString}
+        selectedLanguage={lp.selectedLanguage}
+        selectedScript={lp.selectedScript}
+        customizableLanguageDetails={lp.CustomizableLanguageDetails}
+        saveLanguageDetails={lp.saveLanguageDetails}
+        selectUnlistedLanguage={lp.selectUnlistedLanguage}
+        searchString={lp.searchString}
         onClose={() => setCustomizeLanguageDialogOpen(false)}
       />
     </div>
