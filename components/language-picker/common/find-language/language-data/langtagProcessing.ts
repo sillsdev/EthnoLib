@@ -1,5 +1,5 @@
 import { iso15924 } from "iso-15924";
-import langtags from "./langtags.json" assert { type: "json" };
+import langTagsJson from "./langtags.json" assert { type: "json" };
 import * as fs from "fs";
 import { ILanguage, IScript } from "../findLanguageInterfaces";
 import iso3166 from "iso-3166-1";
@@ -83,7 +83,7 @@ function autonymOrFallback(entry: any, fallback: string) {
 }
 
 // We want to have one entry for every ISO 630-3 code, whereas langtags.json sometimes has multiple entries per code
-// Combine entry into the entry with matching code in langs if there is one, otherwise create a new entry
+// Combine entry into the entry with matching ISO 630-3 code in langs if there is one, otherwise create a new entry
 function addOrCombineLangtagsEntry(entry, langs) {
   if (!entry.iso639_3) {
     // langTags.json has metadata items in the same list mixed in with the data entries
@@ -127,12 +127,12 @@ function addOrCombineLangtagsEntry(entry, langs) {
 }
 
 function parseLangtagsJson() {
-  // TODO fix variable names
-  const langs = {};
-  const langTags = langtags as any[];
+  // We want to have one entry for every ISO 630-3 code, whereas langtags.json sometimes has multiple entries per code
+  const langTags = langTagsJson as any[];
   const iso639_3CodeDetails = getIso639_3CodeDetails();
+  const consolidatedLangTags = {};
   for (const entry of langTags) {
-    addOrCombineLangtagsEntry(entry, langs);
+    addOrCombineLangtagsEntry(entry, consolidatedLangTags);
 
     // TODO I haven't finished implementing Macrolanguage/specific language handling. See README
     if (iso639_3CodeDetails.has(entry.iso639_3)) {
@@ -147,7 +147,7 @@ function parseLangtagsJson() {
               code: iso639_3Code,
               isForMacrolanguageDisambiguation: true,
             },
-            langs
+            consolidatedLangTags
           );
         }
       }
@@ -159,7 +159,7 @@ function parseLangtagsJson() {
   }
 
   // Tweak some of the data into the format we want
-  const reformattedLangs = Object.values(langs).map(
+  const reformattedLangs = Object.values(consolidatedLangTags).map(
     (langData: ILanguageInternal) => {
       // Don't repeat the autonym and exonym in the names list
       langData.names.delete(langData.autonym);

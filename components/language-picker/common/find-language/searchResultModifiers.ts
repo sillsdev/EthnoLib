@@ -1,7 +1,6 @@
 import { FuseResult } from "fuse.js";
 import { ILanguage, IScript } from "@ethnolib/find-language";
 import {
-  demarcateExactMatches,
   demarcateResults,
   stripDemarcation,
 } from "./matchingSubstringDemarcation";
@@ -43,8 +42,7 @@ function simplifyEnglishResult(
   results: ILanguage[]
 ): ILanguage[] {
   const getSpecialEntry = (result: ILanguage) =>
-    // TODO* remove call to demarcateExactMatches and test that everything still works
-    demarcateExactMatches(searchString, {
+    ({
       autonym: undefined, // because exonym is mandatory and we don't want to repeat it
       exonym: result.exonym, // "English",
       code: result.code,
@@ -63,7 +61,7 @@ function simplifyFrenchResult(
   results: ILanguage[]
 ): ILanguage[] {
   const getSpecialEntry = (result: any) =>
-    demarcateExactMatches(searchString, {
+    ({
       autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
       exonym: result.exonym, // "French"
       code: result.code,
