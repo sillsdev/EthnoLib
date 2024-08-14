@@ -5,7 +5,6 @@ import { ILanguage } from "@ethnolib/find-language";
 import { memo } from "react";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
 
-// TODO is this memo still useful?
 export const LanguageCard: React.FunctionComponent<
   { languageCardData: ILanguage } & OptionCardProps
 > = memo(({ languageCardData, ...optionCardProps }) => {
