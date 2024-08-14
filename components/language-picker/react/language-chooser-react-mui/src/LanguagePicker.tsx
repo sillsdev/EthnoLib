@@ -68,7 +68,7 @@ export const LanguagePicker: React.FunctionComponent<{
 
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTag({
-    languageCode: stripDemarcation(selectedLanguage?.code),
+    languageCode: stripDemarcation(selectedLanguage?.displayCode),
     scriptCode: stripDemarcation(selectedScript?.code),
     regionCode: stripDemarcation(CustomizableLanguageDetails?.region?.code),
     dialectCode: selectedLanguage

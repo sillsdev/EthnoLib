@@ -38,7 +38,7 @@ const latinScriptData = { code: "Latn", name: "Latin" } as IScript;
 
 // Replace the English result with a simpler version that only has "English" and the code on it
 function simplifyEnglishResult(
-  searchString: string,
+  _searchString: string,
   results: ILanguage[]
 ): ILanguage[] {
   const getSpecialEntry = (result: ILanguage) =>
@@ -46,6 +46,7 @@ function simplifyEnglishResult(
       autonym: undefined, // because exonym is mandatory and we don't want to repeat it
       exonym: result.exonym, // "English",
       code: result.code,
+      displayCode: result.displayCode,
       regionNames: "",
       names: [],
       scripts: [latinScriptData],
@@ -57,7 +58,7 @@ function simplifyEnglishResult(
 
 // Replace the French result with a simpler version that only has "Francais", "French" and the code on it
 function simplifyFrenchResult(
-  searchString: string,
+  _searchString: string,
   results: ILanguage[]
 ): ILanguage[] {
   const getSpecialEntry = (result: any) =>
@@ -65,6 +66,7 @@ function simplifyFrenchResult(
       autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
       exonym: result.exonym, // "French"
       code: result.code,
+      displayCode: result.displayCode,
       regionNames: "",
       names: [],
       scripts: [latinScriptData],
@@ -83,8 +85,8 @@ export function codeMatches(
   return (
     !!code1 &&
     !!code2 &&
-    stripDemarcation(code1).toUpperCase() ===
-      stripDemarcation(code2).toUpperCase()
+    stripDemarcation(code1)?.toUpperCase() ===
+      stripDemarcation(code2)?.toUpperCase()
   );
 }
 

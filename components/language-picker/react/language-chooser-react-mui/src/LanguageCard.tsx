@@ -33,7 +33,7 @@ export const LanguageCard: React.FunctionComponent<
             font-family: "Roboto Mono", monospace;
           `}
           variant="body2"
-          dangerouslySetDemarcatedText={languageCardData.code}
+          dangerouslySetDemarcatedText={languageCardData.displayCode}
         />
         {languageCardData.regionNames?.length > 0 && (
           <PartiallyBoldedTypography

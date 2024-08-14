@@ -25,6 +25,7 @@ export interface ILanguagePickerInitialState {
 export const UNLISTED_LANGUAGE_CODE = "qaa";
 export const UNLISTED_LANGUAGE = {
   code: UNLISTED_LANGUAGE_CODE,
+  displayCode: UNLISTED_LANGUAGE_CODE,
   autonym: undefined,
   exonym: "Unknown Language",
   regionNames: "",

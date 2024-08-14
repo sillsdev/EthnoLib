@@ -4,6 +4,7 @@ interface ILanguageTestEntry {
   autonym?: string;
   exonym?: string;
   code?: string;
+  displayCode?: string;
   regionNames?: string;
   names?: string[];
   scripts?: any[];
@@ -18,6 +19,7 @@ export function createTestLanguageEntry(
     autonym: undefined,
     exonym: "",
     code: "",
+    displayCode: "",
     regionNames: "",
     names: [],
     scripts: [],
