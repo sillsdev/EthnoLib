@@ -5,7 +5,7 @@ import { ILanguage } from "./findLanguageInterfaces";
 const fuseSearchKeys = [
   { name: "autonym", weight: 100 },
   { name: "exonym", weight: 100 },
-  { name: "displayCode", weight: 80 },
+  { name: "languageSubtag", weight: 80 },
   { name: "names", weight: 8 },
   { name: "regionNames", weight: 1 },
 ];

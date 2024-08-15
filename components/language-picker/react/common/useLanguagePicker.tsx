@@ -43,7 +43,7 @@ export interface ILanguagePicker {
 export const UNLISTED_LANGUAGE_CODE = "qaa";
 export const UNLISTED_LANGUAGE = {
   iso639_3_code: UNLISTED_LANGUAGE_CODE,
-  displayCode: UNLISTED_LANGUAGE_CODE,
+  languageSubtag: UNLISTED_LANGUAGE_CODE,
   autonym: undefined,
   exonym: "Unknown Language",
   regionNames: "",
@@ -105,7 +105,7 @@ export const useLanguagePicker = (
     // TODO if there is a language code that is also the start of so many language names
     // that the language card with that code isn't initially visible and one must scroll to see it,
     // scroll to it
-    onSearchStringChange(language.displayCode);
+    onSearchStringChange(language.languageSubtag);
     setSelectedLanguage(language);
     saveLanguageDetails(
       customDetails || ({} as ICustomizableLanguageDetails),
@@ -143,6 +143,7 @@ export const useLanguagePicker = (
   }
 
   function toggleSelectLanguage(language: ILanguage) {
+    console.log("language", language);
     if (codeMatches(language.iso639_3_code, selectedLanguage?.iso639_3_code)) {
       // Clicking on the selected language unselects it and clears data specific to that language
       setSelectedLanguage(undefined);

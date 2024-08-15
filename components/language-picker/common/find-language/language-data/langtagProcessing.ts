@@ -50,7 +50,7 @@ interface ILanguageInternal {
   autonym: string;
   exonym: string;
   iso639_3_code: string;
-  displayCode: string;
+  languageSubtag: string;
   regionNames: Set<string>; // ISO 3166 codes
   names: Set<string>;
   scripts: Set<string>;
@@ -118,7 +118,7 @@ function addOrCombineLangtagsEntry(entry, langs) {
       exonym: entry.name,
       iso639_3_code: entry.iso639_3 as string,
       // TODO decide if we should work with the display codes on the backend, see how it interacts with macrolanguage situations
-      displayCode: entry.tag.split("-")[0], // might be 2-letter
+      languageSubtag: entry.tag.split("-")[0], // might be 2-letter
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
       scripts: new Set([entry.script]),
@@ -173,7 +173,7 @@ function parseLangtagsJson() {
         autonym: uncomma(langData.autonym),
         exonym: uncomma(langData.exonym),
         iso639_3_code: langData.iso639_3_code,
-        displayCode: langData.displayCode,
+        languageSubtag: langData.languageSubtag,
         regionNames: [...langData.regionNames].join(COMMA_SEPARATOR),
         scripts: [...new Set([...langData.scripts])].map((scriptCode) => {
           return {

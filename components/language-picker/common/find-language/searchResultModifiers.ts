@@ -43,7 +43,7 @@ function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
       autonym: undefined, // because exonym is mandatory and we don't want to repeat it
       exonym: result.exonym, // "English",
       iso639_3_code: result.iso639_3_code,
-      displayCode: result.displayCode,
+      languageSubtag: result.languageSubtag,
       regionNames: "",
       names: [],
       scripts: [latinScriptData],
@@ -60,7 +60,7 @@ function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
       autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
       exonym: result.exonym, // "French"
       iso639_3_code: result.code,
-      displayCode: result.displayCode,
+      languageSubtag: result.languageSubtag,
       regionNames: "",
       names: [],
       scripts: [latinScriptData],

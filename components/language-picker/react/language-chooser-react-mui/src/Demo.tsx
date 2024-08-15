@@ -18,11 +18,79 @@ function Demo() {
     },
   });
 
+  const uzbekLanguage = {
+    autonym: "ўзбек тили",
+    exonym: "[Uzb]ek",
+    iso639_3_code: "uzb",
+    languageSubtag: "uz",
+    regionNames: "[Uzb]ekistan, Afghanistan, China",
+    scripts: [
+      {
+        code: "Latn",
+        name: "Latin",
+      },
+      {
+        code: "Arab",
+        name: "Arabic",
+      },
+      {
+        code: "Cyrl",
+        name: "Cyrillic",
+      },
+      {
+        code: "Sogd",
+        name: "Sogdian",
+      },
+    ],
+    names: [
+      "O[uzb]ek",
+      "O’zbek",
+      "Usbaki",
+      "Usbeki",
+      "[Uzb]ek, Northern",
+      "oʻzbek",
+      "oʻzbek tili",
+      "oʻzbekcha",
+      "Özbek",
+      "o‘zbek",
+      null,
+      "اوزبیک",
+      "ўзбекча",
+    ],
+    alternativeTags: [
+      "uz-Latn",
+      "uz-UZ",
+      "uz-uzn",
+      "uz-uzn-Latn",
+      "uz-uzn-Latn-UZ",
+      "uz-uzn-UZ",
+      "uzn",
+      "uzn-Latn",
+      "uzn-Latn-UZ",
+      "uzn-UZ",
+      "uz-Arab",
+      "uz-uzn-Arab",
+      "uz-uzn-Arab-AF",
+      "uzn-Arab",
+      "uzn-Arab-AF",
+      "uz-uzn-Brai",
+      "uz-uzn-Brai-UZ",
+      "uzn-Brai",
+      "uzn-Brai-UZ",
+      "uz-uzn-Cyrl",
+      "uz-uzn-Cyrl-UZ",
+      "uzn-Cyrl",
+      "uzn-Cyrl-UZ",
+      "uz-uzn-Sogd",
+      "uz-uzn-Sogd-CN",
+      "uzn-Sogd",
+      "uzn-Sogd-CN",
+    ],
+  };
+
   // To demonstrate the ability to reopen to a desired state
   const initialState: ILanguagePickerInitialState = {
-    language: {
-      // TODO
-    },
+    language: uzbekLanguage,
     script: {
       code: "Cyrl",
       name: "Cyrillic",

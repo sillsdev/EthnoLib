@@ -64,7 +64,13 @@ export const CustomizeLanguageButton: React.FunctionComponent<
         >
           {currentTagPreview}
         </Typography>
-        <Tooltip title="TODO info text...">
+        <Tooltip
+          title={
+            showAsUnlistedLanguage
+              ? "If you cannot find a language and it does not appear in ethnologue.com, you can instead define the language here."
+              : "If you found main the language but need to change some of the specifics like Script or Dialect, you can do that here."
+          }
+        >
           <InfoOutlinedIcon
             css={css`
               color: ${COLORS.greys[2]};

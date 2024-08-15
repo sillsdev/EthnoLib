@@ -4,7 +4,7 @@ interface ILanguageTestEntry {
   autonym?: string;
   exonym?: string;
   iso639_3_code?: string;
-  displayCode?: string;
+  languageSubtag?: string;
   regionNames?: string;
   names?: string[];
   scripts?: any[];
@@ -19,7 +19,7 @@ export function createTestLanguageEntry(
     autonym: undefined,
     exonym: "",
     iso639_3_code: "",
-    displayCode: "",
+    languageSubtag: "",
     regionNames: "",
     names: [],
     scripts: [],

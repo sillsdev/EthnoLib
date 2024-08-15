@@ -38,7 +38,7 @@ export const LanguageCard: React.FunctionComponent<
         `}
         variant="body2"
       >
-        {languageCardData.displayCode}
+        {languageCardData.languageSubtag}
       </PartiallyBoldedTypography>
       {languageCardData.regionNames?.length > 0 && (
         <PartiallyBoldedTypography
