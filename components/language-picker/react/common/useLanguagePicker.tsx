@@ -17,7 +17,7 @@ export interface ICustomizableLanguageDetails {
 }
 
 export interface ILanguagePickerInitialState {
-  languageCode?: string;
+  language: ILanguage;
   script?: IScript;
   customDetails?: ICustomizableLanguageDetails;
 }
@@ -26,7 +26,7 @@ export interface ILanguagePicker {
   languageData: ILanguage[];
   selectedLanguage: ILanguage | undefined;
   selectedScript: IScript | undefined;
-  CustomizableLanguageDetails: ICustomizableLanguageDetails;
+  customizableLanguageDetails: ICustomizableLanguageDetails;
   searchString: string;
   onSearchStringChange: (searchString: string) => void;
   toggleSelectLanguage: (language: ILanguage) => void;
@@ -37,7 +37,7 @@ export interface ILanguagePicker {
     script?: IScript
   ) => void;
   selectUnlistedLanguage: () => void;
-  reopenTo: (initialState: ILanguagePickerInitialState) => void;
+  resetTo: (initialState: ILanguagePickerInitialState) => void;
 }
 
 export const UNLISTED_LANGUAGE_CODE = "qaa";
@@ -53,10 +53,7 @@ export const UNLISTED_LANGUAGE = {
 } as ILanguage;
 
 export const useLanguagePicker = (
-  searchResultModifier?: (
-    results: FuseResult<ILanguage>[],
-    searchString: string
-  ) => ILanguage[]
+  searchResultModifier?: (results: FuseResult<ILanguage>[]) => ILanguage[]
 ) => {
   const [searchString, setSearchString] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState<
@@ -70,7 +67,7 @@ export const useLanguagePicker = (
     dialect: undefined,
   } as ICustomizableLanguageDetails;
 
-  const [CustomizableLanguageDetails, setCustomizableLanguageDetails] =
+  const [customizableLanguageDetails, setCustomizableLanguageDetails] =
     useState<ICustomizableLanguageDetails>(EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS);
 
   function clearCustomizableLanguageDetails() {
@@ -83,7 +80,7 @@ export const useLanguagePicker = (
     (!!selectedScript || selectedLanguage.scripts?.length === 0);
 
   const languageData = useMemo(() => {
-    if (searchString.length < 2) {
+    if (!searchString || searchString.length < 2) {
       return [];
     }
     return getModifiedSearchResults(searchString, searchResultModifier);
@@ -91,9 +88,8 @@ export const useLanguagePicker = (
 
   // For reopening to a specific selection. We should then also set the search string
   // such that the selected language is visible.
-
-  function reopenTo({
-    languageCode,
+  function resetTo({
+    language,
     script,
     customDetails,
   }: ILanguagePickerInitialState) {
@@ -102,30 +98,19 @@ export const useLanguagePicker = (
     setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
 
-    if (!languageCode) {
+    if (!language) {
       return;
     }
 
-    // TODO what if there is a language code that is also the start of so many language names
-    // that the language card with that code isn't initially visible and one must scroll to see it?
-    // Do we need to make the language picker scroll to it? Seems like overkill to me
-    onSearchStringChange(languageCode);
-    // TODO this is inefficient... languageData won't get updated until rerender
-    // and so selectedLanguage won't yet have the desired language, so do a search for it
-    const tempLanguageData = getModifiedSearchResults(
-      languageCode,
-      searchResultModifier
+    // TODO if there is a language code that is also the start of so many language names
+    // that the language card with that code isn't initially visible and one must scroll to see it,
+    // scroll to it
+    onSearchStringChange(language.displayCode);
+    setSelectedLanguage(language);
+    saveLanguageDetails(
+      customDetails || ({} as ICustomizableLanguageDetails),
+      script
     );
-    const desiredLanguage = tempLanguageData.find((language) =>
-      codeMatches(language.iso639_3_code, languageCode)
-    );
-    if (desiredLanguage) {
-      setSelectedLanguage(desiredLanguage);
-      saveLanguageDetails(
-        customDetails || ({} as ICustomizableLanguageDetails),
-        script
-      );
-    }
   }
 
   // details should only include the properties it wants to modify
@@ -135,7 +120,7 @@ export const useLanguagePicker = (
   ) => {
     setSelectedScript(script);
     const updatedCustomizableDetails = {
-      ...CustomizableLanguageDetails,
+      ...customizableLanguageDetails,
       ...details,
     };
     setCustomizableLanguageDetails(updatedCustomizableDetails);
@@ -158,16 +143,11 @@ export const useLanguagePicker = (
   }
 
   function toggleSelectLanguage(language: ILanguage) {
-    if (!language) {
-      console.error("no language selected");
-      return;
-    }
     if (codeMatches(language.iso639_3_code, selectedLanguage?.iso639_3_code)) {
       // Clicking on the selected language unselects it and clears data specific to that language
       setSelectedLanguage(undefined);
       setSelectedScript(undefined);
       clearCustomizableLanguageDetails();
-      return;
     } else {
       setSelectedLanguage(language);
       setSelectedScript(
@@ -179,14 +159,13 @@ export const useLanguagePicker = (
           language.autonym || language.exonym || ""
         ),
       } as ICustomizableLanguageDetails);
-      return;
     }
   }
+
   function toggleSelectScript(script: IScript) {
     if (codeMatches(script.code, selectedScript?.code)) {
       // clicking on the selected script unselects it
       setSelectedScript(undefined);
-      return;
     } else {
       setSelectedScript(script);
     }
@@ -209,7 +188,7 @@ export const useLanguagePicker = (
     languageData,
     selectedLanguage,
     selectedScript,
-    CustomizableLanguageDetails,
+    customizableLanguageDetails,
     searchString,
     onSearchStringChange,
     toggleSelectLanguage,
@@ -217,18 +196,10 @@ export const useLanguagePicker = (
     isReadyToSubmit,
     saveLanguageDetails,
     selectUnlistedLanguage,
-    reopenTo,
+    resetTo,
   } as ILanguagePicker;
 };
 
-// TODO consts to functions
-
-// We show the unlisted language controls unless a language is selected
-export function shouldShowUnlistedLanguageControls(
-  selectedLanguage: ILanguage | undefined
-) {
-  return (
-    selectedLanguage === undefined ||
-    codeMatches(selectedLanguage.iso639_3_code, UNLISTED_LANGUAGE_CODE)
-  );
+export function isUnlistedLanguage(selectedLanguage: ILanguage) {
+  return codeMatches(selectedLanguage.iso639_3_code, UNLISTED_LANGUAGE_CODE);
 }

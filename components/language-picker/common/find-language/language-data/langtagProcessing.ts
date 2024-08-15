@@ -118,8 +118,7 @@ function addOrCombineLangtagsEntry(entry, langs) {
       exonym: entry.name,
       iso639_3_code: entry.iso639_3 as string,
       // TODO decide if we should work with the display codes on the backend, see how it interacts with macrolanguage situations
-      // TODO probably also rename "code" with "iso639_3"
-      displayCode: entry.tag.split("-")[0], // may be 2-letter. BCP-47 cannonical code
+      displayCode: entry.tag.split("-")[0], // might be 2-letter
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
       scripts: new Set([entry.script]),

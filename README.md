@@ -14,7 +14,7 @@ We recommend installing nx globally.
 
 But if you don't, you can just prefix all the commands with `npx`
 
-Nx caches builds for efficiency. If at any point you need to clear your local cache, run `npx nx reset`
+Nx caches builds for efficiency. If at any point you need to clear your local cache, run `nx reset`
 
 ## Language Picker
 

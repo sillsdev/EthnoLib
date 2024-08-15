@@ -19,23 +19,23 @@ function Demo() {
   });
 
   // To demonstrate the ability to reopen to a desired state
-  function getDemoInitialState() {
-    return {
-      languageCode: "uzb",
-      script: {
-        code: "Cyrl",
-        name: "Cyrillic",
-      } as IScript,
-      customDetails: {
-        displayName: "TestOverridenDisplayName",
-        region: {
-          code: "US",
-          name: "United States of America",
-        } as IRegion,
-        dialect: "testDialectName",
-      },
-    } as ILanguagePickerInitialState;
-  }
+  const initialState: ILanguagePickerInitialState = {
+    language: {
+      // TODO
+    },
+    script: {
+      code: "Cyrl",
+      name: "Cyrillic",
+    } as IScript,
+    customDetails: {
+      displayName: "TestOverridenDisplayName",
+      region: {
+        code: "US",
+        name: "United States of America",
+      } as IRegion,
+      dialect: "testDialectName",
+    },
+  } as ILanguagePickerInitialState;
 
   return (
     <ThemeProvider theme={theme}>
@@ -49,7 +49,7 @@ function Demo() {
       >
         <LanguagePicker
           searchResultModifier={defaultSearchResultModifier}
-          getInitialState={getDemoInitialState}
+          initialState={initialState}
         />
       </div>
     </ThemeProvider>

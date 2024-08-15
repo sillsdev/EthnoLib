@@ -8,15 +8,18 @@ import { COLORS } from "./colors";
 export const CustomizeLanguageButton: React.FunctionComponent<
   {
     currentTagPreview: string;
-    showAsUnlistedLanguage: boolean;
+    forUnlistedLanguage: boolean;
   } & ButtonProps
-> = ({ currentTagPreview, showAsUnlistedLanguage, ...buttonProps }) => {
+> = ({
+  currentTagPreview,
+  forUnlistedLanguage: showAsUnlistedLanguage,
+  ...buttonProps
+}) => {
   return (
     <Button
       variant="outlined"
       color="primary"
       css={css`
-        // background-color: white;
         box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.2),
           0px 4px 5px 0px rgba(0, 0, 0, 0.14),
           0px 1px 10px 0px rgba(0, 0, 0, 0.12);
@@ -33,8 +36,6 @@ export const CustomizeLanguageButton: React.FunctionComponent<
         css={css`
           text-transform: uppercase;
           font-weight: bold;
-          // text-align: left;
-          // justify-content: flex-start;
           display: flex; // for the icon
         `}
       >
@@ -59,7 +60,6 @@ export const CustomizeLanguageButton: React.FunctionComponent<
           variant="body2"
           css={css`
             text-align: left;
-            // justify-content: flex-start;
           `}
         >
           {currentTagPreview}

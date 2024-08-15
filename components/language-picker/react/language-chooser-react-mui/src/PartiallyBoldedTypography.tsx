@@ -5,10 +5,15 @@ import {
 } from "@ethnolib/find-language";
 import React from "react";
 
-function createNodesList(demarcatedText: string) {
+function createNodeList(demarcatedText: string) {
   const startMarkerSplitSegments = demarcatedText.split(START_OF_MATCH_MARKER);
-
   const nodes = [];
+  // demarcated text: a[b]c[d]e
+  // startMarkerSplitSegments: a, b]c, d]e
+  // endMarkerSplitSegments:
+  //    a
+  //    b, c
+  //    d, e
   for (const piece of startMarkerSplitSegments) {
     const endMarkerSplitSegments = piece.split(END_OF_MATCH_MARKER);
     if (endMarkerSplitSegments.length === 1) {
@@ -25,10 +30,9 @@ function createNodesList(demarcatedText: string) {
 
 export const PartiallyBoldedTypography: React.FunctionComponent<
   {
-    demarcatedText: string;
+    children: string;
   } & TypographyProps
-> = ({ demarcatedText, children, ...typographyProps }) => {
-  const nodes = createNodesList(demarcatedText);
-
+> = ({ children, ...typographyProps }) => {
+  const nodes = createNodeList(children || "");
   return <Typography {...typographyProps}>{...nodes}</Typography>;
 };

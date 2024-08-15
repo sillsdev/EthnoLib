@@ -1,26 +1,30 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { CardContent, Card } from "@mui/material";
+import { CardContent, Card, CardActionArea } from "@mui/material";
 import React, { PropsWithChildren } from "react";
 import { COLORS } from "./colors";
-import { ClickAwayListener } from "@mui/base/ClickAwayListener";
 
 export interface OptionCardProps {
   isSelected: boolean;
-  colorWhenNotSelected: string;
-  colorWhenSelected: string;
+  backgroundColorWhenNotSelected?: string;
+  backgroundColorWhenSelected?: string;
   className?: string;
-  onClickAway?: () => void;
+  onClick?: () => void;
 }
+
+export type OptionCardPropsWithoutColors = Omit<
+  OptionCardProps,
+  "backgroundColorWhenNotSelected" | "backgroundColorWhenSelected"
+>;
 
 export const OptionCard: React.FunctionComponent<
   PropsWithChildren<OptionCardProps>
 > = (props) => {
   const backgroundColor = props.isSelected
-    ? props.colorWhenSelected
-    : props.colorWhenNotSelected;
+    ? props.backgroundColorWhenSelected || COLORS.white
+    : props.backgroundColorWhenNotSelected || COLORS.white;
   return (
-    <ClickAwayListener onClickAway={props.onClickAway || (() => {})}>
+    <CardActionArea onClick={props.onClick || (() => {})}>
       <Card
         variant="outlined"
         css={css`
@@ -32,6 +36,6 @@ export const OptionCard: React.FunctionComponent<
       >
         <CardContent>{props.children}</CardContent>
       </Card>
-    </ClickAwayListener>
+    </CardActionArea>
   );
 };

@@ -37,10 +37,7 @@ const scriptFilter = (script: IScript) =>
 const latinScriptData = { code: "Latn", name: "Latin" } as IScript;
 
 // Replace the English result with a simpler version that only has "English" and the code on it
-function simplifyEnglishResult(
-  _searchString: string,
-  results: ILanguage[]
-): ILanguage[] {
+function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
   const getSpecialEntry = (result: ILanguage) =>
     ({
       autonym: undefined, // because exonym is mandatory and we don't want to repeat it
@@ -57,10 +54,7 @@ function simplifyEnglishResult(
 }
 
 // Replace the French result with a simpler version that only has "Francais", "French" and the code on it
-function simplifyFrenchResult(
-  _searchString: string,
-  results: ILanguage[]
-): ILanguage[] {
+function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
   const getSpecialEntry = (result: any) =>
     ({
       autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
@@ -196,8 +190,8 @@ export function defaultSearchResultModifier(
     "fra",
     modifiedResults
   );
-  modifiedResults = simplifyEnglishResult(searchString, modifiedResults);
-  modifiedResults = simplifyFrenchResult(searchString, modifiedResults);
+  modifiedResults = simplifyEnglishResult(modifiedResults);
+  modifiedResults = simplifyFrenchResult(modifiedResults);
   modifiedResults = filterOutDefaultExcludedLanguages(modifiedResults);
   modifiedResults = filterScripts(scriptFilter, modifiedResults);
   return modifiedResults;

@@ -6,7 +6,7 @@ import Dialog from "@mui/material/Dialog";
 import Typography from "@mui/material/Typography";
 import {
   ICustomizableLanguageDetails,
-  shouldShowUnlistedLanguageControls,
+  isUnlistedLanguage,
 } from "../../common/useLanguagePicker";
 import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import {

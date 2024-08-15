@@ -1,12 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import {
-  codeMatches,
-  ILanguage,
-  IScript,
-  stripDemarcation,
-} from "@ethnolib/find-language";
-import { LanguageCard } from "./LanguageCard";
+
 import {
   AppBar,
   Button,
@@ -20,11 +14,19 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+
+import {
+  codeMatches,
+  ILanguage,
+  IScript,
+  stripDemarcation,
+} from "@ethnolib/find-language";
+import { LanguageCard } from "./LanguageCard";
 import { ScriptCard } from "./ScriptCard";
 import { COLORS } from "./colors";
 import {
   useLanguagePicker,
-  shouldShowUnlistedLanguageControls,
+  isUnlistedLanguage,
   ILanguagePickerInitialState,
   ILanguagePicker,
 } from "../../common/useLanguagePicker";
@@ -38,18 +40,16 @@ import LazyLoad from "react-lazyload";
 import { FuseResult } from "fuse.js";
 
 export const LanguagePicker: React.FunctionComponent<{
-  searchResultModifier: (
-    results: FuseResult<ILanguage>[],
-    searchString: string
-  ) => ILanguage[];
-  getInitialState: () => ILanguagePickerInitialState;
+  searchResultModifier: (results: FuseResult<ILanguage>[]) => ILanguage[];
+  initialState: ILanguagePickerInitialState;
 }> = (props) => {
   const lp: ILanguagePicker = useLanguagePicker(props.searchResultModifier);
 
   useEffect(() => {
-    const initialState = props.getInitialState();
-    lp.reopenTo(initialState);
-  }, []); // TODO ask reviewer
+    lp.resetTo(props.initialState);
+    // We only want this to run once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [customizeLanguageDialogOpen, setCustomizeLanguageDialogOpen] =
     useState(false);
@@ -58,9 +58,9 @@ export const LanguagePicker: React.FunctionComponent<{
   const currentTagPreview = createTag({
     languageCode: stripDemarcation(lp.selectedLanguage?.displayCode),
     scriptCode: stripDemarcation(lp.selectedScript?.code),
-    regionCode: stripDemarcation(lp.CustomizableLanguageDetails?.region?.code),
+    regionCode: stripDemarcation(lp.customizableLanguageDetails?.region?.code),
     dialectCode: lp.selectedLanguage
-      ? lp.CustomizableLanguageDetails?.dialect
+      ? lp.customizableLanguageDetails?.dialect
       : lp.searchString, // we put the searchString in only when there is no language selected.
     // And in that case we don't show a language tag preview on the right panel anyway. Therefore the
     // search string never shows up in the right panel tag preview
@@ -68,7 +68,7 @@ export const LanguagePicker: React.FunctionComponent<{
 
   return (
     <div
-      id="lang-picker-container"
+      id="lang-picker"
       css={css`
         width: 1500px;
         background-color: ${COLORS.greys[0]};
@@ -76,7 +76,7 @@ export const LanguagePicker: React.FunctionComponent<{
         position: relative;
         margin-left: auto;
         margin-right: auto;
-        overflow: hidden; // TODO otherwise things cover the rounded corners. Better way to fix?
+        overflow: hidden;
       `}
     >
       <AppBar
@@ -173,29 +173,22 @@ export const LanguagePicker: React.FunctionComponent<{
                 <LazyLoad
                   height={"125px"} // the min height we set on the language card
                   overflow={true}
-                  key={index} // TODO this should be stripDemarcation(language.code), but that breaks the lazyload for some reason! (try searching "uzb")
+                  key={index} // TODO this should be language.iso639_3_code, but that breaks the lazyload for some reason! (try searching "uzb")
                 >
-                  <CardActionArea
-                    onClick={() => lp.toggleSelectLanguage(language)}
+                  <LanguageCard
                     css={css`
+                      width: 100%;
+                      min-height: 125px;
+                      flex-direction: column;
                       margin: 10px 0px;
                     `}
-                  >
-                    <LanguageCard
-                      css={css`
-                        width: 100%;
-                        min-height: 125px;
-                        flex-direction: column;
-                      `}
-                      languageCardData={language}
-                      isSelected={codeMatches(
-                        language.iso639_3_code,
-                        lp.selectedLanguage?.iso639_3_code
-                      )}
-                      colorWhenNotSelected={COLORS.white}
-                      colorWhenSelected={COLORS.blues[0]}
-                    ></LanguageCard>
-                  </CardActionArea>
+                    languageCardData={language}
+                    isSelected={codeMatches(
+                      language.iso639_3_code,
+                      lp.selectedLanguage?.iso639_3_code
+                    )}
+                    onClick={() => lp.toggleSelectLanguage(language)}
+                  ></LanguageCard>
                   {codeMatches(
                     language.iso639_3_code,
                     lp.selectedLanguage?.iso639_3_code
@@ -221,22 +214,17 @@ export const LanguagePicker: React.FunctionComponent<{
                                 width: fit-content;
                               `}
                             >
-                              <CardActionArea
+                              <ScriptCard
+                                css={css`
+                                  min-width: 175px;
+                                `}
+                                scriptData={script}
+                                isSelected={codeMatches(
+                                  script.code,
+                                  lp.selectedScript?.code
+                                )}
                                 onClick={() => lp.toggleSelectScript(script)}
-                              >
-                                <ScriptCard
-                                  css={css`
-                                    min-width: 175px;
-                                  `}
-                                  scriptData={script}
-                                  isSelected={codeMatches(
-                                    script.code,
-                                    lp.selectedScript?.code
-                                  )}
-                                  colorWhenNotSelected={COLORS.white}
-                                  colorWhenSelected={COLORS.blues[1]}
-                                />
-                              </CardActionArea>
+                              />
                             </ListItem>
                           );
                         })}
@@ -248,9 +236,9 @@ export const LanguagePicker: React.FunctionComponent<{
           </div>
           <CustomizeLanguageButton
             currentTagPreview={currentTagPreview}
-            showAsUnlistedLanguage={shouldShowUnlistedLanguageControls(
-              lp.selectedLanguage
-            )}
+            forUnlistedLanguage={
+              !lp.selectedLanguage || isUnlistedLanguage(lp.selectedLanguage)
+            }
             css={css`
               min-width: 300px;
               width: fit-content;
@@ -270,16 +258,8 @@ export const LanguagePicker: React.FunctionComponent<{
             padding: 15px 25px 25px 15px;
           `}
         >
-          {lp.selectedLanguage !== undefined && (
-            <div
-              id="right-pane-language-details=section"
-              css={css`
-                // padding: 10px 25px;
-                // width: 50%;
-                // height: 100%;
-                // position: relative;
-              `}
-            >
+          {lp.selectedLanguage && (
+            <div id="right-pane-language-details=section">
               <label htmlFor="language-name-bar">
                 <Typography
                   css={css`
@@ -299,7 +279,7 @@ export const LanguagePicker: React.FunctionComponent<{
                 `}
                 id="language-name-bar"
                 fullWidth
-                value={lp.CustomizableLanguageDetails.displayName}
+                value={lp.customizableLanguageDetails.displayName}
                 onChange={(e) => {
                   lp.saveLanguageDetails({
                     displayName: e.target.value,
@@ -320,7 +300,6 @@ export const LanguagePicker: React.FunctionComponent<{
           <div
             id="buttons-container"
             css={css`
-              // position: absolute;
               width: 100%;
               display: flex;
               justify-content: flex-end;
@@ -355,7 +334,7 @@ export const LanguagePicker: React.FunctionComponent<{
         open={customizeLanguageDialogOpen}
         selectedLanguage={lp.selectedLanguage}
         selectedScript={lp.selectedScript}
-        customizableLanguageDetails={lp.CustomizableLanguageDetails}
+        customizableLanguageDetails={lp.customizableLanguageDetails}
         saveLanguageDetails={lp.saveLanguageDetails}
         selectUnlistedLanguage={lp.selectUnlistedLanguage}
         searchString={lp.searchString}
