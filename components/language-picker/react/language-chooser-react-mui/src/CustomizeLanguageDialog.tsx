@@ -193,6 +193,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               )}
             />
             {/* TODO future work: make this also a autocomplete with registered variants */}
+            {/* use ROLV from langtags repo? */}
             {/* // TODO
           // 4.  Variant subtags MUST be registered with IANA according to the
           // rules in Section 3.5 of this document before being used to form

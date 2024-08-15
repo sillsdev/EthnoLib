@@ -1,3 +1,5 @@
+import { getShortestSufficientLangtag } from "./getShortestSufficientLangtag";
+
 export function createTag({
   languageCode,
   scriptCode,
@@ -28,5 +30,5 @@ export function createTag({
   if (dialectCode) {
     tag += `-${dialectCode}`;
   }
-  return tag;
+  return getShortestSufficientLangtag(tag);
 }

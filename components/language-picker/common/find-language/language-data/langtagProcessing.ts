@@ -221,7 +221,23 @@ function parseLangtagsJson() {
   fs.writeFileSync("language-data/languageData.json", data);
 }
 
+function parseLangTagsTxt() {
+  const langTagsTxtRaw = fs.readFileSync("langtags.txt", "utf8");
+  const langTagsTxt = langTagsTxtRaw.replaceAll("*", "");
+  const lines = langTagsTxt.split("\n");
+  const tagLookups = [];
+  for (const line of lines) {
+    const tags = line.split(" = ");
+    tagLookups.push({
+      shortest: tags[0],
+      allTags: tags,
+    });
+  }
+  fs.writeFileSync("shortestTagLookups.json", JSON.stringify(tagLookups));
+}
+
 parseLangtagsJson();
+parseLangTagsTxt();
 
 // counting scripts
 // let scriptOptions = new Set();

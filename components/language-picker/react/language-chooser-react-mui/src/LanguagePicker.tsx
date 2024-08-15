@@ -4,7 +4,6 @@ import { css } from "@emotion/react";
 import {
   AppBar,
   Button,
-  CardActionArea,
   Icon,
   InputAdornment,
   List,
@@ -40,7 +39,10 @@ import LazyLoad from "react-lazyload";
 import { FuseResult } from "fuse.js";
 
 export const LanguagePicker: React.FunctionComponent<{
-  searchResultModifier: (results: FuseResult<ILanguage>[]) => ILanguage[];
+  searchResultModifier: (
+    results: FuseResult<ILanguage>[],
+    searchString: string
+  ) => ILanguage[];
   initialState: ILanguagePickerInitialState;
 }> = (props) => {
   const lp: ILanguagePicker = useLanguagePicker(props.searchResultModifier);

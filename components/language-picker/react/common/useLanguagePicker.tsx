@@ -53,7 +53,10 @@ export const UNLISTED_LANGUAGE = {
 } as ILanguage;
 
 export const useLanguagePicker = (
-  searchResultModifier?: (results: FuseResult<ILanguage>[]) => ILanguage[]
+  searchResultModifier?: (
+    results: FuseResult<ILanguage>[],
+    searchString: string
+  ) => ILanguage[]
 ) => {
   const [searchString, setSearchString] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState<
@@ -114,17 +117,17 @@ export const useLanguagePicker = (
   }
 
   // details should only include the properties it wants to modify
-  const saveLanguageDetails = (
+  function saveLanguageDetails(
     details: ICustomizableLanguageDetails,
     script?: IScript
-  ) => {
+  ) {
     setSelectedScript(script);
     const updatedCustomizableDetails = {
       ...customizableLanguageDetails,
       ...details,
     };
     setCustomizableLanguageDetails(updatedCustomizableDetails);
-  };
+  }
 
   function getModifiedSearchResults(
     searchString: string,
@@ -178,12 +181,12 @@ export const useLanguagePicker = (
     clearCustomizableLanguageDetails();
   }
 
-  const onSearchStringChange = (searchString: string) => {
+  function onSearchStringChange(searchString: string) {
     setSearchString(searchString);
     setSelectedLanguage(undefined);
     setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
-  };
+  }
 
   return {
     languageData,
