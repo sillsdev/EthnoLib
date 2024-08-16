@@ -26,7 +26,6 @@ export function searchForLanguage(
     distance: 10,
     keys: fuseSearchKeys,
     ignoreFieldNorm: true,
-    useExtendedSearch: true,
   };
   const fuse = new Fuse(languages as ILanguage[], fuseOptions);
 
