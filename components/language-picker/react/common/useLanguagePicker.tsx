@@ -146,7 +146,6 @@ export const useLanguagePicker = (
   }
 
   function toggleSelectLanguage(language: ILanguage) {
-    console.log("language", language);
     if (codeMatches(language.iso639_3_code, selectedLanguage?.iso639_3_code)) {
       // Clicking on the selected language unselects it and clears data specific to that language
       setSelectedLanguage(undefined);

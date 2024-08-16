@@ -16,7 +16,7 @@ import {
   TextField,
 } from "@mui/material";
 import { TextInput } from "./TextInput";
-import iso3166 from "iso-3166-1";
+import { iso31661 } from "iso-3166";
 import { iso15924 } from "iso-15924";
 import { COLORS } from "./colors";
 import {
@@ -28,13 +28,10 @@ import {
 
 // ISO-3166-1 is a region code to region name lookup
 function getAllRegionOptions() {
-  // TODO Congo is duplicated in this list for some reason
-  // try npm install iso-3166
-  return iso3166
-    .all()
+  return iso31661
     .map((region) => {
       return {
-        label: region.country,
+        label: region.name,
         id: region.alpha2,
       };
     })

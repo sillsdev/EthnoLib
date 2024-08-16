@@ -17,6 +17,7 @@
     "@ethnolib/find-language": "*",
     "@mui/icons-material": "^5.15.19",
     "@mui/material": "^5.15.19",
+    "iso-3166": "^4.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

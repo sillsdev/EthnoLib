@@ -175,7 +175,7 @@ export const LanguagePicker: React.FunctionComponent<{
                 <LazyLoad
                   height={"125px"} // the min height we set on the language card
                   overflow={true}
-                  key={index} // TODO this should be language.iso639_3_code, but that breaks the lazyload for some reason! (try searching "uzb")
+                  key={index} // TODO this should be language.iso639_3_code, but that breaks the lazyload for some reason! (try searching "")
                 >
                   <LanguageCard
                     css={css`
