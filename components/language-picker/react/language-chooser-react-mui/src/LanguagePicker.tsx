@@ -175,7 +175,10 @@ export const LanguagePicker: React.FunctionComponent<{
                 <LazyLoad
                   height={"125px"} // the min height we set on the language card
                   overflow={true}
-                  key={index} // TODO this should be language.iso639_3_code, but that breaks the lazyload for some reason! (try searching "")
+                  // Enhance: If we need to speed things up, it would be more efficient to use the iso639_3_code as the key
+                  // though that currently would cause lazyload to show gaps (placeholders?) in the list (try searching "eng")
+                  // so we would probably need to use forceCheck on the lazyload
+                  key={index}
                 >
                   <LanguageCard
                     css={css`
