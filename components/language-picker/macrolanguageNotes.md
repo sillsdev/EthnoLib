@@ -119,5 +119,5 @@ However, at least for the purposes of Bloom, we usually want the users to pick t
     },
     ```
 
-TODO For now, because we have at least one situation like this, we aren't blanket cutting out macrolanguages but should eventually figure out a way of determining which macrolanguages are actually valid options.
+TODO future work: For now, because we have at least one situation like this, we aren't blanket cutting out macrolanguages but should eventually figure out a way of determining which macrolanguages are actually valid options.
 ````
