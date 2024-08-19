@@ -191,7 +191,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             />
             {/* TODO future work: make this also a autocomplete with registered variants */}
             {/* use ROLV from langtags repo? */}
-            // from BCP-47 https://www.rfc-editor.org/bcp/bcp47.txt:
+            {/* // from BCP-47 https://www.rfc-editor.org/bcp/bcp47.txt:
           // 4.  Variant subtags MUST be registered with IANA according to the
           // rules in Section 3.5 of this document before being used to form
           // language tags.  In order to distinguish variants from other types
@@ -199,7 +199,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
           // content restrictions:
 
           // 1.  Variant subtags that begin with a letter (a-z, A-Z) MUST be
-          //     at least five characters long. */}
+          //     at least five characters long.  */}
             <TextInput
               id="customize-variant-field"
               label="Variant (dialect)"
