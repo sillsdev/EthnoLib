@@ -25,7 +25,7 @@ describe("searchForLanguage", () => {
     searchDoesFindLanguage("español", "spa");
     searchDoesFindLanguage("espanol", "spa");
     searchDoesFindLanguage("esp", "spa");
-    // searchFindsLanguage("tok pisin", "tpi"); TODO fix queries with spaces
+    searchDoesFindLanguage("tok pisin", "tpi");
     searchDoesFindLanguage("tokpisin", "tpi");
     searchDoesFindLanguage("tok", "tpi");
   });
@@ -48,7 +48,7 @@ describe("searchForLanguage", () => {
     searchDoesFindLanguage("Porxtuguese", "por");
     searchDoesFindLanguage("ortuguese", "por");
     searchDoesFindLanguage("Potuguese", "por");
-    // searchFindsLanguage("Po tuguese", "por"); // TODO fix queries with spaces
+    searchDoesFindLanguage("Po tuguese", "por");
     searchDoesFindLanguage("Porxuguese", "por");
   });
   it("should find languages by iso639_3 code", () => {
@@ -78,7 +78,7 @@ describe("searchForLanguage", () => {
     searchDoesFindLanguage("JaPanEsE", "jpn");
   });
   // it("should find matches that don't start with the query", () => {
-  // TODO fine-tune the fuzzy matching so "ohlone" brings up "northern ohlone"
+  // TODO future work: fine-tune the fuzzy matching so "ohlone" brings up "northern ohlone"
   // searchFindsLanguage("ohlone", "cst");
   // });
   it("does not find languages that completely don't match the query", () => {

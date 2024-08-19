@@ -9,7 +9,7 @@
   "main": "index.js",
   "keywords": [],
   "author": "",
-  "license": "TODO",
+  "license": "MIT",
   "devDependencies": {
     "@types/lodash": "^4.17.7",
     "@types/react-lazyload": "^3.2.3",

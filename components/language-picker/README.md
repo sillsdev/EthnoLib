@@ -2,7 +2,15 @@
 
 Originally designed for Bloom Desktop.
 
-`language-picker/common/find-language` contains the logic for fuzzy-searching for languages, suitable to be published on its own and usable by various frontends. The database of languages is based on [langtags.json](https://github.com/silnrsi/langtags). Also has various methods for modifying the search results to handle special cases (e.g. sign languages and very common languages). Currently, corner cases in the search results are adjusted as makes sense for Bloom's use cases by `defaultSearchResultModifier.` TODO describe what `defaultSearchResultModifier.` does once this is finalized, as well as how users can customize their own modifier.
+`language-picker/common/find-language` contains the logic for fuzzy-searching for languages, suitable to be published on its own and usable by various frontends. The database of languages is based on [langtags.json](https://github.com/silnrsi/langtags). Also has various methods for modifying the search results to handle special cases (e.g. sign languages and very common languages). Currently, corner cases in the search results are adjusted as makes sense for Bloom's use cases by `defaultSearchResultModifier.`which
+
+- ensures the English result comes up on top if the user starts typing "English",
+- ensures the French result comes up on top if the user starts typing "French", "Francais" or "français"
+- Simplifies the English and French cards to remove the regions lists and most alternative names
+- Remove certain entries from langtags.json that don' represent specific extant human languages, such as zxx (no linguistic content) or ang (old english)
+- filters out Braille from the script options, as well as script codes that do not refer to specific relevant scripts
+
+searchResultModifiers.ts contains various helper methods which others can use to put together modifiers appropriate for their use cases.
 
 `language-picker/react/language-chooser-react-mui` is a React component which uses the `language-picker/common/find-language` logic to present a language picker.
 

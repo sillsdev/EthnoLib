@@ -117,7 +117,7 @@ function addOrCombineLangtagsEntry(entry, langs) {
       autonym: autonymOrFallback(entry, undefined),
       exonym: entry.name,
       iso639_3_code: entry.iso639_3 as string,
-      // TODO decide if we should work with the display codes on the backend, see how it interacts with macrolanguage situations
+      // TODO future work: decide if we should work with the display codes on the backend, see how it interacts with macrolanguage situations
       languageSubtag: entry.tag.split("-")[0], // might be 2-letter
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
@@ -137,7 +137,7 @@ function parseLangtagsJson() {
   for (const entry of langTags) {
     addOrCombineLangtagsEntry(entry, consolidatedLangTags);
 
-    // TODO I haven't finished implementing Macrolanguage/specific language handling. See README
+    // TODO future work: I haven't finished implementing Macrolanguage/specific language handling. See README
     if (iso639_3CodeDetails.has(entry.iso639_3)) {
       const iso639_3Codes = new Set([entry.iso639_3]);
       for (const tag of entry.tags || []) {
@@ -187,7 +187,7 @@ function parseLangtagsJson() {
     }
   );
 
-  // TODO still in progress implementing this
+  // TODO future work macrolanguage handling. This is still in progress
   // // Macrolanguage/specific language handling. See README
   // for (const lang of reformattedLangs) {
   //   if (!macrolangs.has(lang.code)) {
@@ -238,27 +238,6 @@ function parseLangTagsTxt() {
 
 parseLangtagsJson();
 parseLangTagsTxt();
-
-// counting scripts
-// let scriptOptions = new Set();
-// let allScripts = new Set();
-// for (const lang of reformattedLangs) {
-//   allScripts = new Set([...allScripts, ...lang.scripts]);
-//   const langScripts = new Set(lang.scripts);
-//   // TODO do this more cleanly
-//   langScripts.delete("Brai");
-//   langScripts.delete("Zxxx");
-//   langScripts.delete("Zyyy");
-//   langScripts.delete("Zzzz");
-//   langScripts.delete("Zmth");
-//   langScripts.delete("Zsym");
-//   if (langScripts.size > 1) {
-//     scriptOptions = new Set([...scriptOptions, ...langScripts]);
-//   }
-// }
-// console.log([...scriptOptions].length);
-// console.log([...allScripts].length);
-// fs.writeFileSync("scripts.json", [...scriptOptions].sort().join("\n"));
 
 // macrolang checking...
 

@@ -9,7 +9,7 @@ import { defaultSearchResultModifier } from "@ethnolib/find-language/searchResul
 import { LanguagePicker } from "./LanguagePicker";
 
 function Demo() {
-  // TODO use this theme more? Put all the colors into the theme?
+  // TODO future work: move all the colors used into the theme
   const theme = createTheme({
     palette: {
       primary: {
