@@ -11,21 +11,21 @@ export function createTag({
   regionCode?: string;
   dialectCode?: string;
 }) {
-  if (!languageCode) {
+  let tag = "";
+  if (languageCode) {
+    tag += languageCode;
+  } else {
     // Unlisted language
-    let tag = "qaa";
-    if (regionCode) {
-      tag += `-${regionCode}`;
-    }
-    tag += `-x-${dialectCode}`;
-    return tag;
+    tag += "qaa";
   }
-  let tag = languageCode;
   if (scriptCode) {
     tag += `-${scriptCode}`;
   }
   if (regionCode) {
     tag += `-${regionCode}`;
+  }
+  if (!languageCode) {
+    tag += "-x";
   }
   if (dialectCode) {
     tag += `-${dialectCode}`;
