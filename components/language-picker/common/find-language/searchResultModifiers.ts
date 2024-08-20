@@ -126,10 +126,7 @@ const ANCIENT_LANGUAGE_ENTRY_CODES = new Set([
   // Filter for deprecated, historical languages etc.
 ]);
 
-const OTHER_EXCLUDED_LANGUAGE_CODES = new Set([
-  "frc", // Francais cadien/Cajun french/Louisiana french, spoken in the U.S.
-  // TODO need to confirm this is okay to exclude, but seems like it will cause confusion otherwise
-]);
+const OTHER_EXCLUDED_LANGUAGE_CODES = new Set([]);
 
 export function filterOutDefaultExcludedLanguages(
   results: ILanguage[]

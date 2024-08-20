@@ -18,7 +18,7 @@ export const ScriptCard: React.FunctionComponent<
   return (
     <OptionCard {...optionCardProps}>
       <Typography variant="h5">{scriptData.name}</Typography>
-      <Typography variant="body2">TODO sample text</Typography>
+      <Typography variant="body2">TODO sample text here</Typography>
     </OptionCard>
   );
 };
