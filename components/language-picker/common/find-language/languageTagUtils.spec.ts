@@ -25,6 +25,6 @@ describe("Language tag utils", () => {
     // we are currently not adding script to qaa tags, though I'm not sure if we will always want this behavior
     expect(
       createTag({ dialectCode: "foobar", scriptCode: "Latn", regionCode: "US" })
-    ).toEqual("qaa-US-x-foobar");
+    ).toEqual("qaa-Latn-US-x-foobar");
   });
 });

@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { CardContent, Card, CardActionArea } from "@mui/material";
-import React, { PropsWithChildren } from "react";
+import React from "react";
 import { COLORS } from "./colors";
 
 export interface OptionCardProps {
@@ -18,7 +18,7 @@ export type OptionCardPropsWithoutColors = Omit<
 >;
 
 export const OptionCard: React.FunctionComponent<
-  PropsWithChildren<OptionCardProps>
+  { children: React.ReactNode } & OptionCardProps
 > = (props) => {
   const backgroundColor = props.isSelected
     ? props.backgroundColorWhenSelected || COLORS.white

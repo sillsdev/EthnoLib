@@ -9,7 +9,8 @@
     "moduleResolution": "Node",
     "outDir": "./dist",
     "declaration": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "skipLibCheck": true 
   },
   "include": ["."],
   "exclude": ["./dist/**/*", "node_modules", "**/*.spec.ts"],

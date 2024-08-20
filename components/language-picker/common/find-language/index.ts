@@ -4,3 +4,4 @@ export * from "./searchResultModifiers";
 export * from "./matchingSubstringDemarcation";
 export * from "./languageTagUtils";
 export * from "./getShortestSufficientLangtag";
+export * from "./regionsAndScripts";

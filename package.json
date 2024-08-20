@@ -10,17 +10,10 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
+  "dependencies": {},
   "devDependencies": {
-    "@types/lodash": "^4.17.7",
-    "@types/react-lazyload": "^3.2.3",
     "nx": "^19.1.2",
+    "vite": "^5.0.8",
     "vitest": "^2.0.5"
-  },
-  "dependencies": {
-    "@emotion/css": "^11.11.2",
-    "@emotion/react": "^11.11.4",
-    "@emotion/styled": "^11.11.5",
-    "@mui/material": "^5.15.19",
-    "lodash": "^4.17.21"
   }
 }

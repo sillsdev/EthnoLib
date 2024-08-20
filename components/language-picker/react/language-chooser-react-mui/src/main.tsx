@@ -1,9 +1,11 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
+// import React from "react";
+import ReactDOM from "react-dom";
 import Demo from "./Demo.tsx";
+import React from "react";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+ReactDOM.render(
   <React.StrictMode>
-    <Demo />
-  </React.StrictMode>
+    <Demo />,
+  </React.StrictMode>,
+  document.getElementById("root")
 );
