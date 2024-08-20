@@ -16,10 +16,10 @@ import {
   TextField,
 } from "@mui/material";
 import { TextInput } from "./TextInput";
-import { iso31661 } from "iso-3166";
-import { iso15924 } from "iso-15924";
 import { COLORS } from "./colors";
 import {
+  getAllRegions,
+  getAllScripts,
   ILanguage,
   IRegion,
   IScript,
@@ -28,17 +28,17 @@ import {
 
 // ISO-3166-1 is a region code to region name lookup
 function getAllRegionOptions() {
-  return iso31661.map((region) => {
+  return getAllRegions().map((region: IRegion) => {
     return {
       label: region.name,
-      id: region.alpha2,
+      id: region.code,
     };
   });
 }
 
 // ISO-15924 is a script code to script name lookup
 function getAllScriptOptions() {
-  return iso15924.map((script) => {
+  return getAllScripts().map((script: IScript) => {
     return {
       label: script.name,
       id: script.code,
