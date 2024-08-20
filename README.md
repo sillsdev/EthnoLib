@@ -7,7 +7,7 @@ This is a small collection Browser components for language apps. Each is publish
 
 ## About the monorepo
 
-EthnoLib is a [monorepo](https://nx.dev/concepts/decisions/why-monorepos) using Nx.
+EthnoLib is a [monorepo](https://nx.dev/concepts/decisions/why-monorepos) using nx.
 
 We recommend installing nx globally.
 `npm i -g nx`

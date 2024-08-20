@@ -1,6 +1,6 @@
 # Language Picker
 
-This project was initially developed for use in Bloom Desktop.
+This project was initially developed for use in [BloomDesktop](https://github.com/BloomBooks/BloomDesktop).
 
 The `language-picker/common/find-language` module contains the logic for fuzzy-searching languages. This module is designed to be published independently and can be utilized by various frontends. The language database is based on [langtags.json](https://github.com/silnrsi/langtags) and also references [langtags.txt](https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#langtagstxt). It includes various methods for adjusting search results to handle special cases, such as sign languages and very common languages. Currently, edge cases in the search results are adjusted for Bloom’s use case by the `defaultSearchResultModifier`, which:
 
@@ -23,11 +23,11 @@ For details of macrolanguage handling, see [macrolanguageNotes.md](macrolanguage
 
 ## Developing
 
-First, set up Nx if you haven't done so already (see [README.md](../../README.md)).
+First, set up nx if you haven't done so already (see [README.md](../../README.md)).
 
 We recommend installing nx globally, but if you haven't, you can just prefix all the commands with `npx`
 
-Although we recommend installing Nx globally, you can alternatively run the nx commands without a global installation by prefixing them with `npx`, e.g. `npx nx dev @ethnolib/language-chooser-react-mui`.
+Although we recommend installing nx globally, you can alternatively run the nx commands without a global installation by prefixing them with `npx`, e.g. `npx nx dev @ethnolib/language-chooser-react-mui`.
 
 To locally run a hot-reloading demo of the MUI language chooser: `nx dev @ethnolib/language-chooser-react-mui`
 
@@ -37,5 +37,5 @@ If you modify [langtagProcessing.ts](common/find-language/langtagProcessing.ts),
 
 ## Unit tests
 
-Language picker uses vitest for unit testing. . To run tests, use:
+Language picker uses vitest for unit testing. To run tests, use:
 `nx test @ethnolib/find-language`
