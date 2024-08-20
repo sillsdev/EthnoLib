@@ -126,16 +126,13 @@ const ANCIENT_LANGUAGE_ENTRY_CODES = new Set([
   // Filter for deprecated, historical languages etc.
 ]);
 
-const OTHER_EXCLUDED_LANGUAGE_CODES = new Set([]);
-
 export function filterOutDefaultExcludedLanguages(
   results: ILanguage[]
 ): ILanguage[] {
   return filterLanguageCodes(
-    (code) =>
+    ((code) =>
       !NOT_A_LANGUAGE_ENTRY_CODES.has(code) &&
-      !ANCIENT_LANGUAGE_ENTRY_CODES.has(code) &&
-      !OTHER_EXCLUDED_LANGUAGE_CODES.has(code),
+      !ANCIENT_LANGUAGE_ENTRY_CODES.has(code)) as (value: string) => boolean,
     results
   );
 }

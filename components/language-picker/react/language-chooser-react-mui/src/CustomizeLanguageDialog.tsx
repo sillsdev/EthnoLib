@@ -253,7 +253,9 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
 
               props.saveLanguageDetails(
                 {
-                  displayName: dialogSelectedDialect,
+                  displayName: isUnlistedLanguageDialog
+                    ? dialogSelectedDialect
+                    : props.customizableLanguageDetails.displayName,
                   region: {
                     code: dialogSelectedRegion?.id,
                     name: dialogSelectedRegion?.label,
