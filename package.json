@@ -1,0 +1,19 @@
+{
+  "name": "@ethnolib/source",
+  "workspaces": [
+    "components/language-picker/common/*",
+    "components/language-picker/react/*"
+  ],
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "nx": "^19.1.2",
+    "vite": "^5.0.8",
+    "vitest": "^2.0.5"
+  }
+}

@@ -1,0 +1,17 @@
+{
+    "editor.formatOnSave": true,
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "cSpell.words": [
+        "autonym",
+        "ethnolib",
+        "exonym",
+        "langtag",
+        "langtags",
+        "macrolanguage"
+    ]
+}
