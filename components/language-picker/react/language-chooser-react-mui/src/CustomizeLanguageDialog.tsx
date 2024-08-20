@@ -28,14 +28,12 @@ import {
 
 // ISO-3166-1 is a region code to region name lookup
 function getAllRegionOptions() {
-  return iso31661
-    .map((region) => {
-      return {
-        label: region.name,
-        id: region.alpha2,
-      };
-    })
-    .filter((region) => region.label !== "Congo");
+  return iso31661.map((region) => {
+    return {
+      label: region.name,
+      id: region.alpha2,
+    };
+  });
 }
 
 // ISO-15924 is a script code to script name lookup
