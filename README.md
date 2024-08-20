@@ -1,6 +1,6 @@
 # EthnoLib
 
-This is a small collection Browser components for language apps. Each is published to its own NPM package.
+This is a small collection of browser components for language apps. Each is published to its own npm package.
 
 > [!warning]
 > This project is currently under development and not ready for public use.
