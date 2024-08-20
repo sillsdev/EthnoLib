@@ -38,35 +38,37 @@ const latinScriptData = { code: "Latn", name: "Latin" } as IScript;
 
 // Replace the English result with a simpler version that only has "English" and the code on it
 function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
-  const getSpecialEntry = (result: ILanguage) =>
-    ({
+  function getSpecialEntry(result: ILanguage) {
+    return {
       autonym: undefined, // because exonym is mandatory and we don't want to repeat it
       exonym: result.exonym, // "English",
       iso639_3_code: result.iso639_3_code,
-      displayCode: result.displayCode,
+      languageSubtag: result.languageSubtag,
       regionNames: "",
       names: [],
       scripts: [latinScriptData],
       variants: "",
       alternativeTags: [],
-    } as ILanguage);
+    } as ILanguage;
+  }
   return substituteInSpecialEntry("eng", getSpecialEntry, results);
 }
 
 // Replace the French result with a simpler version that only has "Francais", "French" and the code on it
 function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
-  const getSpecialEntry = (result: any) =>
-    ({
+  function getSpecialEntry(result: ILanguage) {
+    return {
       autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
       exonym: result.exonym, // "French"
       iso639_3_code: result.code,
-      displayCode: result.displayCode,
+      languageSubtag: result.languageSubtag,
       regionNames: "",
       names: [],
       scripts: [latinScriptData],
       variants: "",
       alternativeTags: [],
-    } as ILanguage);
+    } as ILanguage;
+  }
   return substituteInSpecialEntry("fra", getSpecialEntry, results);
 }
 
@@ -124,10 +126,7 @@ const ANCIENT_LANGUAGE_ENTRY_CODES = new Set([
   // Filter for deprecated, historical languages etc.
 ]);
 
-const OTHER_EXCLUDED_LANGUAGE_CODES = new Set([
-  "frc", // Francais cadien/Cajun french/Louisiana french, spoken in the U.S.
-  // TODO need to confirm this is okay to exclude, but seems like it will cause confusion otherwise
-]);
+const OTHER_EXCLUDED_LANGUAGE_CODES = new Set([]);
 
 export function filterOutDefaultExcludedLanguages(
   results: ILanguage[]

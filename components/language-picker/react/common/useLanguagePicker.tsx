@@ -43,7 +43,7 @@ export interface ILanguagePicker {
 export const UNLISTED_LANGUAGE_CODE = "qaa";
 export const UNLISTED_LANGUAGE = {
   iso639_3_code: UNLISTED_LANGUAGE_CODE,
-  displayCode: UNLISTED_LANGUAGE_CODE,
+  languageSubtag: UNLISTED_LANGUAGE_CODE,
   autonym: undefined,
   exonym: "Unknown Language",
   regionNames: "",
@@ -53,7 +53,10 @@ export const UNLISTED_LANGUAGE = {
 } as ILanguage;
 
 export const useLanguagePicker = (
-  searchResultModifier?: (results: FuseResult<ILanguage>[]) => ILanguage[]
+  searchResultModifier?: (
+    results: FuseResult<ILanguage>[],
+    searchString: string
+  ) => ILanguage[]
 ) => {
   const [searchString, setSearchString] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState<
@@ -105,7 +108,7 @@ export const useLanguagePicker = (
     // TODO if there is a language code that is also the start of so many language names
     // that the language card with that code isn't initially visible and one must scroll to see it,
     // scroll to it
-    onSearchStringChange(language.displayCode);
+    onSearchStringChange(language.languageSubtag);
     setSelectedLanguage(language);
     saveLanguageDetails(
       customDetails || ({} as ICustomizableLanguageDetails),
@@ -114,17 +117,17 @@ export const useLanguagePicker = (
   }
 
   // details should only include the properties it wants to modify
-  const saveLanguageDetails = (
+  function saveLanguageDetails(
     details: ICustomizableLanguageDetails,
     script?: IScript
-  ) => {
+  ) {
     setSelectedScript(script);
     const updatedCustomizableDetails = {
       ...customizableLanguageDetails,
       ...details,
     };
     setCustomizableLanguageDetails(updatedCustomizableDetails);
-  };
+  }
 
   function getModifiedSearchResults(
     searchString: string,
@@ -177,12 +180,12 @@ export const useLanguagePicker = (
     clearCustomizableLanguageDetails();
   }
 
-  const onSearchStringChange = (searchString: string) => {
+  function onSearchStringChange(searchString: string) {
     setSearchString(searchString);
     setSelectedLanguage(undefined);
     setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
-  };
+  }
 
   return {
     languageData,

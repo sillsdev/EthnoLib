@@ -50,7 +50,7 @@ interface ILanguageInternal {
   autonym: string;
   exonym: string;
   iso639_3_code: string;
-  displayCode: string;
+  languageSubtag: string;
   regionNames: Set<string>; // ISO 3166 codes
   names: Set<string>;
   scripts: Set<string>;
@@ -117,8 +117,8 @@ function addOrCombineLangtagsEntry(entry, langs) {
       autonym: autonymOrFallback(entry, undefined),
       exonym: entry.name,
       iso639_3_code: entry.iso639_3 as string,
-      // TODO decide if we should work with the display codes on the backend, see how it interacts with macrolanguage situations
-      displayCode: entry.tag.split("-")[0], // might be 2-letter
+      // TODO future work: decide if we should work with the display codes on the backend, see how it interacts with macrolanguage situations
+      languageSubtag: entry.tag.split("-")[0], // might be 2-letter
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
       scripts: new Set([entry.script]),
@@ -137,7 +137,7 @@ function parseLangtagsJson() {
   for (const entry of langTags) {
     addOrCombineLangtagsEntry(entry, consolidatedLangTags);
 
-    // TODO I haven't finished implementing Macrolanguage/specific language handling. See README
+    // TODO future work: I haven't finished implementing Macrolanguage/specific language handling. See README
     if (iso639_3CodeDetails.has(entry.iso639_3)) {
       const iso639_3Codes = new Set([entry.iso639_3]);
       for (const tag of entry.tags || []) {
@@ -173,7 +173,7 @@ function parseLangtagsJson() {
         autonym: uncomma(langData.autonym),
         exonym: uncomma(langData.exonym),
         iso639_3_code: langData.iso639_3_code,
-        displayCode: langData.displayCode,
+        languageSubtag: langData.languageSubtag,
         regionNames: [...langData.regionNames].join(COMMA_SEPARATOR),
         scripts: [...new Set([...langData.scripts])].map((scriptCode) => {
           return {
@@ -187,7 +187,7 @@ function parseLangtagsJson() {
     }
   );
 
-  // TODO still in progress implementing this
+  // TODO future work macrolanguage handling. This is still in progress
   // // Macrolanguage/specific language handling. See README
   // for (const lang of reformattedLangs) {
   //   if (!macrolangs.has(lang.code)) {
@@ -221,28 +221,23 @@ function parseLangtagsJson() {
   fs.writeFileSync("language-data/languageData.json", data);
 }
 
-parseLangtagsJson();
+function parseLangTagsTxt() {
+  const langTagsTxtRaw = fs.readFileSync("langtags.txt", "utf8");
+  const langTagsTxt = langTagsTxtRaw.replaceAll("*", "");
+  const lines = langTagsTxt.split("\n");
+  const tagLookups = [];
+  for (const line of lines) {
+    const tags = line.split(" = ");
+    tagLookups.push({
+      shortest: tags[0],
+      allTags: tags,
+    });
+  }
+  fs.writeFileSync("shortestTagLookups.json", JSON.stringify(tagLookups));
+}
 
-// counting scripts
-// let scriptOptions = new Set();
-// let allScripts = new Set();
-// for (const lang of reformattedLangs) {
-//   allScripts = new Set([...allScripts, ...lang.scripts]);
-//   const langScripts = new Set(lang.scripts);
-//   // TODO do this more cleanly
-//   langScripts.delete("Brai");
-//   langScripts.delete("Zxxx");
-//   langScripts.delete("Zyyy");
-//   langScripts.delete("Zzzz");
-//   langScripts.delete("Zmth");
-//   langScripts.delete("Zsym");
-//   if (langScripts.size > 1) {
-//     scriptOptions = new Set([...scriptOptions, ...langScripts]);
-//   }
-// }
-// console.log([...scriptOptions].length);
-// console.log([...allScripts].length);
-// fs.writeFileSync("scripts.json", [...scriptOptions].sort().join("\n"));
+parseLangtagsJson();
+parseLangTagsTxt();
 
 // macrolang checking...
 

@@ -5,7 +5,7 @@ import { ILanguage } from "./findLanguageInterfaces";
 const fuseSearchKeys = [
   { name: "autonym", weight: 100 },
   { name: "exonym", weight: 100 },
-  { name: "displayCode", weight: 80 },
+  { name: "languageSubtag", weight: 80 },
   { name: "names", weight: 8 },
   { name: "regionNames", weight: 1 },
 ];
@@ -26,7 +26,6 @@ export function searchForLanguage(
     distance: 10,
     keys: fuseSearchKeys,
     ignoreFieldNorm: true,
-    useExtendedSearch: true,
   };
   const fuse = new Fuse(languages as ILanguage[], fuseOptions);
 

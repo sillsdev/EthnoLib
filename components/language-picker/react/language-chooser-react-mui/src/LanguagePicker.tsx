@@ -4,7 +4,6 @@ import { css } from "@emotion/react";
 import {
   AppBar,
   Button,
-  CardActionArea,
   Icon,
   InputAdornment,
   List,
@@ -40,7 +39,10 @@ import LazyLoad from "react-lazyload";
 import { FuseResult } from "fuse.js";
 
 export const LanguagePicker: React.FunctionComponent<{
-  searchResultModifier: (results: FuseResult<ILanguage>[]) => ILanguage[];
+  searchResultModifier: (
+    results: FuseResult<ILanguage>[],
+    searchString: string
+  ) => ILanguage[];
   initialState: ILanguagePickerInitialState;
 }> = (props) => {
   const lp: ILanguagePicker = useLanguagePicker(props.searchResultModifier);
@@ -56,7 +58,7 @@ export const LanguagePicker: React.FunctionComponent<{
 
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTag({
-    languageCode: stripDemarcation(lp.selectedLanguage?.displayCode),
+    languageCode: stripDemarcation(lp.selectedLanguage?.languageSubtag),
     scriptCode: stripDemarcation(lp.selectedScript?.code),
     regionCode: stripDemarcation(lp.customizableLanguageDetails?.region?.code),
     dialectCode: lp.selectedLanguage
@@ -173,7 +175,10 @@ export const LanguagePicker: React.FunctionComponent<{
                 <LazyLoad
                   height={"125px"} // the min height we set on the language card
                   overflow={true}
-                  key={index} // TODO this should be language.iso639_3_code, but that breaks the lazyload for some reason! (try searching "uzb")
+                  // Enhance: If we need to speed things up, it would be more efficient to use the iso639_3_code as the key
+                  // though that currently would cause lazyload to show gaps (placeholders?) in the list (try searching "eng")
+                  // so we would probably need to use forceCheck on the lazyload
+                  key={index}
                 >
                   <LanguageCard
                     css={css`
