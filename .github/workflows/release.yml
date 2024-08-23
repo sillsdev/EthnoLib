@@ -17,7 +17,7 @@ jobs:
         run: npm install
 
       - name: Build package
-        run: nx build @ethnolib/find-language
+        run: npm run build --prefix components/language-picker/common/find-language/
 
       - name: Run tests
-        run: nx test @ethnolib/find-language
+        run: npm run test --prefix components/language-picker/common/find-language/
