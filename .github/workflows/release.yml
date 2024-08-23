@@ -1,0 +1,23 @@
+name: Build-Test-Release
+
+on:
+  push:
+    branches:
+      - gha_test
+
+jobs:
+  build-test-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build package
+        run: nx build @ethnolib/find-language
+
+      - name: Run tests
+        run: nx test @ethnolib/find-language
