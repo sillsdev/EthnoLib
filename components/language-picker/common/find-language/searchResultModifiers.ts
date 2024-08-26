@@ -1,5 +1,5 @@
 import { FuseResult } from "fuse.js";
-import { ILanguage, IScript } from "@ethnolib/find-language";
+import { ILanguage, IScript } from "./findLanguageInterfaces";
 import {
   demarcateResults,
   stripDemarcation,

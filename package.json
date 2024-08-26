@@ -4,7 +4,7 @@
     "components/language-picker/common/*",
     "components/language-picker/react/*"
   ],
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "",
   "main": "index.js",
   "keywords": [],
