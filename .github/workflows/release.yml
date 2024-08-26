@@ -17,7 +17,7 @@ jobs:
         run: npm install
 
       - name: Build package
-        run: npx nx build @ethnolib/find-language
+        run: npx nx build @ethnolib/language-chooser-react-mui
 
       - name: Run tests
         run: npx nx test @ethnolib/find-language
