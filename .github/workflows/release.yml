@@ -21,3 +21,6 @@ jobs:
 
       - name: Run tests
         run: npx nx test @ethnolib/find-language
+
+      - name: Clean up package.json
+        run: npm pkg delete devDependencies && npm pkg delete dependencies
