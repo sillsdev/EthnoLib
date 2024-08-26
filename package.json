@@ -15,9 +15,5 @@
     "nx": "^19.1.2",
     "vite": "^5.0.8",
     "vitest": "^2.0.5"
-  },
-  "optionalDependencies": {
-    "@nx/nx-linux-x64-gnu": "18.0.4",
-    "@rollup/rollup-linux-x64-gnu": "4.4.1"
   }
 }
