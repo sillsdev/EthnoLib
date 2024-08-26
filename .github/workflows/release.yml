@@ -7,14 +7,14 @@ on:
 
 jobs:
   build-test-release:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci --include=optional
 
       - name: Build package
         run: npx nx build @ethnolib/language-chooser-react-mui
