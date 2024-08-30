@@ -24,3 +24,13 @@ jobs:
 
       - name: Clean up package.json
         run: npm pkg delete devDependencies && npm pkg delete dependencies
+
+      # Done manually because of semantic-release, copied from bloom-player
+      - name: Clean up package.json
+        run: npm pkg delete scripts && npm pkg delete devDependencies && npm pkg delete dependencies
+
+      - name: Publish package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
