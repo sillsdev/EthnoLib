@@ -1,0 +1,36 @@
+name: Build-Test-Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-test-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build package
+        run: npx nx build @ethnolib/language-chooser-react-mui
+
+      - name: Run tests
+        run: npx nx test @ethnolib/find-language
+
+      - name: Clean up package.json
+        run: npm pkg delete devDependencies && npm pkg delete dependencies
+
+      # Done manually because of semantic-release, copied from bloom-player
+      - name: Clean up package.json
+        run: npm pkg delete scripts && npm pkg delete devDependencies && npm pkg delete dependencies
+
+      - name: Publish package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
