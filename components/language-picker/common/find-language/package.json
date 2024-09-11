@@ -14,7 +14,7 @@
     "build": "tsup ./index.ts --format esm --dts --external react",
     "dev": "tsup ./index.ts --format esm --watch --dts --external react",
     "typecheck": "tsc",
-    "test": "vitest --config vitest.config.ts"
+    "test": "nx vite:test --config vitest.config.ts"
   },
   "keywords": [],
   "author": "",
