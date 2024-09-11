@@ -30,4 +30,8 @@
     "tsup": "6.2.2",
     "typescript": "^4.6.4"
   }
+  ,
+  "publishConfig": {
+    "access": "public"
+  }
 }

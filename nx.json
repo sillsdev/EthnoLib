@@ -25,5 +25,8 @@
         "serveStaticTargetName": "serve-static"
       }
     }
-  ]
+  ],
+  "release": {
+    "projects": ["@ethnolib/language-chooser-react-mui"]
+  }
 }
