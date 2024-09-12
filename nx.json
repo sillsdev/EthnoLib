@@ -27,6 +27,10 @@
     }
   ],
   "release": {
+    "projectsRelationship": "independent",
+    "version": {
+      "conventionalCommits": true
+    },
     "projects": ["@ethnolib/language-chooser-react-mui"]
   }
 }
