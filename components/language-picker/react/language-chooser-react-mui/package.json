@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "./dist/index.es.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "dev": "vite --open",
     "typecheck": "tsc",
@@ -13,7 +16,8 @@
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "react-lazyload": "^3.2.1"
+    "react-lazyload": "^3.2.1",
+    "vite-plugin-dts": "^4.2.1"
   },
   "devDependencies": {
     "@nx/vite": "^19.1.2",
