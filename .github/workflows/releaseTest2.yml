@@ -29,8 +29,10 @@ jobs:
       - name: Clean up package.json
         run: npm pkg delete scripts && npm pkg delete devDependencies && npm pkg delete dependencies
 
+      - name: Print Environment Info
+        run: npx nx report
+
       - name: Publish package
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx nx release
