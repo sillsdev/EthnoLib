@@ -3,9 +3,14 @@
   "private": true,
   "version": "0.0.2",
   "type": "module",
-  "main": "./dist/index.es.js",
-  "module": "dist/index.es.js",
-  "types": "dist/index.d.ts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js"
+    }
+  },
   "scripts": {
     "dev": "vite --open",
     "typecheck": "tsc",
