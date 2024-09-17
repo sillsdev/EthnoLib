@@ -35,6 +35,11 @@ jobs:
       - name: Print Environment Info
         run: npx nx report
 
+      - name: Set name and email for git
+        run: |
+          git config user.name "Github Actions"
+          git config user.email "test@example.com"
+
       - name: Publish package
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
