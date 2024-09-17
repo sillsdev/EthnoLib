@@ -19,7 +19,7 @@ import {
   ILanguage,
   IScript,
   stripDemarcation,
-} from "@ethnolib/find-language";
+} from "@nabalones/find-language";
 import { LanguageCard } from "./LanguageCard";
 import { ScriptCard } from "./ScriptCard";
 import { COLORS } from "./colors";
@@ -29,7 +29,7 @@ import {
   ILanguagePickerInitialState,
   ILanguagePicker,
 } from "../../common/useLanguagePicker";
-import { createTag } from "@ethnolib/find-language/languageTagUtils";
+import { createTag } from "@nabalones/find-language/languageTagUtils";
 import { debounce } from "lodash";
 import "./styles.css";
 import { CustomizeLanguageButton } from "./CustomizeLanguageButton";

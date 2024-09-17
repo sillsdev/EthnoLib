@@ -17,7 +17,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@ethnolib/language-chooser-react-mui": [
+      "@nabalones/language-chooser-react-mui": [
         "components/language-picker/react/language-chooser-react-mui/src/index.ts"
       ]
     }

@@ -1,4 +1,4 @@
-# EthnoLib
+# nabalones
 
 This is a small collection of browser components for language apps. Each is published to its own npm package.
 
@@ -7,7 +7,7 @@ This is a small collection of browser components for language apps. Each is publ
 
 ## About the monorepo
 
-EthnoLib is a [monorepo](https://nx.dev/concepts/decisions/why-monorepos) using nx.
+nabalones is a [monorepo](https://nx.dev/concepts/decisions/why-monorepos) using nx.
 
 We recommend installing nx globally.
 `npm i -g nx`

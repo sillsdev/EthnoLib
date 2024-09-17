@@ -7,7 +7,7 @@ import {
   stripDemarcation,
 } from "./matchingSubstringDemarcation";
 import { FuseResult } from "fuse.js";
-import { ILanguage } from "@ethnolib/find-language";
+import { ILanguage } from "@nabalones/find-language";
 import { cloneDeep } from "lodash";
 import { createTestLanguageEntry } from "./testUtils";
 

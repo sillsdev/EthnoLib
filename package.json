@@ -1,5 +1,5 @@
 {
-  "name": "@ethnolib/source",
+  "name": "@nabalones/source",
   "workspaces": [
     "components/language-picker/common/*",
     "components/language-picker/react/*"

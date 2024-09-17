@@ -4,11 +4,11 @@ import {
   IRegion,
   IScript,
   searchForLanguage,
-} from "@ethnolib/find-language";
+} from "@nabalones/find-language";
 import { useMemo, useState } from "react";
-import { stripResultMetadata } from "@ethnolib/find-language";
+import { stripResultMetadata } from "@nabalones/find-language";
 import { FuseResult } from "fuse.js";
-import { stripDemarcation } from "@ethnolib/find-language";
+import { stripDemarcation } from "@nabalones/find-language";
 
 export interface ICustomizableLanguageDetails {
   displayName?: string;

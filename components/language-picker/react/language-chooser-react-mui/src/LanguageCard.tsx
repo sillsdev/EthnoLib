@@ -5,7 +5,7 @@ import {
   OptionCardProps,
   OptionCardPropsWithoutColors,
 } from "./OptionCard";
-import { ILanguage } from "@ethnolib/find-language";
+import { ILanguage } from "@nabalones/find-language";
 import { memo } from "react";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
 import { COLORS } from "./colors";

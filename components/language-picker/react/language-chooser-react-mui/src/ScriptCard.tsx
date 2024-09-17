@@ -4,7 +4,7 @@ import {
   OptionCardPropsWithoutColors,
 } from "./OptionCard";
 import { Typography } from "@mui/material";
-import { IScript } from "@ethnolib/find-language";
+import { IScript } from "@nabalones/find-language";
 import { COLORS } from "./colors";
 
 export const ScriptCard: React.FunctionComponent<

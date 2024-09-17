@@ -2,7 +2,7 @@ import { Typography, TypographyProps } from "@mui/material";
 import {
   START_OF_MATCH_MARKER,
   END_OF_MATCH_MARKER,
-} from "@ethnolib/find-language";
+} from "@nabalones/find-language";
 import React from "react";
 
 function createNodeList(demarcatedText: string) {
