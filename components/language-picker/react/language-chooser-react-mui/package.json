@@ -1,6 +1,5 @@
 {
   "name": "@nabalones/language-chooser-react-mui",
-  "private": true,
   "version": "0.0.2",
   "type": "module",
   "main": "./index.js",
