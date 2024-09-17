@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install dependencies
         run: npm install
@@ -19,13 +21,14 @@ jobs:
       - name: Build package
         run: npx nx build @nabalones/language-chooser-react-mui
 
+      # find-language is a dependency of langauge-chooser-react-mui so will have been built in the build step
       - name: Run tests
         run: npx nx test @nabalones/find-language
 
       - name: Clean up package.json
         run: npm pkg delete devDependencies && npm pkg delete dependencies
 
-      # Done manually because of semantic-release, copied from bloom-player
+      # TODO do we still need this? copied from bloom-player
       - name: Clean up package.json
         run: npm pkg delete scripts && npm pkg delete devDependencies && npm pkg delete dependencies
 
