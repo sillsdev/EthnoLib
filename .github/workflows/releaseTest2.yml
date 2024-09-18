@@ -41,6 +41,9 @@ jobs:
           git config user.email "test@example.com"
 
       - name: Publish
+        uses: actions/setup-node@v2
+        with:
+          registry-url: "https://registry.npmjs.org"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx nx release --yes
