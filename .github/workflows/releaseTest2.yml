@@ -40,12 +40,7 @@ jobs:
           git config user.name "Github Actions"
           git config user.email "test@example.com"
 
-      - name: Prepare for release
+      - name: Prublish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx nx release
-
-      - name: Publish to npm
-        run: nx release publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx nx release --yes
