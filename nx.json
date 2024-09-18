@@ -31,16 +31,6 @@
     "version": {
       "conventionalCommits": true
     },
-    "changelog": {
-      "git": {
-        "commit": true,
-        "tag": true
-      },
-      "workspaceChangelog": {
-        "createRelease": "github"
-      },
-      "projectChangelogs": true
-    },
     "projects": ["@nabalones/language-chooser-react-mui"]
   }
 }
