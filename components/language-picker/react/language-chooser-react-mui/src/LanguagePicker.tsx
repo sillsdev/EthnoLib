@@ -28,7 +28,7 @@ import {
   isUnlistedLanguage,
   ILanguagePickerInitialState,
   ILanguagePicker,
-} from "../../common/useLanguagePicker";
+} from "./useLanguagePicker";
 import { createTag } from "@nabalones/find-language/languageTagUtils";
 import { debounce } from "lodash";
 import "./styles.css";

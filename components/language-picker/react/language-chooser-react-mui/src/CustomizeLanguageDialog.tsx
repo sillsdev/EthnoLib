@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import {
   ICustomizableLanguageDetails,
   isUnlistedLanguage,
-} from "../../common/useLanguagePicker";
+} from "./useLanguagePicker";
 import { createTag } from "@nabalones/find-language/languageTagUtils";
 import {
   Autocomplete,
