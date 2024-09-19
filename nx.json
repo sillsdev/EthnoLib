@@ -25,8 +25,8 @@
     "version": {
       "generatorOptions": {
         "packageRoot": "dist/components/language-picker/react/language-chooser-react-mui/",
-        "currentVersionResolver": "git-tag"
-      }
+      },
+      "conventionalCommits": true
     },
     "projects": ["@nabalones/language-chooser-react-mui"]
     }
