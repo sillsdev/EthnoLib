@@ -1,20 +1,9 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["{projectRoot}/dist"],
-      "cache": true
-    },
-    "typecheck": {
-      "cache": true
-    },
-    "lint": {
-      "cache": true
-    },
     "nx-release-publish": {
       "options": {
-        "packageRoot": "dist/packages/{projectName}"
+        "packageRoot": "dist/components/language-picker/react/language-chooser-react-mui/"
       }
     }
   },
@@ -34,9 +23,11 @@
   "release": {
     "projectsRelationship": "independent",
     "version": {
-      "packageRoot": "dist/packages/{projectName}",
-      "conventionalCommits": true
+      "generatorOptions": {
+        "packageRoot": "dist/components/language-picker/react/language-chooser-react-mui/",
+        "currentVersionResolver": "git-tag"
+      }
     },
-    "projects": ["@nabalones/language-chooser-react-mui", "@nabalones/find-language"]
+    "projects": ["@nabalones/language-chooser-react-mui"]
     }
 }
