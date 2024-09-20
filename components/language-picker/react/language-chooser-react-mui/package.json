@@ -17,7 +17,7 @@
   "dependencies": {
     "lodash": "^4.17.21",
     "react-lazyload": "^3.2.1",
-    "@nabalones/find-language": "*",
+    "@nabalones/find-language": "^0.0.1",
     "@nabalones/language-chooser-react-hook": "*"
   },
   "devDependencies": {
