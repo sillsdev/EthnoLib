@@ -52,6 +52,9 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx nx release --yes
 
+      - name: Push the publish commit
+        run: git push
+
       - name: Push the tag
         run: git push --tags
 # making a change for release
