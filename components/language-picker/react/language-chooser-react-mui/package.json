@@ -17,7 +17,8 @@
   "dependencies": {
     "lodash": "^4.17.21",
     "react-lazyload": "^3.2.1",
-    "vite-plugin-dts": "^4.2.1"
+    "@nabalones/find-language": "*",
+    "@nabalones/language-chooser-react-hook": "*"
   },
   "devDependencies": {
     "@nx/vite": "^19.1.2",
@@ -31,12 +32,12 @@
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vite-plugin-dts": "^4.2.1"
   },
   "peerDependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@nabalones/find-language": "*",
     "@mui/icons-material": "^5.15.19",
     "@mui/material": "^5.15.19",
     "react": "^17.0.2",

@@ -28,7 +28,7 @@ import {
   isUnlistedLanguage,
   ILanguagePickerInitialState,
   ILanguagePicker,
-} from "./useLanguagePicker";
+} from "@nabalones/language-chooser-react-hook";
 import { createTag } from "@nabalones/find-language/languageTagUtils";
 import { debounce } from "lodash";
 import "./styles.css";

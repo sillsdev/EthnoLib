@@ -3,7 +3,7 @@ import { css } from "@emotion/react";
 import { IScript, IRegion } from "@nabalones/find-language";
 import { ThemeProvider, createTheme } from "@mui/material";
 import { COLORS } from "./colors";
-import { ILanguagePickerInitialState } from "./useLanguagePicker";
+import { ILanguagePickerInitialState } from "@nabalones/language-chooser-react-hook";
 import "./styles.css";
 import { defaultSearchResultModifier } from "@nabalones/find-language/searchResultModifiers";
 import { LanguagePicker } from "./LanguagePicker";

@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import {
   ICustomizableLanguageDetails,
   isUnlistedLanguage,
-} from "./useLanguagePicker";
+} from "@nabalones/language-chooser-react-hook";
 import { createTag } from "@nabalones/find-language/languageTagUtils";
 import {
   Autocomplete,
