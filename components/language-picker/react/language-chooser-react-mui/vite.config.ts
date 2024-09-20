@@ -31,7 +31,7 @@ export default defineConfig({
     },
     lib: {
       entry: "src/index.ts",
-      name: "@nabalones/language-chooser-react-mui",
+      name: "@ethnolib/language-chooser-react-mui",
       fileName: "index",
       formats: ["es", "cjs"],
     },

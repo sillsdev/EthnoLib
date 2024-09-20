@@ -11,15 +11,21 @@
     "importHelpers": true,
     "target": "es2021",
     "module": "esnext",
-    "lib": ["es2021", "dom"],
+    "lib": [
+      "es2021",
+      "dom"
+    ],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@nabalones/language-chooser-react-mui": [
+      "@ethnolib/language-chooser-react-mui": [
         "components/language-picker/react/language-chooser-react-mui/src/index.ts"
       ]
     }
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": [
+    "node_modules",
+    "tmp"
+  ]
 }

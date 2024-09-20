@@ -1,5 +1,5 @@
 {
-  "name": "@nabalones/language-chooser-react-mui",
+  "name": "@ethnolib/language-chooser-react-mui",
   "version": "0.0.5",
   "main": "./index.js",
   "types": "./index.d.ts",
@@ -36,9 +36,9 @@
   "peerDependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@nabalones/find-language": "*",
     "@mui/icons-material": "^5.15.19",
     "@mui/material": "^5.15.19",
+    "@ethnolib/find-language": "*",
     "react": "^17.0.2",
     "react-dom": "^17.0.2"
   }

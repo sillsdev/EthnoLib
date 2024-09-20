@@ -26,11 +26,11 @@ jobs:
         run: npm install
 
       - name: Build package
-        run: npx nx build @nabalones/language-chooser-react-mui
+        run: npx nx build @ethnolib/language-chooser-react-mui
 
       # find-language is a dependency of langauge-chooser-react-mui so will have been built in the build step
       - name: Run tests
-        run: npx nx test @nabalones/find-language
+        run: npx nx test @ethnolib/find-language
 
       - name: Clean up package.json
         run: npm pkg delete devDependencies && npm pkg delete dependencies

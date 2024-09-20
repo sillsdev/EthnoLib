@@ -1,11 +1,11 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { IScript, IRegion } from "@nabalones/find-language";
+import { IScript, IRegion } from "@ethnolib/find-language";
 import { ThemeProvider, createTheme } from "@mui/material";
 import { COLORS } from "./colors";
 import { ILanguagePickerInitialState } from "./useLanguagePicker";
 import "./styles.css";
-import { defaultSearchResultModifier } from "@nabalones/find-language/searchResultModifiers";
+import { defaultSearchResultModifier } from "@ethnolib/find-language/searchResultModifiers";
 import { LanguagePicker } from "./LanguagePicker";
 
 function Demo() {

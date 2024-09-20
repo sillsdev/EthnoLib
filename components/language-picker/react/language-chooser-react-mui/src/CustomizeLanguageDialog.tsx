@@ -8,7 +8,7 @@ import {
   ICustomizableLanguageDetails,
   isUnlistedLanguage,
 } from "./useLanguagePicker";
-import { createTag } from "@nabalones/find-language/languageTagUtils";
+import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import {
   Autocomplete,
   DialogActions,
@@ -24,7 +24,7 @@ import {
   IRegion,
   IScript,
   stripDemarcation,
-} from "@nabalones/find-language";
+} from "@ethnolib/find-language";
 
 // ISO-3166-1 is a region code to region name lookup
 function getAllRegionOptions() {

@@ -24,10 +24,10 @@
     "projectsRelationship": "independent",
     "version": {
       "generatorOptions": {
-        "packageRoot": "dist/components/language-picker/react/language-chooser-react-mui/",
+        "packageRoot": "dist/components/language-picker/react/language-chooser-react-mui/"
       },
       "conventionalCommits": true
     },
-    "projects": ["@nabalones/language-chooser-react-mui"]
-    }
+    "projects": ["@ethnolib/language-chooser-react-mui"]
+  }
 }
