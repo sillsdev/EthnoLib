@@ -1,7 +1,7 @@
 import { iso15924 } from "iso-15924";
-import langTagsJson from "./langtags.json" assert { type: "json" };
+import langTagsJson from "./src/language-data/langtags.json" assert { type: "json" };
 import * as fs from "fs";
-import { ILanguage, IScript } from "../findLanguageInterfaces";
+import { ILanguage, IScript } from "./src/findLanguageInterfaces";
 // import iso3166 from "iso-3166-1";
 
 const COMMA_SEPARATOR = ", ";
