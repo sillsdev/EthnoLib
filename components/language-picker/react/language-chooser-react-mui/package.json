@@ -1,6 +1,6 @@
 {
   "name": "@nabalones/language-chooser-react-mui",
-  "version": "0.0.5",
+  "version": "0.0.12",
   "main": "./index.js",
   "types": "./index.d.ts",
   "exports": {
