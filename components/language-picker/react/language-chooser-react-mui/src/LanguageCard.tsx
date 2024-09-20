@@ -57,7 +57,7 @@ export const LanguageCard: React.FunctionComponent<
       {languageCardData.names.length > 0 && (
         <PartiallyBoldedTypography
           variant="body2"
-          // Always show all the names.
+          // Always show all the names
           css={css`
             text-wrap: balance;
           `}
