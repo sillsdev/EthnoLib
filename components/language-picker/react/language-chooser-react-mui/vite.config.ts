@@ -38,4 +38,10 @@ export default defineConfig({
       external: ["react", "react-dom", "react/jsx-runtime"],
     },
   },
+  optimizeDeps: {
+    include: [
+      "@nabalones/language-chooser-react-mui",
+      "@nabalones/find-language",
+    ],
+  },
 });
