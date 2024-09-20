@@ -56,7 +56,7 @@ export function stripDemarcation(
 export function demarcateExactMatches(searchString: string, result: ILanguage) {
   for (const field of fieldsToSearch) {
     if (Array.isArray(result[field])) {
-      result[field] = result[field].map((value) =>
+      result[field] = result[field].map((value: any) =>
         demarcateExactMatchString(searchString, value)
       );
     } else if (typeof result[field] === "string") {
