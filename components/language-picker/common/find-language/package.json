@@ -11,8 +11,8 @@
   ],
   "scripts": {
     "langtag-processing": "ts-node-esm ./language-data/langtagProcessing.ts",
-    "build": "tsup ./index.ts --format esm --dts --external react",
-    "dev": "tsup ./index.ts --format esm --watch --dts --external react",
+    "build": "tsup ./index.ts --format esm --dts",
+    "dev": "tsup ./index.ts --format esm --watch --dts",
     "typecheck": "tsc",
     "test": "vitest --config vitest.config.ts"
   },
