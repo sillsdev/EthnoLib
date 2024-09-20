@@ -23,7 +23,7 @@ export default defineConfig({
   // See: https://vitejs.dev/guide/build.html#library-mode
   build: {
     outDir:
-      "../../../../dist/components/language-picker/react/language-chooser-react-mui/",
+      "../../../../dist/components/language-picker/react/language-chooser-react-mui",
     emptyOutDir: true,
     reportCompressedSize: true,
     commonjsOptions: {
