@@ -1,5 +1,8 @@
 # About macrolanguage handling
 
+> [!warning]
+> Note much of the behavior described in this document has been backed out of the initial release of the language picker and will be implemented in a future release.
+
 - See
 
   - https://issues.bloomlibrary.org/youtrack/issue/BL-12657/Issues-with-macrolanguage-codes-in-the-language-picker
@@ -12,7 +15,7 @@
 
 `chm` (mari) is a macrolanguage which has individual languages `mhr` (Eastern Mari) and `mrj` (Western Mari). There are three relevant entries in Langtags.json, below. In this langauge picker, the language choices we offer users are based on the `iso639_3` field. The "Western Mari" entry is no problem and from it we create a language option with the "mrj" code. However, there is no entry which with `iso639_3` value `mhr`; but rather the two entries with `iso639_3` values of `chm` appear to be about the `mhr` language Western Mari. According to th langtags.json documentation: [For many macro languages, there is a representative language [in this case mhr] for that macro language [in this case chm]. In many cases the macro language code is more popular than the representative langauge code. Thus, for example, in the CLDR, the macro language code is used instead of the representative language code. For this reason, langtags.json unifies the representative language tags into the macro language tag set rather than having a separate tag set for them, and gives the tag for the tag set in terms of the macro language rather than the representative language.](https://github.com/silnrsi/langtags/blob/master/doc/langtags.md#macro-languages)
 
-However, at least for the purposes of Bloom, we usually want the users to pick the specific language code. So since `mhr` is an ISO 639-3 code that shows up as an alternative tag in the `tags` field of those two entries, we create an additional language option which as code `mhr` but contains info from those two entries and therefore is otherwise a duplicate of the `chm` language option coallesced from these entries. (in languageData.json I have marked these additionally created entries with `isForMacrolanguageDisambiguation = true`)
+However, at least for the purposes of Bloom, we usually want the users to pick the specific language code. So since `mhr` is an ISO 639-3 code that shows up as an alternative tag in the `tags` field of those two entries, we create an additional language option which has code `mhr` but contains info from those two entries and therefore is otherwise a duplicate of the `chm` language option coallesced from these entries. (in languageData.json I have marked these additionally created entries with `isForMacrolanguageDisambiguation = true`)
 
 ````
     {
