@@ -1,49 +1,64 @@
-{
-  "name": "@nabalones/language-chooser-react-mui",
-  "version": "0.0.12",
-  "main": "./index.js",
-  "types": "./index.d.ts",
-  "exports": {
-    ".": "./index.js"
-  },
-  "scripts": {
-    "dev": "vite --open",
-    "typecheck": "tsc",
-    "prebuild": "npm run typecheck",
-    "build": "nx vite:build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "nx vite:preview"
-  },
-  "bundledDependencies": [
-    "@nabalones/find-language", "@nabalones/language-chooser-react-hook"
-  ],
-  "dependencies": {
-    "lodash": "^4.17.21",
-    "react-lazyload": "^3.2.1",
-    "@nabalones/find-language": "^0.0.1",
-    "@nabalones/language-chooser-react-hook": "*"
-  },
-  "devDependencies": {
-    "@nx/vite": "^19.1.2",
-    "@types/lodash": "^4.17.7",
-    "@types/react": "^17",
-    "@types/react-dom": "^17",
-    "@types/react-lazyload": "^3.2.3",
-    "@typescript-eslint/eslint-plugin": "^6.14.0",
-    "@typescript-eslint/parser": "^6.14.0",
-    "@vitejs/plugin-react": "^4.2.1",
-    "eslint": "^8.55.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5",
-    "typescript": "^5.2.2",
-    "vite-plugin-dts": "^4.2.1"
-  },
-  "peerDependencies": {
-    "@emotion/react": "^11.11.4",
-    "@emotion/styled": "^11.11.5",
-    "@mui/icons-material": "^5.15.19",
-    "@mui/material": "^5.15.19",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
-  }
-}
+name: Build-Test-Release
+
+on:
+  push:
+    branches:
+      - nx_release_2
+
+jobs:
+  build-test-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          # TODO do we want to hardcode this though?
+          node-version: 18
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build package
+        run: npx nx build @nabalones/language-chooser-react-mui
+
+      # find-language is a dependency of langauge-chooser-react-mui so will have been built in the build step
+      - name: Run tests
+        run: npx nx test @nabalones/find-language
+
+      - name: Clean up package.json
+        run: npm pkg delete devDependencies && npm pkg delete dependencies
+
+      # TODO do we still need this? copied from bloom-player
+      - name: Clean up package.json
+        run: npm pkg delete scripts && npm pkg delete devDependencies && npm pkg delete dependencies
+
+      - name: Print Environment Info
+        run: npx nx report
+
+      - name: Set name and email for git
+        run: |
+          git config user.name "Github Actions"
+        run: git push
+
+      - name: Push the tag
+        run: git push --tags
+          git config user.email "test@example.com"
+
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx nx release --yes
+
+      - name: Push the publish commit
+        run: git push
+
+      - name: Push the tag
+        run: git push --tags
+# making a change for release
