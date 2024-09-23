@@ -34,9 +34,5 @@
   ,
   "publishConfig": {
     "access": "public"
-  },
-  "// We've tested with 18 and have no reason to believe it won't work with higher versions": "",
-  "engines": {
-    "node": ">=18.0.0"
   }
 }
