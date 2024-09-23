@@ -22,6 +22,9 @@
   ],
   "release": {
     "projectsRelationship": "independent",
+    "git": {
+      "commit": false
+    },
     "version": {
       "generatorOptions": {
         "packageRoot": "dist/packages/{projectName}"
