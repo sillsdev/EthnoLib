@@ -18,7 +18,7 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v4
         with:
-          # TODO do we want to hardcode this though?
+          # Keep in sync with the version in the package.json files
           node-version: 18
           registry-url: https://registry.npmjs.org/
 
@@ -28,19 +28,9 @@ jobs:
       - name: Build package
         run: npx nx build @nabalones/language-chooser-react-mui
 
-      # find-language is a dependency of langauge-chooser-react-mui so will have been built in the build step
+      # find-language is a dependency of langauge-chooser-react-mui so it will have been built in the build step
       - name: Run tests
         run: npx nx test @nabalones/find-language
-
-      - name: Clean up package.json
-        run: npm pkg delete devDependencies && npm pkg delete dependencies
-
-      # TODO do we still need this? copied from bloom-player
-      - name: Clean up package.json
-        run: npm pkg delete scripts && npm pkg delete devDependencies && npm pkg delete dependencies
-
-      - name: Print Environment Info
-        run: npx nx report
 
       - name: Set name and email for git
         run: |
@@ -57,4 +47,3 @@ jobs:
 
       - name: Push the tag
         run: git push --tags
-# making a change for release
