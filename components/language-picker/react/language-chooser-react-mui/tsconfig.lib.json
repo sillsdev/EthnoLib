@@ -5,7 +5,8 @@
     "types": [
       "node",
       "vite/client",
-      "@emotion/react/types/css-prop"
+      "@emotion/react/types/css-prop",
+      "@mui/types"
     ]
   },
   "exclude": [

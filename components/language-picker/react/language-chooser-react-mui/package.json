@@ -14,6 +14,9 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "nx vite:preview"
   },
+  "bundledDependencies": [
+    "@nabalones/find-language", "@nabalones/language-chooser-react-hook"
+  ],
   "dependencies": {
     "lodash": "^4.17.21",
     "react-lazyload": "^3.2.1",

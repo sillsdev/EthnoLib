@@ -19,7 +19,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "bundledDependencies": [
+    "@nabalones/find-language"
+  ],
   "dependencies": {
+    "@nabalones/find-language": "*",
     "fuse.js": "^7.0.0",
     "iso-15924": "^3.2.0",
     "iso-3166": "^4.3.0"
