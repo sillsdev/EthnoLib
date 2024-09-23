@@ -32,18 +32,10 @@ jobs:
       - name: Run tests
         run: npx nx test @nabalones/find-language
 
-      - name: Set name and email for git
-        run: |
-          git config user.name "Github Actions"
-          git config user.email "test@example.com"
-
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx nx release --yes
 
-      - name: Push the publish commit
-        run: git push
-
-      - name: Push the tag
+      - name: Push the release tag
         run: git push --tags
