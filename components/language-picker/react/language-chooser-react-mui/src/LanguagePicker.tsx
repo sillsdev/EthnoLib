@@ -133,7 +133,7 @@ export const LanguagePicker: React.FunctionComponent<{
                 margin-bottom: 5px;
               `}
             >
-              Search by name, code, or countryxxxxxxxxxxxxxxxxxxxxxx
+              Search by name, code, or country
             </Typography>
           </label>
           <OutlinedInput
