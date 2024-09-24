@@ -3,7 +3,7 @@
   "targetDefaults": {
     "nx-release-publish": {
       "options": {
-        "packageRoot": "components/language-picker/react/language-chooser-react-mui/dist"
+        "packageRoot": "{projectRoot}/dist"
       }
     }
   },
@@ -27,7 +27,7 @@
     },
     "version": {
       "generatorOptions": {
-        "packageRoot": "components/language-picker/react/language-chooser-react-mui/dist"
+        "packageRoot": "{projectRoot}/dist"
       },
       "conventionalCommits": true
     },
