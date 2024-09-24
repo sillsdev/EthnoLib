@@ -32,6 +32,11 @@ jobs:
       - name: Run tests
         run: npx nx test @nabalones/find-language
 
+      - name: Set name and email for git so we can tag
+        run: |
+          git config user.name "Github Actions"
+          git config user.email "nabalone@zoho.com"
+
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
