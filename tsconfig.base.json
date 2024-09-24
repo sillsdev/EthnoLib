@@ -18,6 +18,9 @@
     "paths": {
       "@nabalones/language-chooser-react-mui": [
         "components/language-picker/react/language-chooser-react-mui/src/index.ts"
+      ],
+      "@nabalones/find-language": [
+        "components/language-picker/common/find-language/src/index.ts"
       ]
     }
   },

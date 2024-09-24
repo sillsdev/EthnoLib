@@ -8,7 +8,7 @@ import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 export default defineConfig({
   root: __dirname,
   cacheDir:
-    "../../../../node_modules/.vite/components/language-picker/react/language-chooser-react-mui",
+    "../../../../node_modules/.vite/components/language-picker/common/find-language",
 
   plugins: [
     react(),
@@ -22,8 +22,7 @@ export default defineConfig({
   // Configuration for building your library.
   // See: https://vitejs.dev/guide/build.html#library-mode
   build: {
-    outDir:
-      "../../../../dist/components/language-picker/react/language-chooser-react-mui/",
+    outDir: "../../../../dist/packages/@nabalones/find-language",
     emptyOutDir: true,
     reportCompressedSize: true,
     commonjsOptions: {
@@ -31,12 +30,9 @@ export default defineConfig({
     },
     lib: {
       entry: "src/index.ts",
-      name: "@nabalones/language-chooser-react-mui",
+      name: "@nabalones/find-language",
       fileName: "index",
       formats: ["es", "cjs"],
-    },
-    rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime"],
     },
   },
 });
