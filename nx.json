@@ -31,6 +31,6 @@
       },
       "conventionalCommits": true
     },
-    "projects": ["@nabalones/language-chooser-react-mui"]
+    "projects": ["@nabalones/language-chooser-react-mui", "@nabalones/find-language"]
     }
 }

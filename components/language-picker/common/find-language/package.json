@@ -6,13 +6,12 @@
   "main": "index.js",
   "module": "index.js",
   "types": "index.d.ts",
-  "private": true,
   "files": [
     "dist/**"
   ],
   "scripts": {
     "langtag-processing": "ts-node-esm ./language-data/langtagProcessing.ts",
-    "build": "tsup ./index.ts --format esm --dts --external react",
+    "build": "tsup ./index.ts --format esm --dts --external react --outDir ../../../../dist/packages/@nabalones/find-language",
     "dev": "tsup ./index.ts --format esm --watch --dts --external react",
     "typecheck": "tsc",
     "test": "nx vite:test --config vitest.config.ts"
