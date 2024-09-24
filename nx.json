@@ -3,7 +3,7 @@
   "targetDefaults": {
     "nx-release-publish": {
       "options": {
-        "packageRoot": "dist/packages/{projectName}"
+        
       }
     }
   },
@@ -26,9 +26,6 @@
       "commit": false
     },
     "version": {
-      "generatorOptions": {
-        "packageRoot": "dist/packages/{projectName}"
-      },
       "conventionalCommits": true
     },
     "projects": ["@nabalones/language-chooser-react-mui", "@nabalones/find-language"]
