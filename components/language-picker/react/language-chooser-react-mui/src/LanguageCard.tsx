@@ -52,7 +52,7 @@ export const LanguageCard: React.FunctionComponent<
             -webkit-box-orient: vertical;
             overflow: hidden;
           `}
-        >{`A language of ${languageCardData.regionNames}`}</PartiallyBoldedTypography>
+        >{`A language xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx of ${languageCardData.regionNames}`}</PartiallyBoldedTypography>
       )}
       {languageCardData.names.length > 0 && (
         <PartiallyBoldedTypography
