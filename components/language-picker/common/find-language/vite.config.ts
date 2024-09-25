@@ -12,7 +12,7 @@ export default defineConfig({
   plugins: [
     nxViteTsPaths(),
     dts({
-      entryRoot: "src",
+      entryRoot: ".",
       tsconfigPath: path.join(__dirname, "tsconfig.lib.json"),
     }),
   ],
@@ -27,7 +27,7 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
     lib: {
-      entry: "src/index.ts",
+      entry: "./index.ts",
       name: "@nabalones/find-language",
       fileName: "index",
       formats: ["es", "cjs"],

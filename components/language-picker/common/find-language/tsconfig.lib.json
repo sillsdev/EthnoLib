@@ -18,5 +18,5 @@
     "**/*.spec.jsx",
     "**/*.test.jsx"
   ],
-  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx", "langtagProcessing.ts"]
+  "include": ["./**/*.js", "./**/*.jsx", "./**/*.ts", "./**/*.tsx", "langtagProcessing.ts"]
 }

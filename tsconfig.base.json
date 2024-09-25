@@ -20,7 +20,7 @@
         "components/language-picker/react/language-chooser-react-mui/src/index.ts"
       ],
       "@nabalones/find-language": [
-        "components/language-picker/common/find-language/src/index.ts"
+        "components/language-picker/common/find-language/index.ts"
       ]
     }
   },
