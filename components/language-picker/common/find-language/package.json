@@ -1,10 +1,8 @@
 {
   "name": "@nabalones/find-language",
   "version": "0.0.1",
-  "type": "module",
-  "description": "",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "exports": {
     ".": "./index.js"
   },
