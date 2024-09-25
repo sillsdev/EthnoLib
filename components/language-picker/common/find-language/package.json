@@ -23,8 +23,7 @@
     "@types/node": "^20.14.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.2.2"
-  }
-  ,
+  },
   "// We've tested with 18 and have no reason to believe it won't work with higher versions": "",
   "engines": {
     "node": ">=18.0.0"
