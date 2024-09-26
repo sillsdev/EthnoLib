@@ -15,7 +15,7 @@
     "preview": "nx vite:preview"
   },
   "bundledDependencies": [
-    "@nabalones/find-language", "@nabalones/language-chooser-react-hook"
+    "@nabalones/language-chooser-react-hook"
   ],
   "dependencies": {
     "lodash": "^4.17.21",
