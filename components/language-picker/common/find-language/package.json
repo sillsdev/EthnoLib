@@ -1,5 +1,8 @@
 {
   "name": "@nabalones/find-language",
+  "description": "A library for fuzzy-searching for languages and other utils for language choosers",
+  "author": "SIL Global",
+  "license": "MIT",
   "version": "0.0.1",
   "main": "./index.js",
   "types": "./index.d.ts",

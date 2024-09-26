@@ -1,8 +1,10 @@
 {
   "name": "@nabalones/language-chooser-react-hook",
+  "description": "A React hook providing the logic for a language chooser",
+  "author": "SIL Global",
+  "license": "MIT",
   "version": "0.0.0",
   "type": "module",
-  "description": "",
   "main": "index.js",
   "module": "index.js",
   "types": "index.d.ts",
@@ -16,9 +18,6 @@
     "typecheck": "tsc",
     "test": "nx vite:test --config vitest.config.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@nabalones/find-language": "*",
     "fuse.js": "^7.0.0",

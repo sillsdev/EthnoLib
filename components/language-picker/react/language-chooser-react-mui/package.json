@@ -1,5 +1,8 @@
 {
   "name": "@nabalones/language-chooser-react-mui",
+  "description": "A language chooser React component using MUI",
+  "author": "SIL Global",
+  "license": "MIT",
   "version": "0.0.12",
   "main": "./index.js",
   "types": "./index.d.ts",
