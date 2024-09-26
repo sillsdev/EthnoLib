@@ -1,5 +1,5 @@
 {
-  "name": "@nabalones/language-chooser-react-hook",
+  "name": "@ethnolib/language-chooser-react-hook",
   "description": "A React hook providing the logic for a language chooser",
   "author": "SIL Global",
   "license": "MIT",
@@ -19,7 +19,7 @@
     "test": "nx vite:test --config vitest.config.ts"
   },
   "dependencies": {
-    "@nabalones/find-language": "*",
+    "@ethnolib/find-language": "*",
     "fuse.js": "^7.0.0",
     "iso-15924": "^3.2.0",
     "iso-3166": "^4.3.0"

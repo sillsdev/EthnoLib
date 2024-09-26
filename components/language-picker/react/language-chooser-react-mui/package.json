@@ -1,9 +1,9 @@
 {
-  "name": "@nabalones/language-chooser-react-mui",
+  "name": "@ethnolib/language-chooser-react-mui",
   "description": "A language chooser React component using MUI",
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.0.12",
+  "version": "0.0.1",
   "main": "./index.js",
   "types": "./index.d.ts",
   "exports": {
@@ -18,13 +18,13 @@
     "preview": "nx vite:preview"
   },
   "bundledDependencies": [
-    "@nabalones/language-chooser-react-hook"
+    "@ethnolib/language-chooser-react-hook"
   ],
   "dependencies": {
     "lodash": "^4.17.21",
     "react-lazyload": "^3.2.1",
-    "@nabalones/find-language": "^0.0.1",
-    "@nabalones/language-chooser-react-hook": "*"
+    "@ethnolib/find-language": "^0.0.1",
+    "@ethnolib/language-chooser-react-hook": "*"
   },
   "devDependencies": {
     "@nx/vite": "^19.1.2",

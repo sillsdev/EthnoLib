@@ -28,7 +28,7 @@ export default defineConfig({
     },
     lib: {
       entry: "./index.ts",
-      name: "@nabalones/find-language",
+      name: "@ethnolib/find-language",
       fileName: "index",
       formats: ["es", "cjs"],
     },

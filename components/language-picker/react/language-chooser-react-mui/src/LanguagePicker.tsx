@@ -19,7 +19,7 @@ import {
   ILanguage,
   IScript,
   stripDemarcation,
-} from "@nabalones/find-language";
+} from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import { ScriptCard } from "./ScriptCard";
 import { COLORS } from "./colors";
@@ -28,8 +28,8 @@ import {
   isUnlistedLanguage,
   ILanguagePickerInitialState,
   ILanguagePicker,
-} from "@nabalones/language-chooser-react-hook";
-import { createTag } from "@nabalones/find-language/languageTagUtils";
+} from "@ethnolib/language-chooser-react-hook";
+import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import { debounce } from "lodash";
 import "./styles.css";
 import { CustomizeLanguageButton } from "./CustomizeLanguageButton";

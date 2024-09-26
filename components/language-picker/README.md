@@ -27,15 +27,15 @@ First, set up nx if you haven't done so already (see [README.md](../../README.md
 
 We recommend installing nx globally, but if you haven't, you can just prefix all the commands with `npx`
 
-Although we recommend installing nx globally, you can alternatively run the nx commands without a global installation by prefixing them with `npx`, e.g. `npx nx dev @nabalones/language-chooser-react-mui`.
+Although we recommend installing nx globally, you can alternatively run the nx commands without a global installation by prefixing them with `npx`, e.g. `npx nx dev @ethnolib/language-chooser-react-mui`.
 
-To locally run a hot-reloading demo of the MUI language chooser: `nx dev @nabalones/language-chooser-react-mui`
+To locally run a hot-reloading demo of the MUI language chooser: `nx dev @ethnolib/language-chooser-react-mui`
 
-If you make changes to the `find-language` package, you will need to run `nx build @nabalones/find-language` each time for the frontend (e.g. react mui language chooser demo) to incorporate those changes.
+If you make changes to the `find-language` package, you will need to run `nx build @ethnolib/find-language` each time for the frontend (e.g. react mui language chooser demo) to incorporate those changes.
 
 If you modify [langtagProcessing.ts](common/find-language/langtagProcessing.ts), run `npm run find-language/common/langtag-processing` to update [languageData.json](common/find-language/languageData.json).
 
 ## Unit tests
 
 Language picker uses vitest for unit testing. To run tests, use:
-`nx test @nabalones/find-language`
+`nx test @ethnolib/find-language`

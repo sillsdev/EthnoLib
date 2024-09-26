@@ -1,5 +1,5 @@
 {
-  "name": "@nabalones/find-language",
+  "name": "@ethnolib/find-language",
   "description": "A library for fuzzy-searching for languages and other utils for language choosers",
   "author": "SIL Global",
   "license": "MIT",
