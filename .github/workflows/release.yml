@@ -23,7 +23,7 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
       - name: Install dependencies
-        run: npm install --production
+        run: npm install
 
       - name: Build package
         run: npx nx build @nabalones/language-chooser-react-mui
