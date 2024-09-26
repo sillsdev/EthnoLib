@@ -29,5 +29,5 @@ export function searchForLanguage(
   };
   const fuse = new Fuse(languages as ILanguage[], fuseOptions);
 
-  return fuse.search("zho");
+  return fuse.search(queryString);
 }

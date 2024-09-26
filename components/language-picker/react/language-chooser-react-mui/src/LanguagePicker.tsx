@@ -103,7 +103,7 @@ export const LanguagePicker: React.FunctionComponent<{
               font-weight: bold;
             `}
           >
-            Choose languagexxxxxxxxxxxxxx
+            Choose Language
           </Typography>
         </Toolbar>
       </AppBar>
