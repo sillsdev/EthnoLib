@@ -29,9 +29,8 @@ jobs:
         run: npx nx build @nabalones/language-chooser-react-mui
 
       # find-language is a dependency of langauge-chooser-react-mui so it will have been built in the build step
-      # TODO put this back
-      # - name: Run tests
-      #   run: npx nx test @nabalones/find-language
+      - name: Run tests
+        run: npx nx test @nabalones/find-language
 
       - name: Set name and email for git so we can tag
         run: |
