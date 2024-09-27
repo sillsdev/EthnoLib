@@ -3,7 +3,7 @@ name: Build-Test-Release
 on:
   push:
     branches:
-      - nx_release_2
+      - publishing_config
 
 jobs:
   build-test-release:
