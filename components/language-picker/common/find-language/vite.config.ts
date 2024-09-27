@@ -1,6 +1,5 @@
 /// <reference types='vitest' />
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import dts from "vite-plugin-dts";
 import * as path from "path";
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
@@ -8,13 +7,12 @@ import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 export default defineConfig({
   root: __dirname,
   cacheDir:
-    "../../../../node_modules/.vite/components/language-picker/react/language-chooser-react-mui",
+    "../../../../node_modules/.vite/components/language-picker/common/find-language",
 
   plugins: [
-    react(),
     nxViteTsPaths(),
     dts({
-      entryRoot: "src",
+      entryRoot: ".",
       tsconfigPath: path.join(__dirname, "tsconfig.lib.json"),
     }),
   ],
@@ -29,13 +27,10 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
     lib: {
-      entry: "src/index.ts",
-      name: "@ethnolib/language-chooser-react-mui",
+      entry: "./index.ts",
+      name: "@ethnolib/find-language",
       fileName: "index",
       formats: ["es", "cjs"],
-    },
-    rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime"],
     },
   },
 });

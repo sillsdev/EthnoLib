@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import {
   ICustomizableLanguageDetails,
   isUnlistedLanguage,
-} from "../../common/useLanguagePicker";
+} from "@ethnolib/language-chooser-react-hook";
 import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import {
   Autocomplete,

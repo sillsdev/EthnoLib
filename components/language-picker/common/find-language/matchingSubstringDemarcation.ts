@@ -1,6 +1,7 @@
 import { cloneDeep } from "lodash";
 import { FuseResult } from "fuse.js";
-import { fieldsToSearch, ILanguage } from "@ethnolib/find-language";
+import { ILanguage } from "./findLanguageInterfaces";
+import { fieldsToSearch } from "./searchForLanguage";
 
 // for marking/bolding the substrings which match the search string
 export const START_OF_MATCH_MARKER = "[";
@@ -55,7 +56,7 @@ export function stripDemarcation(
 export function demarcateExactMatches(searchString: string, result: ILanguage) {
   for (const field of fieldsToSearch) {
     if (Array.isArray(result[field])) {
-      result[field] = result[field].map((value) =>
+      result[field] = result[field].map((value: any) =>
         demarcateExactMatchString(searchString, value)
       );
     } else if (typeof result[field] === "string") {

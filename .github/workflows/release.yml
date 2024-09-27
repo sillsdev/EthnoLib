@@ -1,0 +1,46 @@
+name: Build-Test-Release
+
+on:
+  push:
+    branches:
+      - publishing_config
+
+jobs:
+  build-test-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          # Keep in sync with the version in the package.json files
+          node-version: 18
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build package
+        run: npx nx build @ethnolib/language-chooser-react-mui
+
+      # find-language is a dependency of langauge-chooser-react-mui so it will have been built in the build step
+      - name: Run tests
+        run: npx nx test @ethnolib/find-language
+
+      - name: Set name and email for git so we can tag
+        run: |
+          git config user.name "Github Actions"
+          git config user.email " no-reply@ethnolib-build.com"
+
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx nx release --yes
+
+      - name: Push the release tag
+        run: git push --tags

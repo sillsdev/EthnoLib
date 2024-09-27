@@ -3,7 +3,7 @@ import { css } from "@emotion/react";
 import { IScript, IRegion } from "@ethnolib/find-language";
 import { ThemeProvider, createTheme } from "@mui/material";
 import { COLORS } from "./colors";
-import { ILanguagePickerInitialState } from "../../common/useLanguagePicker";
+import { ILanguagePickerInitialState } from "@ethnolib/language-chooser-react-hook";
 import "./styles.css";
 import { defaultSearchResultModifier } from "@ethnolib/find-language/searchResultModifiers";
 import { LanguagePicker } from "./LanguagePicker";

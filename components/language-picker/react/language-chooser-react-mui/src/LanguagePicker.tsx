@@ -28,7 +28,7 @@ import {
   isUnlistedLanguage,
   ILanguagePickerInitialState,
   ILanguagePicker,
-} from "../../common/useLanguagePicker";
+} from "@ethnolib/language-chooser-react-hook";
 import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import { debounce } from "lodash";
 import "./styles.css";
