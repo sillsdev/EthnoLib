@@ -18,6 +18,15 @@
         "previewTargetName": "vite:preview",
         "serveStaticTargetName": "serve-static"
       }
+    },
+    {
+      "plugin": "@nx/storybook/plugin",
+      "options": {
+        "serveStorybookTargetName": "storybook",
+        "buildStorybookTargetName": "build-storybook",
+        "testStorybookTargetName": "test-storybook",
+        "staticStorybookTargetName": "static-storybook"
+      }
     }
   ],
   "release": {
@@ -33,4 +42,5 @@
     },
     "projects": ["@ethnolib/language-chooser-react-mui", "@ethnolib/find-language"]
     }
+  }
 }

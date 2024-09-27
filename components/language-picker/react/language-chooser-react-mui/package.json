@@ -28,6 +28,8 @@
   },
   "devDependencies": {
     "@nx/vite": "^19.1.2",
+    "@nx/react": "^19.1.2",
+    "@nx/storybook": "^19.1.2",
     "@types/lodash": "^4.17.7",
     "@types/react": "^17",
     "@types/react-dom": "^17",

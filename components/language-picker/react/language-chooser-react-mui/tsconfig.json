@@ -17,5 +17,11 @@
       "path": "./tsconfig.lib.json"
     }
   ],
-  "extends": "../../../../tsconfig.base.json"
+  "extends": "../../../../tsconfig.base.json",
+  "exclude": [
+    "**/*.stories.ts",
+    "**/*.stories.js",
+    "**/*.stories.jsx",
+    "**/*.stories.tsx"
+  ]
 }
