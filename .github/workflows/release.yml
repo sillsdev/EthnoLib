@@ -35,7 +35,7 @@ jobs:
       - name: Set name and email for git so we can tag
         run: |
           git config user.name "Github Actions"
-          git config user.email "nabalone@zoho.com"
+          git config user.email " no-reply@ethnolib-build.com"
 
       - name: Publish
         env:
