@@ -1,12 +1,12 @@
 /** @jsxImportSource @emotion/react */
-import { css } from "@emotion/react";
-import { IScript, IRegion } from "@ethnolib/find-language";
-import { ThemeProvider, createTheme } from "@mui/material";
-import { COLORS } from "./colors";
-import { ILanguagePickerInitialState } from "@ethnolib/language-chooser-react-hook";
-import "./styles.css";
-import { defaultSearchResultModifier } from "@ethnolib/find-language/searchResultModifiers";
-import { LanguagePicker } from "./LanguagePicker";
+import { css } from '@emotion/react';
+import { IScript, IRegion } from '@ethnolib/find-language';
+import { ThemeProvider, createTheme } from '@mui/material';
+import { COLORS } from './colors';
+import { ILanguageChooserInitialState } from '@ethnolib/language-chooser-react-hook';
+import './styles.css';
+import { defaultSearchResultModifier } from '@ethnolib/find-language/searchResultModifiers';
+import { LanguageChooser } from './LanguageChooser';
 
 function Demo() {
   // TODO future work: move all the colors used into the theme
@@ -19,91 +19,91 @@ function Demo() {
   });
 
   const uzbekLanguage = {
-    autonym: "ўзбек тили",
-    exonym: "[Uzb]ek",
-    iso639_3_code: "uzb",
-    languageSubtag: "uz",
-    regionNames: "[Uzb]ekistan, Afghanistan, China",
+    autonym: 'ўзбек тили',
+    exonym: '[Uzb]ek',
+    iso639_3_code: 'uzb',
+    languageSubtag: 'uz',
+    regionNames: '[Uzb]ekistan, Afghanistan, China',
     scripts: [
       {
-        code: "Latn",
-        name: "Latin",
+        code: 'Latn',
+        name: 'Latin',
       },
       {
-        code: "Arab",
-        name: "Arabic",
+        code: 'Arab',
+        name: 'Arabic',
       },
       {
-        code: "Cyrl",
-        name: "Cyrillic",
+        code: 'Cyrl',
+        name: 'Cyrillic',
       },
       {
-        code: "Sogd",
-        name: "Sogdian",
+        code: 'Sogd',
+        name: 'Sogdian',
       },
     ],
     names: [
-      "O[uzb]ek",
-      "O’zbek",
-      "Usbaki",
-      "Usbeki",
-      "[Uzb]ek, Northern",
-      "oʻzbek",
-      "oʻzbek tili",
-      "oʻzbekcha",
-      "Özbek",
-      "o‘zbek",
+      'O[uzb]ek',
+      'O’zbek',
+      'Usbaki',
+      'Usbeki',
+      '[Uzb]ek, Northern',
+      'oʻzbek',
+      'oʻzbek tili',
+      'oʻzbekcha',
+      'Özbek',
+      'o‘zbek',
       null,
-      "اوزبیک",
-      "ўзбекча",
+      'اوزبیک',
+      'ўзбекча',
     ],
     alternativeTags: [
-      "uz-Latn",
-      "uz-UZ",
-      "uz-uzn",
-      "uz-uzn-Latn",
-      "uz-uzn-Latn-UZ",
-      "uz-uzn-UZ",
-      "uzn",
-      "uzn-Latn",
-      "uzn-Latn-UZ",
-      "uzn-UZ",
-      "uz-Arab",
-      "uz-uzn-Arab",
-      "uz-uzn-Arab-AF",
-      "uzn-Arab",
-      "uzn-Arab-AF",
-      "uz-uzn-Brai",
-      "uz-uzn-Brai-UZ",
-      "uzn-Brai",
-      "uzn-Brai-UZ",
-      "uz-uzn-Cyrl",
-      "uz-uzn-Cyrl-UZ",
-      "uzn-Cyrl",
-      "uzn-Cyrl-UZ",
-      "uz-uzn-Sogd",
-      "uz-uzn-Sogd-CN",
-      "uzn-Sogd",
-      "uzn-Sogd-CN",
+      'uz-Latn',
+      'uz-UZ',
+      'uz-uzn',
+      'uz-uzn-Latn',
+      'uz-uzn-Latn-UZ',
+      'uz-uzn-UZ',
+      'uzn',
+      'uzn-Latn',
+      'uzn-Latn-UZ',
+      'uzn-UZ',
+      'uz-Arab',
+      'uz-uzn-Arab',
+      'uz-uzn-Arab-AF',
+      'uzn-Arab',
+      'uzn-Arab-AF',
+      'uz-uzn-Brai',
+      'uz-uzn-Brai-UZ',
+      'uzn-Brai',
+      'uzn-Brai-UZ',
+      'uz-uzn-Cyrl',
+      'uz-uzn-Cyrl-UZ',
+      'uzn-Cyrl',
+      'uzn-Cyrl-UZ',
+      'uz-uzn-Sogd',
+      'uz-uzn-Sogd-CN',
+      'uzn-Sogd',
+      'uzn-Sogd-CN',
     ],
   };
 
   // To demonstrate the ability to reopen to a desired state
-  const initialState: ILanguagePickerInitialState = {
+  const initialState: ILanguageChooserInitialState = {
     language: uzbekLanguage,
     script: {
-      code: "Cyrl",
-      name: "Cyrillic",
+      code: 'Cyrl',
+      name: 'Cyrillic',
     } as IScript,
     customDetails: {
-      displayName: "TestOverridenDisplayName",
+      displayName: 'TestOverridenDisplayName',
       region: {
-        code: "US",
-        name: "United States of America",
+        code: 'US',
+        name: 'United States of America',
       } as IRegion,
-      dialect: "testDialectName",
+      dialect: 'testDialectName',
     },
-  } as ILanguagePickerInitialState;
+  } as ILanguageChooserInitialState;
 
   return (
     <ThemeProvider theme={theme}>
@@ -115,7 +115,7 @@ function Demo() {
           padding: 17px;
         `}
       >
-        <LanguagePicker
+        <LanguageChooser
           searchResultModifier={defaultSearchResultModifier}
           initialState={initialState}
         />

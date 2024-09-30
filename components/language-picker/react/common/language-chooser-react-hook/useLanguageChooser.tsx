@@ -4,11 +4,11 @@ import {
   IRegion,
   IScript,
   searchForLanguage,
-} from "@ethnolib/find-language";
-import { useMemo, useState } from "react";
-import { stripResultMetadata } from "@ethnolib/find-language";
-import { FuseResult } from "fuse.js";
-import { stripDemarcation } from "@ethnolib/find-language";
+} from '@ethnolib/find-language';
+import { useMemo, useState } from 'react';
+import { stripResultMetadata } from '@ethnolib/find-language';
+import { FuseResult } from 'fuse.js';
+import { stripDemarcation } from '@ethnolib/find-language';
 
 export interface ICustomizableLanguageDetails {
   displayName?: string;
@@ -16,13 +16,13 @@ export interface ICustomizableLanguageDetails {
   dialect?: string;
 }
 
-export interface ILanguagePickerInitialState {
+export interface ILanguageChooserInitialState {
   language: ILanguage;
   script?: IScript;
   customDetails?: ICustomizableLanguageDetails;
 }
 
-export interface ILanguagePicker {
+export interface ILanguageChooser {
   languageData: ILanguage[];
   selectedLanguage: ILanguage | undefined;
   selectedScript: IScript | undefined;
@@ -37,28 +37,28 @@ export interface ILanguagePicker {
     script?: IScript
   ) => void;
   selectUnlistedLanguage: () => void;
-  resetTo: (initialState: ILanguagePickerInitialState) => void;
+  resetTo: (initialState: ILanguageChooserInitialState) => void;
 }
 
-export const UNLISTED_LANGUAGE_CODE = "qaa";
+export const UNLISTED_LANGUAGE_CODE = 'qaa';
 export const UNLISTED_LANGUAGE = {
   iso639_3_code: UNLISTED_LANGUAGE_CODE,
   languageSubtag: UNLISTED_LANGUAGE_CODE,
   autonym: undefined,
-  exonym: "Unknown Language",
-  regionNames: "",
+  exonym: 'Unknown Language',
+  regionNames: '',
   scripts: [],
   alternativeTags: [],
   names: [],
 } as ILanguage;
 
-export const useLanguagePicker = (
+export const useLanguageChooser = (
   searchResultModifier?: (
     results: FuseResult<ILanguage>[],
     searchString: string
   ) => ILanguage[]
 ) => {
-  const [searchString, setSearchString] = useState("");
+  const [searchString, setSearchString] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState<
     ILanguage | undefined
   >();
@@ -95,7 +95,7 @@ export const useLanguagePicker = (
     language,
     script,
     customDetails,
-  }: ILanguagePickerInitialState) {
+  }: ILanguageChooserInitialState) {
     // clear everything
     setSelectedLanguage(undefined);
     setSelectedScript(undefined);
@@ -159,7 +159,7 @@ export const useLanguagePicker = (
       );
       setCustomizableLanguageDetails({
         displayName: stripDemarcation(
-          language.autonym || language.exonym || ""
+          language.autonym || language.exonym || ''
         ),
       } as ICustomizableLanguageDetails);
     }
@@ -200,7 +200,7 @@ export const useLanguagePicker = (
     saveLanguageDetails,
     selectUnlistedLanguage,
     resetTo,
-  } as ILanguagePicker;
+  } as ILanguageChooser;
 };
 
 export function isUnlistedLanguage(selectedLanguage: ILanguage) {
