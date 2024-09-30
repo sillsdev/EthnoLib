@@ -17,10 +17,10 @@
     "baseUrl": ".",
     "paths": {
       "@ethnolib/find-language": [
-        "components/language-picker/common/find-language/index.ts"
+        "components/language-chooser/common/find-language/index.ts"
       ],
       "@ethnolib/language-chooser-react-mui": [
-        "components/language-picker/react/language-chooser-react-mui/src/index.ts"
+        "components/language-chooser/react/language-chooser-react-mui/src/index.ts"
       ]
     }
   },

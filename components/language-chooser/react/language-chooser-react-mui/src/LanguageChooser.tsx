@@ -70,7 +70,7 @@ export const LanguageChooser: React.FunctionComponent<{
 
   return (
     <div
-      id="lang-picker"
+      id="lang-chooser"
       css={css`
         width: 1500px;
         background-color: ${COLORS.greys[0]};
@@ -108,7 +108,7 @@ export const LanguageChooser: React.FunctionComponent<{
         </Toolbar>
       </AppBar>
       <div
-        id="lang-picker-body"
+        id="lang-chooser-body"
         css={css`
           height: 750px;
           display: flex;

@@ -1,1 +1,1 @@
-export * from "./useLanguagePicker";
+export * from './useLanguageChooser';

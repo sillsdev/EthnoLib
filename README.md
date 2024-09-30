@@ -16,6 +16,6 @@ But if you don't, you can just prefix all the commands with `npx`
 
 Nx caches builds for efficiency. If at any point you need to clear your local cache, run `nx reset`
 
-## Language Picker
+## Language Chooser
 
-See [language-picker/README.md](components/language-picker/README.md)
+See [language-chooser/README.md](components/language-chooser/README.md)

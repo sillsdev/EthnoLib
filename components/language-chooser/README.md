@@ -1,8 +1,8 @@
-# Language Picker
+# Language Chooser
 
 This project was initially developed for use in [BloomDesktop](https://github.com/BloomBooks/BloomDesktop).
 
-The `language-picker/common/find-language` module contains the logic for fuzzy-searching languages. This module is designed to be published independently and can be utilized by various frontends. The language database is based on [langtags.json](https://github.com/silnrsi/langtags) and also references [langtags.txt](https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#langtagstxt). It includes various methods for adjusting search results to handle special cases, such as sign languages and very common languages. Currently, edge cases in the search results are adjusted for Bloom’s use case by the `defaultSearchResultModifier`, which:
+The `language-chooser/common/find-language` module contains the logic for fuzzy-searching languages. This module is designed to be published independently and can be utilized by various frontends. The language database is based on [langtags.json](https://github.com/silnrsi/langtags) and also references [langtags.txt](https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#langtagstxt). It includes various methods for adjusting search results to handle special cases, such as sign languages and very common languages. Currently, edge cases in the search results are adjusted for Bloom’s use case by the `defaultSearchResultModifier`, which:
 
 - Ensures the English result comes up on top when the user starts typing "English"
 - Ensures the French result comes up on top when the user starts typing "French", "Francais" or "Français"
@@ -12,7 +12,7 @@ The `language-picker/common/find-language` module contains the logic for fuzzy-s
 
 The `searchResultModifiers.ts` file includes various helper methods that can be used to create modifiers suitable for different use cases.
 
-The `language-picker/react/language-chooser-react-mui` is a React component which uses the `language-picker/common/find-language` logic to present a language picker interface.
+The `language-chooser/react/language-chooser-react-mui` is a React component which uses the `language-chooser/common/find-language` logic to present a language chooser interface.
 
 **See demo on Storybook at [https://sillsdev.github.io/EthnoLib/](https://sillsdev.github.io/EthnoLib/)**
 
@@ -39,5 +39,5 @@ If you modify [langtagProcessing.ts](common/find-language/langtagProcessing.ts),
 
 ## Unit tests
 
-Language picker uses vitest for unit testing. To run tests, use:
+Language chooser uses vitest for unit testing. To run tests, use:
 `nx test @ethnolib/find-language`

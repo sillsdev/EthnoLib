@@ -1,9 +1,9 @@
 {
   "name": "@ethnolib/source",
   "workspaces": [
-    "components/language-picker/common/*",
-    "components/language-picker/react/common/*",
-    "components/language-picker/react/*"
+    "components/language-chooser/common/*",
+    "components/language-chooser/react/common/*",
+    "components/language-chooser/react/*"
   ],
   "version": "0.0.0",
   "description": "",
