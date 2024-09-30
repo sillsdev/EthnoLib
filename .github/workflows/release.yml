@@ -9,6 +9,10 @@ jobs:
   build-test-release:
     runs-on: windows-latest
 
+    environment:
+      name: github-pages
+      url: ${{ steps.build-publish.outputs.page_url }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,3 +48,10 @@ jobs:
 
       - name: Push the release tag
         run: git push --tags
+
+      - name: Deploy Storybook to GitHub Pages
+        uses: bitovi/github-actions-storybook-to-github-pages@v1.0.3
+        with:
+          path: components/language-picker/react/language-chooser-react-mui/storybook-static
+          install_command: :
+          build_command: nx build-storybook @ethnolib/language-chooser-react-mui
