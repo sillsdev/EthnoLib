@@ -14,6 +14,8 @@ The `searchResultModifiers.ts` file includes various helper methods that can be 
 
 The `language-picker/react/language-chooser-react-mui` is a React component which uses the `language-picker/common/find-language` logic to present a language picker interface.
 
+**See demo on Storybook at [https://sillsdev.github.io/EthnoLib/](https://sillsdev.github.io/EthnoLib/)**
+
 For details of macrolanguage handling, see [macrolanguageNotes.md](macrolanguageNotes.md).
 
 ## Project status
