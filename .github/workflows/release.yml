@@ -46,7 +46,7 @@ jobs:
         run: git push --tags
 
       - name: Build storybook
-        run: nx build-storybook @ethnolib/language-chooser-react-mui
+        run: npx nx build-storybook @ethnolib/language-chooser-react-mui
 
       - name: Upload for deploy to github pages
         uses: actions/upload-pages-artifact@v3
