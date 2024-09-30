@@ -8,7 +8,8 @@ on:
 jobs:
   build-test-release:
     runs-on: windows-latest
-    permissions: write-all
+    permissions:
+      id-token: write
 
     steps:
       - name: Checkout code
