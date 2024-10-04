@@ -1,24 +1,24 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
-    "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "{projectRoot}/dist"
-      ],
-      "cache": true
-    },
-    "typecheck": {
-      "cache": true
-    },
-    "lint": {
-      "cache": true
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "{projectRoot}/dist"
+      }
     }
   },
   "defaultBase": "main",
   "plugins": [
+    {
+      "plugin": "@nx/vite/plugin",
+      "options": {
+        "buildTargetName": "vite:build",
+        "testTargetName": "vite:test",
+        "serveTargetName": "serve",
+        "previewTargetName": "vite:preview",
+        "serveStaticTargetName": "serve-static"
+      }
+    },
     {
       "plugin": "@nx/storybook/plugin",
       "options": {
@@ -28,5 +28,21 @@
         "staticStorybookTargetName": "static-storybook"
       }
     }
-  ]
+  ],
+  "release": {
+    "projectsRelationship": "independent",
+    "git": {
+      "commit": false
+    },
+    "version": {
+      "generatorOptions": {
+        "packageRoot": "{projectRoot}/dist"
+      },
+      "conventionalCommits": true
+    },
+    "projects": [
+      "@ethnolib/language-chooser-react-mui",
+      "@ethnolib/find-language"
+    ]
+  }
 }
