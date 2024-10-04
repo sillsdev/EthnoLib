@@ -1,3 +1,5 @@
+/** @jsxImportSource @emotion/react */
+import { css } from "@emotion/react";
 import {
   OptionCard,
   OptionCardProps,
@@ -17,8 +19,21 @@ export const ScriptCard: React.FunctionComponent<
   } as OptionCardProps;
   return (
     <OptionCard {...optionCardProps}>
-      <Typography variant="h5">{scriptData.name}</Typography>
-      <Typography variant="body2">TODO sample text here</Typography>
+      <Typography
+        css={css`
+          font-size: 16px;
+        `}
+      >
+        {scriptData.name}
+      </Typography>
+      <Typography
+        css={css`
+          font-size: 16px;
+          color: ${COLORS.greys[3]};
+        `}
+      >
+        TODO sample text here
+      </Typography>
     </OptionCard>
   );
 };

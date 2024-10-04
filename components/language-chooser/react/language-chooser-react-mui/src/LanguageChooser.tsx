@@ -5,6 +5,7 @@ import {
   AppBar,
   Button,
   Icon,
+  IconButton,
   InputAdornment,
   List,
   ListItem,
@@ -13,12 +14,14 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 
 import {
   codeMatches,
   ILanguage,
   IScript,
   stripDemarcation,
+  createTag,
 } from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import { ScriptCard } from "./ScriptCard";
@@ -26,10 +29,9 @@ import { COLORS } from "./colors";
 import {
   useLanguageChooser,
   isUnlistedLanguage,
-  ILanguageChooserInitialState,
+  IOrthography,
   ILanguageChooser,
 } from "@ethnolib/language-chooser-react-hook";
-import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import { debounce } from "lodash";
 import "./styles.css";
 import { CustomizeLanguageButton } from "./CustomizeLanguageButton";
@@ -43,7 +45,8 @@ export const LanguageChooser: React.FunctionComponent<{
     results: FuseResult<ILanguage>[],
     searchString: string
   ) => ILanguage[];
-  initialState: ILanguageChooserInitialState;
+  initialState: IOrthography;
+  onClose: (languageSelection: IOrthography | undefined) => void;
 }> = (props) => {
   const lp: ILanguageChooser = useLanguageChooser(props.searchResultModifier);
 
@@ -68,13 +71,26 @@ export const LanguageChooser: React.FunctionComponent<{
     // search string never shows up in the right panel tag preview
   });
 
+  let searchInputRef: HTMLInputElement | null = null;
+  const clearSearchText = () => {
+    if (searchInputRef) {
+      searchInputRef.value = "";
+    }
+    lp.onSearchStringChange("");
+  };
+
   return (
     <div
       id="lang-chooser"
       css={css`
-        width: 1500px;
-        background-color: ${COLORS.greys[0]};
-        border-radius: 10px;
+        width: 979px;
+        // TODO (currently working on it) make it shrink if the screen is too small
+        // max-width: 979px;
+        // width: 100%;
+        height: 586px;
+        display: flex;
+        flex-direction: column;
+        border-radius: 5px;
         position: relative;
         margin-left: auto;
         margin-right: auto;
@@ -87,11 +103,14 @@ export const LanguageChooser: React.FunctionComponent<{
           background-color: white;
           box-shadow: none;
           border-bottom: 2px solid ${COLORS.greys[1]};
+          flex-grow: 0;
         `}
       >
         <Toolbar
           disableGutters
+          variant="dense"
           css={css`
+            padding-top: 5px;
             padding-left: 15px;
           `}
         >
@@ -110,19 +129,20 @@ export const LanguageChooser: React.FunctionComponent<{
       <div
         id="lang-chooser-body"
         css={css`
-          height: 750px;
+          flex-grow: 1;
           display: flex;
         `}
       >
         <div
           id="left-pane"
           css={css`
-            width: 50%;
+            flex-grow: 1;
             height: 100%;
             position: relative;
             display: flex; // to make the language list overflow scroll work
             flex-direction: column;
-            padding: 15px 15px 25px 25px;
+            padding: 10px 20px 20px 20px;
+            background-color: ${COLORS.greys[0]};
           `}
         >
           <label htmlFor="search-bar">
@@ -130,6 +150,7 @@ export const LanguageChooser: React.FunctionComponent<{
               css={css`
                 color: ${COLORS.greys[3]};
                 font-weight: bold;
+                font-size: 14px;
                 margin-bottom: 5px;
               `}
             >
@@ -138,20 +159,38 @@ export const LanguageChooser: React.FunctionComponent<{
           </label>
           <OutlinedInput
             type="text"
+            inputRef={(el) => (searchInputRef = el)}
             css={css`
               background-color: white;
               margin-right: 0;
-              margin-bottom: 10px;
+              margin-bottom: 5px;
+              width: 100%;
+              min-width: 100px;
+              max-width: 436px;
+              // TODO (currently working on it) border interferes with the focus indicator outline
+              // border: 1px solid ${COLORS.greys[3]};
             `}
-            endAdornment={
+            size="small"
+            startAdornment={
               <InputAdornment
-                position="end"
+                position="start"
                 css={css`
-                  margin-right: 0;
+                  margin-left: 0;
+                  color: ${COLORS.greys[2]};
                 `}
               >
                 <Icon component={SearchIcon} />
               </InputAdornment>
+            }
+            endAdornment={
+              <IconButton
+                onClick={clearSearchText}
+                css={css`
+                  margin-right: 0;
+                `}
+              >
+                <ClearIcon />
+              </IconButton>
             }
             id="search-bar"
             fullWidth
@@ -168,12 +207,16 @@ export const LanguageChooser: React.FunctionComponent<{
               scrollbar-width: thick;
               flex-basis: 0;
               flex-grow: 1;
+
+              // to make the scrollbar appear at the far right of the "left-pane", on top of the padding
+              margin-right: -20px;
+              padding-right: 20px;
             `}
           >
             {lp.languageData.map((language, index) => {
               return (
                 <LazyLoad
-                  height={"125px"} // the min height we set on the language card
+                  height={"100px"} // needs to match the min-height we set on the language card
                   overflow={true}
                   // Enhance: If we need to speed things up, it would be more efficient to use the iso639_3_code as the key
                   // though that currently would cause lazyload to show gaps (placeholders?) in the list (try searching "eng")
@@ -182,10 +225,10 @@ export const LanguageChooser: React.FunctionComponent<{
                 >
                   <LanguageCard
                     css={css`
-                      width: 100%;
-                      min-height: 125px;
+                      max-width: 406px;
+                      min-height: 100px;
                       flex-direction: column;
-                      margin: 10px 0px;
+                      margin: 5px 0px;
                     `}
                     languageCardData={language}
                     isSelected={codeMatches(
@@ -206,7 +249,7 @@ export const LanguageChooser: React.FunctionComponent<{
                           flex-direction: row;
                           justify-content: flex-end;
                           flex-wrap: wrap;
-                          padding-left: 30px;
+                          padding: 0px 0px 20px 30px;
                         `}
                       >
                         {language.scripts.map((script: IScript) => {
@@ -214,14 +257,13 @@ export const LanguageChooser: React.FunctionComponent<{
                             <ListItem
                               key={script.code}
                               css={css`
-                                margin-right: 0;
-                                padding-right: 0;
+                                padding: 5px 10px;
                                 width: fit-content;
                               `}
                             >
                               <ScriptCard
                                 css={css`
-                                  min-width: 175px;
+                                  min-width: 100px;
                                 `}
                                 scriptData={script}
                                 isSelected={codeMatches(
@@ -245,9 +287,9 @@ export const LanguageChooser: React.FunctionComponent<{
               !lp.selectedLanguage || isUnlistedLanguage(lp.selectedLanguage)
             }
             css={css`
-              min-width: 300px;
+              // TODO (currently working on it) I would like to make this a fixed width, but need make it still shrink if the screen is too small
               width: fit-content;
-              margin-top: 20px;
+              margin-top: 10px;
             `}
             onClick={() => setCustomizeLanguageDialogOpen(true)}
           ></CustomizeLanguageButton>
@@ -255,12 +297,13 @@ export const LanguageChooser: React.FunctionComponent<{
         <div
           id="right-pane"
           css={css`
-            width: 50%;
+            width: 421px;
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             background-color: white;
-            padding: 15px 25px 25px 15px;
+            padding: 10px 20px 20px 20px;
           `}
         >
           {lp.selectedLanguage && (
@@ -268,8 +311,8 @@ export const LanguageChooser: React.FunctionComponent<{
               <label htmlFor="language-name-bar">
                 <Typography
                   css={css`
-                    color: ${COLORS.greys[3]};
                     font-weight: bold;
+                    margin-bottom: 5px;
                   `}
                 >
                   Display this language this way
@@ -281,14 +324,24 @@ export const LanguageChooser: React.FunctionComponent<{
                   background-color: white;
                   margin-right: 16px;
                   margin-bottom: 10px;
+                  // TODO (currently working on it) border interferes with the focus indicator outline
+                  // border: 2px solid ${COLORS.blues[2]};
+                  // border-radius: 0;
+                  font-size: 26px;
+                  font-weight: bold;
                 `}
                 id="language-name-bar"
+                size="small"
                 fullWidth
                 value={lp.customizableLanguageDetails.displayName}
                 onChange={(e) => {
-                  lp.saveLanguageDetails({
-                    displayName: e.target.value,
-                  });
+                  lp.saveLanguageDetails(
+                    {
+                      ...lp.customizableLanguageDetails,
+                      displayName: e.target.value,
+                    },
+                    lp.selectedScript
+                  );
                 }}
               />
               <Typography
@@ -320,6 +373,13 @@ export const LanguageChooser: React.FunctionComponent<{
               variant="contained"
               color="primary"
               disabled={!lp.isReadyToSubmit}
+              onClick={() =>
+                props.onClose({
+                  language: lp.selectedLanguage,
+                  script: lp.selectedScript,
+                  customDetails: lp.customizableLanguageDetails,
+                } as IOrthography)
+              }
             >
               OK
             </Button>
@@ -329,6 +389,7 @@ export const LanguageChooser: React.FunctionComponent<{
               `}
               variant="outlined"
               color="primary"
+              onClick={() => props.onClose(undefined)}
             >
               Cancel
             </Button>
