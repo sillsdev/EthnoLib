@@ -27,7 +27,11 @@
     "@ethnolib/language-chooser-react-hook": "0.0.0"
   },
   "devDependencies": {
-    "@nx/vite": "^19.1.2",
+    "@nx/storybook": "^19.8.0",
+    "@storybook/addon-essentials": "^8.2.8",
+    "@storybook/core-server": "^8.2.8",
+    "@storybook/react-vite": "^8.2.8",
+    "@storybook/test-runner": "^0.19.1",
     "@types/lodash": "^4.17.7",
     "@types/react": "^17",
     "@types/react-dom": "^17",
@@ -38,6 +42,7 @@
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "storybook": "^8.2.8",
     "typescript": "^5.2.2",
     "vite-plugin-dts": "^4.2.1"
   },
