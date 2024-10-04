@@ -4,11 +4,11 @@ import {
   IRegion,
   IScript,
   searchForLanguage,
-} from '@ethnolib/find-language';
-import { useMemo, useState } from 'react';
-import { stripResultMetadata } from '@ethnolib/find-language';
-import { FuseResult } from 'fuse.js';
-import { stripDemarcation } from '@ethnolib/find-language';
+} from "@ethnolib/find-language";
+import { useMemo, useState } from "react";
+import { stripResultMetadata } from "@ethnolib/find-language";
+import { FuseResult } from "fuse.js";
+import { stripDemarcation } from "@ethnolib/find-language";
 
 export interface ICustomizableLanguageDetails {
   displayName?: string;
@@ -40,13 +40,13 @@ export interface ILanguageChooser {
   resetTo: (initialState: ILanguageChooserInitialState) => void;
 }
 
-export const UNLISTED_LANGUAGE_CODE = 'qaa';
+export const UNLISTED_LANGUAGE_CODE = "qaa";
 export const UNLISTED_LANGUAGE = {
   iso639_3_code: UNLISTED_LANGUAGE_CODE,
   languageSubtag: UNLISTED_LANGUAGE_CODE,
   autonym: undefined,
-  exonym: 'Unknown Language',
-  regionNames: '',
+  exonym: "Unknown Language",
+  regionNames: "",
   scripts: [],
   alternativeTags: [],
   names: [],
@@ -58,7 +58,7 @@ export const useLanguageChooser = (
     searchString: string
   ) => ILanguage[]
 ) => {
-  const [searchString, setSearchString] = useState('');
+  const [searchString, setSearchString] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState<
     ILanguage | undefined
   >();
@@ -159,7 +159,7 @@ export const useLanguageChooser = (
       );
       setCustomizableLanguageDetails({
         displayName: stripDemarcation(
-          language.autonym || language.exonym || ''
+          language.autonym || language.exonym || ""
         ),
       } as ICustomizableLanguageDetails);
     }

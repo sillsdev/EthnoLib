@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { css } from '@emotion/react';
+import { css } from "@emotion/react";
 
 import {
   AppBar,
@@ -11,32 +11,32 @@ import {
   OutlinedInput,
   Toolbar,
   Typography,
-} from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 
 import {
   codeMatches,
   ILanguage,
   IScript,
   stripDemarcation,
-} from '@ethnolib/find-language';
-import { LanguageCard } from './LanguageCard';
-import { ScriptCard } from './ScriptCard';
-import { COLORS } from './colors';
+} from "@ethnolib/find-language";
+import { LanguageCard } from "./LanguageCard";
+import { ScriptCard } from "./ScriptCard";
+import { COLORS } from "./colors";
 import {
   useLanguageChooser,
   isUnlistedLanguage,
   ILanguageChooserInitialState,
   ILanguageChooser,
-} from '@ethnolib/language-chooser-react-hook';
-import { createTag } from '@ethnolib/find-language/languageTagUtils';
-import { debounce } from 'lodash';
-import './styles.css';
-import { CustomizeLanguageButton } from './CustomizeLanguageButton';
-import { useEffect, useState } from 'react';
-import { CustomizeLanguageDialog } from './CustomizeLanguageDialog';
-import LazyLoad from 'react-lazyload';
-import { FuseResult } from 'fuse.js';
+} from "@ethnolib/language-chooser-react-hook";
+import { createTag } from "@ethnolib/find-language/languageTagUtils";
+import { debounce } from "lodash";
+import "./styles.css";
+import { CustomizeLanguageButton } from "./CustomizeLanguageButton";
+import { useEffect, useState } from "react";
+import { CustomizeLanguageDialog } from "./CustomizeLanguageDialog";
+import LazyLoad from "react-lazyload";
+import { FuseResult } from "fuse.js";
 
 export const LanguageChooser: React.FunctionComponent<{
   searchResultModifier: (
@@ -173,7 +173,7 @@ export const LanguageChooser: React.FunctionComponent<{
             {lp.languageData.map((language, index) => {
               return (
                 <LazyLoad
-                  height={'125px'} // the min height we set on the language card
+                  height={"125px"} // the min height we set on the language card
                   overflow={true}
                   // Enhance: If we need to speed things up, it would be more efficient to use the iso639_3_code as the key
                   // though that currently would cause lazyload to show gaps (placeholders?) in the list (try searching "eng")
@@ -294,7 +294,7 @@ export const LanguageChooser: React.FunctionComponent<{
               <Typography
                 css={css`
                   color: ${COLORS.greys[3]};
-                  font-family: 'Roboto Mono', monospace;
+                  font-family: "Roboto Mono", monospace;
                 `}
               >
                 {currentTagPreview}
