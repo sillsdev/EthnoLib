@@ -3,7 +3,7 @@ name: Build-Test-Release
 on:
   push:
     branches:
-      - publishing_config
+      - main
 
 jobs:
   build-test-release:
