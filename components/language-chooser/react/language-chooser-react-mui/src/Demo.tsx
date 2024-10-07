@@ -6,30 +6,13 @@ import {
   stripDemarcation,
   defaultSearchResultModifier,
 } from "@ethnolib/find-language";
-import {
-  Button,
-  Card,
-  Dialog,
-  ThemeProvider,
-  Typography,
-  createTheme,
-} from "@mui/material";
-import { COLORS } from "./colors";
+import { Button, Card, Dialog, Typography } from "@mui/material";
 import { IOrthography } from "@ethnolib/language-chooser-react-hook";
 import "./styles.css";
 import { LanguageChooser } from "./LanguageChooser";
 import React from "react";
 
 function Demo() {
-  // TODO future work: move all the colors used into the theme
-  const theme = createTheme({
-    palette: {
-      primary: {
-        main: COLORS.blues[2],
-      },
-    },
-  });
-
   const uzbekLanguage = {
     autonym: "ўзбек тили",
     exonym: "[Uzb]ek",
@@ -132,76 +115,73 @@ function Demo() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <div
-        css={css`
-          width: 100%;
-          height: 100vh;
-          padding: 17px;
-        `}
-      >
-        <div>
-          <Typography variant="h3" component="div">
-            Reopen with language information
-          </Typography>
-          <Typography component="div">
-            User has previously used the tool and reopens it to make changes,
-            retain all data
-          </Typography>
-          <br></br>
-          <div
+    <div
+      css={css`
+        width: 100%;
+        height: 100vh;
+        padding: 17px;
+      `}
+    >
+      <div>
+        <Typography variant="h3" component="div">
+          Reopen with language information
+        </Typography>
+        <Typography component="div">
+          User has previously used the tool and reopens it to make changes,
+          retain all data
+        </Typography>
+        <br></br>
+        <div
+          css={css`
+            width: max-content;
+            margin-left: 20px;
+          `}
+        >
+          <Card
             css={css`
-              width: max-content;
-              margin-left: 20px;
+              margin-top: 20px;
+              padding: 20px;
+              background-color: rgb(220, 220, 220);
+              border-radius: 0px;
+              box-shadow: none;
+              width: 500px;
             `}
           >
-            <Card
-              css={css`
-                margin-top: 20px;
-                padding: 20px;
-                background-color: rgb(220, 220, 220);
-                border-radius: 0px;
-                box-shadow: none;
-                width: 500px;
-              `}
-            >
-              <Typography component="div" css={css``}>
-                Language Display Name:{" "}
-                {selectedValue?.customDetails?.displayName}
-                <br />
-                Language Code:{" "}
-                {stripDemarcation(selectedValue?.language?.languageSubtag)}
-                <br />
-                Script: {stripDemarcation(selectedValue?.script?.name)}
-                <br />
-                Region:{" "}
-                {stripDemarcation(selectedValue?.customDetails?.region?.name)}
-                <br />
-                Dialect: {selectedValue?.customDetails?.dialect}
-              </Typography>
-            </Card>
-            <br />
-            <Button
-              variant="contained"
-              onClick={handleClickOpen}
-              size="large"
-              css={css`
-                background-color: #1976d2;
-              `}
-            >
-              Modify language selection
-            </Button>
-          </div>
-          <Dialog open={open} maxWidth={"lg"}>
-            <LanguageChooser
-              searchResultModifier={defaultSearchResultModifier}
-              initialState={selectedValue}
-              onClose={handleClose}
-            />
-          </Dialog>
+            <Typography component="div" css={css``}>
+              Language Display Name: {selectedValue?.customDetails?.displayName}
+              <br />
+              Language Code:{" "}
+              {stripDemarcation(selectedValue?.language?.languageSubtag)}
+              <br />
+              Script: {stripDemarcation(selectedValue?.script?.name)}
+              <br />
+              Region:{" "}
+              {stripDemarcation(selectedValue?.customDetails?.region?.name)}
+              <br />
+              Dialect: {selectedValue?.customDetails?.dialect}
+            </Typography>
+          </Card>
+          <br />
+          <Button
+            variant="contained"
+            onClick={handleClickOpen}
+            size="large"
+            css={css`
+              background-color: #1976d2;
+            `}
+          >
+            Modify language selection
+          </Button>
         </div>
+        <Dialog open={open} maxWidth={"lg"}>
+          <LanguageChooser
+            searchResultModifier={defaultSearchResultModifier}
+            initialState={selectedValue}
+            onClose={handleClose}
+          />
+        </Dialog>
       </div>
-    </ThemeProvider>
+    </div>
   );
 }
 
