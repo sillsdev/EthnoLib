@@ -53,7 +53,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   customizableLanguageDetails: ICustomizableLanguageDetails;
   saveLanguageDetails: (
     details: ICustomizableLanguageDetails,
-    script?: IScript
+    script: IScript | undefined
   ) => void;
   selectUnlistedLanguage: () => void;
   searchString: string;

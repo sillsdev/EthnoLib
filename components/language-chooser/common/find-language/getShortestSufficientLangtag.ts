@@ -1,4 +1,4 @@
-import shortestTags from "./shortestTagLookups.json" assert { type: "json" };
+import shortestTags from "./language-data/shortestTagLookups.json" assert { type: "json" };
 
 const shortPreferredTagLookup = new Map<string, string>();
 for (const tagset of shortestTags) {
