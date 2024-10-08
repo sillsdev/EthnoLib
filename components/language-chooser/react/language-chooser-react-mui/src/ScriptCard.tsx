@@ -19,16 +19,10 @@ export const ScriptCard: React.FunctionComponent<
   } as OptionCardProps;
   return (
     <OptionCard {...optionCardProps}>
+      <Typography variant="h2">{scriptData.name}</Typography>
       <Typography
+        variant="subtitle1"
         css={css`
-          font-size: 16px;
-        `}
-      >
-        {scriptData.name}
-      </Typography>
-      <Typography
-        css={css`
-          font-size: 16px;
           color: ${COLORS.greys[3]};
         `}
       >

@@ -31,12 +31,10 @@ export const CustomizeLanguageButton: React.FunctionComponent<
       {...buttonProps}
     >
       <Typography
-        variant="body1"
         css={css`
           text-transform: uppercase;
           color: ${COLORS.blues[2]};
           font-weight: bold;
-          size: 16px;
           display: flex; // for the icon
         `}
       >
@@ -61,8 +59,6 @@ export const CustomizeLanguageButton: React.FunctionComponent<
           variant="body2"
           css={css`
             text-align: left;
-            font-family: "Roboto Mono", monospace;
-            font-size: 14px;
             color: ${COLORS.greys[3]};
           `}
         >

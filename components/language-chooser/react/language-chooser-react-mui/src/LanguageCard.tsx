@@ -31,8 +31,8 @@ export const LanguageCard: React.FunctionComponent<
         {/* Top row */}
 
         <PartiallyBoldedTypography
+          variant="h2"
           css={css`
-            font-size: 16px;
             flex-grow: 1;
           `}
         >
@@ -40,8 +40,8 @@ export const LanguageCard: React.FunctionComponent<
         </PartiallyBoldedTypography>
         {languageCardData.autonym && (
           <PartiallyBoldedTypography
+            variant="h2"
             css={css`
-              font-size: 16px;
               flex-grow: 0;
             `}
           >
@@ -49,19 +49,18 @@ export const LanguageCard: React.FunctionComponent<
           </PartiallyBoldedTypography>
         )}
         <PartiallyBoldedTypography
+          variant="body2"
           css={css`
             flex-grow: 0;
-            font-family: "Roboto Mono", monospace;
-            font-size: 14px;
             color: ${COLORS.greys[3]};
           `}
         >
           {languageCardData.languageSubtag}
         </PartiallyBoldedTypography>
       </div>
-
       {languageCardData.regionNames?.length > 0 && (
         <PartiallyBoldedTypography
+          variant="subtitle1"
           gutterBottom
           css={css`
             margin-top: 8px;
@@ -70,7 +69,6 @@ export const LanguageCard: React.FunctionComponent<
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            font-size: 12px;
             color: ${COLORS.greys[3]};
           `}
         >{`A language of ${languageCardData.regionNames}`}</PartiallyBoldedTypography>
@@ -78,9 +76,9 @@ export const LanguageCard: React.FunctionComponent<
       {languageCardData.names.length > 0 && (
         <PartiallyBoldedTypography
           // Always show all the names.
+          variant="subtitle1"
           css={css`
             text-wrap: balance;
-            font-size: 12px;
             color: ${COLORS.greys[3]};
           `}
         >

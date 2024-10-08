@@ -87,7 +87,34 @@ export const LanguageChooser: React.FunctionComponent<{
         main: COLORS.blues[2],
       },
     },
-    typography: {},
+    typography: {
+      h1: {
+        // Used by the top "Language Chooser" title bar
+        fontSize: "1.25rem",
+        fontWeight: 600,
+        lineHeight: 1.6,
+        letterSpacing: "0.0075em",
+      },
+      h2: {
+        // Used for the primary langauge and script name(s)
+        fontSize: "1rem",
+        fontWeight: 400,
+        lineHeight: 1.5,
+        letterSpacing: "0.00938em",
+      },
+      subtitle1: {
+        // Used for list of language regions and other language names
+        fontSize: "0.75rem",
+        lineHeight: 1.167,
+        letterSpacing: "0.001em", // I'm not sure how MUI calculates its default letter spacings, but this looks about right
+      },
+      body2: {
+        // used for language codes and tags
+        fontFamily: "Roboto Mono, monospace",
+        fontSize: "0.875rem",
+        letterSpacing: "0.05rem",
+      },
+    },
   });
   const LANG_CARD_MIN_HEIGHT = "100px";
 
@@ -128,11 +155,10 @@ export const LanguageChooser: React.FunctionComponent<{
             `}
           >
             <Typography
-              variant="h6"
+              variant="h1"
               component="div"
               css={css`
                 color: black;
-                font-weight: bold;
               `}
             >
               Choose Language
@@ -163,7 +189,8 @@ export const LanguageChooser: React.FunctionComponent<{
                 css={css`
                   color: ${COLORS.greys[3]};
                   font-weight: bold;
-                  font-size: 14px;
+                  font-size: 0.875rem; // 14px
+                  letter-spacing: normal;
                   margin-bottom: 5px;
                 `}
               >
@@ -340,8 +367,8 @@ export const LanguageChooser: React.FunctionComponent<{
                     // TODO (currently working on it) border interferes with the focus indicator outline
                     // border: 2px solid ${COLORS.blues[2]};
                     // border-radius: 0;
-                    font-size: 26px;
-                    font-weight: bold;
+                    font-size: 1.625rem; // 26px
+                    font-weight: 700;
                   `}
                   id="language-name-bar"
                   size="small"
@@ -358,9 +385,9 @@ export const LanguageChooser: React.FunctionComponent<{
                   }}
                 />
                 <Typography
+                  variant="body2"
                   css={css`
                     color: ${COLORS.greys[3]};
-                    font-family: "Roboto Mono", monospace;
                   `}
                 >
                   {currentTagPreview}
