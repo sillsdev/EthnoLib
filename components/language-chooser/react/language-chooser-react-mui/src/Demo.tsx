@@ -173,7 +173,16 @@ function Demo() {
             Modify language selection
           </Button>
         </div>
-        <Dialog open={open} maxWidth={"lg"}>
+        <Dialog
+          open={open}
+          fullWidth={true}
+          css={css`
+            .MuiDialog-paper {
+              max-width: 979px;
+              height: 586px;
+            }
+          `}
+        >
           <LanguageChooser
             searchResultModifier={defaultSearchResultModifier}
             initialState={selectedValue}
