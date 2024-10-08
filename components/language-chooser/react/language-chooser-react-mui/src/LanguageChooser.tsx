@@ -96,7 +96,7 @@ export const LanguageChooser: React.FunctionComponent<{
         letterSpacing: "0.0075em",
       },
       h2: {
-        // Used for the primary langauge and script name(s)
+        // Used for the primary language and script name(s)
         fontSize: "1rem",
         fontWeight: 400,
         lineHeight: 1.5,
@@ -123,11 +123,8 @@ export const LanguageChooser: React.FunctionComponent<{
       <div
         id="lang-chooser"
         css={css`
-          width: 979px;
-          // TODO (currently working on it) make it shrink if the screen is too small
-          // max-width: 979px;
-          // width: 100%;
-          height: 586px;
+          width: 100%;
+          height: 100%;
           display: flex;
           flex-direction: column;
           border-radius: 5px;
@@ -176,7 +173,7 @@ export const LanguageChooser: React.FunctionComponent<{
             id="left-pane"
             css={css`
               flex-grow: 1;
-              height: 100%;
+              // height: 100%;
               position: relative;
               display: flex; // to make the language list overflow scroll work
               flex-direction: column;
