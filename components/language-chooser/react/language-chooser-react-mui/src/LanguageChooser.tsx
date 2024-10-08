@@ -1,10 +1,12 @@
 /** @jsxImportSource @emotion/react */
-import { css } from "@emotion/react";
+import { css, ThemeProvider } from "@emotion/react";
 
 import {
   AppBar,
   Button,
+  createTheme,
   Icon,
+  IconButton,
   InputAdornment,
   List,
   ListItem,
@@ -13,12 +15,14 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 
 import {
   codeMatches,
   ILanguage,
   IScript,
   stripDemarcation,
+  createTag,
 } from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import { ScriptCard } from "./ScriptCard";
@@ -26,10 +30,9 @@ import { COLORS } from "./colors";
 import {
   useLanguageChooser,
   isUnlistedLanguage,
-  ILanguageChooserInitialState,
+  IOrthography,
   ILanguageChooser,
 } from "@ethnolib/language-chooser-react-hook";
-import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import { debounce } from "lodash";
 import "./styles.css";
 import { CustomizeLanguageButton } from "./CustomizeLanguageButton";
@@ -43,7 +46,8 @@ export const LanguageChooser: React.FunctionComponent<{
     results: FuseResult<ILanguage>[],
     searchString: string
   ) => ILanguage[];
-  initialState: ILanguageChooserInitialState;
+  initialState: IOrthography;
+  onClose: (languageSelection: IOrthography | undefined) => void;
 }> = (props) => {
   const lp: ILanguageChooser = useLanguageChooser(props.searchResultModifier);
 
@@ -68,283 +72,381 @@ export const LanguageChooser: React.FunctionComponent<{
     // search string never shows up in the right panel tag preview
   });
 
+  let searchInputRef: HTMLInputElement | null = null;
+  const clearSearchText = () => {
+    if (searchInputRef) {
+      searchInputRef.value = "";
+    }
+    lp.onSearchStringChange("");
+  };
+
+  // TODO future work: move all the colors used into the theme
+  const theme = createTheme({
+    palette: {
+      primary: {
+        main: COLORS.blues[2],
+      },
+    },
+    typography: {
+      h1: {
+        // Used by the top "Language Chooser" title bar
+        fontSize: "1.25rem",
+        fontWeight: 600,
+        lineHeight: 1.6,
+        letterSpacing: "0.0075em",
+      },
+      h2: {
+        // Used for the primary langauge and script name(s)
+        fontSize: "1rem",
+        fontWeight: 400,
+        lineHeight: 1.5,
+        letterSpacing: "0.00938em",
+      },
+      subtitle1: {
+        // Used for list of language regions and other language names
+        fontSize: "0.75rem",
+        lineHeight: 1.167,
+        letterSpacing: "0.001em", // I'm not sure how MUI calculates its default letter spacings, but this looks about right
+      },
+      body2: {
+        // used for language codes and tags
+        fontFamily: "Roboto Mono, monospace",
+        fontSize: "0.875rem",
+        letterSpacing: "0.05rem",
+      },
+    },
+  });
+  const LANG_CARD_MIN_HEIGHT = "100px";
+
   return (
-    <div
-      id="lang-chooser"
-      css={css`
-        width: 1500px;
-        background-color: ${COLORS.greys[0]};
-        border-radius: 10px;
-        position: relative;
-        margin-left: auto;
-        margin-right: auto;
-        overflow: hidden;
-      `}
-    >
-      <AppBar
-        position="static"
+    <ThemeProvider theme={theme}>
+      <div
+        id="lang-chooser"
         css={css`
-          background-color: white;
-          box-shadow: none;
-          border-bottom: 2px solid ${COLORS.greys[1]};
+          width: 979px;
+          // TODO (currently working on it) make it shrink if the screen is too small
+          // max-width: 979px;
+          // width: 100%;
+          height: 586px;
+          display: flex;
+          flex-direction: column;
+          border-radius: 5px;
+          position: relative;
+          margin-left: auto;
+          margin-right: auto;
+          overflow: hidden;
         `}
       >
-        <Toolbar
-          disableGutters
+        <AppBar
+          position="static"
           css={css`
-            padding-left: 15px;
+            background-color: white;
+            box-shadow: none;
+            border-bottom: 2px solid ${COLORS.greys[1]};
+            flex-grow: 0;
           `}
         >
-          <Typography
-            variant="h6"
-            component="div"
+          <Toolbar
+            disableGutters
+            variant="dense"
             css={css`
-              color: black;
-              font-weight: bold;
+              padding-top: 5px;
+              padding-left: 15px;
             `}
           >
-            Choose Language
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <div
-        id="lang-chooser-body"
-        css={css`
-          height: 750px;
-          display: flex;
-        `}
-      >
-        <div
-          id="left-pane"
-          css={css`
-            width: 50%;
-            height: 100%;
-            position: relative;
-            display: flex; // to make the language list overflow scroll work
-            flex-direction: column;
-            padding: 15px 15px 25px 25px;
-          `}
-        >
-          <label htmlFor="search-bar">
             <Typography
+              variant="h1"
+              component="div"
               css={css`
-                color: ${COLORS.greys[3]};
-                font-weight: bold;
-                margin-bottom: 5px;
+                color: black;
               `}
             >
-              Search by name, code, or country
+              Choose Language
             </Typography>
-          </label>
-          <OutlinedInput
-            type="text"
-            css={css`
-              background-color: white;
-              margin-right: 0;
-              margin-bottom: 10px;
-            `}
-            endAdornment={
-              <InputAdornment
-                position="end"
-                css={css`
-                  margin-right: 0;
-                `}
-              >
-                <Icon component={SearchIcon} />
-              </InputAdornment>
-            }
-            id="search-bar"
-            fullWidth
-            onChange={(e) => {
-              debounce(async () => {
-                lp.onSearchStringChange(e.target.value);
-              }, 0)();
-            }}
-          />
-          <div
-            id="language-card-list"
-            css={css`
-              overflow-y: auto;
-              scrollbar-width: thick;
-              flex-basis: 0;
-              flex-grow: 1;
-            `}
-          >
-            {lp.languageData.map((language, index) => {
-              return (
-                <LazyLoad
-                  height={"125px"} // the min height we set on the language card
-                  overflow={true}
-                  // Enhance: If we need to speed things up, it would be more efficient to use the iso639_3_code as the key
-                  // though that currently would cause lazyload to show gaps (placeholders?) in the list (try searching "eng")
-                  // so we would probably need to use forceCheck on the lazyload
-                  key={index}
-                >
-                  <LanguageCard
-                    css={css`
-                      width: 100%;
-                      min-height: 125px;
-                      flex-direction: column;
-                      margin: 10px 0px;
-                    `}
-                    languageCardData={language}
-                    isSelected={codeMatches(
-                      language.iso639_3_code,
-                      lp.selectedLanguage?.iso639_3_code
-                    )}
-                    onClick={() => lp.toggleSelectLanguage(language)}
-                  ></LanguageCard>
-                  {codeMatches(
-                    language.iso639_3_code,
-                    lp.selectedLanguage?.iso639_3_code
-                  ) &&
-                    language.scripts.length > 1 && (
-                      <List
-                        css={css`
-                          width: 100%;
-                          display: flex;
-                          flex-direction: row;
-                          justify-content: flex-end;
-                          flex-wrap: wrap;
-                          padding-left: 30px;
-                        `}
-                      >
-                        {language.scripts.map((script: IScript) => {
-                          return (
-                            <ListItem
-                              key={script.code}
-                              css={css`
-                                margin-right: 0;
-                                padding-right: 0;
-                                width: fit-content;
-                              `}
-                            >
-                              <ScriptCard
-                                css={css`
-                                  min-width: 175px;
-                                `}
-                                scriptData={script}
-                                isSelected={codeMatches(
-                                  script.code,
-                                  lp.selectedScript?.code
-                                )}
-                                onClick={() => lp.toggleSelectScript(script)}
-                              />
-                            </ListItem>
-                          );
-                        })}
-                      </List>
-                    )}
-                </LazyLoad>
-              );
-            })}
-          </div>
-          <CustomizeLanguageButton
-            currentTagPreview={currentTagPreview}
-            forUnlistedLanguage={
-              !lp.selectedLanguage || isUnlistedLanguage(lp.selectedLanguage)
-            }
-            css={css`
-              min-width: 300px;
-              width: fit-content;
-              margin-top: 20px;
-            `}
-            onClick={() => setCustomizeLanguageDialogOpen(true)}
-          ></CustomizeLanguageButton>
-        </div>
+          </Toolbar>
+        </AppBar>
         <div
-          id="right-pane"
+          id="lang-chooser-body"
           css={css`
-            width: 50%;
+            flex-grow: 1;
             display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            background-color: white;
-            padding: 15px 25px 25px 15px;
           `}
         >
-          {lp.selectedLanguage && (
-            <div id="right-pane-language-details=section">
-              <label htmlFor="language-name-bar">
-                <Typography
-                  css={css`
-                    color: ${COLORS.greys[3]};
-                    font-weight: bold;
-                  `}
-                >
-                  Display this language this way
-                </Typography>
-              </label>
-              <OutlinedInput
-                type="text"
-                css={css`
-                  background-color: white;
-                  margin-right: 16px;
-                  margin-bottom: 10px;
-                `}
-                id="language-name-bar"
-                fullWidth
-                value={lp.customizableLanguageDetails.displayName}
-                onChange={(e) => {
-                  lp.saveLanguageDetails({
-                    displayName: e.target.value,
-                  });
-                }}
-              />
+          <div
+            id="left-pane"
+            css={css`
+              flex-grow: 1;
+              height: 100%;
+              position: relative;
+              display: flex; // to make the language list overflow scroll work
+              flex-direction: column;
+              padding: 10px 20px 20px 20px;
+              background-color: ${COLORS.greys[0]};
+            `}
+          >
+            <label htmlFor="search-bar">
               <Typography
                 css={css`
                   color: ${COLORS.greys[3]};
-                  font-family: "Roboto Mono", monospace;
+                  font-weight: bold;
+                  font-size: 0.875rem; // 14px
+                  letter-spacing: normal;
+                  margin-bottom: 5px;
                 `}
               >
-                {currentTagPreview}
+                Search by name, code, or country
               </Typography>
-            </div>
-          )}
+            </label>
+            <OutlinedInput
+              type="text"
+              inputRef={(el) => (searchInputRef = el)}
+              css={css`
+                background-color: white;
+                margin-right: 0;
+                margin-bottom: 5px;
+                width: 100%;
+                min-width: 100px;
+                max-width: 436px;
+                // TODO (currently working on it) border interferes with the focus indicator outline
+                // border: 1px solid ${COLORS.greys[3]};
+              `}
+              size="small"
+              startAdornment={
+                <InputAdornment
+                  position="start"
+                  css={css`
+                    margin-left: 0;
+                    color: ${COLORS.greys[2]};
+                  `}
+                >
+                  <Icon component={SearchIcon} />
+                </InputAdornment>
+              }
+              endAdornment={
+                <IconButton
+                  onClick={clearSearchText}
+                  css={css`
+                    margin-right: 0;
+                  `}
+                >
+                  <ClearIcon />
+                </IconButton>
+              }
+              id="search-bar"
+              fullWidth
+              onChange={(e) => {
+                debounce(async () => {
+                  lp.onSearchStringChange(e.target.value);
+                }, 0)();
+              }}
+            />
+            <div
+              id="language-card-list"
+              css={css`
+                overflow-y: auto;
+                scrollbar-width: thick;
+                flex-basis: 0;
+                flex-grow: 1;
 
+                // to make the scrollbar appear at the far right of the "left-pane", on top of the padding
+                margin-right: -20px;
+                padding-right: 20px;
+              `}
+            >
+              {lp.languageData.map((language, index) => {
+                return (
+                  <LazyLoad
+                    height={LANG_CARD_MIN_HEIGHT} // needs to match the min-height we set on the language card
+                    overflow={true}
+                    // Enhance: If we need to speed things up, it would be more efficient to use the iso639_3_code as the key
+                    // though that currently would cause lazyload to show gaps (placeholders?) in the list (try searching "eng")
+                    // so we would probably need to use forceCheck on the lazyload
+                    key={index}
+                  >
+                    <LanguageCard
+                      css={css`
+                        max-width: 406px;
+                        min-height: ${LANG_CARD_MIN_HEIGHT};
+                        flex-direction: column;
+                        margin: 5px 0px;
+                      `}
+                      languageCardData={language}
+                      isSelected={codeMatches(
+                        language.iso639_3_code,
+                        lp.selectedLanguage?.iso639_3_code
+                      )}
+                      onClick={() => lp.toggleSelectLanguage(language)}
+                    ></LanguageCard>
+                    {codeMatches(
+                      language.iso639_3_code,
+                      lp.selectedLanguage?.iso639_3_code
+                    ) &&
+                      language.scripts.length > 1 && (
+                        <List
+                          css={css`
+                            width: 100%;
+                            display: flex;
+                            flex-direction: row;
+                            justify-content: flex-end;
+                            flex-wrap: wrap;
+                            padding: 0px 0px 20px 30px;
+                          `}
+                        >
+                          {language.scripts.map((script: IScript) => {
+                            return (
+                              <ListItem
+                                key={script.code}
+                                css={css`
+                                  padding: 5px 10px;
+                                  width: fit-content;
+                                `}
+                              >
+                                <ScriptCard
+                                  css={css`
+                                    min-width: 100px;
+                                  `}
+                                  scriptData={script}
+                                  isSelected={codeMatches(
+                                    script.code,
+                                    lp.selectedScript?.code
+                                  )}
+                                  onClick={() => lp.toggleSelectScript(script)}
+                                />
+                              </ListItem>
+                            );
+                          })}
+                        </List>
+                      )}
+                  </LazyLoad>
+                );
+              })}
+            </div>
+            <CustomizeLanguageButton
+              currentTagPreview={currentTagPreview}
+              forUnlistedLanguage={
+                !lp.selectedLanguage || isUnlistedLanguage(lp.selectedLanguage)
+              }
+              css={css`
+                // TODO (currently working on it) I would like to make this a fixed width, but need make it still shrink if the screen is too small
+                width: fit-content;
+                margin-top: 10px;
+              `}
+              onClick={() => setCustomizeLanguageDialogOpen(true)}
+            ></CustomizeLanguageButton>
+          </div>
           <div
-            id="buttons-container"
+            id="right-pane"
             css={css`
-              width: 100%;
+              width: 421px;
+              flex-shrink: 0;
               display: flex;
+              flex-direction: column;
               justify-content: flex-end;
-              padding-top: 15px;
+              background-color: white;
+              padding: 10px 20px 20px 20px;
             `}
           >
-            <Button
+            {lp.selectedLanguage && (
+              <div id="right-pane-language-details=section">
+                <label htmlFor="language-name-bar">
+                  <Typography
+                    css={css`
+                      font-weight: bold;
+                      margin-bottom: 5px;
+                    `}
+                  >
+                    Display this language this way
+                  </Typography>
+                </label>
+                <OutlinedInput
+                  type="text"
+                  css={css`
+                    background-color: white;
+                    margin-right: 16px;
+                    margin-bottom: 10px;
+                    // TODO (currently working on it) border interferes with the focus indicator outline
+                    // border: 2px solid ${COLORS.blues[2]};
+                    // border-radius: 0;
+                    font-size: 1.625rem; // 26px
+                    font-weight: 700;
+                  `}
+                  id="language-name-bar"
+                  size="small"
+                  fullWidth
+                  value={lp.customizableLanguageDetails.displayName}
+                  onChange={(e) => {
+                    lp.saveLanguageDetails(
+                      {
+                        ...lp.customizableLanguageDetails,
+                        displayName: e.target.value,
+                      },
+                      lp.selectedScript
+                    );
+                  }}
+                />
+                <Typography
+                  variant="body2"
+                  css={css`
+                    color: ${COLORS.greys[3]};
+                  `}
+                >
+                  {currentTagPreview}
+                </Typography>
+              </div>
+            )}
+
+            <div
+              id="buttons-container"
               css={css`
-                margin-left: auto;
-                margin-right: 10px;
-                min-width: 100px;
+                width: 100%;
+                display: flex;
+                justify-content: flex-end;
+                padding-top: 15px;
               `}
-              variant="contained"
-              color="primary"
-              disabled={!lp.isReadyToSubmit}
             >
-              OK
-            </Button>
-            <Button
-              css={css`
-                min-width: 100px;
-              `}
-              variant="outlined"
-              color="primary"
-            >
-              Cancel
-            </Button>
+              <Button
+                css={css`
+                  margin-left: auto;
+                  margin-right: 10px;
+                  min-width: 100px;
+                `}
+                variant="contained"
+                color="primary"
+                disabled={!lp.isReadyToSubmit}
+                onClick={() =>
+                  props.onClose({
+                    language: lp.selectedLanguage,
+                    script: lp.selectedScript,
+                    customDetails: lp.customizableLanguageDetails,
+                  } as IOrthography)
+                }
+              >
+                OK
+              </Button>
+              <Button
+                css={css`
+                  min-width: 100px;
+                `}
+                variant="outlined"
+                color="primary"
+                onClick={() => props.onClose(undefined)}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         </div>
+        <CustomizeLanguageDialog
+          open={customizeLanguageDialogOpen}
+          selectedLanguage={lp.selectedLanguage}
+          selectedScript={lp.selectedScript}
+          customizableLanguageDetails={lp.customizableLanguageDetails}
+          saveLanguageDetails={lp.saveLanguageDetails}
+          selectUnlistedLanguage={lp.selectUnlistedLanguage}
+          searchString={lp.searchString}
+          onClose={() => setCustomizeLanguageDialogOpen(false)}
+        />
       </div>
-      <CustomizeLanguageDialog
-        open={customizeLanguageDialogOpen}
-        selectedLanguage={lp.selectedLanguage}
-        selectedScript={lp.selectedScript}
-        customizableLanguageDetails={lp.customizableLanguageDetails}
-        saveLanguageDetails={lp.saveLanguageDetails}
-        selectUnlistedLanguage={lp.selectUnlistedLanguage}
-        searchString={lp.searchString}
-        onClose={() => setCustomizeLanguageDialogOpen(false)}
-      />
-    </div>
+    </ThemeProvider>
   );
 };

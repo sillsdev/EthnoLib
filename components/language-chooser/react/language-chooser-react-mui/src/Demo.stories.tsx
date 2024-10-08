@@ -8,9 +8,4 @@ const meta: Meta<typeof Demo> = {
 export default meta;
 type Story = StoryObj<typeof Demo>;
 
-export const Primary: Story = {
-  args: {
-    primary: true,
-    label: "Demo",
-  },
-};
+export const Primary: Story = {};

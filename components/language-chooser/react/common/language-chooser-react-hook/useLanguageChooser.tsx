@@ -4,11 +4,11 @@ import {
   IRegion,
   IScript,
   searchForLanguage,
+  stripResultMetadata,
+  stripDemarcation,
 } from "@ethnolib/find-language";
 import { useMemo, useState } from "react";
-import { stripResultMetadata } from "@ethnolib/find-language";
 import { FuseResult } from "fuse.js";
-import { stripDemarcation } from "@ethnolib/find-language";
 
 export interface ICustomizableLanguageDetails {
   displayName?: string;
@@ -16,7 +16,7 @@ export interface ICustomizableLanguageDetails {
   dialect?: string;
 }
 
-export interface ILanguageChooserInitialState {
+export interface IOrthography {
   language: ILanguage;
   script?: IScript;
   customDetails?: ICustomizableLanguageDetails;
@@ -37,7 +37,7 @@ export interface ILanguageChooser {
     script?: IScript
   ) => void;
   selectUnlistedLanguage: () => void;
-  resetTo: (initialState: ILanguageChooserInitialState) => void;
+  resetTo: (initialState: IOrthography) => void;
 }
 
 export const UNLISTED_LANGUAGE_CODE = "qaa";
@@ -91,11 +91,7 @@ export const useLanguageChooser = (
 
   // For reopening to a specific selection. We should then also set the search string
   // such that the selected language is visible.
-  function resetTo({
-    language,
-    script,
-    customDetails,
-  }: ILanguageChooserInitialState) {
+  function resetTo({ language, script, customDetails }: IOrthography) {
     // clear everything
     setSelectedLanguage(undefined);
     setSelectedScript(undefined);
@@ -116,17 +112,12 @@ export const useLanguageChooser = (
     );
   }
 
-  // details should only include the properties it wants to modify
   function saveLanguageDetails(
     details: ICustomizableLanguageDetails,
     script?: IScript
   ) {
     setSelectedScript(script);
-    const updatedCustomizableDetails = {
-      ...customizableLanguageDetails,
-      ...details,
-    };
-    setCustomizableLanguageDetails(updatedCustomizableDetails);
+    setCustomizableLanguageDetails(details);
   }
 
   function getModifiedSearchResults(

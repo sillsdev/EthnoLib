@@ -1,19 +1,18 @@
 import * as React from "react";
 import { css } from "@emotion/react";
-import Button from "@mui/material/Button";
-import DialogTitle from "@mui/material/DialogTitle";
-import Dialog from "@mui/material/Dialog";
-import Typography from "@mui/material/Typography";
 import {
   ICustomizableLanguageDetails,
   isUnlistedLanguage,
 } from "@ethnolib/language-chooser-react-hook";
-import { createTag } from "@ethnolib/find-language/languageTagUtils";
 import {
   Autocomplete,
   DialogActions,
   DialogContent,
   TextField,
+  Button,
+  Dialog,
+  DialogTitle,
+  Typography,
 } from "@mui/material";
 import { TextInput } from "./TextInput";
 import { COLORS } from "./colors";
@@ -24,6 +23,7 @@ import {
   IRegion,
   IScript,
   stripDemarcation,
+  createTag,
 } from "@ethnolib/find-language";
 
 // ISO-3166-1 is a region code to region name lookup

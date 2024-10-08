@@ -29,12 +29,22 @@ export const OptionCard: React.FunctionComponent<
         variant="outlined"
         css={css`
           position: relative; // so children can be positioned absolutely
-          box-shadow: ${COLORS.greys[2]} 0px 5px 5px;
+          box-shadow: ${COLORS.greys[2]} 0px 3px 5px;
           background-color: ${backgroundColor};
         `}
         className={props.className}
       >
-        <CardContent>{props.children}</CardContent>
+        <CardContent
+          css={css`
+            padding: 10px;
+            :last-child {
+              // otherwise mui puts a lot of bottom padding on the last child
+              padding-bottom: 15px;
+            }
+          `}
+        >
+          {props.children}
+        </CardContent>
       </Card>
     </CardActionArea>
   );

@@ -20,29 +20,47 @@ export const LanguageCard: React.FunctionComponent<
   } as OptionCardProps;
   return (
     <OptionCard {...optionCardProps}>
-      <PartiallyBoldedTypography variant="h5">
-        {languageCardData.autonym || languageCardData.exonym}
-      </PartiallyBoldedTypography>
-      {languageCardData.autonym && (
-        <PartiallyBoldedTypography variant="body2">
-          {languageCardData.exonym}
-        </PartiallyBoldedTypography>
-      )}
-      <PartiallyBoldedTypography
+      <div
         css={css`
-          right: 0;
-          top: 0;
-          position: absolute;
-          margin: 16px; // To match the padding of the card
-          font-family: "Roboto Mono", monospace;
+          display: flex;
+          flex-direction: row;
+          gap: 20px;
+          align-items: flex-end;
         `}
-        variant="body2"
       >
-        {languageCardData.languageSubtag}
-      </PartiallyBoldedTypography>
+        {/* Top row */}
+
+        <PartiallyBoldedTypography
+          variant="h2"
+          css={css`
+            flex-grow: 1;
+          `}
+        >
+          {languageCardData.autonym || languageCardData.exonym}
+        </PartiallyBoldedTypography>
+        {languageCardData.autonym && (
+          <PartiallyBoldedTypography
+            variant="h2"
+            css={css`
+              flex-grow: 0;
+            `}
+          >
+            {languageCardData.exonym}
+          </PartiallyBoldedTypography>
+        )}
+        <PartiallyBoldedTypography
+          variant="body2"
+          css={css`
+            flex-grow: 0;
+            color: ${COLORS.greys[3]};
+          `}
+        >
+          {languageCardData.languageSubtag}
+        </PartiallyBoldedTypography>
+      </div>
       {languageCardData.regionNames?.length > 0 && (
         <PartiallyBoldedTypography
-          variant="h5"
+          variant="subtitle1"
           gutterBottom
           css={css`
             margin-top: 8px;
@@ -51,15 +69,17 @@ export const LanguageCard: React.FunctionComponent<
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            color: ${COLORS.greys[3]};
           `}
         >{`A language of ${languageCardData.regionNames}`}</PartiallyBoldedTypography>
       )}
       {languageCardData.names.length > 0 && (
         <PartiallyBoldedTypography
-          variant="body2"
           // Always show all the names.
+          variant="subtitle1"
           css={css`
             text-wrap: balance;
+            color: ${COLORS.greys[3]};
           `}
         >
           {languageCardData.names.join(", ")}

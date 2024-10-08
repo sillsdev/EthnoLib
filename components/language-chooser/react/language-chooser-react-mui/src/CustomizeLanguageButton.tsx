@@ -20,9 +20,8 @@ export const CustomizeLanguageButton: React.FunctionComponent<
       variant="outlined"
       color="primary"
       css={css`
-        box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.2),
-          0px 4px 5px 0px rgba(0, 0, 0, 0.14),
-          0px 1px 10px 0px rgba(0, 0, 0, 0.12);
+        border: 1.5px solid ${COLORS.blues[2]};
+        box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
         display: flex;
         flex-direction: column;
         align-items: flex-start;
@@ -32,14 +31,14 @@ export const CustomizeLanguageButton: React.FunctionComponent<
       {...buttonProps}
     >
       <Typography
-        variant="body1"
         css={css`
           text-transform: uppercase;
+          color: ${COLORS.blues[2]};
           font-weight: bold;
           display: flex; // for the icon
         `}
       >
-        {showAsUnlistedLanguage && (
+        {!showAsUnlistedLanguage && (
           <EditIcon
             css={css`
               margin-right: 5px;
@@ -60,6 +59,7 @@ export const CustomizeLanguageButton: React.FunctionComponent<
           variant="body2"
           css={css`
             text-align: left;
+            color: ${COLORS.greys[3]};
           `}
         >
           {currentTagPreview}
@@ -73,7 +73,8 @@ export const CustomizeLanguageButton: React.FunctionComponent<
         >
           <InfoOutlinedIcon
             css={css`
-              color: ${COLORS.greys[2]};
+              color: ${COLORS.greys[3]};
+              margin-left: 10px;
             `}
           />
         </Tooltip>
