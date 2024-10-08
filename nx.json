@@ -31,14 +31,18 @@
   ],
   "release": {
     "projectsRelationship": "independent",
-    "git": {
-      "commit": false
-    },
     "version": {
       "generatorOptions": {
-        "packageRoot": "{projectRoot}/dist"
+        "packageRoot": "{projectRoot}"
       },
       "conventionalCommits": true
+    },
+    "changelog": {
+      "projectChangelogs": {
+        "renderOptions": {
+          "authors": false
+        }
+      }
     },
     "projects": [
       "@ethnolib/language-chooser-react-mui",
