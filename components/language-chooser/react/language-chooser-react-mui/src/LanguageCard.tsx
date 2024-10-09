@@ -24,6 +24,7 @@ export const LanguageCard: React.FunctionComponent<
         css={css`
           display: flex;
           flex-direction: row;
+          flex-wrap: wrap;
           gap: 20px;
           align-items: flex-end;
         `}
