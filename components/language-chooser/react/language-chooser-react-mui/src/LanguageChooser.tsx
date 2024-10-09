@@ -131,7 +131,7 @@ export const LanguageChooser: React.FunctionComponent<{
           position: relative;
           margin-left: auto;
           margin-right: auto;
-          overflow: hidden;
+          overflow: scroll;
         `}
       >
         <AppBar
@@ -204,8 +204,6 @@ export const LanguageChooser: React.FunctionComponent<{
                 width: 100%;
                 min-width: 100px;
                 max-width: 436px;
-                // TODO (currently working on it) border interferes with the focus indicator outline
-                // border: 1px solid ${COLORS.greys[3]};
               `}
               size="small"
               startAdornment={
@@ -318,18 +316,20 @@ export const LanguageChooser: React.FunctionComponent<{
                 );
               })}
             </div>
-            <CustomizeLanguageButton
-              currentTagPreview={currentTagPreview}
-              forUnlistedLanguage={
-                !lp.selectedLanguage || isUnlistedLanguage(lp.selectedLanguage)
-              }
-              css={css`
-                // TODO (currently working on it) I would like to make this a fixed width, but need make it still shrink if the screen is too small
-                width: fit-content;
-                margin-top: 10px;
-              `}
-              onClick={() => setCustomizeLanguageDialogOpen(true)}
-            ></CustomizeLanguageButton>
+            <div id="bottom-of-left-pane">
+              <CustomizeLanguageButton
+                currentTagPreview={currentTagPreview}
+                forUnlistedLanguage={
+                  !lp.selectedLanguage ||
+                  isUnlistedLanguage(lp.selectedLanguage)
+                }
+                css={css`
+                  min-width: 60%;
+                  margin-top: 10px;
+                `}
+                onClick={() => setCustomizeLanguageDialogOpen(true)}
+              ></CustomizeLanguageButton>
+            </div>
           </div>
           <div
             id="right-pane"
@@ -361,9 +361,6 @@ export const LanguageChooser: React.FunctionComponent<{
                     background-color: white;
                     margin-right: 16px;
                     margin-bottom: 10px;
-                    // TODO (currently working on it) border interferes with the focus indicator outline
-                    // border: 2px solid ${COLORS.blues[2]};
-                    // border-radius: 0;
                     font-size: 1.625rem; // 26px
                     font-weight: 700;
                   `}
