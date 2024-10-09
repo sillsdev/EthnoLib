@@ -17,7 +17,7 @@ export interface ICustomizableLanguageDetails {
 }
 
 export interface IOrthography {
-  language: ILanguage;
+  language?: ILanguage;
   script?: IScript;
   customDetails?: ICustomizableLanguageDetails;
 }
