@@ -12,7 +12,11 @@ import "./styles.css";
 import { LanguageChooser } from "./LanguageChooser";
 import React from "react";
 
-function Demo() {
+export const Demo: React.FunctionComponent<{
+  alreadyFilled?: boolean;
+  dialogHeight?: string;
+  dialogWidth?: string;
+}> = (props) => {
   const uzbekLanguage = {
     autonym: "ўзбек тили",
     exonym: "[Uzb]ek",
@@ -84,7 +88,7 @@ function Demo() {
   };
 
   // To demonstrate the ability to reopen to a desired state
-  const initialState: IOrthography = {
+  const samplePrefilledSelections: IOrthography = {
     language: uzbekLanguage,
     script: {
       code: "Cyrl",
@@ -100,8 +104,10 @@ function Demo() {
     },
   } as IOrthography;
 
-  const [open, setOpen] = React.useState(false);
-  const [selectedValue, setSelectedValue] = React.useState(initialState);
+  const [open, setOpen] = React.useState(true);
+  const [selectedValue, setSelectedValue] = React.useState(
+    props.alreadyFilled ? samplePrefilledSelections : ({} as IOrthography)
+  );
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -124,11 +130,7 @@ function Demo() {
     >
       <div>
         <Typography variant="h3" component="div">
-          Reopen with language information
-        </Typography>
-        <Typography component="div">
-          User has previously used the tool and reopens it to make changes,
-          retain all data
+          Language Chooser Demo
         </Typography>
         <br></br>
         <div
@@ -175,11 +177,12 @@ function Demo() {
         </div>
         <Dialog
           open={open}
-          maxWidth={"md"}
+          maxWidth={props.dialogWidth ? "xl" : "md"}
           fullWidth={true}
           css={css`
             .MuiDialog-paper {
-              height: 586px;
+              height: ${props.dialogHeight ? props.dialogHeight : "586px"};
+              ${props.dialogWidth ? `width: ${props.dialogWidth};` : ""}
             }
           `}
         >
@@ -192,6 +195,6 @@ function Demo() {
       </div>
     </div>
   );
-}
+};
 
 export default Demo;
