@@ -40,8 +40,8 @@ export interface ILanguageChooser {
   resetTo: (initialState: IOrthography) => void;
 }
 
-export const UNLISTED_LANGUAGE_CODE = "qaa";
-export const UNLISTED_LANGUAGE = {
+const UNLISTED_LANGUAGE_CODE = "qaa";
+const UNLISTED_LANGUAGE = {
   iso639_3_code: UNLISTED_LANGUAGE_CODE,
   languageSubtag: UNLISTED_LANGUAGE_CODE,
   autonym: undefined,
