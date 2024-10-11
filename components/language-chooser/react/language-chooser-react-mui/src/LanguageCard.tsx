@@ -36,6 +36,7 @@ export const LanguageCard: React.FunctionComponent<
           variant="h2"
           css={css`
             flex-grow: 1;
+            font-family: autonymbus, sans-serif;
           `}
         >
           {languageCardData.autonym || languageCardData.exonym}

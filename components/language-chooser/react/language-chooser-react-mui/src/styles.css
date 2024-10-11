@@ -3,3 +3,13 @@
 *:after {
   box-sizing: border-box;
 }
+
+@font-face {
+  font-family: 'autonymbus';
+  src: url('../fonts/Autonymbus-Regular.woff2') format('woff2'),
+       url('../fonts/Autonymbus-Regular.ttf') format('truetype'),
+       url('../fonts/AutonymbusKR-Regular.otf') format('opentype'),
+       url('../fonts/AutonymbusSC-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
