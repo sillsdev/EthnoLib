@@ -22,7 +22,10 @@ const scriptNames = iso15924.reduce(
 function getIso639_3CodeDetails() {
   const codeDetails = new Set();
   // downloaded from https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab
-  const codeDetailsFile = fs.readFileSync("iso-639-3.tab", "utf8");
+  const codeDetailsFile = fs.readFileSync(
+    "language-data/iso-639-3.tab",
+    "utf8"
+  );
   for (const line of codeDetailsFile.split("\n")) {
     if (line.length === 0) {
       continue;
@@ -83,7 +86,7 @@ function autonymOrFallback(entry: any, fallback: string) {
   return entry.localnames ? entry.localnames[0] : undefined ?? fallback;
 }
 
-// We want to have one entry for every ISO 630-3 code, whereas langtags.json sometimes has multiple entries per code
+// We want to have one entry for every ISO 639-3 code, whereas langtags.json sometimes has multiple entries per code
 // Combine entry into the entry with matching ISO 630-3 code in langs if there is one, otherwise create a new entry
 function addOrCombineLangtagsEntry(entry, langs) {
   if (!entry.iso639_3) {
@@ -222,7 +225,7 @@ function parseLangtagsJson() {
 }
 
 function parseLangTagsTxt() {
-  const langTagsTxtRaw = fs.readFileSync("langtags.txt", "utf8");
+  const langTagsTxtRaw = fs.readFileSync("language-data/langtags.txt", "utf8");
   const langTagsTxt = langTagsTxtRaw.replaceAll("*", "");
   const lines = langTagsTxt.split("\n");
   const tagLookups = [];
@@ -233,7 +236,10 @@ function parseLangTagsTxt() {
       allTags: tags,
     });
   }
-  fs.writeFileSync("shortestTagLookups.json", JSON.stringify(tagLookups));
+  fs.writeFileSync(
+    "language-data/shortestTagLookups.json",
+    JSON.stringify(tagLookups)
+  );
 }
 
 parseLangtagsJson();

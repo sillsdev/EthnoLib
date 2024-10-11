@@ -34,7 +34,7 @@ export interface ILanguageChooser {
   isReadyToSubmit: boolean;
   saveLanguageDetails: (
     details: ICustomizableLanguageDetails,
-    script?: IScript
+    script: IScript | undefined
   ) => void;
   selectUnlistedLanguage: () => void;
   resetTo: (initialState: IOrthography) => void;
@@ -114,7 +114,7 @@ export const useLanguageChooser = (
 
   function saveLanguageDetails(
     details: ICustomizableLanguageDetails,
-    script?: IScript
+    script: IScript | undefined
   ) {
     setSelectedScript(script);
     setCustomizableLanguageDetails(details);
