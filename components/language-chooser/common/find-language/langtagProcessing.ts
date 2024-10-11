@@ -1,6 +1,6 @@
 import { iso15924 } from "iso-15924";
 import langTagsJson from "./language-data/langtags.json" assert { type: "json" };
-import * as fs from "fs";
+import fs from "fs";
 import { ILanguage, IScript } from "./findLanguageInterfaces";
 // import iso3166 from "iso-3166-1";
 
@@ -9,7 +9,7 @@ const COMMA_SEPARATOR = ", ";
 const scriptNames = iso15924.reduce(
   (acc, entry) => ({ ...acc, [entry.code]: entry.name }),
   {}
-);
+) as any;
 
 // const regionNames = iso3166
 //   .all()
@@ -80,7 +80,7 @@ function getAllPossibleNames(entry: any) {
   ]);
 }
 
-function autonymOrFallback(entry: any, fallback: string) {
+function autonymOrFallback(entry: any, fallback: string | undefined) {
   // We are currently ignoring the "localname" field because it appears to be more specific than what we want,
   // e.g. the "es-Latn-ES" entry of langtags.json has "localname": "español de España" and "localnames": [ "castellano", "español" ]
   return entry.localnames ? entry.localnames[0] : undefined ?? fallback;
@@ -88,7 +88,7 @@ function autonymOrFallback(entry: any, fallback: string) {
 
 // We want to have one entry for every ISO 639-3 code, whereas langtags.json sometimes has multiple entries per code
 // Combine entry into the entry with matching ISO 630-3 code in langs if there is one, otherwise create a new entry
-function addOrCombineLangtagsEntry(entry, langs) {
+function addOrCombineLangtagsEntry(entry: any, langs: any) {
   if (!entry.iso639_3) {
     // langTags.json has metadata items in the same list mixed in with the data entries
     return;
@@ -166,7 +166,7 @@ function parseLangtagsJson() {
 
   // Tweak some of the data into the format we want
   const reformattedLangs = Object.values(consolidatedLangTags).map(
-    (langData: ILanguageInternal) => {
+    (langData: any) => {
       // Don't repeat the autonym and exonym in the names list
       langData.names.delete(langData.autonym);
       langData.names.delete(langData.exonym);
