@@ -20,28 +20,38 @@ export const CustomizeLanguageButton: React.FunctionComponent<
       variant="outlined"
       color="primary"
       css={css`
-        border: 1.5px solid ${COLORS.blues[2]};
+        border: 1.5px solid ${COLORS.greys[1]};
+        :hover {
+          border-color: ${COLORS.black};
+        }
+        background-color: ${COLORS.white};
         box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
         display: flex;
         flex-direction: column;
         align-items: flex-start;
         text-transform: none;
-        padding: 5px 10px;
+        padding: 5px 7px;
       `}
       {...buttonProps}
     >
       <Typography
         css={css`
           text-transform: uppercase;
-          color: ${COLORS.blues[2]};
+          color: ${COLORS.black};
+          font-size: 0.75rem;
           font-weight: bold;
           display: flex; // for the icon
+          align-items: center;
         `}
       >
         {!showAsUnlistedLanguage && (
           <EditIcon
             css={css`
-              margin-right: 5px;
+              height: 0.75rem;
+              width: 0.75rem;
+              // for visual alignment
+              margin-right: 3px;
+              margin-bottom: 3px;
             `}
           />
         )}
@@ -51,6 +61,7 @@ export const CustomizeLanguageButton: React.FunctionComponent<
         id="custom-language-card-bottom"
         css={css`
           display: flex;
+          align-items: center;
           width: 100%;
           justify-content: space-between;
         `}

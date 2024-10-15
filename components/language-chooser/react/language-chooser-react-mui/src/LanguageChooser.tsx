@@ -131,7 +131,7 @@ export const LanguageChooser: React.FunctionComponent<{
           position: relative;
           margin-left: auto;
           margin-right: auto;
-          overflow: scroll;
+          overflow: auto;
         `}
       >
         <AppBar
@@ -177,7 +177,7 @@ export const LanguageChooser: React.FunctionComponent<{
               position: relative;
               display: flex; // to make the language list overflow scroll work
               flex-direction: column;
-              padding: 10px 20px 20px 20px;
+              padding: 10px 20px;
               background-color: ${COLORS.greys[0]};
             `}
           >
@@ -340,7 +340,7 @@ export const LanguageChooser: React.FunctionComponent<{
               flex-direction: column;
               justify-content: flex-end;
               background-color: white;
-              padding: 10px 20px 20px 20px;
+              padding: 10px 20px;
             `}
           >
             {lp.selectedLanguage && (
@@ -396,6 +396,7 @@ export const LanguageChooser: React.FunctionComponent<{
                 display: flex;
                 justify-content: flex-end;
                 padding-top: 15px;
+                padding-bottom: 5px;
               `}
             >
               <Button
