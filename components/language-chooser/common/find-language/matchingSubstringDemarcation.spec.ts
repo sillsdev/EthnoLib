@@ -1,5 +1,6 @@
 import { beforeEach, expect, it, describe } from "vitest";
 import {
+  deepStripDemarcation,
   demarcateExactMatches,
   demarcateResults,
   END_OF_MATCH_MARKER,
@@ -136,5 +137,100 @@ describe("find and demarcate exact matches", () => {
     expect(demarcateExactMatches("abc", originalResult)).toEqual(
       expectedResult
     );
+  });
+});
+
+describe("deep strip demarcation from different types of data", () => {
+  it("should strip demarcation from strings", () => {
+    expect(
+      deepStripDemarcation(`${START_OF_MATCH_MARKER}uzb${END_OF_MATCH_MARKER}`)
+    ).toEqual("uzb");
+  });
+  it("should leave undefineds alone", () => {
+    expect(deepStripDemarcation(undefined)).toEqual(undefined);
+  });
+  it("should leave bools, numbers, etc. alone", () => {
+    expect(deepStripDemarcation(true)).toEqual(true);
+    expect(deepStripDemarcation(1)).toEqual(1);
+    expect(deepStripDemarcation("foo")).toEqual("foo");
+  });
+  it("should strip demarcation from arrays", () => {
+    expect(
+      deepStripDemarcation([
+        "a",
+        "b",
+        `${START_OF_MATCH_MARKER}c${END_OF_MATCH_MARKER}`,
+      ])
+    ).toEqual(["a", "b", "c"]);
+  });
+  it("should strip demarcation from objects", () => {
+    expect(
+      deepStripDemarcation({
+        a: "b",
+        c: `${START_OF_MATCH_MARKER}d${END_OF_MATCH_MARKER}`,
+      })
+    ).toEqual({ a: "b", c: "d" });
+  });
+
+  it("should strip demarcation from nested objects", () => {
+    expect(
+      deepStripDemarcation({
+        a: "b",
+        c: {
+          d: ["h", `${START_OF_MATCH_MARKER}e${END_OF_MATCH_MARKER}`],
+          f: "g",
+        },
+      })
+    ).toEqual({ a: "b", c: { d: ["h", "e"], f: "g" } });
+  });
+
+  it("should strip demarcation from common language data structures", () => {
+    const uzbekLanguage = {
+      autonym: "ўзбек тили",
+      exonym: "[Uzb]ek",
+      iso639_3_code: "uzb",
+      languageSubtag: "uz",
+      regionNames: "[Uzb]ekistan, Afghanistan, China",
+      scripts: [],
+      names: ["O[uzb]ek", "O’zbek", "Usbeki", "[Uzb]ek, Northern", "oʻzbek"],
+      alternativeTags: [],
+    } as ILanguage;
+
+    interface TestOrthographyInterface {
+      language: ILanguage;
+    }
+
+    // To demonstrate the ability to reopen to a desired state
+    const orthographyObject = {
+      language: uzbekLanguage,
+    } as TestOrthographyInterface;
+
+    expect(deepStripDemarcation(orthographyObject)).toEqual({
+      language: {
+        autonym: "ўзбек тили",
+        exonym: "Uzbek",
+        iso639_3_code: "uzb",
+        languageSubtag: "uz",
+        regionNames: "Uzbekistan, Afghanistan, China",
+        scripts: [],
+        names: ["Ouzbek", "O’zbek", "Usbeki", "Uzbek, Northern", "oʻzbek"],
+        alternativeTags: [],
+      },
+    });
+  });
+  it("should not modify the original results", () => {
+    const uzbekLanguage = {
+      autonym: "ўзбек тили",
+      exonym: "[Uzb]ek",
+      iso639_3_code: "uzb",
+      languageSubtag: "uz",
+      regionNames: "[Uzb]ekistan, Afghanistan, China",
+      scripts: [],
+      names: ["O[uzb]ek", "O’zbek", "Usbeki", "[Uzb]ek, Northern", "oʻzbek"],
+      alternativeTags: [],
+    } as ILanguage;
+    const originalResults = cloneDeep(uzbekLanguage);
+    deepStripDemarcation(originalResults);
+    expect(originalResults).toEqual(uzbekLanguage);
   });
 });

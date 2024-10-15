@@ -3,7 +3,6 @@ import { css } from "@emotion/react";
 import {
   IScript,
   IRegion,
-  stripDemarcation,
   defaultSearchResultModifier,
 } from "@ethnolib/find-language";
 import { Button, Card, Dialog, Typography } from "@mui/material";
@@ -152,13 +151,11 @@ export const Demo: React.FunctionComponent<{
             <Typography component="div" css={css``}>
               Language Display Name: {selectedValue?.customDetails?.displayName}
               <br />
-              Language Code:{" "}
-              {stripDemarcation(selectedValue?.language?.languageSubtag)}
+              Language Code: {selectedValue?.language?.languageSubtag}
               <br />
-              Script: {stripDemarcation(selectedValue?.script?.name)}
+              Script: {selectedValue?.script?.name}
               <br />
-              Region:{" "}
-              {stripDemarcation(selectedValue?.customDetails?.region?.name)}
+              Region: {selectedValue?.customDetails?.region?.name}
               <br />
               Dialect: {selectedValue?.customDetails?.dialect}
             </Typography>
