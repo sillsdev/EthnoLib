@@ -49,6 +49,26 @@ export function stripDemarcation(
   return strippedStr;
 }
 
+export function deepStripDemarcation(demarcated: any): any {
+  if (!demarcated) {
+    return demarcated;
+  }
+  if (typeof demarcated === "string") {
+    return stripDemarcation(demarcated);
+  }
+  if (Array.isArray(demarcated)) {
+    return demarcated.map((element: any) => deepStripDemarcation(element));
+  }
+  if (typeof demarcated === "object") {
+    const newObject = {} as any;
+    for (const key of Object.keys(demarcated)) {
+      newObject[key] = deepStripDemarcation(demarcated[key]);
+    }
+    return newObject;
+  }
+  return demarcated;
+}
+
 // Normally, we get the locations of hte match from fuse and use that to demarcate the part of the string that matches.
 // Use this only when we don't have fuse results which give us match indexes, but when we nonetheless want to demarcate the matching
 // parts of the string, and are okay with demarcating only the exact matches (no fuzzy match finding). Look for matches ourselves and mark them.

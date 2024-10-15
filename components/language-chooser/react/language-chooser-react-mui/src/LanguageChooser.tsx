@@ -23,6 +23,7 @@ import {
   IScript,
   stripDemarcation,
   createTag,
+  deepStripDemarcation,
 } from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import { ScriptCard } from "./ScriptCard";
@@ -408,11 +409,13 @@ export const LanguageChooser: React.FunctionComponent<{
                 color="primary"
                 disabled={!lp.isReadyToSubmit}
                 onClick={() =>
-                  props.onClose({
-                    language: lp.selectedLanguage,
-                    script: lp.selectedScript,
-                    customDetails: lp.customizableLanguageDetails,
-                  } as IOrthography)
+                  props.onClose(
+                    deepStripDemarcation({
+                      language: lp.selectedLanguage,
+                      script: lp.selectedScript,
+                      customDetails: lp.customizableLanguageDetails,
+                    }) as IOrthography
+                  )
                 }
               >
                 OK
