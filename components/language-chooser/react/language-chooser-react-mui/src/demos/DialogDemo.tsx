@@ -7,12 +7,14 @@ import {
 } from "@ethnolib/find-language";
 import { Button, Card, Dialog, Typography } from "@mui/material";
 import { IOrthography } from "@ethnolib/language-chooser-react-hook";
-import "./styles.css";
-import { LanguageChooser } from "./LanguageChooser";
+import "../styles.css";
+import { LanguageChooser } from "../LanguageChooser";
 import React from "react";
+import { DummyRightPanelComponent } from "./DummyRightPanelComponent";
 
-export const Demo: React.FunctionComponent<{
+export const DialogDemo: React.FunctionComponent<{
   alreadyFilled?: boolean;
+  demoRightPanelComponent?: boolean;
   dialogHeight?: string;
   dialogWidth?: string;
 }> = (props) => {
@@ -187,6 +189,11 @@ export const Demo: React.FunctionComponent<{
             searchResultModifier={defaultSearchResultModifier}
             initialState={selectedValue}
             onClose={handleClose}
+            rightPanelComponent={
+              props.demoRightPanelComponent ? (
+                <DummyRightPanelComponent />
+              ) : undefined
+            }
           />
         </Dialog>
       </div>
@@ -194,4 +201,4 @@ export const Demo: React.FunctionComponent<{
   );
 };
 
-export default Demo;
+export default DialogDemo;

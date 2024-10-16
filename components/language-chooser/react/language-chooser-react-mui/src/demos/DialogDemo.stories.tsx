@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import Demo from "./Demo";
+import DialogDemo from "./DialogDemo";
 
-const meta: Meta<typeof Demo> = {
-  component: Demo,
+const meta: Meta<typeof DialogDemo> = {
+  component: DialogDemo,
 };
 
 export default meta;
-type Story = StoryObj<typeof Demo>;
+type Story = StoryObj<typeof DialogDemo>;
 
 export const Primary: Story = {
   args: {
@@ -17,6 +17,13 @@ export const Primary: Story = {
 export const ReopenWithLanguageInformation: Story = {
   args: {
     alreadyFilled: true,
+  },
+};
+
+export const AdditionalRightPanelComponent: Story = {
+  args: {
+    alreadyFilled: false,
+    demoRightPanelComponent: true,
   },
 };
 
