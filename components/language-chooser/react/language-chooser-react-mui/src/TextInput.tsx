@@ -1,26 +1,18 @@
-import { TextField, TextFieldProps, Typography } from "@mui/material";
+/** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { COLORS } from "./colors";
+import { TextField, TextFieldProps } from "@mui/material";
+import { FormFieldLabel } from "./FormFieldLabel";
 
 export const TextInput: React.FunctionComponent<
   {
     id: string;
     label: string;
+    required?: boolean;
   } & TextFieldProps
-> = ({ id, label, ...textFieldProps }) => {
+> = ({ id, label, required, ...textFieldProps }) => {
   return (
     <div>
-      <label htmlFor={id}>
-        <Typography
-          css={css`
-            color: ${COLORS.greys[3]};
-            font-weight: bold;
-            margin-bottom: 5px;
-          `}
-        >
-          {label}
-        </Typography>
-      </label>
+      <FormFieldLabel htmlFor={id} label={label} required={required} />
       <TextField
         type="text"
         css={css`
@@ -29,6 +21,7 @@ export const TextInput: React.FunctionComponent<
           margin-bottom: 10px;
         `}
         id={id}
+        required={required}
         {...textFieldProps}
       />
     </div>
