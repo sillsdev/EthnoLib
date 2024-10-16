@@ -50,6 +50,7 @@ export const LanguageChooser: React.FunctionComponent<{
   ) => ILanguage[];
   initialState: IOrthography;
   onClose: (languageSelection: IOrthography | undefined) => void;
+  rightPanelComponent?: React.ReactNode;
 }> = (props) => {
   const lp: ILanguageChooser = useLanguageChooser(props.searchResultModifier);
 
@@ -329,95 +330,100 @@ export const LanguageChooser: React.FunctionComponent<{
               flex-shrink: 0;
               display: flex;
               flex-direction: column;
-              justify-content: flex-end;
+              justify-content: space-between;
               background-color: white;
               padding: 10px 15px 10px 20px;
             `}
           >
-            {lp.selectedLanguage && (
-              <div id="right-pane-language-details=section">
-                <FormFieldLabel
-                  htmlFor="language-name-bar"
-                  label="Display this language this way"
-                />
-                <OutlinedInput
-                  type="text"
-                  inputProps={{
-                    spellCheck: false,
-                  }}
-                  css={css`
-                    background-color: white;
-                    margin-right: 16px;
-                    margin-bottom: 10px;
-                    font-size: 1.625rem; // 26px
-                    font-weight: 700;
-                  `}
-                  id="language-name-bar"
-                  size="small"
-                  fullWidth
-                  value={lp.customizableLanguageDetails.displayName}
-                  onChange={(e) => {
-                    lp.saveLanguageDetails(
-                      {
-                        ...lp.customizableLanguageDetails,
-                        displayName: e.target.value,
-                      },
-                      lp.selectedScript
-                    );
-                  }}
-                />
-                <Typography
-                  variant="body2"
-                  css={css`
-                    color: ${COLORS.greys[3]};
-                  `}
-                >
-                  {currentTagPreview}
-                </Typography>
-              </div>
-            )}
+            <div id="right-panel-component-container">
+              {props.rightPanelComponent}
+            </div>
+            <div id="right-pane-language-chooser-section">
+              {lp.selectedLanguage && (
+                <div id="right-pane-language-details=section">
+                  <FormFieldLabel
+                    htmlFor="language-name-bar"
+                    label="Display this language this way"
+                  />
+                  <OutlinedInput
+                    type="text"
+                    inputProps={{
+                      spellCheck: false,
+                    }}
+                    css={css`
+                      background-color: white;
+                      margin-right: 16px;
+                      margin-bottom: 10px;
+                      font-size: 1.625rem; // 26px
+                      font-weight: 700;
+                    `}
+                    id="language-name-bar"
+                    size="small"
+                    fullWidth
+                    value={lp.customizableLanguageDetails.displayName}
+                    onChange={(e) => {
+                      lp.saveLanguageDetails(
+                        {
+                          ...lp.customizableLanguageDetails,
+                          displayName: e.target.value,
+                        },
+                        lp.selectedScript
+                      );
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    css={css`
+                      color: ${COLORS.greys[3]};
+                    `}
+                  >
+                    {currentTagPreview}
+                  </Typography>
+                </div>
+              )}
 
-            <div
-              id="buttons-container"
-              css={css`
-                width: 100%;
-                display: flex;
-                justify-content: flex-end;
-                padding-top: 15px;
-                padding-bottom: 5px;
-              `}
-            >
-              <Button
+              <div
+                id="buttons-container"
                 css={css`
-                  margin-left: auto;
-                  margin-right: 10px;
-                  min-width: 100px;
+                  width: 100%;
+                  display: flex;
+                  justify-content: flex-end;
+                  padding-top: 15px;
+                  padding-bottom: 5px;
                 `}
-                variant="contained"
-                color="primary"
-                disabled={!lp.isReadyToSubmit}
-                onClick={() =>
-                  props.onClose(
-                    deepStripDemarcation({
-                      language: lp.selectedLanguage,
-                      script: lp.selectedScript,
-                      customDetails: lp.customizableLanguageDetails,
-                    }) as IOrthography
-                  )
-                }
               >
-                OK
-              </Button>
-              <Button
-                css={css`
-                  min-width: 100px;
-                `}
-                variant="outlined"
-                color="primary"
-                onClick={() => props.onClose(undefined)}
-              >
-                Cancel
-              </Button>
+                <Button
+                  css={css`
+                    margin-left: auto;
+                    margin-right: 10px;
+                    min-width: 100px;
+                  `}
+                  variant="contained"
+                  color="primary"
+                  disabled={!lp.isReadyToSubmit}
+                  onClick={() =>
+                    props.onClose(
+                      deepStripDemarcation({
+                        language: lp.selectedLanguage,
+                        script: lp.selectedScript,
+                        customDetails: lp.customizableLanguageDetails,
+                      }) as IOrthography
+                    )
+                  }
+                >
+                  OK
+                </Button>
+                <Button
+                  css={css`
+                    min-width: 100px;
+                  `}
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => props.onClose(undefined)}
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </div>
         </div>

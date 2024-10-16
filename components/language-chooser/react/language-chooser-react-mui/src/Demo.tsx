@@ -10,9 +10,11 @@ import { IOrthography } from "@ethnolib/language-chooser-react-hook";
 import "./styles.css";
 import { LanguageChooser } from "./LanguageChooser";
 import React from "react";
+import { DemoRightPanelComponent } from "./DemoRightPanelComponent";
 
 export const Demo: React.FunctionComponent<{
   alreadyFilled?: boolean;
+  demoRightPanelComponent?: boolean;
   dialogHeight?: string;
   dialogWidth?: string;
 }> = (props) => {
@@ -187,6 +189,11 @@ export const Demo: React.FunctionComponent<{
             searchResultModifier={defaultSearchResultModifier}
             initialState={selectedValue}
             onClose={handleClose}
+            rightPanelComponent={
+              props.demoRightPanelComponent ? (
+                <DemoRightPanelComponent />
+              ) : undefined
+            }
           />
         </Dialog>
       </div>

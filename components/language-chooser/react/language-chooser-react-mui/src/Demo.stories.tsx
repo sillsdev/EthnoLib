@@ -20,6 +20,13 @@ export const ReopenWithLanguageInformation: Story = {
   },
 };
 
+export const AdditionalRightPanelComponent: Story = {
+  args: {
+    alreadyFilled: false,
+    demoRightPanelComponent: true,
+  },
+};
+
 export const InASmallDialog: Story = {
   args: {
     alreadyFilled: false,
