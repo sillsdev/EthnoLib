@@ -41,6 +41,7 @@ import { useEffect, useState } from "react";
 import { CustomizeLanguageDialog } from "./CustomizeLanguageDialog";
 import LazyLoad from "react-lazyload";
 import { FuseResult } from "fuse.js";
+import { FormFieldLabel } from "./FormFieldLabel";
 
 export const LanguageChooser: React.FunctionComponent<{
   searchResultModifier: (
@@ -182,19 +183,10 @@ export const LanguageChooser: React.FunctionComponent<{
               background-color: ${COLORS.greys[0]};
             `}
           >
-            <label htmlFor="search-bar">
-              <Typography
-                css={css`
-                  color: ${COLORS.greys[3]};
-                  font-weight: bold;
-                  font-size: 0.875rem; // 14px
-                  letter-spacing: normal;
-                  margin-bottom: 5px;
-                `}
-              >
-                Search by name, code, or country
-              </Typography>
-            </label>
+            <FormFieldLabel
+              htmlFor="search-bar"
+              label="Search by name, code, or country"
+            />
             <OutlinedInput
               type="text"
               inputRef={(el) => (searchInputRef = el)}
@@ -344,16 +336,10 @@ export const LanguageChooser: React.FunctionComponent<{
           >
             {lp.selectedLanguage && (
               <div id="right-pane-language-details=section">
-                <label htmlFor="language-name-bar">
-                  <Typography
-                    css={css`
-                      font-weight: bold;
-                      margin-bottom: 5px;
-                    `}
-                  >
-                    Display this language this way
-                  </Typography>
-                </label>
+                <FormFieldLabel
+                  htmlFor="language-name-bar"
+                  label="Display this language this way"
+                />
                 <OutlinedInput
                   type="text"
                   inputProps={{
