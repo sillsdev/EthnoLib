@@ -5,7 +5,7 @@ import React from "react";
 
 ReactDOM.render(
   <React.StrictMode>
-    <Demo />,
+    <Demo alreadyFilled={true} demoRightPanelComponent={true} />,
   </React.StrictMode>,
   document.getElementById("root")
 );
