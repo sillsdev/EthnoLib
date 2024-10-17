@@ -117,7 +117,7 @@ export const LanguageChooser: React.FunctionComponent<{
       },
     },
   });
-  const LANG_CARD_MIN_HEIGHT = "100px";
+  const LANG_CARD_MIN_HEIGHT = "90px"; // The height of typical card - 1 line of alternate names and 1 line of regions
 
   return (
     <ThemeProvider theme={theme}>
@@ -178,7 +178,7 @@ export const LanguageChooser: React.FunctionComponent<{
               position: relative;
               display: flex; // to make the language list overflow scroll work
               flex-direction: column;
-              padding: 10px 20px;
+              padding: 10px 10px 10px 15px;
               background-color: ${COLORS.greys[0]};
             `}
           >
@@ -200,12 +200,15 @@ export const LanguageChooser: React.FunctionComponent<{
               inputRef={(el) => (searchInputRef = el)}
               css={css`
                 background-color: white;
-                margin-right: 0;
-                margin-bottom: 5px;
+                margin-bottom: 10px;
                 width: 100%;
                 min-width: 100px;
-                max-width: 436px;
+                padding-left: 10px;
+                padding-right: 10px;
               `}
+              inputProps={{
+                spellCheck: false,
+              }}
               size="small"
               startAdornment={
                 <InputAdornment
@@ -222,7 +225,7 @@ export const LanguageChooser: React.FunctionComponent<{
                 <IconButton
                   onClick={clearSearchText}
                   css={css`
-                    margin-right: 0;
+                    padding-right: 0px;
                   `}
                 >
                   <ClearIcon />
@@ -243,10 +246,6 @@ export const LanguageChooser: React.FunctionComponent<{
                 scrollbar-width: thick;
                 flex-basis: 0;
                 flex-grow: 1;
-
-                // to make the scrollbar appear at the far right of the "left-pane", on top of the padding
-                margin-right: -20px;
-                padding-right: 20px;
               `}
             >
               {lp.languageData.map((language, index) => {
@@ -261,10 +260,9 @@ export const LanguageChooser: React.FunctionComponent<{
                   >
                     <LanguageCard
                       css={css`
-                        max-width: 406px;
                         min-height: ${LANG_CARD_MIN_HEIGHT};
                         flex-direction: column;
-                        margin: 5px 0px;
+                        margin: 5px 10px 5px 0px;
                       `}
                       languageCardData={language}
                       isSelected={codeMatches(
@@ -341,7 +339,7 @@ export const LanguageChooser: React.FunctionComponent<{
               flex-direction: column;
               justify-content: flex-end;
               background-color: white;
-              padding: 10px 20px;
+              padding: 10px 15px 10px 20px;
             `}
           >
             {lp.selectedLanguage && (
@@ -358,6 +356,9 @@ export const LanguageChooser: React.FunctionComponent<{
                 </label>
                 <OutlinedInput
                   type="text"
+                  inputProps={{
+                    spellCheck: false,
+                  }}
                   css={css`
                     background-color: white;
                     margin-right: 16px;

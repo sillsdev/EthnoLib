@@ -10,6 +10,8 @@ import { memo } from "react";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
 import { COLORS } from "./colors";
 
+const COMMA_SEPARATOR = ", ";
+
 export const LanguageCard: React.FunctionComponent<
   { languageCardData: ILanguage } & OptionCardPropsWithoutColors
 > = memo(({ languageCardData, ...partialOptionCardProps }) => {
@@ -53,6 +55,7 @@ export const LanguageCard: React.FunctionComponent<
           variant="body2"
           css={css`
             flex-grow: 0;
+            margin-bottom: 1px; // for visual alignment
             color: ${COLORS.greys[3]};
           `}
         >
@@ -83,7 +86,7 @@ export const LanguageCard: React.FunctionComponent<
             color: ${COLORS.greys[3]};
           `}
         >
-          {languageCardData.names.join(", ")}
+          {languageCardData.names.join(COMMA_SEPARATOR)}
         </PartiallyBoldedTypography>
       )}
     </OptionCard>
