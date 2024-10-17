@@ -205,6 +205,9 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               onChange={(event) => {
                 setDialogSelectedDialect(event.target.value);
               }}
+              inputProps={{
+                spellCheck: false,
+              }}
             />
           </div>
         )}

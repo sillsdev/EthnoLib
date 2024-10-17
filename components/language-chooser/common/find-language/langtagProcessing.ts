@@ -38,15 +38,24 @@ function getIso639_3CodeDetails() {
 }
 
 // turn "Uzbek, Northern" into "Northern Uzbek"
-function uncomma(str: string) {
-  if (!str) {
-    return "";
+function uncomma(str: string | Set<string>) {
+  if (!str || typeof str === "string") {
+    if (!str) {
+      return "";
+    }
+    const parts = str.split(COMMA_SEPARATOR);
+    if (parts.length === 1) {
+      return str;
+    }
+    return parts[1] + " " + parts[0];
   }
-  const parts = str.split(COMMA_SEPARATOR);
-  if (parts.length === 1) {
-    return str;
+  if (typeof str === "object") {
+    const newSet = new Set<string>();
+    str.forEach((item: string) => {
+      newSet.add(uncomma(item) as string);
+    });
+    return newSet;
   }
-  return parts[1] + " " + parts[0];
 }
 
 interface ILanguageInternal {
@@ -157,10 +166,10 @@ function parseLangtagsJson() {
           );
         }
       }
-      if (iso639_3Codes.size > 2) {
-        // TODO future work handle these cases when we get language type/status data and deal with macrolanguages
-        console.log("multiple iso639_3 codes", entry.iso639_3, iso639_3Codes);
-      }
+      // if (iso639_3Codes.size > 2) {
+      // TODO future work handle these cases when we get language type/status data and deal with macrolanguages
+      // console.log("multiple iso639_3 codes", entry.iso639_3, iso639_3Codes);
+      // }
     }
   }
 
@@ -170,21 +179,23 @@ function parseLangtagsJson() {
       // Don't repeat the autonym and exonym in the names list
       langData.names.delete(langData.autonym);
       langData.names.delete(langData.exonym);
-      langData.names.forEach(uncomma);
-      langData.regionNames.forEach(uncomma);
       return {
         autonym: uncomma(langData.autonym),
         exonym: uncomma(langData.exonym),
         iso639_3_code: langData.iso639_3_code,
         languageSubtag: langData.languageSubtag,
-        regionNames: [...langData.regionNames].join(COMMA_SEPARATOR),
+        regionNames: [...(uncomma(langData.regionNames) as Set<string>)]
+          .filter((regionName) => !!regionName)
+          .join(COMMA_SEPARATOR),
         scripts: [...new Set([...langData.scripts])].map((scriptCode) => {
           return {
             code: scriptCode,
             name: uncomma(scriptNames[scriptCode]),
           } as IScript;
         }),
-        names: [...langData.names],
+        names: [...(uncomma(langData.names) as Set<string>)].filter(
+          (name) => !!name
+        ),
         alternativeTags: [...langData.alternativeTags],
       } as ILanguage;
     }
