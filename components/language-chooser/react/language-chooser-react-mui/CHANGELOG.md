@@ -1,3 +1,12 @@
+## 0.0.10 (2024-10-18)
+
+
+### 🩹 Fixes
+
+- add prop for an additional component on the right side, storybook ([2ecba19](https://github.com/sillsdev/EthnoLib/commit/2ecba19))
+
+- add non-dialog story ([9ac9e0e](https://github.com/sillsdev/EthnoLib/commit/9ac9e0e))
+
 ## 0.0.9 (2024-10-18)
 
 
