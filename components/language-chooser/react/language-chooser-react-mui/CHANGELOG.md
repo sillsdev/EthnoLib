@@ -1,3 +1,15 @@
+## 0.0.9 (2024-10-18)
+
+
+### 🩹 Fixes
+
+- BL-13987 subdialogs Just adding "fix:" to the commit message to trigger the build. ([4f475dd](https://github.com/sillsdev/EthnoLib/commit/4f475dd))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.0.6
+
 ## 0.0.8 (2024-10-11)
 
 
