@@ -1,3 +1,10 @@
+## 0.0.11 (2024-10-18)
+
+
+### 🩹 Fixes
+
+- allow labels to wrap ([95f4a32](https://github.com/sillsdev/EthnoLib/commit/95f4a32))
+
 ## 0.0.10 (2024-10-18)
 
 
