@@ -10,7 +10,13 @@ export const FormFieldLabel: React.FunctionComponent<
   } & InputLabelProps
 > = ({ label, required, ...inputLabelProps }) => {
   return (
-    <InputLabel {...inputLabelProps}>
+    <InputLabel
+      {...inputLabelProps}
+      css={css`
+        // Otherwise it is nowrap and the labels get in the way of horizontal shrinking on narrow screens
+        text-wrap: wrap;
+      `}
+    >
       <Typography
         css={css`
           color: ${COLORS.greys[3]};
