@@ -126,7 +126,7 @@ See the main [README](../../../../README.md).
 
 ### Language data processing pipeline
 
-If you modify [langtagProcessing.ts](./langtagProcessing.ts), run `npm run find-language/common/langtag-processing` to update [languageData.json](language-data/languageData.json) and [shortestTagLookups.json](language-data/shortestTagLookups.json).
+If you modify [langtagProcessing.ts](./langtagProcessing.ts), run `npm run find-language/common/langtag-processing` to update [languageData.json](language-data/languageData.json) and [equivalentTags.json](language-data/equivalentTags.json).
 
 #### ISO-639-3 language consolidation
 
@@ -136,7 +136,7 @@ find-language searches languages included in the ISO-639-3 standard; every resul
 
 The [createTag](./languageTagUtils.ts) function in this package will return the shortest (and thus preferred) tag for a given language/script/region/dialect combination. For example, given language code "emm" (Mamulique), script code "Latn" (Latin) and region code "MX" (Mexico), `createTag` will return "emm" because it is the preferred equivalent tag for emm-Latn-MX.
 
-[langtags.txt](https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#langtagstxt) lists equivalent language tags. langtagProcessing.ts reformats it into [shortestTagLookups.json](language-data/shortestTagLookups.json) which we use for mapping language tags to their shortest equivalent.
+[langtags.txt](https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#langtagstxt) lists equivalent language tags. langtagProcessing.ts reformats it into [equivalentTags.json](language-data/equivalentTags.json) which we use for mapping language tags to their shortest and maximal equivalents.
 
 ### Unit tests
 
