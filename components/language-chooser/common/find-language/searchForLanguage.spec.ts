@@ -1,4 +1,4 @@
-import { searchForLanguage } from "./searchForLanguage";
+import { getLanguageBySubtag, searchForLanguage } from "./searchForLanguage";
 import { ILanguage } from "./findLanguageInterfaces";
 import { describe, expect, it } from "vitest";
 import { expectTypeOf } from "vitest";
@@ -113,3 +113,10 @@ function indexOfLanguageInSearchResults(
   );
   return index;
 }
+
+describe("getLanguageBySubtag", () => {
+  it("should find languages by valid languageSubtag field", () => {
+    expect(getLanguageBySubtag("aaa")?.exonym).toEqual("Ghotuo");
+    expect(getLanguageBySubtag("ab")?.exonym).toEqual("Abkhaz");
+  });
+});

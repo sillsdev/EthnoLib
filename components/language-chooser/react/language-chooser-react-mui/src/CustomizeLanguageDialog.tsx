@@ -244,6 +244,9 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
 
             //   // 1.  Variant subtags that begin with a letter (a-z, A-Z) MUST be
             //   //     at least five characters long.  */}
+
+            // For now, we are putting whatever the user types in the dialect field after "-x-" in the language tag,
+            // e.g. "ood-x-pima"
             id="customize-variant-field"
             label="Variant (dialect)"
             value={dialogSelectedDialect}

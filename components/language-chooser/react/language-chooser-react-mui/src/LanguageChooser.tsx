@@ -33,6 +33,7 @@ import {
   isUnlistedLanguage,
   IOrthography,
   ILanguageChooser,
+  createTagFromOrthography,
 } from "@ethnolib/language-chooser-react-hook";
 import { debounce } from "lodash";
 import "./styles.css";
@@ -48,14 +49,17 @@ export const LanguageChooser: React.FunctionComponent<{
     results: FuseResult<ILanguage>[],
     searchString: string
   ) => ILanguage[];
-  initialState: IOrthography;
-  onClose: (languageSelection: IOrthography | undefined) => void;
+  initialLanguageTag?: string;
+  onClose: (
+    languageSelection: IOrthography | undefined,
+    languageTag: string | undefined
+  ) => void;
   rightPanelComponent?: React.ReactNode;
 }> = (props) => {
   const lp: ILanguageChooser = useLanguageChooser(props.searchResultModifier);
 
   useEffect(() => {
-    lp.resetTo(props.initialState);
+    lp.resetTo(props.initialLanguageTag || "");
     // We only want this to run once
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -401,15 +405,17 @@ export const LanguageChooser: React.FunctionComponent<{
                   variant="contained"
                   color="primary"
                   disabled={!lp.isReadyToSubmit}
-                  onClick={() =>
+                  onClick={() => {
+                    const resultingOrthography = deepStripDemarcation({
+                      language: lp.selectedLanguage,
+                      script: lp.selectedScript,
+                      customDetails: lp.customizableLanguageDetails,
+                    }) as IOrthography;
                     props.onClose(
-                      deepStripDemarcation({
-                        language: lp.selectedLanguage,
-                        script: lp.selectedScript,
-                        customDetails: lp.customizableLanguageDetails,
-                      }) as IOrthography
-                    )
-                  }
+                      resultingOrthography,
+                      createTagFromOrthography(resultingOrthography)
+                    );
+                  }}
                 >
                   OK
                 </Button>
@@ -419,7 +425,7 @@ export const LanguageChooser: React.FunctionComponent<{
                   `}
                   variant="outlined"
                   color="primary"
-                  onClick={() => props.onClose(undefined)}
+                  onClick={() => props.onClose(undefined, undefined)}
                 >
                   Cancel
                 </Button>

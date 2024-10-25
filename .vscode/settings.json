@@ -12,6 +12,8 @@
         "exonym",
         "langtag",
         "langtags",
-        "macrolanguage"
+        "macrolanguage",
+        "Subtag",
+        "subtags"
     ]
 }

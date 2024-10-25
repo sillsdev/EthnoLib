@@ -6,7 +6,10 @@ import {
   defaultSearchResultModifier,
 } from "@ethnolib/find-language";
 import { Button, Card, Dialog, Typography } from "@mui/material";
-import { IOrthography } from "@ethnolib/language-chooser-react-hook";
+import {
+  createTagFromOrthography,
+  IOrthography,
+} from "@ethnolib/language-chooser-react-hook";
 import "../styles.css";
 import { LanguageChooser } from "../LanguageChooser";
 import React from "react";
@@ -109,15 +112,27 @@ export const DialogDemo: React.FunctionComponent<{
   const [selectedValue, setSelectedValue] = React.useState(
     props.alreadyFilled ? samplePrefilledSelections : ({} as IOrthography)
   );
+  // Language tag can also be computed from the IOrthography object using createTagFromOrthography
+  const [languageTag, setLanguageTag] = React.useState(
+    props.alreadyFilled
+      ? createTagFromOrthography(samplePrefilledSelections)
+      : ""
+  );
 
   const handleClickOpen = () => {
     setOpen(true);
   };
 
-  const handleClose = (value: IOrthography | undefined) => {
+  const handleClose = (
+    orthographyInfo: IOrthography | undefined,
+    languageTag: string | undefined
+  ) => {
     setOpen(false);
-    if (value !== undefined) {
-      setSelectedValue(value);
+    if (orthographyInfo !== undefined) {
+      setSelectedValue(orthographyInfo);
+    }
+    if (languageTag !== undefined) {
+      setLanguageTag(languageTag);
     }
   };
 
@@ -160,6 +175,8 @@ export const DialogDemo: React.FunctionComponent<{
               Region: {selectedValue?.customDetails?.region?.name}
               <br />
               Dialect: {selectedValue?.customDetails?.dialect}
+              <br />
+              Language tag: {languageTag}
             </Typography>
           </Card>
           <br />
@@ -187,7 +204,7 @@ export const DialogDemo: React.FunctionComponent<{
         >
           <LanguageChooser
             searchResultModifier={defaultSearchResultModifier}
-            initialState={selectedValue}
+            initialLanguageTag={languageTag}
             onClose={handleClose}
             rightPanelComponent={
               props.demoRightPanelComponent ? (

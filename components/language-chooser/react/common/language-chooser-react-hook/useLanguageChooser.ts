@@ -1,7 +1,6 @@
 import {
   codeMatches,
   ILanguage,
-  IRegion,
   IScript,
   searchForLanguage,
   stripResultMetadata,
@@ -9,18 +8,12 @@ import {
 } from "@ethnolib/find-language";
 import { useMemo, useState } from "react";
 import { FuseResult } from "fuse.js";
-
-export interface ICustomizableLanguageDetails {
-  displayName?: string;
-  region?: IRegion;
-  dialect?: string;
-}
-
-export interface IOrthography {
-  language?: ILanguage;
-  script?: IScript;
-  customDetails?: ICustomizableLanguageDetails;
-}
+import {
+  ICustomizableLanguageDetails,
+  isUnlistedLanguage,
+  parseLangtagForLangChooser,
+  UNLISTED_LANGUAGE,
+} from "./languageTagHandling";
 
 export interface ILanguageChooser {
   languageData: ILanguage[];
@@ -37,20 +30,8 @@ export interface ILanguageChooser {
     script: IScript | undefined
   ) => void;
   selectUnlistedLanguage: () => void;
-  resetTo: (initialState: IOrthography) => void;
+  resetTo: (initialLanguageTag: string) => void;
 }
-
-const UNLISTED_LANGUAGE_CODE = "qaa";
-const UNLISTED_LANGUAGE = {
-  iso639_3_code: UNLISTED_LANGUAGE_CODE,
-  languageSubtag: UNLISTED_LANGUAGE_CODE,
-  autonym: undefined,
-  exonym: "Unknown Language",
-  regionNames: "",
-  scripts: [],
-  alternativeTags: [],
-  names: [],
-} as ILanguage;
 
 export const useLanguageChooser = (
   searchResultModifier?: (
@@ -95,25 +76,24 @@ export const useLanguageChooser = (
 
   // For reopening to a specific selection. We should then also set the search string
   // such that the selected language is visible.
-  function resetTo({ language, script, customDetails }: IOrthography) {
+  function resetTo(initialLanguageTag: string) {
     // clear everything
     setSelectedLanguage(undefined);
     setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
 
-    if (!language) {
-      return;
+    const initialSelections = parseLangtagForLangChooser(initialLanguageTag);
+    if (initialSelections) {
+      // TODO if there is a language code that is also the start of so many language names
+      // that the language card with that code isn't initially visible and one must scroll to see it,
+      // scroll to it
+      onSearchStringChange(initialSelections.language?.languageSubtag || "");
+      setSelectedLanguage(initialSelections.language);
+      saveLanguageDetails(
+        initialSelections.customDetails || ({} as ICustomizableLanguageDetails),
+        initialSelections.script
+      );
     }
-
-    // TODO if there is a language code that is also the start of so many language names
-    // that the language card with that code isn't initially visible and one must scroll to see it,
-    // scroll to it
-    onSearchStringChange(language.languageSubtag);
-    setSelectedLanguage(language);
-    saveLanguageDetails(
-      customDetails || ({} as ICustomizableLanguageDetails),
-      script
-    );
   }
 
   function saveLanguageDetails(
@@ -197,7 +177,3 @@ export const useLanguageChooser = (
     resetTo,
   } as ILanguageChooser;
 };
-
-export function isUnlistedLanguage(selectedLanguage: ILanguage) {
-  return codeMatches(selectedLanguage.iso639_3_code, UNLISTED_LANGUAGE_CODE);
-}

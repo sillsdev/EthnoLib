@@ -12,7 +12,6 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import { IOrthography } from "@ethnolib/language-chooser-react-hook";
 import "../styles.css";
 import { LanguageChooser } from "../LanguageChooser";
 import React from "react";
@@ -222,7 +221,6 @@ export const PageDemo: React.FunctionComponent<{}> = (props) => {
                 border-radius: 0px;
               `}
               searchResultModifier={defaultSearchResultModifier}
-              initialState={{} as IOrthography}
               onClose={() => {}}
             />
           </div>

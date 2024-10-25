@@ -236,6 +236,12 @@ function parseLangtagsJson() {
 }
 
 function parseLangTagsTxt() {
+  /*
+  From https://github.com/silnrsi/langtags/blob/master/doc/langtags.md 
+  Langtags.txt contains a sequence of equivalence sets. Each set consists of a 
+  list of language tags separated by =. The first tag on the line is the canonical
+   tag and the last tag on the line is the maximal tag. In addition, a tag is 
+   prefixed with * if there is an entry in the SLDR for that particular tag. */
   const langTagsTxtRaw = fs.readFileSync("language-data/langtags.txt", "utf8");
   const langTagsTxt = langTagsTxtRaw.replaceAll("*", "");
   const lines = langTagsTxt.split("\n");
@@ -244,11 +250,12 @@ function parseLangTagsTxt() {
     const tags = line.split(" = ");
     tagLookups.push({
       shortest: tags[0],
+      maximal: tags[tags.length - 1],
       allTags: tags,
     });
   }
   fs.writeFileSync(
-    "language-data/shortestTagLookups.json",
+    "language-data/equivalentTags.json",
     JSON.stringify(tagLookups)
   );
 }

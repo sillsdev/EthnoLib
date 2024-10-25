@@ -12,6 +12,19 @@ export function getAllRegions(): IRegion[] {
   });
 }
 
+export function getRegionBySubtag(code: string): IRegion | undefined {
+  const regionInfo = iso31661.find(
+    (r) => r.alpha2.toLowerCase() === code.toLowerCase()
+  );
+  if (regionInfo) {
+    return {
+      name: regionInfo.name,
+      code: regionInfo.alpha2,
+    } as IRegion;
+  }
+  return undefined;
+}
+
 // ISO-15924 is a script code to script name lookup
 export function getAllScripts(): IScript[] {
   return iso15924.map((script) => {
@@ -20,4 +33,17 @@ export function getAllScripts(): IScript[] {
       code: script.code,
     } as IScript;
   });
+}
+
+export function getScriptBySubtag(code: string): IScript | undefined {
+  const scriptInfo = iso15924.find(
+    (s) => s.code.toLowerCase() === code.toLowerCase()
+  );
+  if (scriptInfo) {
+    return {
+      name: scriptInfo.name,
+      code: scriptInfo.code,
+    } as IScript;
+  }
+  return undefined;
 }
