@@ -1,3 +1,15 @@
+## 0.0.12 (2024-10-28)
+
+
+### 🩹 Fixes
+
+- tag parsing for reopening ([bc3a60a](https://github.com/sillsdev/EthnoLib/commit/bc3a60a))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.0.7
+
 ## 0.0.11 (2024-10-18)
 
 

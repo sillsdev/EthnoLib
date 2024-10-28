@@ -1,3 +1,10 @@
+## 0.0.7 (2024-10-28)
+
+
+### 🩹 Fixes
+
+- tag parsing for reopening ([bc3a60a](https://github.com/sillsdev/EthnoLib/commit/bc3a60a))
+
 ## 0.0.6 (2024-10-18)
 
 
