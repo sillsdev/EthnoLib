@@ -61,7 +61,7 @@ export const useLanguageChooser = (
   const isReadyToSubmit =
     !!selectedLanguage &&
     // either a script is selected or there are no scripts for the selected language
-    (!!selectedScript || selectedLanguage.scripts?.length === 0) &&
+    (!!selectedScript || selectedLanguage?.scripts?.length === 0) &&
     // if unlisted language, name and country are required
     (!isUnlistedLanguage ||
       (customizableLanguageDetails.dialect !== "" &&

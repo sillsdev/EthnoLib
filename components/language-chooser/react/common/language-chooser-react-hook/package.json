@@ -14,7 +14,6 @@
   ],
   "scripts": {
     "build": "tsup ./index.ts --format esm --dts --external react",
-    "dev": "tsup ./index.ts --format esm --watch --dts --external react",
     "typecheck": "tsc",
     "test": "nx vite:test --config vitest.config.ts"
   },
@@ -27,7 +26,7 @@
   "devDependencies": {
     "@types/node": "^20.14.11",
     "ts-node": "^10.9.2",
-    "tsup": "6.2.2",
+    "tsup": "8.3.5",
     "typescript": "^4.6.4"
   }
   ,
