@@ -12,10 +12,10 @@
         "exonym",
         "langtag",
         "langtags",
+        "lazyload",
         "macrolanguage",
         "Subtag",
         "subtags",
-        "tsup",
         "typecheck"
     ]
 }
