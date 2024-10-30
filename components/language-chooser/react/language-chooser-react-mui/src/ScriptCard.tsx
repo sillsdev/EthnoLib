@@ -8,6 +8,7 @@ import {
 import { Typography } from "@mui/material";
 import { IScript } from "@ethnolib/find-language";
 import { COLORS } from "./colors";
+import { scriptSamples } from "./scriptSamples";
 
 export const ScriptCard: React.FunctionComponent<
   { scriptData: IScript } & OptionCardPropsWithoutColors
@@ -26,7 +27,7 @@ export const ScriptCard: React.FunctionComponent<
           color: ${COLORS.greys[3]};
         `}
       >
-        TODO sample text here
+        {scriptSamples[scriptData.code.toLowerCase()] || ""}
       </Typography>
     </OptionCard>
   );
