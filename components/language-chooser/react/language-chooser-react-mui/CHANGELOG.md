@@ -1,3 +1,15 @@
+## 0.0.13 (2024-10-30)
+
+
+### 🩹 Fixes
+
+- add script samples for 9 most common scripts ([5da8ea4](https://github.com/sillsdev/EthnoLib/commit/5da8ea4))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.0.8
+
 ## 0.0.12 (2024-10-28)
 
 

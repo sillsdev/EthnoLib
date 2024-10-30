@@ -1,3 +1,10 @@
+## 0.0.8 (2024-10-30)
+
+
+### 🩹 Fixes
+
+- add script samples for 9 most common scripts ([5da8ea4](https://github.com/sillsdev/EthnoLib/commit/5da8ea4))
+
 ## 0.0.7 (2024-10-28)
 
 
