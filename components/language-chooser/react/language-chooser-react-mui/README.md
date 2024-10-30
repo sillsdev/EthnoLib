@@ -62,4 +62,4 @@ import { LanguageChooser } from "@ethnolib/language-chooser-react-mui";
 
 ## Development
 
-See the main [README](../../../../README.md).
+Run `npm run dev` to quickly start the hot reloading development server. See the main [README](../../../../README.md) for more info.

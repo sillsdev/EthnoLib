@@ -122,7 +122,25 @@ Original English result, `unmodifiedSearchResults[0]` (truncated to save space):
 
 ## Development
 
-See the main [README](../../../../README.md).
+Changes made here will be automatically reflected in the MUI language chooser dev server: `nx dev @ethnolib/language-chooser-react-mui`.
+
+See the main [README](../../../../README.md) for more information on the nx monorepo and development.
+
+### Unit tests
+
+`Find-language` uses Vitest for unit testing. Run
+
+```
+nx test @ethnolib/find-language
+```
+
+from anywhere in the monorepo, or
+
+```
+npm run test
+```
+
+from package root.
 
 ### Language data processing pipeline
 
@@ -137,11 +155,3 @@ find-language searches languages included in the ISO-639-3 standard; every resul
 The [createTag](./languageTagUtils.ts) function in this package will return the shortest (and thus preferred) tag for a given language/script/region/dialect combination. For example, given language code "emm" (Mamulique), script code "Latn" (Latin) and region code "MX" (Mexico), `createTag` will return "emm" because it is the preferred equivalent tag for emm-Latn-MX.
 
 [langtags.txt](https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#langtagstxt) lists equivalent language tags. langtagProcessing.ts reformats it into [equivalentTags.json](language-data/equivalentTags.json) which we use for mapping language tags to their shortest and maximal equivalents.
-
-### Unit tests
-
-`Find-language` uses Vitest for unit testing. Use nx to run tests:
-
-```
-nx test @ethnolib/find-language
-```
