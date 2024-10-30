@@ -38,4 +38,22 @@ See Mui React [LanguageChooser](../../language-chooser-react-mui/src/LanguageCho
 
 ## Development
 
+Changes made here will be automatically reflected in the MUI language chooser dev server: `nx dev @ethnolib/language-chooser-react-mui`.
+
 See the main [README](../../../../../README.md).
+
+### Unit tests
+
+`LanguageChooser-react-hook` uses Vitest for unit testing. Run
+
+```
+nx test @ethnolib/language-chooser-react-hook
+```
+
+from anywhere in the monorepo, or
+
+```
+npm run test
+```
+
+from package root.

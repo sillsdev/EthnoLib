@@ -9,7 +9,6 @@
   "scripts": {
     "langtag-processing": "ts-node-esm ./langtagProcessing.ts",
     "build": "nx vite:build",
-    "dev": "vite --open",
     "typecheck": "tsc",
     "test": "nx vite:test --config vitest.config.ts"
   },

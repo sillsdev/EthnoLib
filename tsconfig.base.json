@@ -16,12 +16,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@ethnolib/find-language": [
-        "components/language-chooser/common/find-language/index.ts"
-      ],
-      "@ethnolib/language-chooser-react-mui": [
-        "components/language-chooser/react/language-chooser-react-mui/src/index.ts"
-      ]
     }
   },
   "exclude": ["node_modules", "tmp"]

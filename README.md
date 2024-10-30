@@ -19,6 +19,8 @@ A React hook that provides the logic for a language chooser component. It utiliz
 
 A MUI styled language chooser interface, initially developed for use in [BloomDesktop](https://github.com/BloomBooks/BloomDesktop). It uses the `language-chooser-react-hook` component.
 
+![alt text](image.png)
+
 ## Development
 
 Ethnolib is a [monorepo using nx](https://nx.dev/concepts/decisions/why-monorepos), with npm for package management.
@@ -28,7 +30,7 @@ We recommend installing nx globally.
 
 Nx caches builds for efficiency. To clear the local cache, run `nx reset`.
 
-Use nx to build or run a hot-reload development server. For example, to build or run the MUI language chooser demo:
+Use nx to build or run a hot-reload development server for a package if relevant. For example, to build or run the MUI language chooser demo:
 
 ```
 nx build @ethnolib/language-chooser-react-mui
