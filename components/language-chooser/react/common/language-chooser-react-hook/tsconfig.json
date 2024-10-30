@@ -1,17 +1,21 @@
 {
   "compilerOptions": {
     "jsx": "react-jsx",
-    "allowJs": true,
-    "esModuleInterop": true,
+    "allowJs": false,
+    "esModuleInterop": false,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
-    "module": "esnext",
-    "target": "ESNext",
-    "moduleResolution": "Node",
-    "outDir": "./dist",
-    "declaration": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true 
+    "strict": true,
+    "types": ["vite/client"]
   },
-  "include": ["."],
-  "exclude": ["./dist/**/*", "node_modules", "**/*.spec.ts"],
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    },
+  ],
+  "extends": "../../../../../tsconfig.base.json"
 }

@@ -46,6 +46,7 @@
     },
     "projects": [
       "@ethnolib/language-chooser-react-mui",
+      "@ethnolib/language-chooser-react-hook",
       "@ethnolib/find-language"
     ]
   }
