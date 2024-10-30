@@ -16,14 +16,11 @@
     "build": "nx vite:build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
-  "bundledDependencies": [
-    "@ethnolib/language-chooser-react-hook"
-  ],
   "dependencies": {
     "lodash": "^4.17.21",
     "react-lazyload": "^3.2.1",
     "@ethnolib/find-language": "0.0.8",
-    "@ethnolib/language-chooser-react-hook": "0.0.0"
+    "@ethnolib/language-chooser-react-hook": "0.0.1"
   },
   "devDependencies": {
     "@nx/storybook": "^19.8.0",

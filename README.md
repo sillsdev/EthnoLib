@@ -19,7 +19,7 @@ A React hook that provides the logic for a language chooser component. It utiliz
 
 A MUI styled language chooser interface, initially developed for use in [BloomDesktop](https://github.com/BloomBooks/BloomDesktop). It uses the `language-chooser-react-hook` component.
 
-![alt text](image.png)
+![alt text](readme-package-diagram.png)
 
 ## Development
 
