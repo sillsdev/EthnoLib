@@ -1,3 +1,10 @@
+## 0.0.9 (2024-10-31)
+
+
+### 🩹 Fixes
+
+- make hook vite and publishable ([af9a56a](https://github.com/sillsdev/EthnoLib/commit/af9a56a))
+
 ## 0.0.8 (2024-10-30)
 
 

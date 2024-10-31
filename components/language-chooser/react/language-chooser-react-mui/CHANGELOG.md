@@ -1,3 +1,16 @@
+## 0.0.14 (2024-10-31)
+
+
+### 🩹 Fixes
+
+- make hook vite and publishable ([af9a56a](https://github.com/sillsdev/EthnoLib/commit/af9a56a))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.2
+- Updated @ethnolib/find-language to 0.0.9
+
 ## 0.0.13 (2024-10-30)
 
 
