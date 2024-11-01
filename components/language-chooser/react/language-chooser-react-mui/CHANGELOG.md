@@ -1,3 +1,15 @@
+## 0.0.15 (2024-11-01)
+
+
+### 🩹 Fixes
+
+- reopen with custom display name ([738f9a4](https://github.com/sillsdev/EthnoLib/commit/738f9a4))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.3
+
 ## 0.0.14 (2024-10-31)
 
 

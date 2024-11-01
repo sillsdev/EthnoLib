@@ -1,3 +1,10 @@
+## 0.0.3 (2024-11-01)
+
+
+### 🩹 Fixes
+
+- reopen with custom display name ([738f9a4](https://github.com/sillsdev/EthnoLib/commit/738f9a4))
+
 ## 0.0.2 (2024-10-31)
 
 
