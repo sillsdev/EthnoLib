@@ -50,6 +50,7 @@ export const LanguageChooser: React.FunctionComponent<{
     searchString: string
   ) => ILanguage[];
   initialLanguageTag?: string;
+  initialCustomDisplayName?: string;
   onClose: (
     languageSelection: IOrthography | undefined,
     languageTag: string | undefined
@@ -59,7 +60,7 @@ export const LanguageChooser: React.FunctionComponent<{
   const lp: ILanguageChooser = useLanguageChooser(props.searchResultModifier);
 
   useEffect(() => {
-    lp.resetTo(props.initialLanguageTag || "");
+    lp.resetTo(props.initialLanguageTag || "", props.initialCustomDisplayName);
     // We only want this to run once
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
