@@ -204,6 +204,7 @@ export const DialogDemo: React.FunctionComponent<{
           <LanguageChooser
             searchResultModifier={defaultSearchResultModifier}
             initialLanguageTag={languageTag}
+            initialCustomDisplayName={selectedValue?.customDetails?.displayName}
             onClose={handleClose}
             rightPanelComponent={
               props.demoRightPanelComponent ? (

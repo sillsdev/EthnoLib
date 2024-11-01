@@ -30,7 +30,10 @@ export interface ILanguageChooser {
     script: IScript | undefined
   ) => void;
   selectUnlistedLanguage: () => void;
-  resetTo: (initialLanguageTag: string) => void;
+  resetTo: (
+    initialLanguageTag: string,
+    initialCustomDisplayName?: string
+  ) => void;
 }
 
 export const useLanguageChooser = (
@@ -76,7 +79,10 @@ export const useLanguageChooser = (
 
   // For reopening to a specific selection. We should then also set the search string
   // such that the selected language is visible.
-  function resetTo(initialLanguageTag: string) {
+  function resetTo(
+    initialLanguageTag: string,
+    initialCustomDisplayName?: string // all info can be captured in language tag except display name
+  ) {
     // clear everything
     setSelectedLanguage(undefined);
     setSelectedScript(undefined);
@@ -90,8 +96,11 @@ export const useLanguageChooser = (
       onSearchStringChange(initialSelections.language?.languageSubtag || "");
       setSelectedLanguage(initialSelections.language);
       saveLanguageDetails(
-        initialSelections.customDetails || ({} as ICustomizableLanguageDetails),
-        initialSelections.script
+        {
+          ...initialSelections.customDetails,
+          displayName: initialCustomDisplayName,
+        } as ICustomizableLanguageDetails,
+        initialSelections?.script
       );
     }
   }
