@@ -21,7 +21,7 @@ const darkColor = "#800303";
 const mediumColor = "#bd746f";
 const lightColor = "#e8caca";
 
-export const PageDemo: React.FunctionComponent<{}> = (props) => {
+export const PageDemo: React.FunctionComponent = () => {
   return (
     <div
       css={css`
@@ -221,7 +221,7 @@ export const PageDemo: React.FunctionComponent<{}> = (props) => {
                 border-radius: 0px;
               `}
               searchResultModifier={defaultSearchResultModifier}
-              onClose={() => {}}
+              onClose={() => undefined}
             />
           </div>
         </div>

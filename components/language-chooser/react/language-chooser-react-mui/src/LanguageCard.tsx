@@ -6,7 +6,6 @@ import {
   OptionCardPropsWithoutColors,
 } from "./OptionCard";
 import { ILanguage } from "@ethnolib/find-language";
-import { memo } from "react";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
 import { COLORS } from "./colors";
 
@@ -14,7 +13,7 @@ const COMMA_SEPARATOR = ", ";
 
 export const LanguageCard: React.FunctionComponent<
   { languageCardData: ILanguage } & OptionCardPropsWithoutColors
-> = memo(({ languageCardData, ...partialOptionCardProps }) => {
+> = ({ languageCardData, ...partialOptionCardProps }) => {
   const optionCardProps = {
     ...partialOptionCardProps,
     backgroundColorWhenNotSelected: COLORS.white,
@@ -91,4 +90,4 @@ export const LanguageCard: React.FunctionComponent<
       )}
     </OptionCard>
   );
-});
+};

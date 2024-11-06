@@ -14,7 +14,7 @@
     "typecheck": "tsc",
     "prebuild": "npm run typecheck",
     "build": "nx vite:build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint ."
   },
   "dependencies": {
     "lodash": "^4.17.21",
@@ -32,12 +32,6 @@
     "@types/react": "^17",
     "@types/react-dom": "^17",
     "@types/react-lazyload": "^3.2.3",
-    "@typescript-eslint/eslint-plugin": "^6.14.0",
-    "@typescript-eslint/parser": "^6.14.0",
-    "@vitejs/plugin-react": "^4.2.1",
-    "eslint": "^8.55.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5",
     "storybook": "^8.2.8",
     "typescript": "^5.2.2",
     "vite-plugin-dts": "^4.2.1"
@@ -52,6 +46,6 @@
   },
   "// We've tested with 18 and have no reason to believe it won't work with higher versions": "",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.18"
   }
 }
