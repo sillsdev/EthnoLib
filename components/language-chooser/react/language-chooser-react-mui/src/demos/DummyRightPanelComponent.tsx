@@ -4,7 +4,7 @@ import { OptionCard } from "../OptionCard";
 import { Typography } from "@mui/material";
 
 // Just a quick dummy to demonstrate the right panel slot
-export const DummyRightPanelComponent: React.FunctionComponent<{}> = () => {
+export const DummyRightPanelComponent: React.FunctionComponent = () => {
   const darkColor = "#800303";
   const lightColor = "#e3dada";
   return (

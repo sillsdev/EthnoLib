@@ -69,7 +69,7 @@ export const LanguageChooser: React.FunctionComponent<{
       props.initialSelectionLanguageTag,
       props.initialCustomDisplayName
     );
-  }, []);
+  }, []); // We only want this to run once
 
   const [customizeLanguageDialogOpen, setCustomizeLanguageDialogOpen] =
     useState(false);

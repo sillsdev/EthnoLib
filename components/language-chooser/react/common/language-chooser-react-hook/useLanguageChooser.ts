@@ -10,7 +10,6 @@ import { useMemo, useState } from "react";
 import { FuseResult } from "fuse.js";
 import {
   ICustomizableLanguageDetails,
-  IOrthography,
   isUnlistedLanguage,
   parseLangtagFromLangChooser,
   UNLISTED_LANGUAGE,
@@ -145,7 +144,7 @@ export const useLanguageChooser = (
       setSelectedLanguage(language);
       setSelectedScript(
         // If there is only one script option for this language, automatically select it
-        language.scripts.length == 1 ? language.scripts[0] : undefined
+        language.scripts.length === 1 ? language.scripts[0] : undefined
       );
       setCustomizableLanguageDetails({
         displayName: stripDemarcation(

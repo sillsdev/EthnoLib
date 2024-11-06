@@ -7,10 +7,11 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "scripts": {
-    "langtag-processing": "ts-node-esm ./langtagProcessing.ts",
+    "langtag-processing": "tsx ./langtagProcessing.ts",
     "build": "nx vite:build",
     "typecheck": "tsc",
-    "test": "nx vite:test --config vitest.config.ts"
+    "test": "nx vite:test --config vitest.config.ts",
+    "lint": "eslint ."
   },
   "dependencies": {
     "fuse.js": "^7.0.0",
@@ -20,11 +21,11 @@
   "devDependencies": {
     "@nx/vite": "^19.1.2",
     "@types/node": "^20.16.11",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.2.2"
   },
   "// We've tested with 18 and have no reason to believe it won't work with higher versions": "",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.11.0"
   }
 }

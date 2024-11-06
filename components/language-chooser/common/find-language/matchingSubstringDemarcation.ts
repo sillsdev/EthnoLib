@@ -60,7 +60,7 @@ export function deepStripDemarcation<T>(demarcated: T): T {
     return demarcated.map((element) => deepStripDemarcation(element)) as T;
   }
   if (typeof demarcated === "object") {
-    const newObject = {} as any;
+    const newObject: any = {};
     for (const key of Object.keys(demarcated)) {
       newObject[key] = deepStripDemarcation((demarcated as any)[key]);
     }
@@ -76,7 +76,7 @@ export function deepStripDemarcation<T>(demarcated: T): T {
 export function demarcateExactMatches(searchString: string, result: ILanguage) {
   for (const field of fieldsToSearch) {
     if (Array.isArray(result[field])) {
-      result[field] = result[field].map((value: any) =>
+      result[field] = result[field].map((value: string) =>
         demarcateExactMatchString(searchString, value)
       );
     } else if (typeof result[field] === "string") {
