@@ -357,7 +357,6 @@ export const LanguageChooser: React.FunctionComponent<{
                     }}
                     css={css`
                       background-color: white;
-                      margin-right: 16px;
                       margin-bottom: 10px;
                       font-size: 1.625rem; // 26px
                       font-weight: 700;
