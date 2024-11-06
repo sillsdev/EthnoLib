@@ -1,3 +1,15 @@
+## 0.0.16 (2024-11-06)
+
+
+### 🩹 Fixes
+
+- bugs from Colin's testing ([17c9989](https://github.com/sillsdev/EthnoLib/commit/17c9989))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.4
+
 ## 0.0.15 (2024-11-01)
 
 
