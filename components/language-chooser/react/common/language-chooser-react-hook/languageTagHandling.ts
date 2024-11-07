@@ -46,15 +46,14 @@ export function createTagFromOrthography(orthography: IOrthography) {
   });
 }
 
-// We don't want to export this outside of the language-chooser-react-hook package
-// because it is not a comprehensive langtag parser. It's just built to handle the
+// This is not a comprehensive language tag parser. It's just built to handle the
 // langtags output by the language chooser and the libPalasso language picker that
 // was in BloomDesktop. The languageTag must be the default language subtag for
 // that language (the first part of the "tag" field of langtags.json), which may
-// be a 2-letter code even if an equivalent ISO 639-3 code exists. We also may not
-// correctly handle other BCP-47 langtag corner cases, e.g. irregular codes,
+// be a 2-letter code even if an equivalent ISO 639-3 code exists. This parser is also not
+// designed to handle other BCP-47 langtag corner cases, e.g. irregular codes,
 // extension codes, langtags with both macrolanguage code and language code
-export function parseLangtagForLangChooser(
+export function parseLangtagFromLangChooser(
   languageTag: string // must be the default language subtag for the language
 ): IOrthography | undefined {
   const parts = languageTag.split(/-[xX]-/);

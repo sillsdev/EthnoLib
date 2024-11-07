@@ -5,7 +5,7 @@ import React from "react";
 
 ReactDOM.render(
   <React.StrictMode>
-    <DialogDemo alreadyFilled={true} demoRightPanelComponent={true} />,
+    <DialogDemo initialSearchString={"uz"} initialLanguageTag={"uz-arab"} />,
   </React.StrictMode>,
   document.getElementById("root")
 );

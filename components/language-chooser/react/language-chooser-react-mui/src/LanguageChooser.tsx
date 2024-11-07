@@ -49,7 +49,8 @@ export const LanguageChooser: React.FunctionComponent<{
     results: FuseResult<ILanguage>[],
     searchString: string
   ) => ILanguage[];
-  initialLanguageTag?: string;
+  initialSearchString?: string;
+  initialSelectionLanguageTag?: string;
   initialCustomDisplayName?: string;
   onClose: (
     languageSelection: IOrthography | undefined,
@@ -60,9 +61,14 @@ export const LanguageChooser: React.FunctionComponent<{
   const lp: ILanguageChooser = useLanguageChooser(props.searchResultModifier);
 
   useEffect(() => {
-    lp.resetTo(props.initialLanguageTag || "", props.initialCustomDisplayName);
-    // We only want this to run once
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (searchInputRef) {
+      searchInputRef.value = props.initialSearchString || "";
+    }
+    lp.resetTo(
+      props.initialSearchString || "",
+      props.initialSelectionLanguageTag,
+      props.initialCustomDisplayName
+    );
   }, []);
 
   const [customizeLanguageDialogOpen, setCustomizeLanguageDialogOpen] =
@@ -195,7 +201,7 @@ export const LanguageChooser: React.FunctionComponent<{
             />
             <OutlinedInput
               type="text"
-              inputRef={(el) => (searchInputRef = el)}
+              inputRef={(el) => (searchInputRef = el)} // for displaying initial search string
               css={css`
                 background-color: white;
                 margin-bottom: 10px;
