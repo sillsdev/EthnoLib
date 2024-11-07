@@ -1,3 +1,15 @@
+## 0.0.17 (2024-11-07)
+
+
+### 🩹 Fixes
+
+- preload search string, more demos ([d0a387f](https://github.com/sillsdev/EthnoLib/commit/d0a387f))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.5
+
 ## 0.0.16 (2024-11-06)
 
 

@@ -1,3 +1,10 @@
+## 0.0.5 (2024-11-07)
+
+
+### 🩹 Fixes
+
+- preload search string, more demos ([d0a387f](https://github.com/sillsdev/EthnoLib/commit/d0a387f))
+
 ## 0.0.4 (2024-11-06)
 
 
