@@ -10,8 +10,9 @@ import { useMemo, useState } from "react";
 import { FuseResult } from "fuse.js";
 import {
   ICustomizableLanguageDetails,
+  IOrthography,
   isUnlistedLanguage,
-  parseLangtagForLangChooser,
+  parseLangtagFromLangChooser,
   UNLISTED_LANGUAGE,
 } from "./languageTagHandling";
 
@@ -31,7 +32,8 @@ export interface ILanguageChooser {
   ) => void;
   selectUnlistedLanguage: () => void;
   resetTo: (
-    initialLanguageTag: string,
+    searchString: string,
+    selectionLanguageTag?: string,
     initialCustomDisplayName?: string
   ) => void;
 }
@@ -80,28 +82,32 @@ export const useLanguageChooser = (
   // For reopening to a specific selection. We should then also set the search string
   // such that the selected language is visible.
   function resetTo(
-    initialLanguageTag: string,
+    searchString: string,
+    selectionLanguageTag?: string, // if present, the language in selectionLanguageTag must be a result of this search string or selection won't display
     initialCustomDisplayName?: string // all info can be captured in language tag except display name
   ) {
-    // clear everything
-    setSelectedLanguage(undefined);
-    setSelectedScript(undefined);
-    clearCustomizableLanguageDetails();
+    onSearchStringChange(searchString);
 
-    const initialSelections = parseLangtagForLangChooser(initialLanguageTag);
-    if (initialSelections) {
-      // TODO if there is a language code that is also the start of so many language names
-      // that the language card with that code isn't initially visible and one must scroll to see it,
-      // scroll to it
-      onSearchStringChange(initialSelections.language?.languageSubtag || "");
-      setSelectedLanguage(initialSelections.language);
-      saveLanguageDetails(
-        {
-          ...initialSelections.customDetails,
-          displayName: initialCustomDisplayName,
-        } as ICustomizableLanguageDetails,
-        initialSelections?.script
-      );
+    const initialSelections = parseLangtagFromLangChooser(
+      selectionLanguageTag || ""
+    );
+
+    if (initialSelections?.language) {
+      // TODO future work: if the selection language is lower in the search results such that its
+      // language card isn't initially visible, we should automatically scroll to it
+      toggleSelectLanguage(initialSelections.language);
+      if (initialSelections?.script) {
+        toggleSelectScript(initialSelections.script);
+      }
+      setCustomizableLanguageDetails((c) => {
+        // toggleSelectLanguage will have set a default display name. We want to use it unless
+        // it is overridden by a initialCustomDisplayName
+        return {
+          ...(initialSelections?.customDetails ||
+            ({} as ICustomizableLanguageDetails)),
+          displayName: initialCustomDisplayName || c.displayName,
+        };
+      });
     }
   }
 

@@ -1,14 +1,10 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import {
-  IScript,
-  IRegion,
-  defaultSearchResultModifier,
-} from "@ethnolib/find-language";
+import { defaultSearchResultModifier } from "@ethnolib/find-language";
 import { Button, Card, Dialog, Typography } from "@mui/material";
 import {
-  createTagFromOrthography,
   IOrthography,
+  parseLangtagFromLangChooser,
 } from "@ethnolib/language-chooser-react-hook";
 import "../styles.css";
 import { LanguageChooser } from "../LanguageChooser";
@@ -16,106 +12,29 @@ import React from "react";
 import { DummyRightPanelComponent } from "./DummyRightPanelComponent";
 
 export const DialogDemo: React.FunctionComponent<{
-  alreadyFilled?: boolean;
+  initialSearchString?: string;
+  initialLanguageTag?: string;
+  initialCustomDisplayName?: string;
   demoRightPanelComponent?: boolean;
   dialogHeight?: string;
   dialogWidth?: string;
 }> = (props) => {
-  const uzbekLanguage = {
-    autonym: "ўзбек тили",
-    exonym: "[Uzb]ek",
-    iso639_3_code: "uzb",
-    languageSubtag: "uz",
-    regionNames: "[Uzb]ekistan, Afghanistan, China",
-    scripts: [
-      {
-        code: "Latn",
-        name: "Latin",
-      },
-      {
-        code: "Arab",
-        name: "Arabic",
-      },
-      {
-        code: "Cyrl",
-        name: "Cyrillic",
-      },
-      {
-        code: "Sogd",
-        name: "Sogdian",
-      },
-    ],
-    names: [
-      "O[uzb]ek",
-      "O’zbek",
-      "Usbaki",
-      "Usbeki",
-      "[Uzb]ek, Northern",
-      "oʻzbek",
-      "oʻzbek tili",
-      "oʻzbekcha",
-      "Özbek",
-      "o‘zbek",
-      null,
-      "اوزبیک",
-      "ўзбекча",
-    ],
-    alternativeTags: [
-      "uz-Latn",
-      "uz-UZ",
-      "uz-uzn",
-      "uz-uzn-Latn",
-      "uz-uzn-Latn-UZ",
-      "uz-uzn-UZ",
-      "uzn",
-      "uzn-Latn",
-      "uzn-Latn-UZ",
-      "uzn-UZ",
-      "uz-Arab",
-      "uz-uzn-Arab",
-      "uz-uzn-Arab-AF",
-      "uzn-Arab",
-      "uzn-Arab-AF",
-      "uz-uzn-Brai",
-      "uz-uzn-Brai-UZ",
-      "uzn-Brai",
-      "uzn-Brai-UZ",
-      "uz-uzn-Cyrl",
-      "uz-uzn-Cyrl-UZ",
-      "uzn-Cyrl",
-      "uzn-Cyrl-UZ",
-      "uz-uzn-Sogd",
-      "uz-uzn-Sogd-CN",
-      "uzn-Sogd",
-      "uzn-Sogd-CN",
-    ],
-  };
-
   // To demonstrate the ability to reopen to a desired state
-  const samplePrefilledSelections: IOrthography = {
-    language: uzbekLanguage,
-    script: {
-      code: "Cyrl",
-      name: "Cyrillic",
-    } as IScript,
-    customDetails: {
-      displayName: "TestOverridenDisplayName",
-      region: {
-        code: "US",
-        name: "United States of America",
-      } as IRegion,
-      dialect: "testDialectName",
-    },
-  } as IOrthography;
+  const initialSelection: IOrthography | undefined =
+    parseLangtagFromLangChooser(props.initialLanguageTag || "");
+  if (props.initialCustomDisplayName !== undefined && initialSelection) {
+    initialSelection.customDetails = {
+      ...initialSelection.customDetails,
+      displayName: props.initialCustomDisplayName,
+    };
+  }
 
   const [open, setOpen] = React.useState(true);
   const [selectedValue, setSelectedValue] = React.useState(
-    props.alreadyFilled ? samplePrefilledSelections : ({} as IOrthography)
+    initialSelection || ({} as IOrthography)
   );
   const [languageTag, setLanguageTag] = React.useState(
-    props.alreadyFilled
-      ? createTagFromOrthography(samplePrefilledSelections)
-      : ""
+    props.initialLanguageTag || ""
   );
 
   const handleClickOpen = () => {
@@ -203,8 +122,9 @@ export const DialogDemo: React.FunctionComponent<{
         >
           <LanguageChooser
             searchResultModifier={defaultSearchResultModifier}
-            initialLanguageTag={languageTag}
-            initialCustomDisplayName={selectedValue?.customDetails?.displayName}
+            initialSearchString={props.initialSearchString}
+            initialSelectionLanguageTag={languageTag}
+            initialCustomDisplayName={props.initialCustomDisplayName}
             onClose={handleClose}
             rightPanelComponent={
               props.demoRightPanelComponent ? (
