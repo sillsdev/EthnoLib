@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// This file has lots of anys in order to parse and process langtags.json
 import { iso15924 } from "iso-15924";
 import langTagsJson from "./language-data/langtags.json" assert { type: "json" };
 import fs from "fs";
@@ -92,7 +94,7 @@ function getAllPossibleNames(entry: any) {
 function autonymOrFallback(entry: any, fallback: string | undefined) {
   // We are currently ignoring the "localname" field because it appears to be more specific than what we want,
   // e.g. the "es-Latn-ES" entry of langtags.json has "localname": "español de España" and "localnames": [ "castellano", "español" ]
-  return entry.localnames ? entry.localnames[0] : undefined ?? fallback;
+  return entry.localnames ? entry.localnames[0] : fallback;
 }
 
 // We want to have one entry for every ISO 639-3 code, whereas langtags.json sometimes has multiple entries per code
@@ -245,7 +247,7 @@ function parseLangTagsTxt() {
   const langTagsTxtRaw = fs.readFileSync("language-data/langtags.txt", "utf8");
   const langTagsTxt = langTagsTxtRaw.replaceAll("*", "");
   const lines = langTagsTxt.split("\n");
-  const tagLookups = [];
+  const tagLookups: any[] = [];
   for (const line of lines) {
     if (line.length === 0) {
       continue;

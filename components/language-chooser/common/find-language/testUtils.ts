@@ -1,4 +1,4 @@
-import { ILanguage } from "./findLanguageInterfaces";
+import { ILanguage, IScript } from "./findLanguageInterfaces";
 
 interface ILanguageTestEntry {
   autonym?: string;
@@ -7,7 +7,7 @@ interface ILanguageTestEntry {
   languageSubtag?: string;
   regionNames?: string;
   names?: string[];
-  scripts?: any[];
+  scripts?: IScript[];
   variants?: string;
   alternativeTags?: string[];
 }

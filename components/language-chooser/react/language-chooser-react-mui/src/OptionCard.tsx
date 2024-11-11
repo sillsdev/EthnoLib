@@ -24,7 +24,7 @@ export const OptionCard: React.FunctionComponent<
     ? props.backgroundColorWhenSelected || COLORS.white
     : props.backgroundColorWhenNotSelected || COLORS.white;
   return (
-    <CardActionArea onClick={props.onClick || (() => {})}>
+    <CardActionArea onClick={props.onClick || (() => undefined)}>
       <Card
         variant="outlined"
         css={css`

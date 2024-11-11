@@ -20,5 +20,6 @@ export interface ILanguage {
   alternativeTags: string[];
   isForMacrolanguageDisambiguation?: boolean;
   isMacrolanguage?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // allow indexing by string
 }
