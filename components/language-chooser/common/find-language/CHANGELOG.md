@@ -1,3 +1,10 @@
+## 0.0.10 (2024-11-11)
+
+
+### 🩹 Fixes
+
+- eslint ([56cbb16](https://github.com/sillsdev/EthnoLib/commit/56cbb16))
+
 ## 0.0.9 (2024-10-31)
 
 

@@ -1,3 +1,15 @@
+## 0.0.6 (2024-11-11)
+
+
+### 🩹 Fixes
+
+- eslint ([56cbb16](https://github.com/sillsdev/EthnoLib/commit/56cbb16))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.0.10
+
 ## 0.0.5 (2024-11-07)
 
 
