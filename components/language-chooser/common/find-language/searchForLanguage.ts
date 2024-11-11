@@ -47,7 +47,7 @@ export function searchForLanguage(
   const allResultsFuse = new Fuse(languages as ILanguage[], {
     ...baseFuseOptions,
     ignoreLocation: true,
-    threshold: 0.2,
+    threshold: 0.3,
   });
   const allResults = allResultsFuse.search(queryString);
 
