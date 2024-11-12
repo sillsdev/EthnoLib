@@ -1,3 +1,15 @@
+## 0.0.7 (2024-11-12)
+
+
+### 🩹 Fixes
+
+- chinese special case and other tweaks ([d2183c8](https://github.com/sillsdev/EthnoLib/commit/d2183c8))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.0.11
+
 ## 0.0.6 (2024-11-11)
 
 

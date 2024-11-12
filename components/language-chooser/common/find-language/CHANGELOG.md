@@ -1,3 +1,10 @@
+## 0.0.11 (2024-11-12)
+
+
+### 🩹 Fixes
+
+- chinese special case and other tweaks ([d2183c8](https://github.com/sillsdev/EthnoLib/commit/d2183c8))
+
 ## 0.0.10 (2024-11-11)
 
 
