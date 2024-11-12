@@ -1,13 +1,15 @@
-import { expect, it, describe, test, beforeEach } from "vitest";
+import { expect, it, describe, test, beforeEach, beforeAll } from "vitest";
 import {
   filterScripts,
   codeMatches,
   prioritizeLangByKeywords,
   filterLanguageCodes,
   substituteInSpecialEntry,
+  defaultSearchResultModifier,
 } from "./searchResultModifiers";
 import { ILanguage } from "./findLanguageInterfaces";
 import { createTestLanguageEntry } from "./testUtils";
+import { searchForLanguage } from "./searchForLanguage";
 
 describe("filter scripts", () => {
   it("should filter out scripts", () => {
@@ -174,5 +176,29 @@ describe("reordering entries to prioritize desired language when keywords are se
       originalResults
     );
     expect(reorderedResults[0].iso639_3_code).toEqual("tpi");
+  });
+
+  describe("Chinese should be handled reasonably", () => {
+    let chineseResults: ILanguage[];
+    beforeAll(() => {
+      const chineseSearchString = "chinese";
+      chineseResults = defaultSearchResultModifier(
+        searchForLanguage(chineseSearchString),
+        chineseSearchString
+      );
+    });
+    it("top chinese result should have language subtag zh", () => {
+      expect(chineseResults[0].languageSubtag).toEqual("zh");
+    });
+    it("should only have one zh result", () => {
+      expect(
+        chineseResults.filter((r) => r.languageSubtag === "zh").length
+      ).toEqual(1);
+    });
+    it("zh result should have many alternative names listed", () => {
+      expect(
+        chineseResults.find((r) => r.languageSubtag === "zh")?.names.length
+      ).toBeGreaterThan(10);
+    });
   });
 });

@@ -21,6 +21,16 @@ export function filterScripts(
   }));
 }
 
+export function modifyScripts(
+  scriptModifier: (value: IScript) => IScript,
+  results: ILanguage[]
+): ILanguage[] {
+  return results.map((result) => ({
+    ...result,
+    scripts: result.scripts.map(scriptModifier),
+  }));
+}
+
 const SCRIPT_CODES_TO_EXCLUDE = new Set([
   "Brai",
   "Zyyy",
@@ -70,6 +80,27 @@ function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
     } as ILanguage;
   }
   return substituteInSpecialEntry("fra", getSpecialEntry, results);
+}
+
+function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
+  function getSpecialEntry(result: ILanguage) {
+    return {
+      ...result,
+      regionNames: "", // clear the long and confusing list of region names
+      scripts: [
+        {
+          code: "Hans",
+          name: "Chinese (Simplified)",
+        } as IScript,
+        {
+          code: "Hant",
+          name: "Chinese (Traditional)",
+        } as IScript,
+        latinScriptData,
+      ],
+    } as ILanguage;
+  }
+  return substituteInSpecialEntry("zho", getSpecialEntry, results);
 }
 
 // Compare codes, ignoring any demarcation or casing
@@ -126,13 +157,26 @@ const ANCIENT_LANGUAGE_ENTRY_CODES = new Set([
   // Filter for deprecated, historical languages etc.
 ]);
 
+const SPECIAL_CASE_EXCLUDED_ENTRY_CODES = new Set([
+  "zhx", // I don't understand why this entry is in langtags.json. It is an ISO-639-5 (language collection) code covering the zho macrolanguage, has no Ethnologue entry, only listed script is Nshu
+  "cmn", // TODO when we implement macrolanguage handling, see if the situation is taken care of and we can remove this exception.
+  // In langtags.json, most chinese entries have iso639_3_code "zho" (which is the macrolanguage code) except zh-Brai-CN and zh-Hant-ES which have "cmn"
+  // so we end up with two search results and don't want to keep the "cmn" one
+]);
+
+const DEFAULT_EXCLUDED_ENTRY_CODES = new Set([
+  ...NOT_A_LANGUAGE_ENTRY_CODES,
+  ...ANCIENT_LANGUAGE_ENTRY_CODES,
+  ...SPECIAL_CASE_EXCLUDED_ENTRY_CODES,
+]);
+
 export function filterOutDefaultExcludedLanguages(
   results: ILanguage[]
 ): ILanguage[] {
   return filterLanguageCodes(
-    ((code) =>
-      !NOT_A_LANGUAGE_ENTRY_CODES.has(code) &&
-      !ANCIENT_LANGUAGE_ENTRY_CODES.has(code)) as (value: string) => boolean,
+    ((code) => !DEFAULT_EXCLUDED_ENTRY_CODES.has(code)) as (
+      value: string
+    ) => boolean,
     results
   );
 }
@@ -186,8 +230,15 @@ export function defaultSearchResultModifier(
     "fra",
     modifiedResults
   );
+  modifiedResults = prioritizeLangByKeywords(
+    ["chinese"],
+    searchString,
+    "zho", // TODO: if we implement improved macrolanguage handling, see if we should change this to cmn
+    modifiedResults
+  );
   modifiedResults = simplifyEnglishResult(modifiedResults);
   modifiedResults = simplifyFrenchResult(modifiedResults);
+  modifiedResults = simplifyChineseResult(modifiedResults);
   modifiedResults = filterOutDefaultExcludedLanguages(modifiedResults);
   modifiedResults = filterScripts(scriptFilter, modifiedResults);
   return modifiedResults;

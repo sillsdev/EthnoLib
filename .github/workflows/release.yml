@@ -36,7 +36,7 @@ jobs:
 
       # find-language is a dependency of langauge-chooser-react-mui so it will have been built in the build step
       - name: Run tests
-        run: npx nx test @ethnolib/find-language
+        run: npx nx run-many --all --target=test
 
       - name: Set name and email for git so we can commit and tag
         run: |

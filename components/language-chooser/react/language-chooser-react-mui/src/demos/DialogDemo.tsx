@@ -3,6 +3,7 @@ import { css } from "@emotion/react";
 import { defaultSearchResultModifier } from "@ethnolib/find-language";
 import { Button, Card, Dialog, Typography } from "@mui/material";
 import {
+  defaultDisplayName,
   IOrthography,
   parseLangtagFromLangChooser,
 } from "@ethnolib/language-chooser-react-hook";
@@ -22,10 +23,12 @@ export const DialogDemo: React.FunctionComponent<{
   // To demonstrate the ability to reopen to a desired state
   const initialSelection: IOrthography | undefined =
     parseLangtagFromLangChooser(props.initialLanguageTag || "");
-  if (props.initialCustomDisplayName !== undefined && initialSelection) {
+  if (initialSelection?.language) {
     initialSelection.customDetails = {
-      ...initialSelection.customDetails,
-      displayName: props.initialCustomDisplayName,
+      ...(initialSelection.customDetails || []),
+      displayName:
+        props.initialCustomDisplayName ??
+        defaultDisplayName(initialSelection.language),
     };
   }
 
