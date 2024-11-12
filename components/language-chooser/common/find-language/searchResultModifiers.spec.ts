@@ -202,3 +202,8 @@ describe("reordering entries to prioritize desired language when keywords are se
     });
   });
 });
+describe("this has a broken test for testing GHA", () => {
+  it("will fail", () => {
+    expect(true).toBe(false);
+  });
+});
