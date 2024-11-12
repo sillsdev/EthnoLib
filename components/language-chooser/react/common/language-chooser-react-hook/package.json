@@ -14,7 +14,7 @@
     "test": "nx vite:test --config vitest.config.ts"
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.0.11",
+    "@ethnolib/find-language": "0.0.12",
     "fuse.js": "^7.0.0",
     "iso-15924": "^3.2.0",
     "iso-3166": "^4.3.0"

@@ -19,7 +19,7 @@
   "dependencies": {
     "lodash": "^4.17.21",
     "react-lazyload": "^3.2.1",
-    "@ethnolib/find-language": "0.0.11",
+    "@ethnolib/find-language": "0.0.12",
     "@ethnolib/language-chooser-react-hook": "0.0.7"
   },
   "devDependencies": {

@@ -1,3 +1,10 @@
+## 0.0.12 (2024-11-12)
+
+
+### 🩹 Fixes
+
+- broken unit test to test GHA response ([fad9355](https://github.com/sillsdev/EthnoLib/commit/fad9355))
+
 ## 0.0.11 (2024-11-12)
 
 
