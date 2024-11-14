@@ -2,24 +2,39 @@ import Fuse, { FuseResult } from "fuse.js";
 import languages from "./language-data/languageData.json";
 import { ILanguage } from "./findLanguageInterfaces";
 
-const fuseSearchKeys = [
+function spacePad(target: string | undefined) {
+  return target ? " " + target + " " : target;
+}
+
+// If we surround the search targets with spaces, we can detect exact whole-word matches or prefix matches simply by adding spaces around the query string
+const spacePaddedLanguages = languages.map((language) => ({
+  ...language,
+  autonym: spacePad(language.autonym),
+  exonym: spacePad(language.exonym),
+  names: language.names.map(spacePad),
+  languageSubtag: spacePad(language.languageSubtag),
+}));
+
+const exactMatchPrioritizableFuseSearchKeys = [
   { name: "autonym", weight: 100 },
   { name: "exonym", weight: 100 },
   { name: "languageSubtag", weight: 80 },
   { name: "names", weight: 8 },
+];
+// We will bring results that exactly whole-word match or prefix-match to the top of the list
+// but don't want to do this for region names
+const allFuseSearchKeys = [
+  ...exactMatchPrioritizableFuseSearchKeys,
   { name: "regionNames", weight: 1 },
 ];
 
-// We will bring results that start with the query string to the top of the list
-// except for results that just have a region name that starts with the query string
-const prefixPrioritizableFuseSearchKeys = [
-  { name: "autonym", weight: 100 },
-  { name: "exonym", weight: 100 },
-  { name: "languageSubtag", weight: 80 },
-  { name: "names", weight: 8 },
-];
+// exported for match-highlighting use
+export const fieldsToSearch = allFuseSearchKeys.map((key) => key.name);
 
-export const fieldsToSearch = fuseSearchKeys.map((key) => key.name);
+// a good alternative search library would be minisearch (https://github.com/lucaong/minisearch) which handles word tokenization
+// and so we wouldn't need all this hacky space padding business. But if we switched to minisearch, I'm not sure how we would do
+// highlighting of fuzzy match portions, e.g. higlighting "[japane]se" if the user searched "jpane"
+// and what we have is working for now
 
 export function searchForLanguage(
   queryString: string
@@ -29,40 +44,59 @@ export function searchForLanguage(
     includeMatches: true,
     minMatchCharLength: 2,
 
-    keys: fuseSearchKeys,
+    keys: allFuseSearchKeys,
+    ignoreLocation: true,
     ignoreFieldNorm: true,
     findAllMatches: false,
   };
 
-  // separately collect results that start with the query string, so we can prioritize them
-  const prefixOnlyFuse = new Fuse(languages as ILanguage[], {
+  const exactMatchFuse = new Fuse(spacePaddedLanguages as ILanguage[], {
     ...baseFuseOptions,
-    threshold: 0.2, // we can turn this down if we find it's prioritizing things that are not so close matches
-    keys: prefixPrioritizableFuseSearchKeys,
-    location: 0,
-    distance: 1,
+    threshold: 0, //exact matches only
+    keys: exactMatchPrioritizableFuseSearchKeys,
   });
-  const prefixOnlyResults = prefixOnlyFuse.search(queryString);
 
-  const allResultsFuse = new Fuse(languages as ILanguage[], {
+  // We have padded with spaces, so e.g. if queryString is "cree", then " cree " is an exact match for " plains cree " but not " creek "
+  const wholeWordMatchResults = exactMatchFuse.search(" " + queryString + " ");
+
+  // e.g. if querystring is "otl", then " otl" is a prefix match for " San Felipe Otlaltepec Popoloca " but not "botlikh"
+  const prefixMatchResults = exactMatchFuse.search(" " + queryString);
+
+  const fuzzyMatchFuse = new Fuse(spacePaddedLanguages as ILanguage[], {
     ...baseFuseOptions,
-    ignoreLocation: true,
     threshold: 0.3,
   });
-  const allResults = allResultsFuse.search(queryString);
+  const fuzzyMatchResults = fuzzyMatchFuse.search(queryString);
 
-  // remove the results in prefixOnlyResults from allResults
-  // so we can combine without duplicates
-  const prefixOnlyResultsCodes = new Set(
-    prefixOnlyResults.map((result) => result.item.iso639_3_code)
-  );
-  const nonPrefixResults = allResults.filter(
-    (result) => !prefixOnlyResultsCodes.has(result.item.iso639_3_code)
-  );
-  return [...prefixOnlyResults, ...nonPrefixResults];
+  // Combine all the result lists with no duplicates, prioritizing whole word exact matches then prefix exact matches then all other fuzzy matches
+  const results = [];
+  const alreadyIncludedResultCodes = new Set();
+  for (const resultList of [
+    wholeWordMatchResults,
+    prefixMatchResults,
+    fuzzyMatchResults,
+  ]) {
+    for (const result of resultList) {
+      if (!alreadyIncludedResultCodes.has(result.item.iso639_3_code)) {
+        results.push(result);
+        alreadyIncludedResultCodes.add(result.item.iso639_3_code);
+      }
+    }
+  }
+
+  return results.map((r) => ({
+    ...r,
+    item: {
+      ...r.item,
+      autonym: r.item.autonym ? r.item.autonym.trim() : undefined,
+      exonym: r.item.exonym.trim(),
+      names: r.item.names.map((n) => n.trim()),
+      languageSubtag: r.item.languageSubtag.trim(),
+    },
+  }));
 }
 
-//get language (not macrolanguage) with exact match on subtag
+// get language (not macrolanguage) with exact match on subtag
 export function getLanguageBySubtag(code: string): ILanguage | undefined {
   const fuse = new Fuse(languages as ILanguage[], {
     keys: ["languageSubtag", "iso639_3_code"],
