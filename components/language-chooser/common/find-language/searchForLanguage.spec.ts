@@ -83,6 +83,53 @@ describe("searchForLanguage", () => {
   it("does not find languages that completely don't match the query", () => {
     searchDoesNotFindLanguage("zzzz", "jpn");
   });
+
+  it("prioritizes whole word matches, then prefix matches", () => {
+    // searching "cree", all "cree" results should come before the "creek" result
+    const creeQuery = "cree";
+    const indexOfCreek = indexOfLanguageInSearchResults(creeQuery, "mus");
+    const creeLangCodes = [
+      "cre",
+      "crg",
+      "crj",
+      "crk",
+      "crl",
+      "crm",
+      "csw",
+      "ojs",
+    ];
+    for (const creeLangCode of creeLangCodes) {
+      expect(
+        indexOfLanguageInSearchResults(creeQuery, creeLangCode)
+      ).toBeLessThan(indexOfCreek);
+    }
+
+    // searching "aka", all "aka" languages should come before the "akan" language
+    const akaQuery = "aka";
+    const indexOfAkan = indexOfLanguageInSearchResults(akaQuery, "aka");
+    const akaLangCodes = ["soh", "ahk", "axk", "hru", "wum"];
+    for (const akaLangCode of akaLangCodes) {
+      expect(
+        indexOfLanguageInSearchResults(akaQuery, akaLangCode)
+      ).toBeLessThan(indexOfAkan);
+    }
+    // "aka koro" should also come before "akan" since "aka" stands as a whole word
+    expect(indexOfLanguageInSearchResults(akaQuery, "jkr")).toBeLessThan(
+      indexOfAkan
+    );
+
+    //searching "oka", "Wejeñememaja oka" should come before "Okanisi Tongo" (djk)
+    const okaQuery = "oka";
+    expect(indexOfLanguageInSearchResults(okaQuery, "tnc")).toBeLessThan(
+      indexOfLanguageInSearchResults(okaQuery, "djk")
+    );
+
+    //searching "otl", "San Felipe Otlaltepec Popoloca" (pow) should come before "botlikh" (bph)
+    const otlQuery = "otl";
+    expect(indexOfLanguageInSearchResults(otlQuery, "pow")).toBeLessThan(
+      indexOfLanguageInSearchResults(otlQuery, "bph")
+    );
+  });
 });
 
 function searchDoesFindLanguage(query: string, expectedLanguageCode: string) {
