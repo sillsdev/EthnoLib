@@ -1,3 +1,10 @@
+## 0.0.13 (2024-11-18)
+
+
+### 🩹 Fixes
+
+- prioritize whole word matches then prefix matches ([7922d91](https://github.com/sillsdev/EthnoLib/commit/7922d91))
+
 ## 0.0.12 (2024-11-12)
 
 
