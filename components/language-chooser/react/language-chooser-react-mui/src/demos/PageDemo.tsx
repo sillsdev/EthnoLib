@@ -6,7 +6,6 @@ import {
   Button,
   FormControl,
   FormControlLabel,
-  FormLabel,
   Radio,
   RadioGroup,
   Toolbar,
@@ -21,7 +20,10 @@ const darkColor = "#800303";
 const mediumColor = "#bd746f";
 const lightColor = "#e8caca";
 
+const TOP_ROW_HEIGHT = "600px";
+
 export const PageDemo: React.FunctionComponent = () => {
+  const [languageTag, setLanguageTag] = React.useState("");
   return (
     <div
       css={css`
@@ -66,7 +68,7 @@ export const PageDemo: React.FunctionComponent = () => {
             id="top-left"
             css={css`
               background-color: #ffffff;
-              height: 550px;
+              height: ${TOP_ROW_HEIGHT};
               width: 300px;
               flex-shrink: 1;
               flex-grow: 0;
@@ -80,8 +82,7 @@ export const PageDemo: React.FunctionComponent = () => {
                 flex-direction: column;
                 gap: 10px;
                 color: ${darkColor};
-                padding: 30px;
-                padding-top: 40px;
+                padding: 20px;
                 background-color: #f7e6e7;
                 border-radius: 5px;
               `}
@@ -150,79 +151,97 @@ export const PageDemo: React.FunctionComponent = () => {
             </div>
           </div>
           <div
+            id="top-right"
+            css={css`
+              height: ${TOP_ROW_HEIGHT};
+              width: 1000px;
+              flex-shrink: 1;
+              overflow: auto;
+              background-color: white;
+              color: ${darkColor};
+              display: flex;
+              flex-direction: column;
+            `}
+          >
+            <Typography
+              variant="h4"
+              css={css`
+                padding: 20px;
+                padding-bottom: 10px;
+              `}
+            >
+              Language:
+            </Typography>
+            <LanguageChooser
+              css={css`
+                border-radius: 0px;
+              `}
+              initialSearchString="uzbek"
+              initialSelectionLanguageTag={"uz-cyrl"}
+              searchResultModifier={defaultSearchResultModifier}
+              onSelectionChange={(
+                _orthography,
+                languageTag: string | undefined
+              ) => {
+                setLanguageTag(languageTag || "");
+              }}
+            />
+          </div>
+          <div
             id="top-center"
             css={css`
               flex-grow: 0;
               background-color: ${lightColor};
-              height: 550px;
+              height: ${TOP_ROW_HEIGHT};
               color: ${darkColor};
               padding: 20px;
-              padding-top: 100px;
               flex-shrink: 1;
               border-radius: 5px;
-              // overflow: auto;
             `}
           >
-            <Typography
-              css={css`
-                font-weight: bold;
-                font-size: 1.25rem;
-                // padding-top: 100%;
-                // padding-bottom: 100%;
-                border: 1px solid ${darkColor};
-                border-radius: 5px;
-                padding: 10px;
-                width: 300px;
-                margin-bottom: 20px;
-              `}
-            >
-              This is just a goofy page to demonstrate the language chooser in a
-              non-dialog context.
-            </Typography>
+            <Typography variant="h4">Color:</Typography>
+
             <FormControl>
-              <FormLabel
-                id="demo-radio-buttons-group-label"
-                css={css`
-                  color: ${darkColor};
-                  font-size: 2rem;
-                `}
-              >
-                Color:
-              </FormLabel>
               <RadioGroup
                 aria-labelledby="demo-radio-buttons-group-label"
                 defaultValue="red"
                 name="radio-buttons-group"
               >
-                <FormControlLabel value="red" control={<Radio />} label="Red" />
+                <FormControlLabel
+                  value="red"
+                  control={<Radio />}
+                  label="Red"
+                  disabled={true}
+                />
                 <FormControlLabel
                   value="blue"
                   control={<Radio />}
                   label="Blue"
+                  disabled={true}
                 />
                 <FormControlLabel
                   value="green"
                   control={<Radio />}
                   label="Green"
+                  disabled={true}
                 />
               </RadioGroup>
             </FormControl>
-          </div>
-          <div
-            css={css`
-              height: 550px;
-              width: 1000px;
-              flex-shrink: 1;
-              overflow: auto;
-            `}
-          >
-            <LanguageChooser
+            <Typography
               css={css`
-                border-radius: 0px;
+                font-weight: bold;
+                font-size: 1.25rem;
+                border: 1px solid ${darkColor};
+                border-radius: 5px;
+                padding: 10px;
+                width: 300px;
+                margin-bottom: 20px;
+                margin-top: 50px;
               `}
-              searchResultModifier={defaultSearchResultModifier}
-              onClose={() => undefined}
-            />
+            >
+              This is just a goofy page to demonstrate the language chooser in a
+              non-dialog context.
+            </Typography>
           </div>
         </div>
         <div
@@ -234,48 +253,20 @@ export const PageDemo: React.FunctionComponent = () => {
             min-height: 300px;
             padding: 30px;
             color: ${darkColor};
+            display: flex;
+            justify-content: space-between;
           `}
         >
-          <Typography>
-            We are a global, faith-based nonprofit that works with local
-            communities around the world to develop language solutions that
-            expand possibilities for a better life. SIL's core contribution
-            areas are Scripture translation, literacy, education, development,
-            linguistic research and language tools. We are eager for the day
-            when all people enjoy equal access to education, to socio-economic
-            opportunities, and to resources for spiritual growth - no matter
-            what language they speak or sign. We are a global, faith-based
-            nonprofit that works with local communities around the world to
-            develop language solutions that expand possibilities for a better
-            life. SIL's core contribution areas are Scripture translation,
-            literacy, education, development, linguistic research and language
-            tools. We are eager for the day when all people enjoy equal access
-            to education, to socio-economic opportunities, and to resources for
-            spiritual growth - no matter what language they speak or sign. We
-            are a global, faith-based nonprofit that works with local
-            communities around the world to develop language solutions that
-            expand possibilities for a better life. SIL's core contribution
-            areas are Scripture translation, literacy, education, development,
-            linguistic research and language tools. We are eager for the day
-            when all people enjoy equal access to education, to socio-economic
-            opportunities, and to resources for spiritual growth - no matter
-            what language they speak or sign. We are a global, faith-based
-            nonprofit that works with local communities around the world to
-            develop language solutions that expand possibilities for a better
-            life. SIL's core contribution areas are Scripture translation,
-            literacy, education, development, linguistic research and language
-            tools. We are eager for the day when all people enjoy equal access
-            to education, to socio-economic opportunities, and to resources for
-            spiritual growth - no matter what language they speak or sign. We
-            are a global, faith-based nonprofit that works with local
-            communities around the world to develop language solutions that
-            expand possibilities for a better life. SIL's core contribution
-            areas are Scripture translation, literacy, education, development,
-            linguistic research and language tools. We are eager for the day
-            when all people enjoy equal access to education, to socio-economic
-            opportunities, and to resources for spiritual growth - no matter
-            what language they speak or sign.
+          <Typography variant="h4">Selected Font: Roboto Mono </Typography>
+          <Typography
+            variant="h4"
+            css={css`
+              font-weight: bold;
+            `}
+          >
+            Selected Language Tag: {languageTag}{" "}
           </Typography>
+          <Typography variant="h4">Selected Color: red </Typography>
         </div>
       </div>
     </div>

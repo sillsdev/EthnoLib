@@ -287,7 +287,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
         `}
       >
         <div
-          id="buttons-container"
+          id="customize-dialog-action-buttons-container"
           css={css`
             // position: absolute;
             width: 100%;
@@ -320,10 +320,12 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                   } as IRegion,
                   dialect: dialogSelectedDialect,
                 } as ICustomizableLanguageDetails,
-                {
-                  code: dialogSelectedScript?.id,
-                  name: dialogSelectedScript?.label,
-                } as IScript
+                dialogSelectedScript?.id
+                  ? ({
+                      code: dialogSelectedScript?.id,
+                      name: dialogSelectedScript?.label,
+                    } as IScript)
+                  : undefined
               );
               props.onClose();
             }}
