@@ -12,4 +12,5 @@ export {
 export type {
   IOrthography,
   ICustomizableLanguageDetails,
+  defaultDisplayName,
 } from "@ethnolib/language-chooser-react-hook";

@@ -8,7 +8,7 @@ import {
   parseLangtagFromLangChooser,
 } from "@ethnolib/language-chooser-react-hook";
 import "../styles.css";
-import { LanguageChooser } from "../LanguageChooser";
+import { LanguageChooserDialog } from "./LanguageChooserDialog";
 import React from "react";
 import { DummyRightPanelComponent } from "./DummyRightPanelComponent";
 
@@ -44,18 +44,22 @@ export const DialogDemo: React.FunctionComponent<{
     setOpen(true);
   };
 
-  const handleClose = (
+  const onOk = (
     orthographyInfo: IOrthography | undefined,
     languageTag: string | undefined
   ) => {
-    setOpen(false);
     if (orthographyInfo !== undefined) {
       setSelectedValue(orthographyInfo);
     }
     if (languageTag !== undefined) {
       setLanguageTag(languageTag);
     }
+    setOpen(false);
   };
+
+  function onCancel() {
+    setOpen(false);
+  }
 
   return (
     <div
@@ -112,30 +116,23 @@ export const DialogDemo: React.FunctionComponent<{
             Modify language selection
           </Button>
         </div>
-        <Dialog
+
+        <LanguageChooserDialog
           open={open}
-          maxWidth={props.dialogWidth ? "xl" : "md"}
-          fullWidth={true}
-          css={css`
-            .MuiDialog-paper {
-              height: ${props.dialogHeight ? props.dialogHeight : "586px"};
-              ${props.dialogWidth ? `width: ${props.dialogWidth};` : ""}
-            }
-          `}
-        >
-          <LanguageChooser
-            searchResultModifier={defaultSearchResultModifier}
-            initialSearchString={props.initialSearchString}
-            initialSelectionLanguageTag={languageTag}
-            initialCustomDisplayName={props.initialCustomDisplayName}
-            onClose={handleClose}
-            rightPanelComponent={
-              props.demoRightPanelComponent ? (
-                <DummyRightPanelComponent />
-              ) : undefined
-            }
-          />
-        </Dialog>
+          dialogWidth={props.dialogWidth}
+          dialogHeight={props.dialogHeight}
+          searchResultModifier={defaultSearchResultModifier}
+          initialSearchString={props.initialSearchString}
+          initialSelectionLanguageTag={languageTag}
+          initialCustomDisplayName={props.initialCustomDisplayName}
+          onCancel={onCancel}
+          onOk={onOk}
+          rightPanelComponent={
+            props.demoRightPanelComponent ? (
+              <DummyRightPanelComponent />
+            ) : undefined
+          }
+        />
       </div>
     </div>
   );

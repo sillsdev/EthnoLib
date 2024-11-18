@@ -231,5 +231,5 @@ export const useLanguageChooser = (
 };
 
 export function defaultDisplayName(language: ILanguage) {
-  return stripDemarcation(language.autonym || language.exonym || "");
+  return stripDemarcation(language.autonym || language.exonym);
 }
