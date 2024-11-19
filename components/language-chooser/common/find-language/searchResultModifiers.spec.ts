@@ -10,6 +10,7 @@ import {
 import { ILanguage } from "./findLanguageInterfaces";
 import { createTestLanguageEntry } from "./testUtils";
 import { searchForLanguage } from "./searchForLanguage";
+import { stripDemarcation } from "./matchingSubstringDemarcation";
 
 describe("filter scripts", () => {
   it("should filter out scripts", () => {
@@ -199,6 +200,27 @@ describe("reordering entries to prioritize desired language when keywords are se
       expect(
         chineseResults.find((r) => r.languageSubtag === "zh")?.names.length
       ).toBeGreaterThan(10);
+    });
+  });
+
+  describe("Spanish name listings should be handled as desired", () => {
+    it("finds spanish", () => {
+      const spanishSearchString = "spanish";
+      const spanishResult = defaultSearchResultModifier(
+        searchForLanguage(spanishSearchString),
+        spanishSearchString
+      )[0];
+      expect(spanishResult?.iso639_3_code).toEqual("spa");
+
+      // Español should be the autonym and not in the names list
+      expect(spanishResult?.autonym).toEqual("español");
+      // Castellano should be in the names list
+      expect(
+        spanishResult?.names.filter((n) => stripDemarcation(n) === "castellano")
+          .length
+      ).toEqual(1);
+      // make sure we didn't accidentally prepend an empty name instead of castellano
+      expect(spanishResult?.names[0]).toBeTruthy();
     });
   });
 });

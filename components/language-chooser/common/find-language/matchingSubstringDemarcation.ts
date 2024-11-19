@@ -44,9 +44,9 @@ export function stripDemarcation(
     return demarcatedText;
   }
   if (!demarcatedText) return demarcatedText;
-  let strippedStr = demarcatedText.replaceAll(END_OF_MATCH_MARKER, "");
-  strippedStr = strippedStr.replaceAll(START_OF_MATCH_MARKER, "");
-  return strippedStr;
+  return demarcatedText
+    .replaceAll(END_OF_MATCH_MARKER, "")
+    .replaceAll(START_OF_MATCH_MARKER, "");
 }
 
 export function deepStripDemarcation<T>(demarcated: T): T {
@@ -67,43 +67,4 @@ export function deepStripDemarcation<T>(demarcated: T): T {
     return newObject;
   }
   return demarcated;
-}
-
-// Normally, we get the locations of hte match from fuse and use that to demarcate the part of the string that matches.
-// Use this only when we don't have fuse results which give us match indexes, but when we nonetheless want to demarcate the matching
-// parts of the string, and are okay with demarcating only the exact matches (no fuzzy match finding). Look for matches ourselves and mark them.
-// Currently this only finds the first match in the field,
-export function demarcateExactMatches(searchString: string, result: ILanguage) {
-  for (const field of fieldsToSearch) {
-    if (Array.isArray(result[field])) {
-      result[field] = result[field].map((value: string) =>
-        demarcateExactMatchString(searchString, value)
-      );
-    } else if (typeof result[field] === "string") {
-      result[field] = demarcateExactMatchString(searchString, result[field]);
-    }
-  }
-  return result;
-}
-
-function demarcateExactMatchString(
-  searchString: string,
-  stringToDemarcate: string
-) {
-  const lowerCasedSearchString = searchString.toLowerCase();
-  const lowerCasedValue = stringToDemarcate.toLowerCase();
-  const indexOfSearchString = lowerCasedValue.indexOf(lowerCasedSearchString);
-  if (indexOfSearchString !== -1) {
-    return (
-      stringToDemarcate.slice(0, indexOfSearchString) +
-      START_OF_MATCH_MARKER +
-      stringToDemarcate.slice(
-        indexOfSearchString,
-        indexOfSearchString + searchString.length
-      ) +
-      END_OF_MATCH_MARKER +
-      stringToDemarcate.slice(indexOfSearchString + searchString.length)
-    );
-  }
-  return stringToDemarcate;
 }

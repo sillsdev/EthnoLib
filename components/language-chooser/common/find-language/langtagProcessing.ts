@@ -40,24 +40,23 @@ function getIso639_3CodeDetails() {
 }
 
 // turn "Uzbek, Northern" into "Northern Uzbek"
-function uncomma(str: string | Set<string>) {
-  if (!str || typeof str === "string") {
-    if (!str) {
-      return "";
-    }
-    const parts = str.split(COMMA_SEPARATOR);
-    if (parts.length === 1) {
-      return str;
-    }
-    return parts[1] + " " + parts[0];
+function uncomma(str: string | undefined) {
+  if (!str) {
+    return str;
   }
-  if (typeof str === "object") {
-    const newSet = new Set<string>();
-    str.forEach((item: string) => {
-      newSet.add(uncomma(item) as string);
-    });
-    return newSet;
+  const parts = str.split(COMMA_SEPARATOR);
+  if (parts.length === 1) {
+    return str;
   }
+  return parts[1] + " " + parts[0];
+}
+
+function uncommaAll(strs: Set<string>) {
+  const newSet = new Set<string>();
+  strs.forEach((item: string) => {
+    newSet.add(uncomma(item) as string);
+  });
+  return newSet;
 }
 
 interface ILanguageInternal {
@@ -186,7 +185,7 @@ function parseLangtagsJson() {
         exonym: uncomma(langData.exonym),
         iso639_3_code: langData.iso639_3_code,
         languageSubtag: langData.languageSubtag,
-        regionNames: [...(uncomma(langData.regionNames) as Set<string>)]
+        regionNames: [...(uncommaAll(langData.regionNames) as Set<string>)]
           .filter((regionName) => !!regionName)
           .join(COMMA_SEPARATOR),
         scripts: [...new Set([...langData.scripts])].map((scriptCode) => {
@@ -195,9 +194,7 @@ function parseLangtagsJson() {
             name: uncomma(scriptNames[scriptCode]),
           } as IScript;
         }),
-        names: [...(uncomma(langData.names) as Set<string>)].filter(
-          (name) => !!name
-        ),
+        names: [...uncommaAll(langData.names)].filter((name) => !!name),
         alternativeTags: [...langData.alternativeTags],
       } as ILanguage;
     }
