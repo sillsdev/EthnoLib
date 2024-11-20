@@ -8,6 +8,7 @@ export type { ILanguage, IScript, IRegion } from "@ethnolib/find-language";
 export {
   isUnlistedLanguage,
   createTagFromOrthography,
+  parseLangtagFromLangChooser,
 } from "@ethnolib/language-chooser-react-hook";
 export type {
   IOrthography,
