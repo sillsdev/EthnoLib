@@ -40,7 +40,7 @@ export const LanguageChooserDialog: React.FunctionComponent<
     initialSelection || ({} as IOrthography)
   );
   const [pendingLanguageTag, setPendingLanguageTag] = React.useState(
-    languageChooserProps.initialSelectionLanguageTag || "" // TODO is this right?
+    languageChooserProps.initialSelectionLanguageTag || ""
   );
   function onSelectionChange(
     orthographyInfo: IOrthography | undefined,
@@ -102,7 +102,7 @@ export const LanguageChooserDialog: React.FunctionComponent<
         `}
       >
         <div
-          id="lang-chooser"
+          id="lang-chooser-dialog-content"
           css={css`
             width: 100%;
             height: 100%;
