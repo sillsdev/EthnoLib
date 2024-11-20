@@ -1,3 +1,15 @@
+## 0.0.21 (2024-11-20)
+
+
+### 🩹 Fixes
+
+- dialog buttons and header should not be baked into the component ([5168a3d](https://github.com/sillsdev/EthnoLib/commit/5168a3d))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.9
+
 ## 0.0.20 (2024-11-20)
 
 
