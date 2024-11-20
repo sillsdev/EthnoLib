@@ -153,50 +153,10 @@ export const useLanguageChooser = (
   }
 
   function toggleSelectScript(script: IScript) {
-    // clicking on the selected script unselects it
     if (codeMatches(script.code, selectedScript?.code)) {
-      // if the display name is our automatically set Chinese (Simplified) for zh-Hans or Chinese (Traditional) for zh-Hant,
-      // then we want to reset to the default display name for Chinese with no selected script
-      if (
-        selectedLanguage?.languageSubtag === "zh" &&
-        ((codeMatches(script.code, "Hans") &&
-          customizableLanguageDetails.displayName === "Chinese (Simplified)") ||
-          (codeMatches(script.code, "Hant") &&
-            customizableLanguageDetails.displayName ===
-              "Chinese (Traditional)"))
-      ) {
-        setCustomizableLanguageDetails((d) => ({
-          ...d,
-          displayName: defaultDisplayName(selectedLanguage),
-        }));
-      }
+      // clicking on the selected script unselects it
       setSelectedScript(undefined);
     } else {
-      // selecting a script
-      if (
-        selectedLanguage?.languageSubtag === "zh" &&
-        customizableLanguageDetails.displayName ===
-          defaultDisplayName(selectedLanguage)
-      ) {
-        // automatically set the display name to Chinese (Simplified) or Chinese (Traditional) for zh-Hans or zh-Hant respectively
-        if (codeMatches(script.code, "Hans")) {
-          setCustomizableLanguageDetails(
-            (d) =>
-              ({
-                ...d,
-                displayName: "Chinese (Simplified)",
-              }) as ICustomizableLanguageDetails
-          );
-        } else if (codeMatches(script.code, "Hant")) {
-          setCustomizableLanguageDetails(
-            (d) =>
-              ({
-                ...d,
-                displayName: "Chinese (Traditional)",
-              }) as ICustomizableLanguageDetails
-          );
-        }
-      }
       setSelectedScript(script);
     }
   }

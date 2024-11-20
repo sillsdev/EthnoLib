@@ -82,11 +82,46 @@ function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
   return substituteInSpecialEntry("fra", getSpecialEntry, results);
 }
 
+// langtags.json lists spanish with localnames ["castellano", "español"]
+// so castellano becomes the autonym, but we want to list español as the autonym
+// while preserving any match demarcation
+function simplifySpanishResult(results: ILanguage[]): ILanguage[] {
+  function getSpecialEntry(result: ILanguage) {
+    let demarcatedCastellano = result.autonym;
+    if (stripDemarcation(demarcatedCastellano) !== "castellano") {
+      demarcatedCastellano = "castellano";
+    }
+
+    const demarcatedEspanol = result.names.find(
+      (name) => stripDemarcation(name) === "español"
+    );
+    return {
+      ...result,
+      autonym: demarcatedEspanol,
+      names: [
+        // make sure castellano is in the names list exactly once
+        demarcatedCastellano,
+        ...result.names.filter(
+          (name) => name !== demarcatedCastellano && name !== demarcatedEspanol
+        ),
+      ],
+      scripts: [latinScriptData],
+    } as ILanguage;
+  }
+  return substituteInSpecialEntry("spa", getSpecialEntry, results);
+}
+
 function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
   function getSpecialEntry(result: ILanguage) {
     return {
       ...result,
+      autonym: "中文",
       regionNames: "", // clear the long and confusing list of region names
+      names: result.names.filter(
+        (name) => name !== "中文" && name !== "繁體中文"
+        // 繁體中文 is traditional script chinese, and since there is no equivalent in the names list for simplified script chinese,
+        // take it out so as not to confuse people since they should select this card regardless of script
+      ),
       scripts: [
         {
           code: "Hans",
@@ -153,6 +188,11 @@ const ANCIENT_LANGUAGE_ENTRY_CODES = new Set([
   "sga", // Old Irish
   "goh", // Old High German
   "peo", // Old Persian
+  "osp", // Old Spanish
+  "lzh", // Literary Chinese
+  "ltc", // Late Middle Chinese
+  "och", // Old Chinese
+
   // TODO future work there are a bunch more - search for things like (to 1500), (up to 700), BCE, B.C., ca., etc
   // Filter for deprecated, historical languages etc.
 ]);
@@ -236,9 +276,16 @@ export function defaultSearchResultModifier(
     "zho", // TODO: if we implement improved macrolanguage handling, see if we should change this to cmn
     modifiedResults
   );
+  modifiedResults = prioritizeLangByKeywords(
+    ["espanol", "español", "spanish", "castellano"],
+    searchString,
+    "spa",
+    modifiedResults
+  );
   modifiedResults = simplifyEnglishResult(modifiedResults);
   modifiedResults = simplifyFrenchResult(modifiedResults);
   modifiedResults = simplifyChineseResult(modifiedResults);
+  modifiedResults = simplifySpanishResult(modifiedResults);
   modifiedResults = filterOutDefaultExcludedLanguages(modifiedResults);
   modifiedResults = filterScripts(scriptFilter, modifiedResults);
   return modifiedResults;
