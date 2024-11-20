@@ -1,3 +1,16 @@
+## 0.0.20 (2024-11-20)
+
+
+### 🩹 Fixes
+
+- spanish and chinese special cases and some bug fixes ([f50ad49](https://github.com/sillsdev/EthnoLib/commit/f50ad49))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.8
+- Updated @ethnolib/find-language to 0.0.14
+
 ## 0.0.19 (2024-11-12)
 
 

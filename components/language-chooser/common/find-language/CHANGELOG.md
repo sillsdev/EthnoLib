@@ -1,3 +1,10 @@
+## 0.0.14 (2024-11-20)
+
+
+### 🩹 Fixes
+
+- spanish and chinese special cases and some bug fixes ([f50ad49](https://github.com/sillsdev/EthnoLib/commit/f50ad49))
+
 ## 0.0.13 (2024-11-18)
 
 
