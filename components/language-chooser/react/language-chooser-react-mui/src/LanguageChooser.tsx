@@ -69,6 +69,7 @@ export const LanguageChooser: React.FunctionComponent<{
       props.initialSelectionLanguageTag,
       props.initialCustomDisplayName
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // We only want this to run once
 
   const [customizeLanguageDialogOpen, setCustomizeLanguageDialogOpen] =
