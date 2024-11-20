@@ -5,9 +5,9 @@ import tseslint from "typescript-eslint";
 import reactPlugin from "eslint-plugin-react";
 import eslintConfigPrettier from "eslint-config-prettier";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
-// import eslintPluginReactHooks from "eslint-plugin-react-hooks";
+import eslintPluginReactHooks from "eslint-plugin-react-hooks";
 // TODO future work: eslint-plugin-react-hooks support for flat-config looks like it's on it's way:
-// https://github.com/facebook/react/pull/30774. I say we wait for it to be released then can easily add it
+// https://github.com/facebook/react/pull/30774. When released, we should switch to that.
 
 export default [
   {
@@ -71,12 +71,14 @@ export default [
       },
       plugins: {
         react: reactPlugin,
+        "react-hooks": eslintPluginReactHooks,
       },
       rules: {
         // Copied from BloomDesktop
         "react/no-unknown-property": ["error", { ignore: ["css"] }], // allow emotion css: https://emotion.sh/docs/eslint-plugin-react
-        "react/no-unescaped-entities": "off", // Complains about some special chars that sort of work, but due to the burden that enocded chars present to localizers, we'd prefer not to encode them if not necessary.
+        "react/no-unescaped-entities": "off", // Complains about some special chars that sort of work, but due to the burden that encoded chars present to localizers, we'd prefer not to encode them if not necessary.
         "react/prop-types": "off", // Seems to require validation on the props parameter itself, but Typescript can already figure out the types through annotations in different places, seems unnecessary
+        ...eslintPluginReactHooks.configs.recommended.rules, // See TODO above
       },
     },
   ].map((c) => {
