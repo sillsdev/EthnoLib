@@ -62,39 +62,31 @@ export function searchForLanguage(
   // e.g. if querystring is "otl", then " otl" is a prefix match for " San Felipe Otlaltepec Popoloca " but not "botlikh"
   const prefixMatchResults = exactMatchFuse.search(" " + queryString);
 
-  const fuzzyMatchFuse = new Fuse(spacePaddedLanguages as ILanguage[], {
+  const fuzzyMatchFuse = new Fuse(languages as ILanguage[], {
     ...baseFuseOptions,
     threshold: 0.3,
   });
   const fuzzyMatchResults = fuzzyMatchFuse.search(queryString);
 
-  // Combine all the result lists with no duplicates, prioritizing whole word exact matches then prefix exact matches then all other fuzzy matches
-  const results = [];
-  const alreadyIncludedResultCodes = new Set();
-  for (const resultList of [
-    wholeWordMatchResults,
-    prefixMatchResults,
-    fuzzyMatchResults,
-  ]) {
-    for (const result of resultList) {
-      if (!alreadyIncludedResultCodes.has(result.item.iso639_3_code)) {
-        results.push(result);
-        alreadyIncludedResultCodes.add(result.item.iso639_3_code);
+  // Use the results from the fuzzy match search, since the others will have incorrect match indices due to the space padding.
+  // But order the results in order of whole word matches, then prefix matches, then the rest
+  const resultsByIso639_3Code = new Map<string, FuseResult<ILanguage>>();
+  for (const result of fuzzyMatchResults) {
+    resultsByIso639_3Code.set(result.item.iso639_3_code, result);
+  }
+  const orderedResults = [];
+  for (const resultList of [wholeWordMatchResults, prefixMatchResults]) {
+    for (const r of resultList) {
+      const isoCode = r.item.iso639_3_code;
+      const correctResult = resultsByIso639_3Code.get(isoCode);
+      if (correctResult) {
+        orderedResults.push(correctResult);
+        resultsByIso639_3Code.delete(isoCode);
       }
     }
   }
-
-  return results.map((r) => ({
-    ...r,
-    // We trim off the spaces that we added above to find exact and prefix matches.
-    item: {
-      ...r.item,
-      autonym: r.item.autonym ? r.item.autonym.trim() : undefined,
-      exonym: r.item.exonym.trim(),
-      names: r.item.names.map((n) => n.trim()),
-      languageSubtag: r.item.languageSubtag.trim(),
-    },
-  }));
+  orderedResults.push(...resultsByIso639_3Code.values());
+  return orderedResults;
 }
 
 // get language (not macrolanguage) with exact match on subtag

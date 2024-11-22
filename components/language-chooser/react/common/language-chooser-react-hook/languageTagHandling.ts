@@ -118,3 +118,24 @@ export function parseLangtagFromLangChooser(
     } as ICustomizableLanguageDetails,
   } as IOrthography;
 }
+
+export function defaultRegionForLangTag(languageTag: string) {
+  // if languageTag already has a region tag in it, use that
+  const orthography = parseLangtagFromLangChooser(languageTag);
+  if (orthography?.customDetails?.region) {
+    return orthography.customDetails.region;
+  }
+
+  // Otherwise, the maximal equivalent language tag will have the region code
+  const languageSubtag = orthography?.language?.languageSubtag;
+  const scriptSubtag = orthography?.script?.code;
+
+  // Take the most specific/relevant matching maximal tag that we are able to find
+  const maximalTag =
+    getMaximalLangtag(languageTag) ||
+    getMaximalLangtag(`${languageSubtag}-${scriptSubtag}`) ||
+    getMaximalLangtag(`${languageSubtag}`) ||
+    "";
+  const maximalTagOrthography = parseLangtagFromLangChooser(maximalTag || "");
+  return maximalTagOrthography?.customDetails?.region;
+}
