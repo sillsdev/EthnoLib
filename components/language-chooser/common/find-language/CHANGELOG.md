@@ -1,3 +1,10 @@
+## 0.0.15 (2024-11-25)
+
+
+### 🩹 Fixes
+
+- langtag bug fix and region lookup ([12533ae](https://github.com/sillsdev/EthnoLib/commit/12533ae))
+
 ## 0.0.14 (2024-11-20)
 
 

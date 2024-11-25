@@ -1,3 +1,16 @@
+## 0.0.22 (2024-11-25)
+
+
+### 🩹 Fixes
+
+- langtag bug fix and region lookup ([12533ae](https://github.com/sillsdev/EthnoLib/commit/12533ae))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.10
+- Updated @ethnolib/find-language to 0.0.15
+
 ## 0.0.21 (2024-11-20)
 
 

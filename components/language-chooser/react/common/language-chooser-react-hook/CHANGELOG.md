@@ -1,3 +1,15 @@
+## 0.0.10 (2024-11-25)
+
+
+### 🩹 Fixes
+
+- langtag bug fix and region lookup ([12533ae](https://github.com/sillsdev/EthnoLib/commit/12533ae))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.0.15
+
 ## 0.0.9 (2024-11-20)
 
 
