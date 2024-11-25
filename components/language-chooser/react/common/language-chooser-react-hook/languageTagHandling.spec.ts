@@ -1,5 +1,8 @@
 import { expect, it, describe } from "vitest";
-import { parseLangtagFromLangChooser } from "./languageTagHandling";
+import {
+  defaultRegionForLangTag,
+  parseLangtagFromLangChooser,
+} from "./languageTagHandling";
 import { getRegionBySubtag } from "@ethnolib/find-language";
 describe("Tag parsing", () => {
   it("should find a language by 2 letter language subtag", () => {
@@ -132,4 +135,25 @@ describe("Tag parsing", () => {
     "United Arab Emirates"
   );
   expect(ssh_Arab_AE_x_foobar_result?.customDetails?.dialect).toEqual("foobar");
+});
+
+describe("defaultRegionForLangTag", () => {
+  it("should return the region for a language tag that already has a region", () => {
+    expect(defaultRegionForLangTag("en-Latn-US")?.name).toEqual(
+      "United States of America"
+    );
+    expect(defaultRegionForLangTag("en-CN-x-foobar")?.name).toEqual("China");
+    expect(defaultRegionForLangTag("en-JP")?.name).toEqual("Japan");
+  });
+  it("should return the region for the closest maximal equivalent of the language tag", () => {
+    expect(defaultRegionForLangTag("uz")?.name).toEqual("Uzbekistan");
+    expect(defaultRegionForLangTag("uz-Cyrl")?.name).toEqual("Uzbekistan");
+    expect(defaultRegionForLangTag("uz-Arab")?.name).toEqual("Afghanistan");
+    expect(defaultRegionForLangTag("uz-Arab-x-foobar")?.name).toEqual(
+      "Afghanistan"
+    );
+    expect(defaultRegionForLangTag("uz-Taml-x-foobar")?.name).toEqual(
+      "Uzbekistan"
+    );
+  });
 });

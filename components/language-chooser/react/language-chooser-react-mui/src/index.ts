@@ -9,9 +9,10 @@ export {
   isUnlistedLanguage,
   createTagFromOrthography,
   parseLangtagFromLangChooser,
+  defaultDisplayName,
+  defaultRegionForLangTag,
 } from "@ethnolib/language-chooser-react-hook";
 export type {
   IOrthography,
   ICustomizableLanguageDetails,
-  defaultDisplayName,
 } from "@ethnolib/language-chooser-react-hook";
