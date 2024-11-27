@@ -6,10 +6,12 @@ import {
   Icon,
   IconButton,
   InputAdornment,
+  lighten,
   List,
   ListItem,
   OutlinedInput,
   Typography,
+  useTheme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -24,7 +26,6 @@ import {
 } from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import { ScriptCard } from "./ScriptCard";
-import { COLORS } from "./colors";
 import {
   useLanguageChooser,
   isUnlistedLanguage,
@@ -40,43 +41,52 @@ import { CustomizeLanguageDialog } from "./CustomizeLanguageDialog";
 import LazyLoad from "react-lazyload";
 import { FuseResult } from "fuse.js";
 import { FormFieldLabel } from "./FormFieldLabel";
+import { TypographyOptions } from "@mui/material/styles/createTypography";
 
-// TODO future work: move all the colors used into the theme
-export const languageChooserMuiTheme = createTheme({
-  palette: {
-    primary: {
-      main: COLORS.blues[2],
-    },
+// so we can put "lighter" in the mui theme palette
+// https://mui.com/material-ui/customization/palette/#typescript-2
+declare module "@mui/material/styles" {
+  interface PaletteColor {
+    lighter?: string;
+    lightest?: string;
+  }
+
+  interface SimplePaletteColorOptions {
+    lighter?: string;
+    lightest?: string;
+  }
+}
+
+const languageChooserTypography: TypographyOptions = {
+  // TODO future work: figure out how to incorporate base theme typography?
+  h1: {
+    // Used by the top "Language Chooser" title bar
+    fontSize: "1.25rem",
+    fontWeight: 600,
+    lineHeight: 1.6,
+    letterSpacing: "0.0075em",
   },
-  typography: {
-    h1: {
-      // Used by the top "Language Chooser" title bar
-      fontSize: "1.25rem",
-      fontWeight: 600,
-      lineHeight: 1.6,
-      letterSpacing: "0.0075em",
-    },
-    h2: {
-      // Used for the primary language and script name(s)
-      fontSize: "1rem",
-      fontWeight: 400,
-      lineHeight: 1.5,
-      letterSpacing: "0.00938em",
-    },
-    subtitle1: {
-      // Used for list of language regions and other language names
-      fontSize: "0.75rem",
-      lineHeight: 1.167,
-      letterSpacing: "0.001em", // I'm not sure how MUI calculates its default letter spacings, but this looks about right
-    },
-    body2: {
-      // used for language codes and tags
-      fontFamily: "Roboto Mono, monospace",
-      fontSize: "0.875rem",
-      letterSpacing: "0.05rem",
-    },
+  h2: {
+    // Used for the primary language and script name(s)
+    fontSize: "1rem",
+    fontWeight: 400,
+    lineHeight: 1.5,
+    letterSpacing: "0.00938em",
   },
-});
+  subtitle1: {
+    // Used for list of language regions and other language names
+    fontSize: "0.75rem",
+    lineHeight: 1.167,
+    letterSpacing: "0.001em", // I'm not sure how MUI calculates its default letter spacings, but this looks about right
+  },
+  body2: {
+    // used for language codes and tags
+    fontFamily: "Roboto Mono, monospace",
+    fontSize: "0.875rem",
+    letterSpacing: "0.05rem",
+  },
+};
+
 const LANG_CARD_MIN_HEIGHT = "90px"; // The height of typical card - 1 line of alternate names and 1 line of regions
 
 export interface ILanguageChooserProps {
@@ -93,6 +103,8 @@ export interface ILanguageChooserProps {
   ) => void;
   rightPanelComponent?: React.ReactNode;
   actionButtons?: React.ReactNode;
+  languageCardBackgroundColorOverride?: string; // if not provided, will use lighten(primaryColor, 0.7)
+  scriptCardBackgroundColorOverride?: string; // if not provided, will use lighten(primaryColor, 0.88)
 }
 
 export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
@@ -194,8 +206,29 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
     lp.onSearchStringChange("");
   };
 
+  const originalTheme = useTheme();
+  const primaryMainColor = originalTheme.palette.primary.main;
+  const theme = createTheme({
+    ...originalTheme,
+    typography: languageChooserTypography,
+    palette: {
+      ...originalTheme.palette,
+      primary: {
+        ...originalTheme.palette.primary,
+        main: primaryMainColor,
+        // mui palettes have a "light" also, but for the card backgrounds we want very light colors, lighter than "light" usually is
+        lighter:
+          props.languageCardBackgroundColorOverride ||
+          lighten(primaryMainColor, 0.7),
+        lightest:
+          props.scriptCardBackgroundColorOverride ||
+          lighten(primaryMainColor, 0.88),
+      },
+    },
+  });
+
   return (
-    <ThemeProvider theme={languageChooserMuiTheme}>
+    <ThemeProvider theme={theme}>
       <div
         id="lang-chooser-body"
         css={css`
@@ -214,7 +247,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
             display: flex; // to make the language list overflow scroll work
             flex-direction: column;
             padding: 10px 10px 10px 15px;
-            background-color: ${COLORS.greys[0]};
+            background-color: ${theme.palette.grey[50]};
           `}
         >
           <FormFieldLabel
@@ -241,7 +274,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                 position="start"
                 css={css`
                   margin-left: 0;
-                  color: ${COLORS.greys[2]};
+                  color: ${theme.palette.grey[400]};
                 `}
               >
                 <Icon component={SearchIcon} />
@@ -416,7 +449,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                 <Typography
                   variant="body2"
                   css={css`
-                    color: ${COLORS.greys[3]};
+                    color: ${theme.palette.grey[700]};
                   `}
                 >
                   {currentTagPreview}
