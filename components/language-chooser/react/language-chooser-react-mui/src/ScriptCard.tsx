@@ -5,17 +5,17 @@ import {
   OptionCardProps,
   OptionCardPropsWithoutColors,
 } from "./OptionCard";
-import { Typography } from "@mui/material";
+import { Typography, useTheme } from "@mui/material";
 import { IScript, scriptSamples } from "@ethnolib/find-language";
-import { COLORS } from "./colors";
 
 export const ScriptCard: React.FunctionComponent<
   { scriptData: IScript } & OptionCardPropsWithoutColors
 > = ({ scriptData, ...partialOptionCardProps }) => {
+  const theme = useTheme();
   const optionCardProps = {
     ...partialOptionCardProps,
-    backgroundColorWhenNotSelected: COLORS.white,
-    backgroundColorWhenSelected: COLORS.blues[1],
+    backgroundColorWhenNotSelected: theme.palette.background.paper,
+    backgroundColorWhenSelected: theme.palette.primary.lightest,
   } as OptionCardProps;
   return (
     <OptionCard {...optionCardProps}>
@@ -23,7 +23,7 @@ export const ScriptCard: React.FunctionComponent<
       <Typography
         variant="subtitle1"
         css={css`
-          color: ${COLORS.greys[3]};
+          color: ${theme.palette.grey[700]};
         `}
       >
         {scriptSamples[scriptData.code.toLowerCase()] || ""}

@@ -1,7 +1,11 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { InputLabel, InputLabelProps, Typography } from "@mui/material";
-import { COLORS } from "./colors";
+import {
+  InputLabel,
+  InputLabelProps,
+  Typography,
+  useTheme,
+} from "@mui/material";
 
 export const FormFieldLabel: React.FunctionComponent<
   {
@@ -9,6 +13,7 @@ export const FormFieldLabel: React.FunctionComponent<
     required?: boolean;
   } & InputLabelProps
 > = ({ label, required, ...inputLabelProps }) => {
+  const theme = useTheme();
   return (
     <InputLabel
       {...inputLabelProps}
@@ -19,7 +24,7 @@ export const FormFieldLabel: React.FunctionComponent<
     >
       <Typography
         css={css`
-          color: ${COLORS.greys[3]};
+          color: ${theme.palette.grey[700]};
           font-weight: bold;
           margin-bottom: 3px;
         `}
@@ -29,7 +34,7 @@ export const FormFieldLabel: React.FunctionComponent<
           <sup
             css={css`
               font-weight: normal;
-              color: ${COLORS.error};
+              color: ${theme.palette.error.main};
             `}
           >
             (required)
