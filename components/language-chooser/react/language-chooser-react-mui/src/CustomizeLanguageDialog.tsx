@@ -15,10 +15,10 @@ import {
   DialogTitle,
   Typography,
   Card,
+  useTheme,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { TextInput } from "./TextInput";
-import { COLORS } from "./colors";
 import {
   getAllRegions,
   getAllScripts,
@@ -114,6 +114,8 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
     );
   }, [props, EMPTY_COMBOBOX_VALUE]);
 
+  const theme = useTheme();
+
   return (
     <Dialog
       onClose={props.onClose}
@@ -149,14 +151,14 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
         <Card
           variant="outlined"
           css={css`
-            border: 1px solid ${COLORS.blues[2]};
+            border: 1px solid ${theme.palette.primary.main};
             padding: 7px;
             flex-shrink: 0;
           `}
         >
           <Typography
             css={css`
-              color: ${COLORS.blues[2]};
+              color: ${theme.palette.primary.main};
               font-size: 0.875rem;
               display: flex;
               align-items: start;

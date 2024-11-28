@@ -1,15 +1,17 @@
 /** @jsxImportSource @emotion/react */
-import { css, ThemeProvider } from "@emotion/react";
+import { css } from "@emotion/react";
 
-import { AppBar, Button, Dialog, Toolbar, Typography } from "@mui/material";
-
-import { COLORS } from "../colors";
-import "../styles.css";
 import {
-  ILanguageChooserProps,
-  LanguageChooser,
-  languageChooserMuiTheme,
-} from "../LanguageChooser";
+  AppBar,
+  Button,
+  Dialog,
+  Toolbar,
+  Typography,
+  useTheme,
+} from "@mui/material";
+
+import "../styles.css";
+import { ILanguageChooserProps, LanguageChooser } from "../LanguageChooser";
 import {
   IOrthography,
   parseLangtagFromLangChooser,
@@ -49,6 +51,7 @@ export const LanguageChooserDialog: React.FunctionComponent<
     setPendingSelection(orthographyInfo || ({} as IOrthography));
     setPendingLanguageTag(languageTag || "");
   }
+  const theme = useTheme();
   const dialogActionButtons = (
     <div
       id="dialog-action-buttons-container"
@@ -89,67 +92,65 @@ export const LanguageChooserDialog: React.FunctionComponent<
   );
 
   return (
-    <ThemeProvider theme={languageChooserMuiTheme}>
-      <Dialog
-        open={open}
-        maxWidth={dialogWidth ? "xl" : "md"}
-        fullWidth={true}
+    <Dialog
+      open={open}
+      maxWidth={dialogWidth ? "xl" : "md"}
+      fullWidth={true}
+      css={css`
+        .MuiDialog-paper {
+          height: ${dialogHeight ? dialogHeight : "586px"};
+          ${dialogWidth ? `width: ${dialogWidth};` : ""}
+        }
+      `}
+    >
+      <div
+        id="lang-chooser-dialog-content"
         css={css`
-          .MuiDialog-paper {
-            height: ${dialogHeight ? dialogHeight : "586px"};
-            ${dialogWidth ? `width: ${dialogWidth};` : ""}
-          }
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          border-radius: 5px;
+          position: relative;
+          margin-left: auto;
+          margin-right: auto;
+          overflow: auto;
         `}
       >
-        <div
-          id="lang-chooser-dialog-content"
+        <AppBar
+          position="static"
           css={css`
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            border-radius: 5px;
-            position: relative;
-            margin-left: auto;
-            margin-right: auto;
-            overflow: auto;
+            background-color: white;
+            box-shadow: none;
+            border-bottom: 2px solid ${theme.palette.grey[300]};
+            flex-grow: 0;
           `}
         >
-          <AppBar
-            position="static"
+          <Toolbar
+            disableGutters
+            variant="dense"
             css={css`
-              background-color: white;
-              box-shadow: none;
-              border-bottom: 2px solid ${COLORS.greys[1]};
-              flex-grow: 0;
+              padding-top: 5px;
+              padding-left: 15px;
             `}
           >
-            <Toolbar
-              disableGutters
-              variant="dense"
+            <Typography
+              variant="h5"
+              component="div"
               css={css`
-                padding-top: 5px;
-                padding-left: 15px;
+                color: black;
               `}
             >
-              <Typography
-                variant="h1"
-                component="div"
-                css={css`
-                  color: black;
-                `}
-              >
-                Choose Language
-              </Typography>
-            </Toolbar>
-          </AppBar>
-          <LanguageChooser
-            {...languageChooserProps}
-            onSelectionChange={onSelectionChange}
-            actionButtons={dialogActionButtons}
-          />
-        </div>
-      </Dialog>
-    </ThemeProvider>
+              Choose Language
+            </Typography>
+          </Toolbar>
+        </AppBar>
+        <LanguageChooser
+          {...languageChooserProps}
+          onSelectionChange={onSelectionChange}
+          actionButtons={dialogActionButtons}
+        />
+      </div>
+    </Dialog>
   );
 };
