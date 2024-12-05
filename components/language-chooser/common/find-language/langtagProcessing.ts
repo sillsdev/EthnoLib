@@ -90,12 +90,6 @@ function getAllPossibleNames(entry: any) {
   ]);
 }
 
-function autonymOrFallback(entry: any, fallback: string | undefined) {
-  // We are currently ignoring the "localname" field because it appears to be more specific than what we want,
-  // e.g. the "es-Latn-ES" entry of langtags.json has "localname": "español de España" and "localnames": [ "castellano", "español" ]
-  return entry.localnames ? entry.localnames[0] : fallback;
-}
-
 // We want to have one entry for every ISO 639-3 code, whereas langtags.json sometimes has multiple entries per code
 // Combine entry into the entry with matching ISO 630-3 code in langs if there is one, otherwise create a new entry
 function addOrCombineLangtagsEntry(entry: any, langs: any) {
@@ -106,11 +100,13 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
 
   if (langs[entry.iso639_3]) {
     // We already have an entry with this code, combine with it
-    langs[entry.iso639_3].autonym = autonymOrFallback(
-      entry,
-      langs[entry.iso639_3].autonym
-    ); // We want to take an autonym from any of the entries that we are combining and fallback to undefined
-    // only if none of them have autonyms
+
+    // We prioritize autonyms from the "localnames" field (which matches ethnologue if present)
+    // over the "localname" field (which may be specific to a language/region/script combo)
+    // Some languages may have an entry with "localname" but not "localname" and another entry with "localname" but not "localnames"
+    langs[entry.iso639_3].autonym = entry.localnames
+      ? entry.localnames[0]
+      : langs[entry.iso639_3].autonym || entry.localname;
     langs[entry.iso639_3].regionNames.add(entry.regionname);
     langs[entry.iso639_3].scripts.add(entry.script);
     langs[entry.iso639_3].names = new Set([
@@ -127,7 +123,7 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
   } else {
     // create a new entry for this language code
     langs[entry.iso639_3] = {
-      autonym: autonymOrFallback(entry, undefined),
+      autonym: entry.localnames ? entry.localnames[0] : entry.localname,
       exonym: entry.name,
       iso639_3_code: entry.iso639_3 as string,
       // TODO future work: decide if we should work with the display codes on the backend, see how it interacts with macrolanguage situations
