@@ -35,7 +35,7 @@ import {
 import { debounce } from "lodash";
 import "./styles.css";
 import { CustomizeLanguageButton } from "./CustomizeLanguageButton";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CustomizeLanguageDialog } from "./CustomizeLanguageDialog";
 import LazyLoad from "react-lazyload";
 import { FuseResult } from "fuse.js";
@@ -112,6 +112,36 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // We only want this to run once
 
+  // on first load, if there is an initialSelectionLanguageTag, we want to scroll to the selected language card
+  const [initialScrollingNeeded, setInitialScrollingNeeded] = useState(
+    !!props.initialSelectionLanguageTag
+  );
+  const selectedLanguageCardRef = useRef<HTMLDivElement>(null);
+  useEffect(
+    () => {
+      console.log("initialScrollingNeeded", initialScrollingNeeded);
+      if (
+        initialScrollingNeeded &&
+        props.initialSelectionLanguageTag &&
+        selectedLanguageCardRef.current
+      ) {
+        selectedLanguageCardRef.current?.scrollIntoView({
+          block: "center",
+        });
+        setInitialScrollingNeeded(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      // The ref is not ready yet when this first runs, so we rely on the selectedLanguageCardRef.current dependency to trigger it.
+      // Even though "Mutable values aren't valid dependencies because mutating them doesn't re-render the component", it still triggers
+      // the effect which does the scrolling, and then the effect calls setInitialScrollingNeeded which triggers a re-render and so syncs the state back up.
+      selectedLanguageCardRef.current,
+      initialScrollingNeeded,
+      props.initialSelectionLanguageTag,
+    ]
+  );
+
   const [previousStateWasValidSelection, setPreviousStateWasValidSelection] =
     useState(false);
 
@@ -134,6 +164,12 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
       }
     }
   }, [lp.selectedLanguage, lp.selectedScript, lp.customizableLanguageDetails]);
+
+  // Scroll to top whenever the language list changes
+  const languageCardListRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    languageCardListRef.current?.scrollTo(0, 0);
+  }, [lp.languageData]);
 
   const [customizeLanguageDialogOpen, setCustomizeLanguageDialogOpen] =
     useState(false);
@@ -237,71 +273,82 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
               flex-basis: 0;
               flex-grow: 1;
             `}
+            ref={languageCardListRef}
           >
             {lp.languageData.map((language, index) => {
+              const isSelectedLanguageCard = codeMatches(
+                language.iso639_3_code,
+                lp.selectedLanguage?.iso639_3_code
+              );
               return (
-                <LazyLoad
-                  height={LANG_CARD_MIN_HEIGHT} // needs to match the min-height we set on the language card
-                  overflow={true}
-                  // Enhance: If we need to speed things up, it would be more efficient to use the iso639_3_code as the key
-                  // though that currently would cause lazyload to show gaps (placeholders?) in the list (try searching "eng")
-                  // so we would probably need to use forceCheck on the lazyload
+                <div
                   key={index}
+                  // We use this ref to scroll the initially selected language card into view
+                  ref={
+                    isSelectedLanguageCard ? selectedLanguageCardRef : undefined
+                  }
                 >
-                  <LanguageCard
-                    css={css`
-                      min-height: ${LANG_CARD_MIN_HEIGHT};
-                      flex-direction: column;
-                      margin: 5px 10px 5px 0px;
-                    `}
-                    languageCardData={language}
-                    isSelected={codeMatches(
+                  <LazyLoad
+                    offset={initialScrollingNeeded ? 1000000 : 500} // Normally, load a 500px buffer under the visible area so we don't have to get the calculation perfect. But if initial scrolling is needed, load everything so we can scroll the appropriate amount
+                    height={LANG_CARD_MIN_HEIGHT} // needs to match the min-height we set on the language card
+                    overflow={true}
+                    // Enhance: If we need to speed things up, it would be more efficient to use the iso639_3_code as the key
+                    // though that currently would cause lazyload to show gaps (placeholders?) in the list (try searching "eng")
+                    // so we would probably need to use forceCheck on the lazyload
+                    key={index}
+                  >
+                    <LanguageCard
+                      css={css`
+                        min-height: ${LANG_CARD_MIN_HEIGHT};
+                        flex-direction: column;
+                        margin: 5px 10px 5px 0px;
+                      `}
+                      languageCardData={language}
+                      isSelected={isSelectedLanguageCard}
+                      onClick={() => lp.toggleSelectLanguage(language)}
+                    ></LanguageCard>
+                    {codeMatches(
                       language.iso639_3_code,
                       lp.selectedLanguage?.iso639_3_code
-                    )}
-                    onClick={() => lp.toggleSelectLanguage(language)}
-                  ></LanguageCard>
-                  {codeMatches(
-                    language.iso639_3_code,
-                    lp.selectedLanguage?.iso639_3_code
-                  ) &&
-                    language.scripts.length > 1 && (
-                      <List
-                        css={css`
-                          width: 100%;
-                          display: flex;
-                          flex-direction: row;
-                          justify-content: flex-end;
-                          flex-wrap: wrap;
-                          padding: 0px 0px 20px 30px;
-                        `}
-                      >
-                        {language.scripts.map((script: IScript) => {
-                          return (
-                            <ListItem
-                              key={script.code}
-                              css={css`
-                                padding: 5px 10px;
-                                width: fit-content;
-                              `}
-                            >
-                              <ScriptCard
+                    ) &&
+                      language.scripts.length > 1 && (
+                        <List
+                          css={css`
+                            width: 100%;
+                            display: flex;
+                            flex-direction: row;
+                            justify-content: flex-end;
+                            flex-wrap: wrap;
+                            padding: 0px 0px 20px 30px;
+                          `}
+                        >
+                          {language.scripts.map((script: IScript) => {
+                            return (
+                              <ListItem
+                                key={script.code}
                                 css={css`
-                                  min-width: 100px;
+                                  padding: 5px 10px;
+                                  width: fit-content;
                                 `}
-                                scriptData={script}
-                                isSelected={codeMatches(
-                                  script.code,
-                                  lp.selectedScript?.code
-                                )}
-                                onClick={() => lp.toggleSelectScript(script)}
-                              />
-                            </ListItem>
-                          );
-                        })}
-                      </List>
-                    )}
-                </LazyLoad>
+                              >
+                                <ScriptCard
+                                  css={css`
+                                    min-width: 100px;
+                                  `}
+                                  scriptData={script}
+                                  isSelected={codeMatches(
+                                    script.code,
+                                    lp.selectedScript?.code
+                                  )}
+                                  onClick={() => lp.toggleSelectScript(script)}
+                                />
+                              </ListItem>
+                            );
+                          })}
+                        </List>
+                      )}
+                  </LazyLoad>
+                </div>
               );
             })}
           </div>
