@@ -35,7 +35,7 @@ import {
 import { debounce } from "lodash";
 import "./styles.css";
 import { CustomizeLanguageButton } from "./CustomizeLanguageButton";
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { CustomizeLanguageDialog } from "./CustomizeLanguageDialog";
 import LazyLoad from "react-lazyload";
 import { FuseResult } from "fuse.js";
@@ -113,9 +113,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   }, []); // We only want this to run once
 
   // on first load, if there is an initialSelectionLanguageTag, we want to scroll to the selected language card
-  const [initialScrollingNeeded, setInitialScrollingNeeded] = useState(
-    !!props.initialSelectionLanguageTag
-  );
+  const [initialScrollingNeeded, setInitialScrollingNeeded] = useState(false);
   const selectedLanguageCardRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (
@@ -129,9 +127,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
       setInitialScrollingNeeded(false);
     }
   }, [
-    // The ref is not ready yet when this first runs, so we rely on the selectedLanguageCardRef.current dependency to trigger it.
-    // I'm not sure why this is working. Mutables are supposedly unnecessary dependencies. But this makes things work
-    selectedLanguageCardRef.current,
+    // The ref is not ready yet when this first runs. We will set initialScrollingNeeded to true when it is, if relevant.
     initialScrollingNeeded,
     props.initialSelectionLanguageTag,
   ]);
@@ -275,12 +271,21 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                 lp.selectedLanguage?.iso639_3_code
               );
               return (
-                <div
+                <ScrollingHelper
                   key={index}
                   // We use this ref to scroll the initially selected language card into view
                   ref={
                     isSelectedLanguageCard ? selectedLanguageCardRef : undefined
                   }
+                  onMount={() => {
+                    if (
+                      props.initialSelectionLanguageTag &&
+                      isSelectedLanguageCard
+                    ) {
+                      // This should only run once
+                      setInitialScrollingNeeded(true);
+                    }
+                  }}
                 >
                   <LazyLoad
                     offset={initialScrollingNeeded ? 1000000 : 500} // Normally, load a 500px buffer under the visible area so we don't have to get the calculation perfect. But if initial scrolling is needed, load everything so we can scroll the appropriate amount
@@ -342,7 +347,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                         </List>
                       )}
                   </LazyLoad>
-                </div>
+                </ScrollingHelper>
               );
             })}
           </div>
@@ -434,3 +439,18 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
     </ThemeProvider>
   );
 };
+
+const ScrollingHelper = forwardRef<
+  HTMLDivElement,
+  { children: React.ReactNode; onMount: () => void }
+>(({ children, onMount }, ref) => {
+  useEffect(() => {
+    onMount();
+  }, []);
+  return (
+    <div ref={ref} id="scrolling-helper">
+      {children}
+    </div>
+  );
+});
+ScrollingHelper.displayName = "ScrollingHelper";
