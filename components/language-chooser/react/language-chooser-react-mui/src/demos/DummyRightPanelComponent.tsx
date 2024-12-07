@@ -19,7 +19,8 @@ export const DummyRightPanelComponent: React.FunctionComponent = () => {
       `}
     >
       <Typography>
-        Space here to add another component. For example, a font picker.
+        This language chooser component allows you to add other components you
+        might need in this area. For example, a font picker.
       </Typography>
       <Typography variant="h1">Font:</Typography>
       <OptionCard
