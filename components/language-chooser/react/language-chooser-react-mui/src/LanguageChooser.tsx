@@ -179,7 +179,6 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
       ...originalTheme.palette,
       primary: {
         ...originalTheme.palette.primary,
-        main: primaryMainColor,
         // mui palettes have a "light" also, but for the card backgrounds we want very light colors, lighter than "light" usually is
         lighter:
           props.languageCardBackgroundColorOverride ||
