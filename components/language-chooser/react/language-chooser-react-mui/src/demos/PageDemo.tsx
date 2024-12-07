@@ -1,181 +1,126 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { defaultSearchResultModifier } from "@ethnolib/find-language";
-import {
-  AppBar,
-  Button,
-  FormControl,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  Toolbar,
-  Typography,
-} from "@mui/material";
+import { Slider, Typography } from "@mui/material";
 import "../styles.css";
 import { LanguageChooser } from "../LanguageChooser";
 import React from "react";
-import { OptionCard } from "../OptionCard";
 
 const darkColor = "#800303";
 const mediumColor = "#bd746f";
 const lightColor = "#e8caca";
-
-const TOP_ROW_HEIGHT = "600px";
+const veryLightColor = "#f7ebeb";
 
 export const PageDemo: React.FunctionComponent = () => {
   const [languageTag, setLanguageTag] = React.useState("");
+  const [height, setHeight] = React.useState(500);
+  const [width, setWidth] = React.useState(900);
+  const mainSectionHeight = `${height}px`;
+  const languageChooserWidth = `${width}px`;
   return (
     <div
       css={css`
         width: 100%;
-        height: 100vh;
       `}
     >
-      <AppBar
-        position="static"
+      <div
         css={css`
-          background-color: ${darkColor};
+          background-color: ${lightColor};
           padding: 20px;
+          border-bottom: 2px solid ${mediumColor};
         `}
       >
-        <Toolbar>
-          <Typography
-            variant="h3"
-            component="div"
-            align="center"
+        <Typography
+          variant="h1"
+          css={css`
+            font-size: 2rem;
+            color: ${darkColor};
+          `}
+        >
+          This demonstrates the Language Chooser in a non-dialog context. It
+          should be responsive to size changes.
+        </Typography>
+        <div
+          id="slider-row"
+          css={css`
+            display: flex;
+            gap: 70px;
+          `}
+        >
+          <div
+            id="height-slider-container"
             css={css`
-              flex-grow: 1;
+              margin-top: 20px;
             `}
           >
-            Settings
-          </Typography>
-          <Button color="inherit">Login</Button>
-        </Toolbar>
-      </AppBar>
+            <Typography>Adjust Height:</Typography>
+            <Slider
+              css={css`
+                color: black;
+                width: 250px;
+              `}
+              value={height}
+              max={700}
+              min={300}
+              onChange={(_, value) => setHeight(value as number)}
+            />
+          </div>
+          <div
+            id="width-slider-container"
+            css={css`
+              margin-top: 20px;
+            `}
+          >
+            <Typography>Adjust Width:</Typography>
+            <Slider
+              css={css`
+                color: black;
+                width: 250px;
+              `}
+              value={width}
+              max={1100}
+              min={600}
+              onChange={(_, value) => setWidth(value as number)}
+            />
+          </div>
+        </div>
+      </div>
       <div
         css={css`
           display: flex;
           flex-direction: column;
+          flex-shrink: 1;
+          height: 100vh;
         `}
       >
         <div
           css={css`
             display: flex;
+            flex-shrink: 1;
             background-color: ${lightColor};
           `}
         >
           <div
             id="top-left"
             css={css`
-              background-color: #ffffff;
-              height: ${TOP_ROW_HEIGHT};
-              width: 300px;
-              flex-shrink: 1;
+              background-color: ${veryLightColor};
+              max-height: ${mainSectionHeight};
+              width: 50px;
               flex-grow: 0;
-              overflow: auto;
             `}
-          >
-            <div
-              css={css`
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                color: ${darkColor};
-                padding: 20px;
-                background-color: #f7e6e7;
-                border-radius: 5px;
-              `}
-            >
-              <Typography variant="h4">Font:</Typography>
-              <OptionCard
-                isSelected={false}
-                backgroundColorWhenSelected={lightColor}
-                backgroundColorWhenNotSelected={lightColor}
-                css={css`
-                  color: ${darkColor};
-                  border: 1px solid ${darkColor};
-                  height: 100px;
-                `}
-              >
-                <div
-                  css={css`
-                    font-family: "Roboto Mono", monospace;
-                    font-size: 2rem;
-                    font-weight: 700;
-                  `}
-                >
-                  Roboto Mono
-                </div>
-              </OptionCard>
-              <OptionCard
-                isSelected={false}
-                backgroundColorWhenSelected={lightColor}
-                backgroundColorWhenNotSelected={lightColor}
-                css={css`
-                  color: ${darkColor};
-                  border: 1px solid ${darkColor};
-                  height: 100px;
-                `}
-              >
-                <div
-                  css={css`
-                    font-family: serif;
-                    font-size: 2rem;
-                    font-weight: 700;
-                  `}
-                >
-                  Serif
-                </div>
-              </OptionCard>
-              <OptionCard
-                isSelected={false}
-                backgroundColorWhenSelected={lightColor}
-                backgroundColorWhenNotSelected={lightColor}
-                css={css`
-                  color: ${darkColor};
-                  border: 1px solid ${darkColor};
-                  height: 100px;
-                `}
-              >
-                <div
-                  css={css`
-                    font-family: sans-serif;
-                    font-size: 2rem;
-                    font-weight: 700;
-                  `}
-                >
-                  Sans-serif
-                </div>
-              </OptionCard>
-            </div>
-          </div>
+          ></div>
           <div
-            id="top-right"
+            id="lc"
             css={css`
-              height: ${TOP_ROW_HEIGHT};
-              width: 1000px;
-              flex-shrink: 1;
-              overflow: auto;
+              max-height: ${mainSectionHeight};
+              width: ${languageChooserWidth};
+              flex-grow: 0;
+              flex-shrink: 0;
               background-color: white;
               color: ${darkColor};
-              display: flex;
-              flex-direction: column;
             `}
           >
-            <Typography
-              variant="h4"
-              css={css`
-                padding: 20px;
-                padding-bottom: 10px;
-              `}
-            >
-              Language:
-            </Typography>
             <LanguageChooser
-              css={css`
-                border-radius: 0px;
-              `}
               initialSearchString="uzbek"
               initialSelectionLanguageTag={"uz-cyrl"}
               searchResultModifier={defaultSearchResultModifier}
@@ -188,87 +133,48 @@ export const PageDemo: React.FunctionComponent = () => {
             />
           </div>
           <div
-            id="top-center"
             css={css`
-              flex-grow: 0;
-              background-color: ${lightColor};
-              height: ${TOP_ROW_HEIGHT};
+              background-color: ${veryLightColor};
+              max-height: ${mainSectionHeight};
               color: ${darkColor};
               padding: 20px;
+              width: 500px;
+              flex-grow: 1;
               flex-shrink: 1;
-              border-radius: 5px;
+              overflow: hidden;
             `}
           >
-            <Typography variant="h4">Color:</Typography>
-
-            <FormControl>
-              <RadioGroup
-                aria-labelledby="demo-radio-buttons-group-label"
-                defaultValue="red"
-                name="radio-buttons-group"
-              >
-                <FormControlLabel
-                  value="red"
-                  control={<Radio />}
-                  label="Red"
-                  disabled={true}
-                />
-                <FormControlLabel
-                  value="blue"
-                  control={<Radio />}
-                  label="Blue"
-                  disabled={true}
-                />
-                <FormControlLabel
-                  value="green"
-                  control={<Radio />}
-                  label="Green"
-                  disabled={true}
-                />
-              </RadioGroup>
-            </FormControl>
-            <Typography
-              css={css`
-                font-weight: bold;
-                font-size: 1.25rem;
-                border: 1px solid ${darkColor};
-                border-radius: 5px;
-                padding: 10px;
-                width: 300px;
-                margin-bottom: 20px;
-                margin-top: 50px;
-              `}
-            >
-              This is just a goofy page to demonstrate the language chooser in a
-              non-dialog context.
-            </Typography>
+            <Typography>{loremIpsum}</Typography>
           </div>
         </div>
         <div
           id="bottom"
           css={css`
-            background-color: ${mediumColor};
-            flex-grow: 1;
+            background-color: ${lightColor};
             width: 100%;
-            min-height: 300px;
+            height: 100%;
             padding: 30px;
-            color: ${darkColor};
             display: flex;
-            justify-content: space-between;
+            gap: 40px;
           `}
         >
-          <Typography variant="h4">Selected Font: Roboto Mono </Typography>
           <Typography
-            variant="h4"
             css={css`
-              font-weight: bold;
+              font-size: 1.5rem;
+              border: 2px solid ${darkColor};
+              padding: 15px 35px;
+              min-width: 500px;
+              height: fit-content;
+              background-color: ${veryLightColor};
             `}
           >
-            Selected Language Tag: {languageTag}{" "}
+            Selected Language Tag: {languageTag}
           </Typography>
-          <Typography variant="h4">Selected Color: red </Typography>
         </div>
       </div>
     </div>
   );
 };
+
+const loremIpsum =
+  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In et est sed magna venenatis ultrices consectetur faucibus risus. Nullam aliquet varius leo eget bibendum. Pellentesque vestibulum magna vitae commodo faucibus. Maecenas metus tortor, lobortis eget fringilla nec, ultricies in orci. Phasellus convallis iaculis turpis. Aliquam lobortis congue vehicula. Pellentesque molestie eleifend feugiat. Etiam lectus risus, suscipit non quam sit amet, condimentum convallis tortor. Suspendisse sodales auctor condimentum. Sed sed ullamcorper tortor, non placerat diam. Donec vitae orci ac odio ultricies rhoncus et et elit. Fusce semper dolor id lectus lobortis molestie. Interdum et malesuada fames ac ante ipsum primis in faucibus. Phasellus commodo enim in facilisis malesuada. Ut non euismod dui. Morbi sapien odio, sodales vitae auctor ac, lobortis ut felis. Nulla ornare diam id vestibulum tincidunt. Curabitur vel ex ipsum. Aenean vel porttitor metus. Praesent vehicula sit amet libero ut ultrices. Ut viverra eros id luctus viverra. Aliquam volutpat, dui in fermentum cursus, nisl lectus euismod justo, sed posuere ligula odio a purus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed eget suscipit tortor. Suspendisse imperdiet dui nisi, eget cursus ipsum varius at. Mauris elit erat, sodales eu ligula quis, blandit tempus nulla. Aenean vestibulum congue pharetra. Sed risus tortor, blandit nec ultricies non, vestibulum quis tortor. Donec in gravida ante. Vivamus luctus velit non consequat sodales. Vestibulum eget nisi velit. Etiam venenatis scelerisque dolor non mattis. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus quis interdum enim. Donec feugiat risus nec tempor iaculis. Morbi sollicitudin venenatis ullamcorper. Praesent massa arcu, venenatis ut tincidunt vel, feugiat eget augue. Nunc pellentesque justo dolor, ut hendrerit ipsum vulputate eu. Sed sed ipsum ut ligula maximus fermentum eget pretium leo. Aliquam feugiat ante eget lectus semper, in vulputate quam aliquet. Phasellus ac turpis sed ipsum gravida dapibus. Praesent vehicula magna lectus, vitae efficitur libero feugiat accumsan. Nunc bibendum, lacus quis mollis elementum, odio mi ultricies nisl, nec pretium nunc erat id mauris. Sed volutpat purus arcu, sed tincidunt quam interdum congue. Curabitur laoreet malesuada risus, at dictum justo aliquet sed. Etiam venenatis sem quis diam mollis rutrum. Mauris est ligula, dictum sed ultrices in, suscipit et nisl. Nunc massa est, consequat eu fringilla in, venenatis elementum libero. Proin maximus condimentum sodales. Integer tempus velit non arcu consequat, eget finibus lectus pellentesque. Donec tempus ornare elementum. Nullam eget diam vel eros tincidunt sodales vel non diam. Etiam leo felis, tincidunt in tincidunt ";
