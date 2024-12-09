@@ -1,12 +1,17 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { CardContent, Card, CardActionArea } from "@mui/material";
+import {
+  CardContent,
+  Card,
+  CardActionArea,
+  PaletteColor,
+  useTheme,
+} from "@mui/material";
 import React from "react";
-import { COLORS } from "./colors";
 
 export interface OptionCardProps {
   isSelected: boolean;
-  backgroundColorWhenNotSelected?: string;
+  backgroundColorWhenNotSelected?: string | PaletteColor;
   backgroundColorWhenSelected?: string;
   className?: string;
   onClick?: () => void;
@@ -20,18 +25,21 @@ export type OptionCardPropsWithoutColors = Omit<
 export const OptionCard: React.FunctionComponent<
   { children: React.ReactNode } & OptionCardProps
 > = (props) => {
+  const theme = useTheme();
   const backgroundColor = props.isSelected
-    ? props.backgroundColorWhenSelected || COLORS.white
-    : props.backgroundColorWhenNotSelected || COLORS.white;
+    ? props.backgroundColorWhenSelected || theme.palette.grey["400"]
+    : props.backgroundColorWhenNotSelected || theme.palette.background.paper;
   return (
     <CardActionArea onClick={props.onClick || (() => undefined)}>
       <Card
         variant="outlined"
         css={css`
           position: relative; // so children can be positioned absolutely
-          box-shadow: ${COLORS.greys[2]} 0px 3px 5px;
-          background-color: ${backgroundColor};
+          box-shadow: ${theme.palette.grey[400]} 0px 3px 5px;
         `}
+        sx={{
+          bgcolor: `${backgroundColor}`,
+        }}
         className={props.className}
       >
         <CardContent

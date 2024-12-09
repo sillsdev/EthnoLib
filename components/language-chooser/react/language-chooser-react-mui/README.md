@@ -19,9 +19,11 @@ Install with npm:
 npm i @ethnolib/language-chooser-react-mui
 ```
 
-### Sizing
+### Sizing and Colors
 
 The LanguageChooser will grow to fit the size of its parent. Height and width should be set on the parent. An explicit size should be set on its parent. Our recommended size is 1084x586 (to fit on a low-end notebook with windows task bar) but it will work in a variety of sizes.
+
+The Language Chooser will adopt the primary color of the [MUI theme](https://mui.com/material-ui/customization/theming/) and by default derive the card colors from the primary color. This can be overriden with the `languageCardBackgroundColorOverride` and `scriptCardBackgroundColorOverride` props, or by `setting theme.palette.primary.lighter` (used for the language card color) and `theme.palette.primary.lightest` (used for the script card color) in your MUI theme.
 
 ### Props
 
@@ -42,6 +44,8 @@ The LanguageChooser will grow to fit the size of its parent. Height and width sh
 - `onSelectionChange?: (orthographyInfo: IOrthography | undefined, languageTag: string | undefined) => void` - Whenever the user makes or unselects a complete language selection, this function will be called with the selected language information or undefined, respectively.
 - `rightPanelComponent?: React.ReactNode` - A slot for a component to go in the space on the upper right side of the language chooser. See the Storybook Dialog Demo -> Additional Right Panel Component for an example.
 - `actionButtons?: React.ReactNode` - A slot for dialog action buttons, e.g. Ok and Cancel. See the [LanguageChooserDialog.tsx](./src/demos/LanguageChooserDialog.tsx) example.
+- `languageCardBackgroundColorOverride?: string` - The language chooser will adopt the primary color of the MUI theme. By default, it will make the language card backgrounds be the primary color but 70% lighter (or use theme.palette.primary.lighter if it is set). If provided, this prop will override this background color behavior. See the Storybook Dialog Demo -> withCardBackgroundColorOverrides for an example.
+- `scriptCardBackgroundColorOverride?: string` - The language chooser will adopt the primary color of the MUI theme. By default, it will make the script card backgrounds be the primary color but 88% lighter (or use theme.palette.primary.lightest if it is set). If provided, this prop will override this background color behavior. See the Storybook Dialog Demo -> withCardBackgroundColorOverrides for an example.
 
 ### Demos
 

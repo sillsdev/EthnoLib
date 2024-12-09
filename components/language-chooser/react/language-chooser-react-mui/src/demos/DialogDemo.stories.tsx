@@ -50,7 +50,7 @@ export const AdditionalRightPanelComponent: Story = {
   },
 };
 
-export const InASmallDialog: Story = {
+export const InTooSmallDialog: Story = {
   args: {
     dialogHeight: "350px",
     dialogWidth: "650px",

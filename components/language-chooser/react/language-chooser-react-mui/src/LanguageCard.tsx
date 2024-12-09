@@ -7,17 +7,18 @@ import {
 } from "./OptionCard";
 import { ILanguage } from "@ethnolib/find-language";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
-import { COLORS } from "./colors";
+import { useTheme } from "@mui/material";
 
 const COMMA_SEPARATOR = ", ";
 
 export const LanguageCard: React.FunctionComponent<
   { languageCardData: ILanguage } & OptionCardPropsWithoutColors
 > = ({ languageCardData, ...partialOptionCardProps }) => {
+  const theme = useTheme();
   const optionCardProps = {
     ...partialOptionCardProps,
-    backgroundColorWhenNotSelected: COLORS.white,
-    backgroundColorWhenSelected: COLORS.blues[0],
+    backgroundColorWhenNotSelected: theme.palette.background.paper,
+    backgroundColorWhenSelected: theme.palette.primary.lighter,
   } as OptionCardProps;
   return (
     <OptionCard {...optionCardProps}>
@@ -55,7 +56,7 @@ export const LanguageCard: React.FunctionComponent<
           css={css`
             flex-grow: 0;
             margin-bottom: 1px; // for visual alignment
-            color: ${COLORS.greys[3]};
+            color: ${theme.palette.grey[700]};
           `}
         >
           {languageCardData.languageSubtag}
@@ -72,7 +73,7 @@ export const LanguageCard: React.FunctionComponent<
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            color: ${COLORS.greys[3]};
+            color: ${theme.palette.grey[700]};
           `}
         >{`A language of ${languageCardData.regionNames}`}</PartiallyBoldedTypography>
       )}
@@ -82,7 +83,7 @@ export const LanguageCard: React.FunctionComponent<
           variant="subtitle1"
           css={css`
             text-wrap: balance;
-            color: ${COLORS.greys[3]};
+            color: ${theme.palette.grey[700]};
           `}
         >
           {languageCardData.names.join(COMMA_SEPARATOR)}
