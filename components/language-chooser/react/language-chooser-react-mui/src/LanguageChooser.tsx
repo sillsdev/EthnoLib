@@ -103,8 +103,8 @@ export interface ILanguageChooserProps {
   ) => void;
   rightPanelComponent?: React.ReactNode;
   actionButtons?: React.ReactNode;
-  languageCardBackgroundColorOverride?: string; // if not provided, will use theme.palette.primary.lighter if present or fall back to lighten(primaryColor, 0.7)
-  scriptCardBackgroundColorOverride?: string; // if not provided, will use theme.palette.primary.lightest if present or fall back to lighten(primaryColor, 0.88)
+  languageCardBackgroundColorOverride?: string; // If not provided, will use theme.palette.primary.lighter if present or fall back to lighten(primaryColor, 0.7)
+  scriptCardBackgroundColorOverride?: string; // If not provided, will use theme.palette.primary.lightest if present or fall back to lighten(primaryColor, 0.88)
 }
 
 export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
