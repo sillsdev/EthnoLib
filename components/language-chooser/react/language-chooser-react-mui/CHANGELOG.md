@@ -1,3 +1,10 @@
+## 0.0.23 (2024-12-09)
+
+
+### 🩹 Fixes
+
+- trivial change to trigger publish ([d359a48](https://github.com/sillsdev/EthnoLib/commit/d359a48))
+
 ## 0.0.22 (2024-11-25)
 
 
