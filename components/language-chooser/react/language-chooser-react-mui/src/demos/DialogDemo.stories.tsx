@@ -50,19 +50,6 @@ export const AdditionalRightPanelComponent: Story = {
   },
 };
 
-export const withMuiThemePrimaryColor: Story = {
-  args: {
-    primaryColor: "#1d94a4",
-  },
-};
-
-export const withCardBackgroundColorOverrides: Story = {
-  args: {
-    languageCardBackgroundColorOverride: "#d2ebb2",
-    scriptCardBackgroundColorOverride: "#ebe9b2",
-  },
-};
-
 export const InTooSmallDialog: Story = {
   args: {
     dialogHeight: "350px",

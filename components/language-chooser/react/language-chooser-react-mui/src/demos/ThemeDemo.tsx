@@ -13,6 +13,7 @@ import {
   RadioGroup,
   ThemeProvider,
   Typography,
+  Checkbox,
 } from "@mui/material";
 import { defaultSearchResultModifier } from "@ethnolib/find-language";
 
@@ -22,6 +23,7 @@ export const ThemeDemo: React.FunctionComponent = () => {
   const [primaryColor, setPrimaryColor] = React.useState(
     PrimaryColorChoices[0]
   );
+  const [colorOverrides, setColorOverrides] = React.useState(false);
   const theme = createTheme();
   if (primaryColor) {
     theme.palette.primary.main = primaryColor;
@@ -127,6 +129,17 @@ export const ThemeDemo: React.FunctionComponent = () => {
               ))}
             </RadioGroup>
           </FormControl>
+          {/* Add a checkbox to override the colors */}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={colorOverrides}
+                onChange={(e) => setColorOverrides(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Override theme colors"
+          />
         </div>
         <div
           css={css`
@@ -141,6 +154,10 @@ export const ThemeDemo: React.FunctionComponent = () => {
             initialSelectionLanguageTag={"uz-cyrl"}
             searchResultModifier={defaultSearchResultModifier}
             actionButtons={dialogActionButtons}
+            {...(colorOverrides && {
+              languageCardBackgroundColorOverride: "#d2ebb2",
+              scriptCardBackgroundColorOverride: "#ebe9b2",
+            })}
           />
         </div>
       </div>
