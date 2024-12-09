@@ -130,13 +130,25 @@ describe("searchForLanguage", () => {
       indexOfLanguageInSearchResults(otlQuery, "bph")
     );
   });
+
+  it("should prefer localnames[0] for autonym", () => {
+    expect(searchForLanguage("azerbaijani")[0].item.autonym).toBe(
+      "Azərbaycan dili"
+    );
+  });
+  it("should fallback to localname for autonym if no localnames", () => {
+    expect(searchForLanguage("japanese")[0].item.autonym).toBe("日本語");
+  });
+  it("should leave autonym as undefined if no localnames or localname", () => {
+    expect(searchForLanguage("Aranadan")[0].item.autonym).toBeUndefined();
+  });
 });
 
 function searchDoesFindLanguage(query: string, expectedLanguageCode: string) {
-  const result = searchForLanguage(query);
-  expect(result.length).toBeGreaterThan(0);
+  const results = searchForLanguage(query);
+  expect(results.length).toBeGreaterThan(0);
   expect(
-    result.some((result) => result.item.iso639_3_code === expectedLanguageCode)
+    results.some((result) => result.item.iso639_3_code === expectedLanguageCode)
   ).toBe(true);
 }
 
@@ -144,9 +156,9 @@ function searchDoesNotFindLanguage(
   query: string,
   expectedLanguageCode: string
 ) {
-  const result = searchForLanguage(query);
+  const results = searchForLanguage(query);
   expect(
-    result.some((result) => result.item.iso639_3_code === expectedLanguageCode)
+    results.some((result) => result.item.iso639_3_code === expectedLanguageCode)
   ).toBe(false);
 }
 
@@ -154,8 +166,8 @@ function indexOfLanguageInSearchResults(
   query: string,
   expectedLanguageCode: string
 ) {
-  const result = searchForLanguage(query);
-  const index = result.findIndex(
+  const results = searchForLanguage(query);
+  const index = results.findIndex(
     (result) => result.item.iso639_3_code === expectedLanguageCode
   );
   return index;

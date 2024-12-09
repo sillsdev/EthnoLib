@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { defaultSearchResultModifier } from "@ethnolib/find-language";
-import { Button, Card, Dialog, Typography } from "@mui/material";
+import { Button, Card, Typography } from "@mui/material";
 import {
   defaultDisplayName,
   IOrthography,
