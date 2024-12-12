@@ -115,6 +115,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   useEffect(() => {
     if (searchInputRef) {
       searchInputRef.value = props.initialSearchString || "";
+      searchInputRef.focus();
     }
     lp.resetTo(
       props.initialSearchString || "",
@@ -204,6 +205,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
       searchInputRef.value = "";
     }
     lp.onSearchStringChange("");
+    searchInputRef?.focus();
   };
 
   const originalTheme = useTheme();
