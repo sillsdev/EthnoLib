@@ -24,6 +24,7 @@ export const ScriptCard: React.FunctionComponent<
         variant="subtitle1"
         css={css`
           color: ${theme.palette.grey[700]};
+          min-height: 1.2em;
         `}
       >
         {scriptSamples[scriptData.code.toLowerCase()] || ""}

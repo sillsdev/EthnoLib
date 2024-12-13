@@ -30,17 +30,24 @@ export const FormFieldLabel: React.FunctionComponent<
         `}
       >
         {label}
-        {required && (
-          <sup
-            css={css`
-              font-weight: normal;
-              color: ${theme.palette.error.main};
-            `}
-          >
-            (required)
-          </sup>
-        )}
       </Typography>
+
+      {required && (
+        <span
+          css={css`
+            font-weight: normal;
+            color: ${theme.palette.error.main};
+            // align with right edge of parent
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            top: 0;
+            font-size: 0.75rem;
+          `}
+        >
+          required
+        </span>
+      )}
     </InputLabel>
   );
 };
