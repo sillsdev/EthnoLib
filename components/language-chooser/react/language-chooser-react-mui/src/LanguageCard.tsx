@@ -23,34 +23,47 @@ export const LanguageCard: React.FunctionComponent<
   return (
     <OptionCard {...optionCardProps}>
       <div
+        // The top row of text on the card. Autonym exonym, language tag
         css={css`
           display: flex;
           flex-direction: row;
-          flex-wrap: wrap;
           gap: 20px;
-          align-items: flex-end;
+          align-items: flex-start;
+          margin-bottom: 8px;
         `}
       >
-        {/* Top row */}
-
-        <PartiallyBoldedTypography
-          variant="h2"
+        <div
+          // holds the autonym and/or exonym. Grows to take up most of the top row
           css={css`
             flex-grow: 1;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            row-gap: 5px;
+            column-gap: 20px;
           `}
         >
-          {languageCardData.autonym || languageCardData.exonym}
-        </PartiallyBoldedTypography>
-        {languageCardData.autonym && (
-          <PartiallyBoldedTypography
-            variant="h2"
-            css={css`
-              flex-grow: 0;
-            `}
-          >
-            {languageCardData.exonym}
-          </PartiallyBoldedTypography>
-        )}
+          {languageCardData.autonym && (
+            <PartiallyBoldedTypography
+              variant="h2"
+              css={css`
+                flex-grow: 1;
+              `}
+            >
+              {languageCardData.autonym}
+            </PartiallyBoldedTypography>
+          )}
+          {languageCardData.exonym !== languageCardData.autonym && (
+            <PartiallyBoldedTypography
+              variant="h2"
+              css={css`
+                flex-grow: 0;
+              `}
+            >
+              {languageCardData.exonym}
+            </PartiallyBoldedTypography>
+          )}
+        </div>
         <PartiallyBoldedTypography
           variant="body2"
           css={css`
@@ -67,7 +80,6 @@ export const LanguageCard: React.FunctionComponent<
           variant="subtitle1"
           gutterBottom
           css={css`
-            margin-top: 8px;
             // Copilot gave me this to cut off after 2 lines with an ellipsis
             display: -webkit-box;
             -webkit-line-clamp: 2;

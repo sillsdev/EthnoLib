@@ -350,7 +350,6 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                       language.scripts.length > 1 && (
                         <List
                           css={css`
-                            width: 100%;
                             display: flex;
                             flex-direction: row;
                             justify-content: flex-end;
