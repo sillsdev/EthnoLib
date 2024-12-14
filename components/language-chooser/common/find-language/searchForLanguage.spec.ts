@@ -71,7 +71,23 @@ describe("searchForLanguage", () => {
     expect(indexOfLanguageInSearchResults(choQuery, "xco")).toBeLessThan(
       indexOfLanguageInSearchResults(choQuery, "caa")
     );
+
+    // arabic should come on top if you search "arabic"
+    const arabicQuery = "arabic";
+    expect(searchForLanguage(arabicQuery)[0].item.languageSubtag).toBe("ar");
   });
+
+  it("finds reasonably expected results for imperfect queries", () => {
+    searchDoesFindLanguage("olone", "cst"); //northern ohlone
+    searchDoesFindLanguage("buenaventura", "azn"); //autonym is Meshikan de San Agustin Buenaventura y de Santa Cruz. Good test case for very long name
+    searchDoesFindLanguage("santa cruz", "azn");
+    searchDoesFindLanguage("apai", "xad"); //autonym is Adai. Test case of very short name with 1 substitution
+  });
+
+  // TODO test case that "sign language" should only have 1 match in "American sign language"
+  // TODO add test case for trailing space should not change the results?
+  //
+
   it("should find matches regardless of case", () => {
     searchDoesFindLanguage("japanese", "jpn");
     searchDoesFindLanguage("JAPANESE", "jpn");

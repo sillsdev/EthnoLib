@@ -37,21 +37,31 @@ export const fieldsToSearch = allFuseSearchKeys.map((key) => key.name);
 // and what we have is working for now
 
 export function searchForLanguage(
-  queryString: string
+  originalQueryString: string
 ): FuseResult<ILanguage>[] {
+  const queryString = originalQueryString.trim(); // ignore any leading or trailing whitespace in original query string
+
   const baseFuseOptions = {
     isCaseSensitive: false,
     includeMatches: true,
-    minMatchCharLength: 2,
+    minMatchCharLength: Math.max(2, Math.min(6, queryString.length - 3)),
 
     keys: allFuseSearchKeys,
-    ignoreLocation: true,
-    ignoreFieldNorm: true,
     findAllMatches: false,
+    fieldNormWeight: 1, // Shorter target strings get a bit of a boost over longer ones. This is Fuse's default value.
+    ignoreFieldNorm: true,
+    ignoreLocation: true,
   };
+
+  // TODO: Fuse can't prioritize by location when searching for exact matches only.
+  // If, say, the querystring was "arabi" and the results were Arabi, Southern Arabi, Arabic, and Tunisian Arabic
+  // Should they be in that order? We could make new fuses with ignoreLocation false to find and
+  // prioritize start of field matches (for autonym and exonym only?) But then we would be making 5 queries
+  // per search
 
   const exactMatchFuse = new Fuse(spacePaddedLanguages as ILanguage[], {
     ...baseFuseOptions,
+    ignoreLocation: true, // otherwise, since threshold is 0, it only matches at the start
     threshold: 0, //exact matches only
     keys: exactMatchPrioritizableFuseSearchKeys,
   });
@@ -64,6 +74,8 @@ export function searchForLanguage(
 
   const fuzzyMatchFuse = new Fuse(languages as ILanguage[], {
     ...baseFuseOptions,
+    location: 0,
+    distance: 100, // lightly prioritize matches earlier in the string. This is Fuse's default value.
     threshold: 0.3,
   });
   const fuzzyMatchResults = fuzzyMatchFuse.search(queryString);
