@@ -3,21 +3,23 @@
 > [!warning]
 > Note much of the behavior described in this document has been backed out of the initial release of the language chooser and will be implemented in a future release.
 
+- This is about ISO 639-3 codes which represent collections of languages and have a one-to-many correspondence with ISO 630-3 codes which denote individual languages.
+
 - See
 
   - https://issues.bloomlibrary.org/youtrack/issue/BL-12657/Issues-with-macrolanguage-codes-in-the-language-picker
   - https://github.com/silnrsi/langtags/blob/master/doc/langtags.md#macro-languages
   - https://iso639-3.sil.org/code_tables/macrolanguage_mappings/
 
-- We are talking about ISO 639-3 codes which represent collections of languages and have a one-to-many correspondence with ISO 630-3 codes which denote individual languages.
-
 ### A simple (and somewhat typical) example of how macrolanguages appear to be handled in Langtags.json
 
-`chm` (mari) is a macrolanguage which has individual languages `mhr` (Eastern Mari) and `mrj` (Western Mari). There are three relevant entries in Langtags.json, below. In this langauge chooser, the language choices we offer users are based on the `iso639_3` field. The "Western Mari" entry is no problem and from it we create a language option with the "mrj" code. However, there is no entry which with `iso639_3` value `mhr`; but rather the two entries with `iso639_3` values of `chm` appear to be about the `mhr` language Western Mari. According to th langtags.json documentation: [For many macro languages, there is a representative language [in this case mhr] for that macro language [in this case chm]. In many cases the macro language code is more popular than the representative langauge code. Thus, for example, in the CLDR, the macro language code is used instead of the representative language code. For this reason, langtags.json unifies the representative language tags into the macro language tag set rather than having a separate tag set for them, and gives the tag for the tag set in terms of the macro language rather than the representative language.](https://github.com/silnrsi/langtags/blob/master/doc/langtags.md#macro-languages)
+`chm` (mari) is a macrolanguage which has individual languages `mhr` (Eastern Mari) and `mrj` (Western Mari). There are three relevant entries in Langtags.json, below. In this langauge chooser, the language options we offer users are based on the `iso639_3` field. The "Western Mari" entry is no problem and from it we create a language option with the "mrj" code. However, there is no entry which has `iso639_3` value `mhr`; but rather the two entries with `iso639_3` values of `chm` appear to be about the `mhr` language Western Mari. According to th langtags.json documentation: [For many macro languages, there is a representative language [in this case mhr] for that macro language [in this case chm]. In many cases the macro language code is more popular than the representative langauge code. Thus, for example, in the CLDR, the macro language code is used instead of the representative language code. For this reason, langtags.json unifies the representative language tags into the macro language tag set rather than having a separate tag set for them, and gives the tag for the tag set in terms of the macro language rather than the representative language.](https://github.com/silnrsi/langtags/blob/master/doc/langtags.md#macro-languages)
 
-However, at least for the purposes of Bloom, we usually want the users to pick the specific language code. So since `mhr` is an ISO 639-3 code that shows up as an alternative tag in the `tags` field of those two entries, we create an additional language option which has code `mhr` but contains info from those two entries and therefore is otherwise a duplicate of the `chm` language option coallesced from these entries. (in languageData.json I have marked these additionally created entries with `isForMacrolanguageDisambiguation = true`)
+However, at least for the purposes of Bloom, we want the users to pick the specific language code. So since `mhr` is an ISO 639-3 code that shows up as an alternative tag in the `tags` field of those two entries, we create an additional language option which has code `mhr` but contains info from those two entries and therefore is otherwise a duplicate of the `chm` language option coallesced from these entries. (in languageData.json I have marked these additionally created entries with `isForMacrolanguageDisambiguation = true`).
 
-````
+<!-- TODO about adding the macrolanguage one to EXCLUDABLE_MACROLANGUAGE_ENTRY_CODES -->
+
+```
     {
         "full": "mrj-Cyrl-RU",
         "iana": [ "Western Mari" ],
@@ -68,59 +70,60 @@ However, at least for the purposes of Bloom, we usually want the users to pick t
         "tags": [ "mhr-Latn", "mhr-Latn-RU" ],
         "windows": "chm-Latn"
     },
-    ```
+
+```
 
 ### A more complicated example
- [`aka` (Akan) is a macro language which has individual languages `fat` (Fanti) and `twi` (Twi).] (https://iso639-3.sil.org/code_tables/macrolanguage_mappings/data?code=aka&name=). However, [Akan itself is listed as a language in Ethnologue] (https://www.ethnologue.com/language/aka/) and Fanti and Twi are only listed as dialects of Akan, though the page notes that "The two main subdivisions of Akan are assigned codes in the ISO 639-3 standard: Fanti (fat) and Twi (twi)." So it seems like (at least for the purposes of Bloom) we would want users to be able to pick `aka` even though it is technically a macrolanguage. And, the relevant entries in Langtags.json are as below. The `twi` code does not even show up anywhere in langtags.json at all.
 
- ```
-    {
-        "full": "ak-Latn-GH",
-        "iana": [ "Akan" ],
-        "iso639_3": "aka",
-        "localname": "Akan",
-        "localnames": [ "Akan" ],
-        "name": "Akan",
-        "region": "GH",
-        "regionname": "Ghana",
-        "regions": [ "AU", "CA", "GB", "LR", "NL" ],
-        "script": "Latn",
-        "sldr": true,
-        "tag": "ak",
-        "tags": [ "ak-GH", "ak-Latn", "fat", "fat-GH", "fat-Latn", "fat-Latn-GH", "tw", "tw-GH", "tw-Latn", "tw-Latn-GH" ],
-        "variants": [ "akuapem", "asante" ],
-        "windows": "ak-Latn"
-    },
-    {
-        "full": "ak-Arab-GH",
-        "iana": [ "Akan" ],
-        "iso639_3": "aka",
-        "name": "Akan",
-        "nophonvars": true,
-        "region": "GH",
-        "regionname": "Ghana",
-        "regions": [ "CA", "GB", "LR" ],
-        "script": "Arab",
-        "sldr": false,
-        "tag": "ak-Arab",
-        "windows": "ak-Arab"
-    },
-    {
-        "full": "ak-Brai-GH",
-        "iana": [ "Akan" ],
-        "iso639_3": "aka",
-        "name": "Akan",
-        "nophonvars": true,
-        "region": "GH",
-        "regionname": "Ghana",
-        "regions": [ "AU", "CA", "GB", "LR", "NL" ],
-        "script": "Brai",
-        "sldr": false,
-        "tag": "ak-Brai",
-        "tags": [ "tw-Brai", "tw-Brai-GH" ],
-        "windows": "ak-Brai"
-    },
-    ```
+[`aka` (Akan) is a macro language which has individual languages `fat` (Fanti) and `twi` (Twi)](https://iso639-3.sil.org/code_tables/macrolanguage_mappings/data?code=aka&name=). However, [Akan itself is listed as a language in Ethnologue](https://www.ethnologue.com/language/aka/) and Fanti and Twi are only listed as dialects of Akan, though the page notes that "The two main subdivisions of Akan are assigned codes in the ISO 639-3 standard: Fanti (fat) and Twi (twi)." So it seems like (at least for the purposes of Bloom) we would want users to be able to pick `aka` even though it is technically a macrolanguage. And, the relevant entries in Langtags.json are as below. The `twi` code does not even show up anywhere in langtags.json at all.
+
+```
+   {
+       "full": "ak-Latn-GH",
+       "iana": [ "Akan" ],
+       "iso639_3": "aka",
+       "localname": "Akan",
+       "localnames": [ "Akan" ],
+       "name": "Akan",
+       "region": "GH",
+       "regionname": "Ghana",
+       "regions": [ "AU", "CA", "GB", "LR", "NL" ],
+       "script": "Latn",
+       "sldr": true,
+       "tag": "ak",
+       "tags": [ "ak-GH", "ak-Latn", "fat", "fat-GH", "fat-Latn", "fat-Latn-GH", "tw", "tw-GH", "tw-Latn", "tw-Latn-GH" ],
+       "variants": [ "akuapem", "asante" ],
+       "windows": "ak-Latn"
+   },
+   {
+       "full": "ak-Arab-GH",
+       "iana": [ "Akan" ],
+       "iso639_3": "aka",
+       "name": "Akan",
+       "nophonvars": true,
+       "region": "GH",
+       "regionname": "Ghana",
+       "regions": [ "CA", "GB", "LR" ],
+       "script": "Arab",
+       "sldr": false,
+       "tag": "ak-Arab",
+       "windows": "ak-Arab"
+   },
+   {
+       "full": "ak-Brai-GH",
+       "iana": [ "Akan" ],
+       "iso639_3": "aka",
+       "name": "Akan",
+       "nophonvars": true,
+       "region": "GH",
+       "regionname": "Ghana",
+       "regions": [ "AU", "CA", "GB", "LR", "NL" ],
+       "script": "Brai",
+       "sldr": false,
+       "tag": "ak-Brai",
+       "tags": [ "tw-Brai", "tw-Brai-GH" ],
+       "windows": "ak-Brai"
+   },
+```
 
 TODO future work: For now, because we have at least one situation like this, we aren't blanket cutting out macrolanguages but should eventually figure out a way of determining which macrolanguages are actually valid options.
-````
