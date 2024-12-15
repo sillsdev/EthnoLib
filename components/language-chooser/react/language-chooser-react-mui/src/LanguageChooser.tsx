@@ -285,6 +285,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
             }
             endAdornment={
               <IconButton
+                id="clear-search-X-button"
                 onClick={clearSearchText}
                 css={css`
                   padding-right: 0px;
@@ -322,6 +323,9 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                   // We use this ref to scroll the initially selected language card into view
                   ref={
                     isSelectedLanguageCard ? selectedLanguageCardRef : undefined
+                  }
+                  data-testid={
+                    "language-card-container-" + language.iso639_3_code
                   }
                 >
                   <LazyLoad

@@ -13,7 +13,7 @@ export interface OptionCardProps {
   isSelected: boolean;
   backgroundColorWhenNotSelected?: string | PaletteColor;
   backgroundColorWhenSelected?: string;
-  className?: string;
+  testId?: string;
   onClick?: () => void;
 }
 
@@ -32,6 +32,7 @@ export const OptionCard: React.FunctionComponent<
   return (
     <CardActionArea onClick={props.onClick || (() => undefined)}>
       <Card
+        data-testid={props.testId}
         variant="outlined"
         css={css`
           position: relative; // so children can be positioned absolutely
@@ -40,7 +41,7 @@ export const OptionCard: React.FunctionComponent<
         sx={{
           bgcolor: `${backgroundColor}`,
         }}
-        className={props.className}
+        className="option-card"
       >
         <CardContent
           css={css`

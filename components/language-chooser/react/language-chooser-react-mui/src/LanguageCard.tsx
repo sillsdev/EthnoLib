@@ -19,6 +19,7 @@ export const LanguageCard: React.FunctionComponent<
     ...partialOptionCardProps,
     backgroundColorWhenNotSelected: theme.palette.background.paper,
     backgroundColorWhenSelected: theme.palette.primary.lighter,
+    testId: `language-card-${languageCardData.iso639_3_code}`,
   } as OptionCardProps;
   return (
     <OptionCard {...optionCardProps}>
