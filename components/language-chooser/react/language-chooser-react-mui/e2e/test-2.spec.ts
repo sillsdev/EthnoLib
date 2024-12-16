@@ -44,11 +44,11 @@ test.describe("Search", () => {
     await expect(page.locator("#search-bar")).toHaveText("");
 
     // no results
-    await expect(page.locator(".option-card")).not.toBeVisible();
+    await expect(page.locator(".option-card-button")).not.toBeVisible();
   });
 });
 
-test.describe("Script card behavior", () => {
+test.describe("Selection toggle script card behavior", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
   });
@@ -62,12 +62,6 @@ test.describe("Script card behavior", () => {
     await expect(uzbekCard).toBeVisible();
     await expect(uzbekCard).toContainText("Uzbek");
 
-    return uzbekCard;
-  }
-
-  async function findAndSelectUzbek({ page }) {
-    const uzbekCard = await findUzbekCard({ page });
-    await uzbekCard.click();
     return uzbekCard;
   }
 
@@ -98,7 +92,7 @@ test.describe("Script card behavior", () => {
   }) => {
     const cyrlCard = await selectCyrl({ page });
     const uzbekCard = page.getByTestId("language-card-container-uzb");
-    await uzbekCard.click();
+    await uzbekCard.getByText("ўзбек тили").click();
     await expect(cyrlCard).not.toBeVisible();
   });
 
@@ -124,14 +118,35 @@ test.describe("Script card behavior", () => {
   });
 });
 
+// Okay, this is testing the OK button which is part of the demo, but it's a good way to test
+// whether the language chooser is detecting and outputing a valid langauge selection at the right times
+test.describe("Language selection validity", () => {
+  async function expectOkButtonEnabled(page) {
+    await expect(page.getByRole("button").getByText("OK")).toBeEnabled();
+  }
+
+  async function expectOkButtonDisabled(page) {
+    await expect(page.getByRole("button").getByText("OK")).toBeDisabled();
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+  });
+
+  test("Ok button disabled when no language selected", async ({ page }) => {
+    await page.locator("#clear-search-X-button").click();
+    await expectOkButtonDisabled(page);
+  });
+});
+
 /* 
-goto error
  customize dialog
  unlisted language dialog
  ok button enabled
 
 */
 
-// TODO where did all the whitespace go?
 // TODO compare lameta
 // TODO fix bash prompt
+// TODO try storybook tests
+// TODO break this file up

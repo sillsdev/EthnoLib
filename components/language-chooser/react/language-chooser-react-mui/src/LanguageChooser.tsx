@@ -132,7 +132,6 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   const selectedLanguageCardRef = useRef<HTMLDivElement>(null);
   useEffect(
     () => {
-      console.log("initialScrollingNeeded", initialScrollingNeeded);
       if (
         initialScrollingNeeded &&
         props.initialSelectionLanguageTag &&

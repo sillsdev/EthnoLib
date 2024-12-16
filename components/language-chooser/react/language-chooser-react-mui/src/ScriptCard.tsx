@@ -16,12 +16,11 @@ export const ScriptCard: React.FunctionComponent<
     ...partialOptionCardProps,
     backgroundColorWhenNotSelected: theme.palette.background.paper,
     backgroundColorWhenSelected: theme.palette.primary.lightest,
-    testId: `script-card-${scriptData.code}`,
   } as OptionCardProps;
   return (
     <OptionCard
       {...optionCardProps}
-      data-testid={`script-card-${scriptData.code}`}
+      buttonTestId={`script-card-${scriptData.code}`}
     >
       <Typography variant="h2">{scriptData.name}</Typography>
       <Typography

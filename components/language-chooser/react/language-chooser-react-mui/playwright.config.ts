@@ -36,16 +36,17 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+    // TODO uncomment
 
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
+    // {
+    //   name: "firefox",
+    //   use: { ...devices["Desktop Firefox"] },
+    // },
 
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
-    },
+    // {
+    //   name: "webkit",
+    //   use: { ...devices["Desktop Safari"] },
+    // },
 
     // Uncomment for mobile browsers support
     /* {
@@ -68,4 +69,5 @@ export default defineConfig({
     } */
   ],
   reporter: [["html", { open: "never" }]],
+  workers: 2, // I am getting random NS_ERROR_CONNECTION_REFUSED errors with 6 workers
 });
