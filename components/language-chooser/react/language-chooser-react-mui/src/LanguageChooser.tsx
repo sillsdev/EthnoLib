@@ -464,6 +464,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
         </div>
       </div>
       <CustomizeLanguageDialog
+        key={lp.selectedLanguage?.iso639_3 + "_" + lp.selectedScript?.code} // This is to force a re-render when the user has changed language or script selection and then reopens dialog
         open={customizeLanguageDialogOpen}
         selectedLanguage={lp.selectedLanguage}
         selectedScript={lp.selectedScript}
