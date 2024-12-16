@@ -69,50 +69,39 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   const EMPTY_COMBOBOX_VALUE = React.useMemo(() => ({ label: "", id: "" }), []);
 
   // Store dialog state. Used to create a tag preview just inside the dialog, before saving anything
+  const initialScript = props.selectedScript?.code
+    ? {
+        label: props.selectedScript.name,
+        id: props.selectedScript.code,
+      }
+    : EMPTY_COMBOBOX_VALUE;
   const [dialogSelectedScript, setDialogSelectedScript] = React.useState<{
     label: string;
     id: string;
-  }>(EMPTY_COMBOBOX_VALUE);
+  }>(initialScript);
+  const initialRegion = props.customizableLanguageDetails.region?.code
+    ? {
+        label: props.customizableLanguageDetails.region.name,
+        id: props.customizableLanguageDetails.region.code,
+      }
+    : EMPTY_COMBOBOX_VALUE;
   const [dialogSelectedRegion, setDialogSelectedRegion] = React.useState<{
     label: string;
     id: string;
-  }>(EMPTY_COMBOBOX_VALUE);
+  }>(initialRegion);
+  const initialDialect = // if the user has not selected any language, not even the unlisted language button, then
+    // there will be no language details and we suggest the search string as a
+    // starting point for the unlisted language name (which is actually stored in the dialect field)
+    props.selectedLanguage
+      ? props.customizableLanguageDetails.dialect || ""
+      : props.searchString;
   const [dialogSelectedDialect, setDialogSelectedDialect] =
-    React.useState<string>("");
+    React.useState<string>(initialDialect);
 
   // name (dialect) and country (region) are required for unlisted language
   const isReadyToSubmit =
     !isUnlistedLanguageDialog ||
     (dialogSelectedDialect !== "" && dialogSelectedRegion.label !== "");
-
-  // To reset the dialog if the user closes and reopens it, since they may have changed the language
-  //or script selection in between
-  React.useEffect(() => {
-    setDialogSelectedScript(
-      props.selectedScript?.code
-        ? {
-            label: props.selectedScript.name,
-            id: props.selectedScript.code,
-          }
-        : EMPTY_COMBOBOX_VALUE
-    );
-    setDialogSelectedRegion(
-      props.customizableLanguageDetails.region?.code
-        ? {
-            label: props.customizableLanguageDetails.region.name,
-            id: props.customizableLanguageDetails.region.code,
-          }
-        : EMPTY_COMBOBOX_VALUE
-    );
-    setDialogSelectedDialect(
-      // if the user has not selected any language, not even the unlisted language button, then
-      // there will be no language details and we suggest the search string as a
-      // starting point for the unlisted language name (which is actually stored in the dialect field)
-      props.selectedLanguage
-        ? props.customizableLanguageDetails.dialect || ""
-        : props.searchString
-    );
-  }, [props, EMPTY_COMBOBOX_VALUE]);
 
   const theme = useTheme();
 
