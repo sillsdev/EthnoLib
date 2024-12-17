@@ -8,7 +8,7 @@ test.describe("Search", () => {
   // TODO where expect and where await? expect(await page.locator("h1").innerText()).toContain("Welcome");
 
   test("basic search by name", async ({ page }) => {
-    await page.locator("#clear-search-X-button").click();
+    await page.getByTestId("clear-search-X-button").click();
     await page.locator("#search-bar").fill("tok pisin");
     const tpiCard = page.getByTestId("language-card-container-tpi");
     await tpiCard.scrollIntoViewIfNeeded();
@@ -17,7 +17,7 @@ test.describe("Search", () => {
   });
 
   test("basic search by code", async ({ page }) => {
-    await page.locator("#clear-search-X-button").click();
+    await page.getByTestId("clear-search-X-button").click();
     await page.locator("#search-bar").fill("tpi");
     const tpiCard = page.getByTestId("language-card-container-tpi");
     await tpiCard.scrollIntoViewIfNeeded();
@@ -26,7 +26,7 @@ test.describe("Search", () => {
   });
 
   test("basic search by country", async ({ page }) => {
-    await page.locator("#clear-search-X-button").click();
+    await page.getByTestId("clear-search-X-button").click();
     await page.locator("#search-bar").fill("Switzerland");
     const swissGermanCard = page.getByTestId("language-card-container-gsw");
     await swissGermanCard.scrollIntoViewIfNeeded();
@@ -38,7 +38,7 @@ test.describe("Search", () => {
     await page.locator("#search-bar").fill("tok pisin");
     // some results exist
 
-    await page.locator("#clear-search-X-button").click();
+    await page.getByTestId("clear-search-X-button").click();
 
     // search bar is empty
     await expect(page.locator("#search-bar")).toHaveText("");
@@ -55,7 +55,7 @@ test.describe("Selection toggle script card behavior", () => {
 
   async function findUzbekCard({ page }) {
     // search for "uzbek"
-    await page.locator("#clear-search-X-button").click();
+    await page.getByTestId("clear-search-X-button").click();
     await page.locator("#search-bar").fill("uzbek");
     const uzbekCard = page.getByTestId("language-card-container-uzb");
     await uzbekCard.scrollIntoViewIfNeeded();
@@ -134,7 +134,7 @@ test.describe("Language selection validity", () => {
   });
 
   test("Ok button disabled when no language selected", async ({ page }) => {
-    await page.locator("#clear-search-X-button").click();
+    await page.getByTestId("clear-search-X-button").click();
     await expectOkButtonDisabled(page);
   });
 });

@@ -284,7 +284,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
             }
             endAdornment={
               <IconButton
-                id="clear-search-X-button"
+                data-testid="clear-search-X-button"
                 onClick={clearSearchText}
                 css={css`
                   padding-right: 0px;
@@ -294,6 +294,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
               </IconButton>
             }
             id="search-bar"
+            data-testid="search-bar"
             fullWidth
             onChange={(e) => {
               debounce(async () => {

@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import DialogDemo from "./DialogDemo";
+import { within, userEvent } from "@storybook/testing-library";
+import { expect } from "@storybook/jest";
 
 const meta: Meta<typeof DialogDemo> = {
   component: DialogDemo,
@@ -54,5 +56,19 @@ export const InTooSmallDialog: Story = {
   args: {
     dialogHeight: "350px",
     dialogWidth: "650px",
+  },
+};
+
+export const TestTest: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // const button = canvas.getByTestId("clear-search-X-button");
+    const button = canvas.getByRole("button");
+    await userEvent.click(button);
+    expect(canvas.getByRole("button").innerText).toBe(
+      "You've clicked me 1 times"
+    );
+    // await expect(canvas.getByTestId("#search-bar").innerText).toBe("");
+    // await expect(canvas.locator(".option-card-button")).not.toBeVisible();
   },
 };
