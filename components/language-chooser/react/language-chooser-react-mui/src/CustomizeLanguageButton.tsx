@@ -23,6 +23,7 @@ export const CustomizeLanguageButton: React.FunctionComponent<
   const theme = useTheme();
   return (
     <Button
+      data-testid="customization-button"
       variant="outlined"
       color="primary"
       css={css`

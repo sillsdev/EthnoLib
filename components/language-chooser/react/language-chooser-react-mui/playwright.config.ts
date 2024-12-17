@@ -17,6 +17,7 @@ const baseURL = process.env["BASE_URL"] || "http://localhost:5173"; // port numb
  */
 export default defineConfig({
   ...nxE2EPreset(__filename, { testDir: "./e2e" }),
+  testMatch: /.*\.e2e\.ts/,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,

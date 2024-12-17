@@ -129,6 +129,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
       `}
       maxWidth={"sm"}
       fullWidth={true}
+      data-testid={"customization-dialog"}
     >
       <DialogTitle
         css={css`
@@ -341,6 +342,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             variant="outlined"
             color="primary"
             onClick={props.onClose}
+            data-testid="customization-dialog-cancel-button"
           >
             Cancel
           </Button>
