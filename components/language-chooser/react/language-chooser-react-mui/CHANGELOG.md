@@ -1,3 +1,10 @@
+## 0.0.24 (2024-12-17)
+
+
+### 🩹 Fixes
+
+- move "required" label, various spacing tweaks ([b10df60](https://github.com/sillsdev/EthnoLib/commit/b10df60))
+
 ## 0.0.23 (2024-12-09)
 
 
