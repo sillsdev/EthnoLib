@@ -113,10 +113,10 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
         .MuiDialog-paper {
           padding: 20px 25px 25px 25px;
           display: flex;
-          gap: 15px;
+          gap: 20px;
         }
       `}
-      maxWidth={"sm"}
+      maxWidth={"xs"}
       fullWidth={true}
     >
       <DialogTitle
@@ -143,6 +143,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             border: 1px solid ${theme.palette.primary.main};
             padding: 7px;
             flex-shrink: 0;
+            margin-bottom: 10px; // extra space between info box and form fields
           `}
         >
           <Typography
@@ -275,12 +276,12 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
       <DialogActions
         css={css`
           padding: 0; //using padding on the entire dialog instead, plus gap between sections
+          padding-top: 20px; // extra space on top of the buttons
         `}
       >
         <div
           id="customize-dialog-action-buttons-container"
           css={css`
-            // position: absolute;
             width: 100%;
             display: flex;
             justify-content: flex-end;
