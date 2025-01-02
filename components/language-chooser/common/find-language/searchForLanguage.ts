@@ -44,11 +44,11 @@ export function searchForLanguage(
   const baseFuseOptions = {
     isCaseSensitive: false,
     includeMatches: true,
-    minMatchCharLength: Math.max(2, Math.min(6, queryString.length - 3)),
+    // minMatchCharLength: Math.max(2, Math.min(6, queryString.length - 3)),
 
     keys: allFuseSearchKeys,
     findAllMatches: false,
-    fieldNormWeight: 1, // Shorter target strings get a bit of a boost over longer ones. This is Fuse's default value.
+    // fieldNormWeight: 1, // Shorter target strings get a bit of a boost over longer ones. This is Fuse's default value.
     ignoreFieldNorm: true,
     ignoreLocation: true,
   };
@@ -74,8 +74,9 @@ export function searchForLanguage(
 
   const fuzzyMatchFuse = new Fuse(languages as ILanguage[], {
     ...baseFuseOptions,
-    location: 0,
-    distance: 100, // lightly prioritize matches earlier in the string. This is Fuse's default value.
+    // location: 0,
+    // distance: 100, // lightly prioritize matches earlier in the string. This is Fuse's default value.
+    ignoreLocation: true,
     threshold: 0.3,
   });
   const fuzzyMatchResults = fuzzyMatchFuse.search(queryString);
@@ -103,6 +104,7 @@ export function searchForLanguage(
       }
     }
   }
+  console.log(orderedResults[1]);
   return orderedResults;
 }
 
