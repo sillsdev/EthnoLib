@@ -118,6 +118,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
       `}
       maxWidth={"xs"}
       fullWidth={true}
+      data-testid={"customization-dialog"}
     >
       <DialogTitle
         css={css`
@@ -177,11 +178,12 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
           />
         )}
         {!isUnlistedLanguageDialog && (
-          <div id="customize-script">
+          <div id="customize-script-field-wrapper">
             {/* TODO future work: make these fuzzy search */}
 
             <FormFieldLabel htmlFor="customize-script-field" label="Script" />
             <Autocomplete
+              id="customize-script-field"
               value={dialogSelectedScript}
               onChange={(
                 _event,
@@ -190,23 +192,21 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                 setDialogSelectedScript(newValue || EMPTY_COMBOBOX_VALUE);
               }}
               disablePortal
-              id="combo-box-language-chooser-react-mui"
               options={getAllScriptOptions()}
-              renderInput={(params) => (
-                <TextField {...params} id="customize-script-field" />
-              )}
+              renderInput={(params) => <TextField {...params} />}
               size={"small"}
             />
           </div>
         )}
 
-        <div id="customize-region">
+        <div id="customize-region-field-wrapper">
           <FormFieldLabel
             htmlFor="customize-region-field"
             label="Country"
             required={isUnlistedLanguageDialog}
           />
           <Autocomplete
+            id="customize-region-field"
             value={dialogSelectedRegion}
             onChange={(
               _event,
@@ -215,11 +215,8 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               setDialogSelectedRegion(newValue || EMPTY_COMBOBOX_VALUE);
             }}
             disablePortal
-            id="combo-box-language-chooser-react-mui"
             options={getAllRegionOptions()}
-            renderInput={(params) => (
-              <TextField {...params} id="customize-region-field" />
-            )}
+            renderInput={(params) => <TextField {...params} />}
             size={"small"}
           />
         </div>
@@ -321,6 +318,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               );
               props.onClose();
             }}
+            data-testid="customization-dialog-ok-button"
           >
             OK
           </Button>
@@ -331,6 +329,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             variant="outlined"
             color="primary"
             onClick={props.onClose}
+            data-testid="customization-dialog-cancel-button"
           >
             Cancel
           </Button>

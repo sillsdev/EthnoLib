@@ -21,7 +21,10 @@ export const LanguageCard: React.FunctionComponent<
     backgroundColorWhenSelected: theme.palette.primary.lighter,
   } as OptionCardProps;
   return (
-    <OptionCard {...optionCardProps}>
+    <OptionCard
+      {...optionCardProps}
+      buttonTestId={`language-card-${languageCardData.iso639_3_code}`}
+    >
       <div
         // The top row of text on the card. Autonym exonym, language tag
         css={css`
