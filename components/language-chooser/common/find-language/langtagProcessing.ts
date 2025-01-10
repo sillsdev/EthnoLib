@@ -142,6 +142,7 @@ function parseLangtagsJson() {
   // We want to have one entry for every ISO 630-3 code, whereas langtags.json sometimes has multiple entries per code
   const langTags = langTagsJson as any[];
   const iso639_3CodeDetails = getIso639_3CodeDetails();
+  // TODO check if is macrolang and set isMacrolanguage to true?
   const consolidatedLangTags = {};
   for (const entry of langTags) {
     addOrCombineLangtagsEntry(entry, consolidatedLangTags);
@@ -163,10 +164,10 @@ function parseLangtagsJson() {
           );
         }
       }
-      // if (iso639_3Codes.size > 2) {
-      // TODO future work handle these cases when we get language type/status data and deal with macrolanguages
-      // console.log("multiple iso639_3 codes", entry.iso639_3, iso639_3Codes);
-      // }
+      if (iso639_3Codes.size > 2) {
+        // TODO future work handle these cases when we get language type/status data and deal with macrolanguages
+        console.log("multiple iso639_3 codes", entry.iso639_3, iso639_3Codes);
+      }
     }
   }
 
@@ -195,35 +196,6 @@ function parseLangtagsJson() {
       } as ILanguage;
     }
   );
-
-  // TODO future work macrolanguage handling. This is still in progress
-  // // Macrolanguage/specific language handling. See README
-  // for (const lang of reformattedLangs) {
-  //   if (!macrolangs.has(lang.code)) {
-  //     continue;
-  //   }
-  //   lang.isMacrolanguage = true;
-  //   const iso639_3Codes = new Set([lang.code]);
-  //   for (const tag of lang.alternativeTags || []) {
-  //     const iso639_3Code = findPotentialIso639_3Code(tag);
-  //     if (iso639_3Code && !iso639_3Codes.has(iso639_3Code)) {
-  //       iso639_3Codes.add(iso639_3Code);
-  //       reformattedLangs.push({
-  //         ...lang,
-  //         code: iso639_3Code,
-  //         isForMacrolanguageDisambiguation: true,
-  //       });
-  //     }
-  //   }
-  //   if (iso639_3Codes.size > 2) {
-  //     console.log("multiple iso639_3 codes", lang.code, iso639_3Codes);
-  //   }
-  // }
-
-  // const latinScriptData: IScript = {
-  //   code: "Latn",
-  //   name: "Latin",
-  // };
 
   //   write langs to a json file
   const data = JSON.stringify(reformattedLangs);
