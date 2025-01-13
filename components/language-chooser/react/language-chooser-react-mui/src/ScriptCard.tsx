@@ -18,11 +18,10 @@ export const ScriptCard: React.FunctionComponent<
     backgroundColorWhenSelected: theme.palette.primary.lightest,
   } as OptionCardProps;
   return (
-    <OptionCard
-      {...optionCardProps}
-      buttonTestId={`script-card-${scriptData.code}`}
-    >
-      <Typography variant="h2">{scriptData.name}</Typography>
+    <OptionCard {...optionCardProps}>
+      <Typography variant="h2" data-testid={`script-card-${scriptData.code}`}>
+        {scriptData.name}
+      </Typography>
       <Typography
         variant="subtitle1"
         css={css`

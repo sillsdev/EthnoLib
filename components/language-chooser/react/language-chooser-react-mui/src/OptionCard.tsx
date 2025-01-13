@@ -13,7 +13,6 @@ export interface OptionCardProps {
   isSelected: boolean;
   backgroundColorWhenNotSelected?: string | PaletteColor;
   backgroundColorWhenSelected?: string;
-  buttonTestId?: string;
   className?: string;
   onClick?: () => void;
 }
@@ -31,7 +30,6 @@ export const OptionCard: React.FunctionComponent<
   backgroundColorWhenNotSelected,
   backgroundColorWhenSelected,
   onClick,
-  buttonTestId,
   className,
 }) => {
   const theme = useTheme();
@@ -42,7 +40,6 @@ export const OptionCard: React.FunctionComponent<
     <CardActionArea
       onClick={onClick || (() => undefined)}
       className={`option-card-button ${isSelected && "selected-option-card-button"} ${className}`}
-      data-testid={buttonTestId}
     >
       <Card
         variant="outlined"

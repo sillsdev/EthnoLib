@@ -15,7 +15,7 @@
     "prebuild": "npm run typecheck",
     "build": "nx vite:build",
     "lint": "eslint .",
-    "e2e": "nx e2e @ethnolib/language-chooser-react-mui"
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@ethnolib/find-language": "0.0.15",

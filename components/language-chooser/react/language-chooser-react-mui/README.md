@@ -57,4 +57,4 @@ Run `npm run dev` to quickly start the hot reloading development server. See the
 
 ### Testing
 
-Run playwright e2e tests with `npm run test` or `nx e2e @ethnolib/language-chooser-react-mui`. Tests will spin up a dev server; no need to manually build first.
+Run playwright e2e tests with `npm run e2e` or `nx e2e @ethnolib/language-chooser-react-mui`. Tests will spin up a dev server; no need to manually build first.

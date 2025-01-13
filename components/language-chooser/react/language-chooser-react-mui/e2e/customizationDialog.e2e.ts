@@ -264,9 +264,9 @@ test.describe("Customization button and dialog", () => {
       .filter({ hasNotText: "Arabic (Nastaliq variant)" })
       .click();
     await okButtonLocator(customizationDialog).click();
-    await expect(page.getByTestId(scriptCardTestId("Arab"))).toHaveClass(
-      /.*selected-option-card-button.*/
-    );
+    await expect(
+      page.locator(`button:has([data-testid="${scriptCardTestId("Arab")}"])`)
+    ).toHaveClass(/.*selected-option-card-button.*/);
   });
 
   test("name and country are required in the unlisted language dialog", async () => {
