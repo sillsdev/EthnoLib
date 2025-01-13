@@ -1,3 +1,10 @@
+## 0.0.25 (2025-01-13)
+
+
+### 🩹 Fixes
+
+- put back the useEffect to reset customization dialog ([801fff8](https://github.com/sillsdev/EthnoLib/commit/801fff8))
+
 ## 0.0.24 (2024-12-17)
 
 
