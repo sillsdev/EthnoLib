@@ -11,7 +11,8 @@
     "build": "nx vite:build",
     "typecheck": "tsc",
     "test": "nx vite:test --config vitest.config.ts",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "fuse.js": "^7.0.0",
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@nx/vite": "^19.1.2",
     "@types/node": "^20.16.11",
+    "patch-package": "^8.0.0",
     "tsx": "^4.19.2",
     "typescript": "^5.2.2"
   },
