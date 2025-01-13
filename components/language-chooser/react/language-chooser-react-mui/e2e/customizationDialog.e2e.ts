@@ -1,8 +1,10 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Page } from "@playwright/test";
 import {
   clearSearch,
   clickLanguageCard,
+  createPageAndLoadLanguageChooser,
   findCyrlCard,
+  loadLanguageChooser,
   scriptCardTestId,
   search,
   selectUzbekCard,
@@ -73,30 +75,38 @@ function enterName(customizationDialog, name) {
   return nameFieldLocator(customizationDialog).fill(name);
 }
 
+let page: Page; // All the tests in this file use the same page object to save time; we only reload the language chooser when necessary
+
 test.describe("Customization button and dialog", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+  test.beforeAll(async ({ browser }) => {
+    page = await createPageAndLoadLanguageChooser(browser);
   });
 
-  test("no language selected, button should say 'Create Unlisted Language'", async ({
-    page,
-  }) => {
+  test.beforeEach(async () => {
+    // close customization dialog if open
+    const customizationDialog = await customizationDialogLocator(page);
+    if (await customizationDialog.isVisible()) {
+      await cancelButtonLocator(customizationDialog).click();
+    }
+    // clear search
     await clearSearch(page);
+  });
+
+  test("no language selected, button should say 'Create Unlisted Language'", async () => {
     const customizationButton = await customizationButtonLocator(page);
     await expect(customizationButton).toHaveText(/Create Unlisted Language.*/);
     await expect(customizationButton.getByTestId("EditIcon")).not.toBeVisible();
   });
 
-  test("if language selected, button should say 'Customize'", async ({
-    page,
-  }) => {
+  test("if language selected, button should say 'Customize'", async () => {
     await selectUzbekCard(page);
     const customizationButton = await customizationButtonLocator(page);
     await expect(customizationButton).toHaveText(/Customize.*/);
     await expect(customizationButton.getByTestId("EditIcon")).toBeVisible();
   });
 
-  test("open and cancel dialog", async ({ page }) => {
+  test("dialog starts closed; open and cancel dialog", async () => {
+    await loadLanguageChooser(page);
     const customizationDialog = await customizationDialogLocator(page);
     await expect(customizationDialog).not.toBeVisible();
     await clickCustomizationButton(page);
@@ -105,8 +115,7 @@ test.describe("Customization button and dialog", () => {
     await expect(customizationDialog).not.toBeVisible();
   });
 
-  test("unlisted language dialog features", async ({ page }) => {
-    await clearSearch(page);
+  test("unlisted language dialog features", async () => {
     await clickCustomizationButton(page);
     await expect(page.getByText("Unlisted Language Tag")).toBeVisible();
     await expect(page.getByText("Custom Language Tag")).not.toBeVisible();
@@ -124,7 +133,7 @@ test.describe("Customization button and dialog", () => {
     ).not.toBeVisible();
   });
 
-  test("customize language dialog features", async ({ page }) => {
+  test("customize language dialog features", async () => {
     await selectUzbekCard(page);
     await clickCustomizationButton(page);
     const customizationDialog = await customizationDialogLocator(page);
@@ -150,9 +159,7 @@ test.describe("Customization button and dialog", () => {
     ).toBeVisible();
   });
 
-  test("Selected script is automatically filled into script field", async ({
-    page,
-  }) => {
+  test("Selected script is automatically filled into script field", async () => {
     // select cyrillic script
     const cyrlCard = await findCyrlCard(page);
     await cyrlCard.click();
@@ -163,9 +170,7 @@ test.describe("Customization button and dialog", () => {
     await expect(scriptField).toHaveValue(/.*Cyr.*/);
   });
 
-  test("Reopening customize dialog should maintain selected details", async ({
-    page,
-  }) => {
+  test("Reopening customize dialog should maintain selected details", async () => {
     // Open customize dialog and enter a script, region, and variant name
     await selectUzbekCard(page);
     await clickCustomizationButton(page);
@@ -194,7 +199,7 @@ test.describe("Customization button and dialog", () => {
     );
   });
 
-  test("Cancel should clear selections", async ({ page }) => {
+  test("Cancel should clear selections", async () => {
     // Open customize dialog and enter a script, region, and variant name
     await selectUzbekCard(page);
     await clickCustomizationButton(page);
@@ -217,9 +222,7 @@ test.describe("Customization button and dialog", () => {
     await expect(variantFieldLocator(customizationDialog2)).toHaveValue("");
   });
 
-  test("Selecting another langauge should clear customizations", async ({
-    page,
-  }) => {
+  test("Selecting another langauge should clear customizations", async () => {
     // Open customize dialog and enter a script, region, and variant name
     await selectUzbekCard(page);
     await clickCustomizationButton(page);
@@ -247,9 +250,7 @@ test.describe("Customization button and dialog", () => {
     await expect(variantFieldLocator(customizationDialog2)).toHaveValue("");
   });
 
-  test("Selecting a script in customize dialog selects that script card if it exists", async ({
-    page,
-  }) => {
+  test("Selecting a script in customize dialog selects that script card if it exists", async () => {
     await selectUzbekCard(page);
     await clickCustomizationButton(page);
     const customizationDialog = await customizationDialogLocator(page);
@@ -268,10 +269,7 @@ test.describe("Customization button and dialog", () => {
     );
   });
 
-  test("name and country are required in the unlisted language dialog", async ({
-    page,
-  }) => {
-    await clearSearch(page);
+  test("name and country are required in the unlisted language dialog", async () => {
     await clickCustomizationButton(page);
     const customizationDialog = await customizationDialogLocator(page);
     await expect(customizationDialog).toBeVisible();
@@ -299,9 +297,7 @@ test.describe("Customization button and dialog", () => {
     ).toHaveCount(2);
   });
 
-  test("ok button is always enabled in customize dialog, no required fields", async ({
-    page,
-  }) => {
+  test("ok button is always enabled in customize dialog, no required fields", async () => {
     await selectUzbekCard(page);
     await clickCustomizationButton(page);
     const customizationDialog = await customizationDialogLocator(page);
@@ -310,10 +306,7 @@ test.describe("Customization button and dialog", () => {
     await expect(okButton).not.toBeDisabled();
   });
 
-  test("search string automatically fills into unlisted dialog name field", async ({
-    page,
-  }) => {
-    await clearSearch(page);
+  test("search string automatically fills into unlisted dialog name field", async () => {
     await search(page, "foo");
     await clickCustomizationButton(page);
     const customizationDialog = await customizationDialogLocator(page);

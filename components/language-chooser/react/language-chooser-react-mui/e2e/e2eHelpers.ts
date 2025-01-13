@@ -1,5 +1,15 @@
 import { expect } from "@playwright/test";
 
+export async function createPageAndLoadLanguageChooser(browser) {
+  const page = await browser.newPage();
+  await loadLanguageChooser(page);
+  return page;
+}
+
+export async function loadLanguageChooser(page) {
+  await page.goto("/", { waitUntil: "load" });
+}
+
 export function scriptCardTestId(scriptCode: string) {
   return `script-card-${scriptCode}`;
 }
@@ -34,7 +44,7 @@ export async function toggleScriptCard(page, isoCode) {
 
 export async function findUzbekCard(page) {
   // search for "uzbek"
-  await page.getByTestId("clear-search-X-button").click();
+  await clearSearch(page);
   await search(page, "uzbek");
   const uzbekCard = await page.getByTestId(languageCardTestId("uzb"));
   await uzbekCard.scrollIntoViewIfNeeded();
