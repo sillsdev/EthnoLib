@@ -132,7 +132,6 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   const selectedLanguageCardRef = useRef<HTMLDivElement>(null);
   useEffect(
     () => {
-      console.log("initialScrollingNeeded", initialScrollingNeeded);
       if (
         initialScrollingNeeded &&
         props.initialSelectionLanguageTag &&
@@ -285,6 +284,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
             }
             endAdornment={
               <IconButton
+                data-testid="clear-search-X-button"
                 onClick={clearSearchText}
                 css={css`
                   padding-right: 0px;
@@ -294,6 +294,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
               </IconButton>
             }
             id="search-bar"
+            data-testid="search-bar"
             fullWidth
             onChange={(e) => {
               debounce(async () => {

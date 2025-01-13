@@ -14,15 +14,17 @@
     "typecheck": "tsc",
     "prebuild": "npm run typecheck",
     "build": "nx vite:build",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "e2e": "playwright test"
   },
   "dependencies": {
-    "lodash": "^4.17.21",
-    "react-lazyload": "^3.2.1",
     "@ethnolib/find-language": "0.0.15",
-    "@ethnolib/language-chooser-react-hook": "0.0.10"
+    "@ethnolib/language-chooser-react-hook": "0.0.10",
+    "lodash": "^4.17.21",
+    "react-lazyload": "^3.2.1"
   },
   "devDependencies": {
+    "@nx/playwright": "^19.8.10",
     "@nx/storybook": "^19.8.0",
     "@storybook/addon-essentials": "^8.2.8",
     "@storybook/core-server": "^8.2.8",
@@ -47,5 +49,6 @@
   "// We've tested with 18 and have no reason to believe it won't work with higher versions": "",
   "engines": {
     "node": ">=18.18"
-  }
+  },
+  "nx": {}
 }

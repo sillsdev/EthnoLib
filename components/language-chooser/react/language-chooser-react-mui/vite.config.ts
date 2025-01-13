@@ -38,4 +38,7 @@ export default defineConfig({
       external: ["react", "react-dom", "react/jsx-runtime"],
     },
   },
+  server: {
+    port: 5173, // Should match the port used in playwright.config.ts
+  },
 });
