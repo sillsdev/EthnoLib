@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install playwright browsers for e2e tests
+        run: npx playwright install --with-deps
+
       # We've configured nx to update version numbers in the primary package.json files (rather than in the dist builds to be published)
       # Therefore this step must be done before build so that the new version numbers are copied to dist/package.json
       - name: Update version numbers in the persistant package.json files
