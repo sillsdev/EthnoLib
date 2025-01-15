@@ -35,7 +35,14 @@ export default defineConfig({
       formats: ["es", "cjs"],
     },
     rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime"],
+      external: [
+        "@emotion/react",
+        // Externalizing "@emotion/styled" broke the package. I didn't figure out why
+        "@mui/material",
+        "react",
+        "react-dom",
+        "react/jsx-runtime",
+      ],
     },
   },
   server: {
