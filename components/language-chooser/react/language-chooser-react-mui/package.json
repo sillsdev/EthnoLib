@@ -3,7 +3,7 @@
   "description": "A language chooser React component using MUI",
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "main": "./index.js",
   "types": "./index.d.ts",
   "exports": {
@@ -18,8 +18,8 @@
     "e2e": "playwright test"
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.0.15",
-    "@ethnolib/language-chooser-react-hook": "0.0.10",
+    "@ethnolib/find-language": "0.0.16",
+    "@ethnolib/language-chooser-react-hook": "0.0.11",
     "lodash": "^4.17.21",
     "react-lazyload": "^3.2.1"
   },

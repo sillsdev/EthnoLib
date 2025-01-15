@@ -1,3 +1,20 @@
+## 0.0.26 (2025-01-15)
+
+
+### 🩹 Fixes
+
+- add e2e to gha, refactor e2e to reuse page ([9a08165](https://github.com/sillsdev/EthnoLib/commit/9a08165))
+
+- fix e2e npm script ([79009be](https://github.com/sillsdev/EthnoLib/commit/79009be))
+
+- try to fix ci e2e test running ([aff0bf6](https://github.com/sillsdev/EthnoLib/commit/aff0bf6))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.11
+- Updated @ethnolib/find-language to 0.0.16
+
 ## 0.0.25 (2025-01-13)
 
 
