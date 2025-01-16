@@ -8,8 +8,10 @@ on:
 jobs:
   build-test-release:
     runs-on: windows-latest
-    permissions: write-all
+    permissions:
+      write-all
 
+      # Many steps are duplicated in buildAndTest.yml. Changes made here may need to be made in both
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

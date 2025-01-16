@@ -1,0 +1,41 @@
+name: Run-Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-tests:
+    runs-on: windows-latest
+    permissions: write-all
+
+    # Steps are duplicated in release.yml. Changes made here may need to be made in both
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          # Keep in sync with the version in the package.json files
+          node-version: 18
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install playwright browsers for e2e tests
+        run: npx playwright install --with-deps
+
+      - name: Build package
+        run: npx nx build @ethnolib/language-chooser-react-mui
+
+      # find-language is a dependency of langauge-chooser-react-mui so it will have been built in the build step
+      - name: Run unit tests
+        run: npx nx run-many --all --target=test
+
+      - name: Run e2e tests
+        run: npx nx run-many --all --target=e2e
