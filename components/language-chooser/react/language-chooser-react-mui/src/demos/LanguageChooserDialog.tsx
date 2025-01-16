@@ -64,6 +64,7 @@ export const LanguageChooserDialog: React.FunctionComponent<
       `}
     >
       <Button
+        data-testid="lang-chooser-dialog-ok-button"
         css={css`
           margin-left: auto;
           margin-right: 10px;

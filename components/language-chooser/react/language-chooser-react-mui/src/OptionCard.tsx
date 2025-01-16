@@ -24,13 +24,23 @@ export type OptionCardPropsWithoutColors = Omit<
 
 export const OptionCard: React.FunctionComponent<
   { children: React.ReactNode } & OptionCardProps
-> = (props) => {
+> = ({
+  children,
+  isSelected,
+  backgroundColorWhenNotSelected,
+  backgroundColorWhenSelected,
+  onClick,
+  className,
+}) => {
   const theme = useTheme();
-  const backgroundColor = props.isSelected
-    ? props.backgroundColorWhenSelected || theme.palette.grey["400"]
-    : props.backgroundColorWhenNotSelected || theme.palette.background.paper;
+  const backgroundColor = isSelected
+    ? backgroundColorWhenSelected || theme.palette.grey["400"]
+    : backgroundColorWhenNotSelected || theme.palette.background.paper;
   return (
-    <CardActionArea onClick={props.onClick || (() => undefined)}>
+    <CardActionArea
+      onClick={onClick || (() => undefined)}
+      className={`option-card-button ${isSelected && "selected-option-card-button"} ${className}`}
+    >
       <Card
         variant="outlined"
         css={css`
@@ -40,7 +50,6 @@ export const OptionCard: React.FunctionComponent<
         sx={{
           bgcolor: `${backgroundColor}`,
         }}
-        className={props.className}
       >
         <CardContent
           css={css`
@@ -51,7 +60,7 @@ export const OptionCard: React.FunctionComponent<
             }
           `}
         >
-          {props.children}
+          {children}
         </CardContent>
       </Card>
     </CardActionArea>

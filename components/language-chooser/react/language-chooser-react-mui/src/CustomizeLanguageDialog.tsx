@@ -69,34 +69,16 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   const EMPTY_COMBOBOX_VALUE = React.useMemo(() => ({ label: "", id: "" }), []);
 
   // Store dialog state. Used to create a tag preview just inside the dialog, before saving anything
-  const initialScript = props.selectedScript?.code
-    ? {
-        label: props.selectedScript.name,
-        id: props.selectedScript.code,
-      }
-    : EMPTY_COMBOBOX_VALUE;
   const [dialogSelectedScript, setDialogSelectedScript] = React.useState<{
     label: string;
     id: string;
-  }>(initialScript);
-  const initialRegion = props.customizableLanguageDetails.region?.code
-    ? {
-        label: props.customizableLanguageDetails.region.name,
-        id: props.customizableLanguageDetails.region.code,
-      }
-    : EMPTY_COMBOBOX_VALUE;
+  }>(EMPTY_COMBOBOX_VALUE);
   const [dialogSelectedRegion, setDialogSelectedRegion] = React.useState<{
     label: string;
     id: string;
-  }>(initialRegion);
-  const initialDialect = // if the user has not selected any language, not even the unlisted language button, then
-    // there will be no language details and we suggest the search string as a
-    // starting point for the unlisted language name (which is actually stored in the dialect field)
-    props.selectedLanguage
-      ? props.customizableLanguageDetails.dialect || ""
-      : props.searchString;
+  }>(EMPTY_COMBOBOX_VALUE);
   const [dialogSelectedDialect, setDialogSelectedDialect] =
-    React.useState<string>(initialDialect);
+    React.useState<string>("");
 
   // name (dialect) and country (region) are required for unlisted language
   const isReadyToSubmit =
@@ -104,6 +86,34 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
     (dialogSelectedDialect !== "" && dialogSelectedRegion.label !== "");
 
   const theme = useTheme();
+
+  // To clear stale values and dynamically prepopulate form every time it is opened
+  React.useEffect(() => {
+    setDialogSelectedScript(
+      props.selectedScript?.code
+        ? {
+            label: props.selectedScript.name,
+            id: props.selectedScript.code,
+          }
+        : EMPTY_COMBOBOX_VALUE
+    );
+    setDialogSelectedRegion(
+      props.customizableLanguageDetails.region?.code
+        ? {
+            label: props.customizableLanguageDetails.region.name,
+            id: props.customizableLanguageDetails.region.code,
+          }
+        : EMPTY_COMBOBOX_VALUE
+    );
+    setDialogSelectedDialect(
+      // if the user has not selected any language, not even the unlisted language button, then
+      // there will be no language details and we suggest the search string as a
+      // starting point for the unlisted language name (which is actually stored in the dialect field)
+      props.selectedLanguage
+        ? props.customizableLanguageDetails.dialect || ""
+        : props.searchString
+    );
+  }, [props, EMPTY_COMBOBOX_VALUE]);
 
   return (
     <Dialog
@@ -118,6 +128,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
       `}
       maxWidth={"xs"}
       fullWidth={true}
+      data-testid={"customization-dialog"}
     >
       <DialogTitle
         css={css`
@@ -177,11 +188,12 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
           />
         )}
         {!isUnlistedLanguageDialog && (
-          <div id="customize-script">
+          <div id="customize-script-field-wrapper">
             {/* TODO future work: make these fuzzy search */}
 
             <FormFieldLabel htmlFor="customize-script-field" label="Script" />
             <Autocomplete
+              id="customize-script-field"
               value={dialogSelectedScript}
               onChange={(
                 _event,
@@ -190,23 +202,21 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                 setDialogSelectedScript(newValue || EMPTY_COMBOBOX_VALUE);
               }}
               disablePortal
-              id="combo-box-language-chooser-react-mui"
               options={getAllScriptOptions()}
-              renderInput={(params) => (
-                <TextField {...params} id="customize-script-field" />
-              )}
+              renderInput={(params) => <TextField {...params} />}
               size={"small"}
             />
           </div>
         )}
 
-        <div id="customize-region">
+        <div id="customize-region-field-wrapper">
           <FormFieldLabel
             htmlFor="customize-region-field"
             label="Country"
             required={isUnlistedLanguageDialog}
           />
           <Autocomplete
+            id="customize-region-field"
             value={dialogSelectedRegion}
             onChange={(
               _event,
@@ -215,11 +225,8 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               setDialogSelectedRegion(newValue || EMPTY_COMBOBOX_VALUE);
             }}
             disablePortal
-            id="combo-box-language-chooser-react-mui"
             options={getAllRegionOptions()}
-            renderInput={(params) => (
-              <TextField {...params} id="customize-region-field" />
-            )}
+            renderInput={(params) => <TextField {...params} />}
             size={"small"}
           />
         </div>
@@ -321,6 +328,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               );
               props.onClose();
             }}
+            data-testid="customization-dialog-ok-button"
           >
             OK
           </Button>
@@ -331,6 +339,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             variant="outlined"
             color="primary"
             onClick={props.onClose}
+            data-testid="customization-dialog-cancel-button"
           >
             Cancel
           </Button>

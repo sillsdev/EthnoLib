@@ -31,6 +31,7 @@ export const LanguageCard: React.FunctionComponent<
           align-items: flex-start;
           margin-bottom: 8px;
         `}
+        data-testid={`language-card-${languageCardData.iso639_3_code}`}
       >
         <div
           // holds the autonym and/or exonym. Grows to take up most of the top row

@@ -23,6 +23,7 @@ export const CustomizeLanguageButton: React.FunctionComponent<
   const theme = useTheme();
   return (
     <Button
+      data-testid="customization-button"
       variant="outlined"
       color="primary"
       css={css`
@@ -64,7 +65,6 @@ export const CustomizeLanguageButton: React.FunctionComponent<
         {showAsUnlistedLanguage ? "Create Unlisted Language" : "Customize"}
       </Typography>
       <div
-        id="custom-language-card-bottom"
         css={css`
           display: flex;
           align-items: center;
