@@ -21,7 +21,9 @@
     "@ethnolib/find-language": "0.0.16",
     "@ethnolib/language-chooser-react-hook": "0.0.11",
     "lodash": "^4.17.21",
-    "react-lazyload": "^3.2.1"
+    "react-lazyload": "^3.2.1",
+    "@mui/icons-material": "^5.15.19"
+
   },
   "devDependencies": {
     "@nx/playwright": "^19.8.10",
@@ -41,7 +43,6 @@
   "peerDependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@mui/icons-material": "^5.15.19",
     "@mui/material": "^5.15.19",
     "react": "^17.0.2",
     "react-dom": "^17.0.2"
