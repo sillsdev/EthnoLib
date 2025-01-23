@@ -3,7 +3,7 @@
   "description": "A language chooser React component using MUI",
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.0.26",
+  "version": "0.0.27",
   "main": "./index.js",
   "types": "./index.d.ts",
   "exports": {
@@ -23,7 +23,6 @@
     "lodash": "^4.17.21",
     "react-lazyload": "^3.2.1",
     "@mui/icons-material": "^5.15.19"
-
   },
   "devDependencies": {
     "@nx/playwright": "^19.8.10",

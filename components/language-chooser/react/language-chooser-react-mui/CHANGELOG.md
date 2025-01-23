@@ -1,3 +1,10 @@
+## 0.0.27 (2025-01-23)
+
+
+### 🩹 Fixes
+
+- try to trigger release ([33dec32](https://github.com/sillsdev/EthnoLib/commit/33dec32))
+
 ## 0.0.26 (2025-01-15)
 
 
