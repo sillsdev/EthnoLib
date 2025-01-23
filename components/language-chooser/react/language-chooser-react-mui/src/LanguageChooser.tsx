@@ -80,7 +80,7 @@ const languageChooserTypography: TypographyOptions = {
     letterSpacing: "0.001em", // I'm not sure how MUI calculates its default letter spacings, but this looks about right
   },
   body2: {
-    // used for language codes and tags
+    // Used for language codes and tags
     fontFamily: "Roboto Mono, monospace",
     fontSize: "0.875rem",
     letterSpacing: "0.05rem",
