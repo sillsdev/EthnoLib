@@ -103,8 +103,8 @@ export interface ILanguageChooserProps {
   ) => void;
   rightPanelComponent?: React.ReactNode;
   actionButtons?: React.ReactNode;
-  languageCardBackgroundColorOverride?: string; // If not provided, will use theme.palette.primary.lighter if present or fall back to lighten(primaryColor, 0.7)
-  scriptCardBackgroundColorOverride?: string; // If not provided, will use theme.palette.primary.lightest if present or fall back to lighten(primaryColor, 0.88)
+  languageCardBackgroundColorOverride?: string; // If not provided, will use lighten(primaryColor, 0.7)
+  scriptCardBackgroundColorOverride?: string; // If not provided, will use lighten(primaryColor, 0.88)
 }
 
 export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
@@ -208,25 +208,9 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   };
 
   const originalTheme = useTheme();
-  const primaryMainColor = originalTheme.palette.primary.main;
   const theme = createTheme({
     ...originalTheme,
     typography: languageChooserTypography,
-    palette: {
-      ...originalTheme.palette,
-      primary: {
-        ...originalTheme.palette.primary,
-        // mui palettes have a "light" also, but for the card backgrounds we want very light colors, lighter than "light" usually is
-        lighter:
-          props.languageCardBackgroundColorOverride ||
-          originalTheme.palette.primary.lighter ||
-          lighten(primaryMainColor, 0.7),
-        lightest:
-          props.scriptCardBackgroundColorOverride ||
-          originalTheme.palette.primary.lightest ||
-          lighten(primaryMainColor, 0.88),
-      },
-    },
   });
 
   return (
@@ -343,6 +327,13 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                       languageCardData={language}
                       isSelected={isSelectedLanguageCard}
                       onClick={() => lp.toggleSelectLanguage(language)}
+                      // If languageCardBackgroundColorOverride is not provided, LanguageCard will fall back toa default based on the primary color
+                      backgroundColorWhenSelected={
+                        props.languageCardBackgroundColorOverride
+                      }
+                      backgroundColorWhenNotSelected={
+                        theme.palette.background.paper
+                      }
                     ></LanguageCard>
                     {codeMatches(
                       language.iso639_3_code,
@@ -377,6 +368,13 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                                     lp.selectedScript?.code
                                   )}
                                   onClick={() => lp.toggleSelectScript(script)}
+                                  // If scriptCardBackgroundColorOverride is not provided, ScriptCard will fall back to a default based on the primary color
+                                  backgroundColorWhenSelected={
+                                    props.scriptCardBackgroundColorOverride
+                                  }
+                                  backgroundColorWhenNotSelected={
+                                    theme.palette.background.paper
+                                  }
                                 />
                               </ListItem>
                             );

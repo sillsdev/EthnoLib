@@ -1,21 +1,20 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import {
-  OptionCard,
-  OptionCardProps,
-  OptionCardPropsWithoutColors,
-} from "./OptionCard";
-import { Typography, useTheme } from "@mui/material";
+import { OptionCard, OptionCardProps } from "./OptionCard";
+import { lighten, Typography, useTheme } from "@mui/material";
 import { IScript, scriptSamples } from "@ethnolib/find-language";
 
 export const ScriptCard: React.FunctionComponent<
-  { scriptData: IScript } & OptionCardPropsWithoutColors
-> = ({ scriptData, ...partialOptionCardProps }) => {
+  {
+    scriptData: IScript;
+  } & OptionCardProps
+> = ({ scriptData, ...origOptionCardProps }) => {
   const theme = useTheme();
   const optionCardProps = {
-    ...partialOptionCardProps,
-    backgroundColorWhenNotSelected: theme.palette.background.paper,
-    backgroundColorWhenSelected: theme.palette.primary.lightest,
+    ...origOptionCardProps,
+    backgroundColorWhenSelected:
+      origOptionCardProps.backgroundColorWhenSelected ??
+      lighten(theme.palette.primary.main, 0.88), // If color not provided, fall back to 88% of primary color
   } as OptionCardProps;
   return (
     <OptionCard {...optionCardProps}>
