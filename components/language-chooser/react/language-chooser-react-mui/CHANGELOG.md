@@ -1,3 +1,16 @@
+## 0.0.28 (2025-01-28)
+
+
+### 🩹 Fixes
+
+- prompt release ([9922789](https://github.com/sillsdev/EthnoLib/commit/9922789))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.12
+- Updated @ethnolib/find-language to 0.0.17
+
 ## 0.0.27 (2025-01-23)
 
 

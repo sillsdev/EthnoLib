@@ -1,3 +1,10 @@
+## 0.0.17 (2025-01-28)
+
+
+### 🩹 Fixes
+
+- prompt release ([9922789](https://github.com/sillsdev/EthnoLib/commit/9922789))
+
 ## 0.0.16 (2025-01-15)
 
 
