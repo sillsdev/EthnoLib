@@ -12,15 +12,10 @@ import React from "react";
 export interface OptionCardProps {
   isSelected: boolean;
   backgroundColorWhenNotSelected?: string | PaletteColor;
-  backgroundColorWhenSelected?: string;
+  backgroundColorWhenSelected?: string | PaletteColor;
   className?: string;
   onClick?: () => void;
 }
-
-export type OptionCardPropsWithoutColors = Omit<
-  OptionCardProps,
-  "backgroundColorWhenNotSelected" | "backgroundColorWhenSelected"
->;
 
 export const OptionCard: React.FunctionComponent<
   { children: React.ReactNode } & OptionCardProps
