@@ -20,6 +20,10 @@ const exactMatchPrioritizableFuseSearchKeys = [
   { name: "exonym", weight: 100 },
   { name: "languageSubtag", weight: 80 },
   { name: "names", weight: 8 },
+
+  // These are currently not displayed on the card, but we still want corresponding results to come up if people search for them
+  { name: "iso639_3_code", weight: 70 },
+  { name: "alternativeTags", weight: 70 },
 ];
 // We will bring results that exactly whole-word match or prefix-match to the top of the list
 // but don't want to do this for region names
