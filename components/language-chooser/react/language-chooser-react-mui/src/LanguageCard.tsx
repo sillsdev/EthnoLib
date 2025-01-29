@@ -20,6 +20,13 @@ export const LanguageCard: React.FunctionComponent<
     backgroundColorWhenNotSelected: theme.palette.background.paper,
     backgroundColorWhenSelected: theme.palette.primary.lighter,
   } as OptionCardProps;
+  // TODO macrolangauge
+  {
+    /* {(languageCardData.autonym || languageCardData.exonym) +
+          languageCardData.isForMacrolanguageDisambiguation
+            ? " (macrolanguage)"
+            : ""} */
+  }
   return (
     <OptionCard {...optionCardProps}>
       <div

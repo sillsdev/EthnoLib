@@ -197,6 +197,12 @@ const ANCIENT_LANGUAGE_ENTRY_CODES = new Set([
   // Filter for deprecated, historical languages etc.
 ]);
 
+// In general, we don't want users to select macrolanguage codes. At this time we cannot blanket exclude them, however,
+// because it looks like at least Akan (aka) is a macrolanguage code that users may in fact need to select
+// (see macrolanguageNotes.md) and we don't know if there are other similar situations. So for now we can manually exclude
+// macrolanguage codes here.
+const EXCLUDABLE_MACROLANGUAGE_ENTRY_CODES = new Set(["sgn"]);
+
 const SPECIAL_CASE_EXCLUDED_ENTRY_CODES = new Set([
   "zhx", // I don't understand why this entry is in langtags.json. It is an ISO-639-5 (language collection) code covering the zho macrolanguage, has no Ethnologue entry, only listed script is Nshu
   "cmn", // TODO when we implement macrolanguage handling, see if the situation is taken care of and we can remove this exception.
