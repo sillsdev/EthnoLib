@@ -29,7 +29,7 @@ export default defineConfig({
     // command: "npm dev",
     command: "nx dev  @ethnolib/language-chooser-react-mui",
     url: "http://localhost:5173/", // port number should match server.port in vite.config.ts
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     cwd: workspaceRoot,
   },
   projects: [
