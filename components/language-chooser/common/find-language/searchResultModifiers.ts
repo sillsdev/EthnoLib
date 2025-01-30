@@ -70,7 +70,7 @@ function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
     return {
       autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
       exonym: result.exonym, // "French"
-      iso639_3_code: result.code,
+      iso639_3_code: result.iso639_3_code,
       languageSubtag: result.languageSubtag,
       regionNames: "",
       names: [],
@@ -138,6 +138,10 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
   return substituteInSpecialEntry("zho", getSpecialEntry, results);
 }
 
+export function rawIsoCode(result: ILanguage) {
+  return stripDemarcation(result.iso639_3_code);
+}
+
 // Compare codes, ignoring any demarcation or casing
 // undefined does not match undefined
 export function codeMatches(
@@ -169,7 +173,7 @@ export function filterLanguageCodes(
   langCodeFilter: (value: string) => boolean,
   results: ILanguage[]
 ): ILanguage[] {
-  return results.filter((result) => langCodeFilter(result.iso639_3_code));
+  return results.filter((result) => langCodeFilter(rawIsoCode(result) || ""));
 }
 
 const NOT_A_LANGUAGE_ENTRY_CODES = new Set([
@@ -200,7 +204,7 @@ const ANCIENT_LANGUAGE_ENTRY_CODES = new Set([
 const SPECIAL_CASE_EXCLUDED_ENTRY_CODES = new Set([
   "zhx", // I don't understand why this entry is in langtags.json. It is an ISO-639-5 (language collection) code covering the zho macrolanguage, has no Ethnologue entry, only listed script is Nshu
   "cmn", // TODO when we implement macrolanguage handling, see if the situation is taken care of and we can remove this exception.
-  // In langtags.json, most chinese entries have iso639_3_code "zho" (which is the macrolanguage code) except zh-Brai-CN and zh-Hant-ES which have "cmn"
+  // In langtags.json, most chinese entries have ISO 639-3 code "zho" (which is the macrolanguage code) except zh-Brai-CN and zh-Hant-ES which have "cmn"
   // so we end up with two search results and don't want to keep the "cmn" one
 ]);
 

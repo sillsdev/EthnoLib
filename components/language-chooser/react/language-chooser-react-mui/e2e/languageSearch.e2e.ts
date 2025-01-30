@@ -40,6 +40,26 @@ test.describe("Search", () => {
     await expect(swissGermanCard).toContainText("Schwiizerdütsch");
   });
 
+  test("search by iso 639-3 code when different from displayed language subtag", async () => {
+    // japanese code has iso 639-3 code "jpn" but displays the preferred language subtag "ja" (iso 639-2)
+    await search(page, "jpn");
+    const card = page.getByTestId(languageCardTestId("jpn"));
+    await card.scrollIntoViewIfNeeded();
+    await expect(card).toBeVisible();
+    await expect(card).toContainText("Japanese");
+  });
+
+  test("search by long tags from langtags.json", async () => {
+    await search(page, "soe-Latn-CD");
+    const card = await page.getByTestId(languageCardTestId("soe"));
+    await card.scrollIntoViewIfNeeded();
+    await expect(card).toBeVisible();
+    await expect(card).toContainText(/hendo/);
+
+    await search(page, "soe-Latn");
+    await expect(card).toBeVisible();
+  });
+
   test("X button clears search and results", async () => {
     await search(page, "tok pisin");
     // At least one result is visible

@@ -115,6 +115,7 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
     ]);
     langs[entry.iso639_3].alternativeTags = new Set([
       ...langs[entry.iso639_3].alternativeTags,
+      entry.full,
       ...(entry.tags ?? []),
     ]);
     langs[entry.iso639_3].isForMacrolanguageDisambiguation =
@@ -131,7 +132,7 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
       scripts: new Set([entry.script]),
-      alternativeTags: new Set(entry.tags || []),
+      alternativeTags: new Set([entry.full, ...(entry.tags || [])]),
       isForMacrolanguageDisambiguation:
         entry.isForMacrolanguageDisambiguation || false,
     } as ILanguageInternal;

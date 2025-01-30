@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { OptionCard, OptionCardProps } from "./OptionCard";
-import { ILanguage } from "@ethnolib/find-language";
+import { ILanguage, rawIsoCode } from "@ethnolib/find-language";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
 import { lighten, useTheme } from "@mui/material";
 
@@ -28,7 +28,7 @@ export const LanguageCard: React.FunctionComponent<
           align-items: flex-start;
           margin-bottom: 8px;
         `}
-        data-testid={`language-card-${languageCardData.iso639_3_code}`}
+        data-testid={`language-card-${rawIsoCode(languageCardData)}`}
       >
         <div
           // holds the autonym and/or exonym. Grows to take up most of the top row

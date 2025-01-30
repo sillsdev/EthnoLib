@@ -1,7 +1,6 @@
 import { cloneDeep } from "lodash";
 import { FuseResult } from "fuse.js";
 import { ILanguage } from "./findLanguageInterfaces";
-import { fieldsToSearch } from "./searchForLanguage";
 
 // for marking/bolding the substrings which match the search string
 export const START_OF_MATCH_MARKER = "[";

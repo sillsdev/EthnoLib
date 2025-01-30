@@ -61,8 +61,8 @@ In default modification, much of the language info is stripped from the English 
 ```
   {
     "exonym": "[Engl]i[sh]",
-    "iso639_3_code": "eng",
-    "languageSubtag": "en",
+    "iso639_3_code": "[eng]",
+    "languageSubtag": "[en]",
     "regionNames": "",
     "names": [],
     "scripts": [

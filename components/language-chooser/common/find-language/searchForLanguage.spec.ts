@@ -3,6 +3,7 @@ import { ILanguage } from "./findLanguageInterfaces";
 import { describe, expect, it } from "vitest";
 import { expectTypeOf } from "vitest";
 import { FuseResult } from "fuse.js";
+import { codeMatches } from "./searchResultModifiers";
 
 describe("searchForLanguage", () => {
   it("should return a list of languages", () => {
@@ -148,7 +149,9 @@ function searchDoesFindLanguage(query: string, expectedLanguageCode: string) {
   const results = searchForLanguage(query);
   expect(results.length).toBeGreaterThan(0);
   expect(
-    results.some((result) => result.item.iso639_3_code === expectedLanguageCode)
+    results.some((result) =>
+      codeMatches(result.item.iso639_3_code, expectedLanguageCode)
+    )
   ).toBe(true);
 }
 
@@ -158,7 +161,9 @@ function searchDoesNotFindLanguage(
 ) {
   const results = searchForLanguage(query);
   expect(
-    results.some((result) => result.item.iso639_3_code === expectedLanguageCode)
+    results.some((result) =>
+      codeMatches(result.item.iso639_3_code, expectedLanguageCode)
+    )
   ).toBe(false);
 }
 
@@ -167,8 +172,8 @@ function indexOfLanguageInSearchResults(
   expectedLanguageCode: string
 ) {
   const results = searchForLanguage(query);
-  const index = results.findIndex(
-    (result) => result.item.iso639_3_code === expectedLanguageCode
+  const index = results.findIndex((result) =>
+    codeMatches(result.item.iso639_3_code, expectedLanguageCode)
   );
   return index;
 }
