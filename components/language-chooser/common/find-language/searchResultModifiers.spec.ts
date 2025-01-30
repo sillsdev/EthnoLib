@@ -1,6 +1,7 @@
 import { expect, it, describe, test, beforeEach, beforeAll } from "vitest";
 import {
   filterScripts,
+  rawIsoCode,
   codeMatches,
   prioritizeLangByKeywords,
   filterLanguageCodes,
@@ -176,7 +177,7 @@ describe("reordering entries to prioritize desired language when keywords are se
       "tpi",
       originalResults
     );
-    expect(reorderedResults[0].iso639_3_code).toEqual("tpi");
+    expect(rawIsoCode(reorderedResults[0])).toEqual("tpi");
   });
 
   describe("Chinese should be handled reasonably", () => {
@@ -210,7 +211,7 @@ describe("reordering entries to prioritize desired language when keywords are se
         searchForLanguage(spanishSearchString),
         spanishSearchString
       )[0];
-      expect(spanishResult?.iso639_3_code).toEqual("spa");
+      expect(rawIsoCode(spanishResult)).toEqual("spa");
 
       // Español should be the autonym and not in the names list
       expect(spanishResult?.autonym).toEqual("español");

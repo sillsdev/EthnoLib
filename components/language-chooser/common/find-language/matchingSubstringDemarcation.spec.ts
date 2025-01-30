@@ -42,6 +42,11 @@ describe("Adding match demarcation", () => {
           {
             indices: [[0, 2]],
             value: "uzb",
+            key: "iso639_3_code",
+          },
+          {
+            indices: [[0, 2]],
+            value: "uzb",
             key: "languageSubtag",
           },
           {
@@ -70,7 +75,7 @@ describe("Adding match demarcation", () => {
         item: {
           autonym: "ўзбек тили",
           exonym: "[Uzb]ek",
-          iso639_3_code: "uzb",
+          iso639_3_code: "[uzb]",
           languageSubtag: "[uzb]",
           regionNames: "[Uzb]ekistan, Afghanistan, China",
           scripts: [
@@ -164,7 +169,7 @@ describe("deep strip demarcation from different types of data", () => {
     const uzbekLanguage = {
       autonym: "ўзбек тили",
       exonym: "[Uzb]ek",
-      iso639_3_code: "uzb",
+      iso639_3_code: "[uzb]",
       languageSubtag: "uz",
       regionNames: "[Uzb]ekistan, Afghanistan, China",
       scripts: [],
@@ -198,7 +203,7 @@ describe("deep strip demarcation from different types of data", () => {
     const uzbekLanguage = {
       autonym: "ўзбек тили",
       exonym: "[Uzb]ek",
-      iso639_3_code: "uzb",
+      iso639_3_code: "[uzb]",
       languageSubtag: "uz",
       regionNames: "[Uzb]ekistan, Afghanistan, China",
       scripts: [],

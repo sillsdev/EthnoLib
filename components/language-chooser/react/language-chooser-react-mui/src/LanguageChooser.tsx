@@ -313,7 +313,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                     offset={initialScrollingNeeded ? 1000000 : 500} // Normally, load a 500px buffer under the visible area so we don't have to get the calculation perfect. But if initial scrolling is needed, load everything so we can scroll the appropriate amount
                     height={LANG_CARD_MIN_HEIGHT} // needs to match the min-height we set on the language card
                     overflow={true}
-                    // Enhance: If we need to speed things up, it would be more efficient to use the iso639_3_code as the key
+                    // Enhance: If we need to speed things up, it would be more efficient to use the iso code as the key
                     // though that currently would cause lazyload to show gaps (placeholders?) in the list (try searching "eng")
                     // so we would probably need to use forceCheck on the lazyload
                     key={index}
