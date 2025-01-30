@@ -1,3 +1,10 @@
+## 0.0.18 (2025-01-30)
+
+
+### 🩹 Fixes
+
+- fix e2e tests (undemarcate iso_639_3 code) ([0a7ada2](https://github.com/sillsdev/EthnoLib/commit/0a7ada2))
+
 ## 0.0.17 (2025-01-28)
 
 
