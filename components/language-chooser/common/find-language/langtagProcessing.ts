@@ -21,22 +21,70 @@ const scriptNames = iso15924.reduce(
 //   return regionNames[code];
 // }
 
-function getIso639_3CodeDetails() {
-  const codeDetails = new Set();
-  // downloaded from https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab
-  const codeDetailsFile = fs.readFileSync(
-    "language-data/iso-639-3.tab",
-    "utf8"
-  );
-  for (const line of codeDetailsFile.split("\n")) {
-    if (line.length === 0) {
-      continue;
-    }
-    const parts = line.split("\t");
-
-    codeDetails.add(parts[0]);
+const isoCodesDetails = {};
+const iso639_1To639_3 = {};
+const iso639_3Codes = new Set();
+const iso639_1Codes = new Set();
+// downloaded from https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab
+/*
+           Scope   char(1) NOT NULL,  -- I(ndividual), M(acrolanguage), S(pecial)
+         Type    char(1) NOT NULL,  -- A(ncient), C(onstructed),  
+                                    -- E(xtinct), H(istorical), L(iving), S(pecial)
+*/
+const isoCodesDetailsFile = fs.readFileSync(
+  "language-data/iso-639-3.tab",
+  "utf8"
+);
+for (const line of isoCodesDetailsFile.split("\n")) {
+  if (line.length === 0) {
+    continue;
   }
-  return codeDetails;
+  const parts = line.split("\t");
+  const iso639_3Code = parts[0];
+  iso639_3Codes.add(iso639_3Code);
+  const iso639_1Code = parts[3];
+  if (iso639_1Code) {
+    iso639_1Codes.add(iso639_1Code);
+    iso639_1To639_3[iso639_1Code] = iso639_3Code;
+  }
+
+  const scope = parts[4];
+  const typeLetter = parts[5];
+  let languageType;
+  switch (typeLetter) {
+    case "A":
+      languageType = "Ancient";
+      break;
+    case "C":
+      languageType = "Constructed";
+      break;
+    case "E":
+      languageType = "Extinct";
+      break;
+    case "H":
+      languageType = "Historical";
+      break;
+    case "L":
+      languageType = "Living";
+      break;
+    case "S":
+      languageType = "Special";
+      break;
+    default:
+      languageType = "Unknown";
+  }
+  isoCodesDetails[iso639_3Code] = {
+    isMacrolanguage: scope === "M",
+    languageType,
+  };
+}
+
+function isMacrolanguage(iso639_3: string) {
+  return isoCodesDetails[iso639_3]?.isMacrolanguage || false;
+}
+
+function languageType(iso639_3: string) {
+  return isoCodesDetails[iso639_3]?.languageType || "Unknown";
 }
 
 // turn "Uzbek, Northern" into "Northern Uzbek"
@@ -72,8 +120,17 @@ interface ILanguageInternal {
 
 function findPotentialIso639_3Code(languageTag: string): string | undefined {
   const parts = languageTag.split("-");
-  if (parts[0].length === 3) {
-    return parts[0];
+  const code = parts[0];
+  if (code.length === 3) {
+    if (!iso639_3Codes.has(code)) {
+      console.log("unrecognized iso 639-3 code", code);
+    }
+    return code;
+  } else if (code.length === 2) {
+    if (!iso639_1Codes.has(code)) {
+      console.log("unrecognized iso 639-1 code", code);
+    }
+    return iso639_1To639_3[code];
   }
   return undefined;
 }
@@ -117,9 +174,9 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       ...langs[entry.iso639_3].alternativeTags,
       ...(entry.tags ?? []),
     ]);
-    langs[entry.iso639_3].isForMacrolanguageDisambiguation =
-      langs[entry.iso639_3].isForMacrolanguageDisambiguation &&
-      entry.isForMacrolanguageDisambiguation;
+    // langs[entry.iso639_3].isForMacrolanguageDisambiguation =
+    //   langs[entry.iso639_3].isForMacrolanguageDisambiguation &&
+    //   entry.isForMacrolanguageDisambiguation;
   } else {
     // create a new entry for this language code
     langs[entry.iso639_3] = {
@@ -131,9 +188,11 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
       scripts: new Set([entry.script]),
-      alternativeTags: new Set(entry.tags || []),
-      isForMacrolanguageDisambiguation:
-        entry.isForMacrolanguageDisambiguation || false,
+      alternativeTags: new Set([entry.full, ...(entry.tags || [])]),
+      isMacrolanguage: isMacrolanguage(entry.iso639_3),
+      languageType: languageType(entry.iso639_3),
+      // isForMacrolanguageDisambiguation:
+      //   entry.isForMacrolanguageDisambiguation || false,
     } as ILanguageInternal;
   }
 }
@@ -141,33 +200,34 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
 function parseLangtagsJson() {
   // We want to have one entry for every ISO 630-3 code, whereas langtags.json sometimes has multiple entries per code
   const langTags = langTagsJson as any[];
-  const iso639_3CodeDetails = getIso639_3CodeDetails();
-  // TODO check if is macrolang and set isMacrolanguage to true?
   const consolidatedLangTags = {};
   for (const entry of langTags) {
     addOrCombineLangtagsEntry(entry, consolidatedLangTags);
 
     // TODO future work: I haven't finished implementing Macrolanguage/specific language handling. See README
-    if (iso639_3CodeDetails.has(entry.iso639_3)) {
-      const iso639_3Codes = new Set([entry.iso639_3]);
+    if (isMacrolanguage(entry.iso639_3)) {
+      const alreadyFoundChildCodes = new Set([entry.iso639_3]);
       for (const tag of entry.tags || []) {
-        const iso639_3Code = findPotentialIso639_3Code(tag);
-        if (iso639_3Code && !iso639_3Codes.has(iso639_3Code)) {
-          iso639_3Codes.add(iso639_3Code);
+        const childCode = findPotentialIso639_3Code(tag);
+        if (childCode && !alreadyFoundChildCodes.has(childCode)) {
           addOrCombineLangtagsEntry(
             {
               ...entry,
-              iso639_3_code: iso639_3Code,
+              iso639_3: childCode,
               isForMacrolanguageDisambiguation: true,
             },
             consolidatedLangTags
           );
+          alreadyFoundChildCodes.add(childCode);
         }
       }
-      if (iso639_3Codes.size > 2) {
-        // TODO future work handle these cases when we get language type/status data and deal with macrolanguages
-        console.log("multiple iso639_3 codes", entry.iso639_3, iso639_3Codes);
-      }
+      // if (alreadyFoundChildCodes.size > 2) {
+      // console.log(
+      //   "multiple child codes",
+      //   entry.iso639_3,
+      //   alreadyFoundChildCodes
+      // );
+      // }
     }
   }
 
@@ -193,6 +253,9 @@ function parseLangtagsJson() {
         }),
         names: [...uncommaAll(langData.names)].filter((name) => !!name),
         alternativeTags: [...langData.alternativeTags],
+        isMacrolanguage: langData.isMacrolanguage,
+        languageType: langData.languageType,
+        // isForMacrolanguageDisambiguation: langData.isForMacrolanguageDisambiguation,
       } as ILanguage;
     }
   );

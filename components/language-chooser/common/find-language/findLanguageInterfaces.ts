@@ -8,6 +8,16 @@ export interface IScript {
   name: string;
 }
 
+export enum LanguageType {
+  Ancient = "Ancient",
+  Constructed = "Constructed",
+  Extinct = "Extinct",
+  Historical = "Historical",
+  Living = "Living",
+  Special = "Special",
+  Unknown = "Unknown",
+}
+
 export interface ILanguage {
   autonym?: string;
   exonym: string;
@@ -20,6 +30,7 @@ export interface ILanguage {
   alternativeTags: string[];
   isForMacrolanguageDisambiguation?: boolean;
   isMacrolanguage?: boolean;
+  languageType: LanguageType;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // allow indexing by string
 }

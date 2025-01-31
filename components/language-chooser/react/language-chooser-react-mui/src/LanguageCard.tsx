@@ -44,6 +44,7 @@ export const LanguageCard: React.FunctionComponent<
           variant="h2"
           css={css`
             flex-grow: 1;
+            color: ${languageCardData.isMacrolanguage ? "blue" : "black"};
           `}
         >
           {languageCardData.autonym || languageCardData.exonym}
@@ -58,6 +59,7 @@ export const LanguageCard: React.FunctionComponent<
             {languageCardData.exonym}
           </PartiallyBoldedTypography>
         )}
+
         <PartiallyBoldedTypography
           variant="body2"
           css={css`
@@ -69,6 +71,10 @@ export const LanguageCard: React.FunctionComponent<
           {languageCardData.languageSubtag}
         </PartiallyBoldedTypography>
       </div>
+      {/* TODO remove. For debugging. */}
+      <PartiallyBoldedTypography variant="subtitle1">
+        {`ISO 639-3 code: ${languageCardData.iso639_3_code}`}
+      </PartiallyBoldedTypography>
       {languageCardData.regionNames?.length > 0 && (
         <PartiallyBoldedTypography
           variant="subtitle1"

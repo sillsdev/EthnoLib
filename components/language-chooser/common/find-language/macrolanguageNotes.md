@@ -127,3 +127,17 @@ However, at least for the purposes of Bloom, we want the users to pick the speci
 ```
 
 TODO future work: For now, because we have at least one situation like this, we aren't blanket cutting out macrolanguages but should eventually figure out a way of determining which macrolanguages are actually valid options.
+
+<!-- From the ISO 639-3 site, Akan is a macrolanguage with child languages Twi and Fanti. However, in Ethnologue, Akan has a page (https://www.ethnologue.com/language/aka/) that lists Twi and Fanti as dialects, but Twi and Fanti do not have pages. In fact, the ISO 639-3 site has links attempting to access nonexistent Twi and Fanti Ethnologue pages.
+
+Relatedly, the names "Fanti" and "Twi" do not appear in connection to the ak/fat/tw languages in langtags.json, despite being the names given in ISO 639-3.
+
+Another similar situation is Sanskrit, which is also listed as a macrolanguage in ISO 639-3, and yet it has an Ethnologue page which does not call it a macrolanguage, and its child languages (Classical Sanskrit - cls and Vedic Sanskrit - vsn) do not.
+
+Are there other similar situations?
+
+I am working on the language chooser for Bloom. We usually do not want users to select macrolanguages. Would it be a problem if users can select
+languages "fat" and "twi" but not "aka" (at least not easily)?
+
+And then multiple child codes zap Set(3) { 'zap', 'zai', 'zcd' } - ZAI and ZCD listed as equivalent despite ethnologue not even saying they are closest zapotecs to each other
+ -->
