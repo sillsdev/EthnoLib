@@ -1,9 +1,10 @@
 import { FuseResult } from "fuse.js";
-import { ILanguage, IScript } from "./findLanguageInterfaces";
+import { ILanguage, IScript, LanguageType } from "./findLanguageInterfaces";
 import {
   demarcateResults,
   stripDemarcation,
 } from "./matchingSubstringDemarcation";
+import { DEFAULT_EXCLUDED_HISTORIC_LANGUAGE_CODES } from "./defaultExcludedHistoricLanguages";
 
 export function stripResultMetadata(
   results: FuseResult<ILanguage>[]
@@ -59,6 +60,7 @@ function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
       scripts: [latinScriptData],
       variants: "",
       alternativeTags: [],
+      languageType: LanguageType.Living,
     } as ILanguage;
   }
   return substituteInSpecialEntry("eng", getSpecialEntry, results);
@@ -77,6 +79,7 @@ function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
       scripts: [latinScriptData],
       variants: "",
       alternativeTags: [],
+      languageType: LanguageType.Living,
     } as ILanguage;
   }
   return substituteInSpecialEntry("fra", getSpecialEntry, results);
@@ -135,7 +138,24 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
       ],
     } as ILanguage;
   }
-  return substituteInSpecialEntry("zho", getSpecialEntry, results);
+  return substituteInSpecialEntry("cmn", getSpecialEntry, results);
+}
+
+// If excluding macrolanguages, use this for special cases which are technically macrolanguages but
+// should be treated as individual languages
+export function overrideAsIndividualLanguages(
+  isoCodesToOverride: string[],
+  results: ILanguage[]
+) {
+  return results.map((result) => {
+    if (isoCodesToOverride.includes(result.iso639_3_code)) {
+      return {
+        ...result,
+        isMacrolanguage: false,
+      };
+    }
+    return result;
+  });
 }
 
 export function rawIsoCode(result: ILanguage) {
@@ -176,45 +196,16 @@ export function filterLanguageCodes(
   return results.filter((result) => langCodeFilter(rawIsoCode(result) || ""));
 }
 
-const NOT_A_LANGUAGE_ENTRY_CODES = new Set([
-  "mis", //Uncoded languages
-  "mul", // Multiple languages
-  "zxx", // no linguistic content
-  "und", // Undetermined
-]);
-
-const ANCIENT_LANGUAGE_ENTRY_CODES = new Set([
-  "ang", // Old English
-  "enm", // Middle English
-  "fro", // Old French
-  "frm", // Middle French
-  "oko", // old korean
-  "sga", // Old Irish
-  "goh", // Old High German
-  "peo", // Old Persian
-  "osp", // Old Spanish
-  "lzh", // Literary Chinese
-  "ltc", // Late Middle Chinese
-  "och", // Old Chinese
-
-  // TODO future work there are a bunch more - search for things like (to 1500), (up to 700), BCE, B.C., ca., etc
-  // Filter for deprecated, historical languages etc.
-]);
-
 const SPECIAL_CASE_EXCLUDED_ENTRY_CODES = new Set([
   "zhx", // I don't understand why this entry is in langtags.json. It is an ISO-639-5 (language collection) code covering the zho macrolanguage, has no Ethnologue entry, only listed script is Nshu
-  "cmn", // TODO when we implement macrolanguage handling, see if the situation is taken care of and we can remove this exception.
-  // In langtags.json, most chinese entries have ISO 639-3 code "zho" (which is the macrolanguage code) except zh-Brai-CN and zh-Hant-ES which have "cmn"
-  // so we end up with two search results and don't want to keep the "cmn" one
 ]);
 
 const DEFAULT_EXCLUDED_ENTRY_CODES = new Set([
-  ...NOT_A_LANGUAGE_ENTRY_CODES,
-  ...ANCIENT_LANGUAGE_ENTRY_CODES,
+  ...DEFAULT_EXCLUDED_HISTORIC_LANGUAGE_CODES,
   ...SPECIAL_CASE_EXCLUDED_ENTRY_CODES,
 ]);
 
-export function filterOutDefaultExcludedLanguages(
+export function filterOutSpecialCaseExcludedLanguages(
   results: ILanguage[]
 ): ILanguage[] {
   return filterLanguageCodes(
@@ -253,6 +244,20 @@ export function prioritizeLangByKeywords(
   return results;
 }
 
+export function filterOutMacrolanguages(results: ILanguage[]): ILanguage[] {
+  // remove all entries with isMacrolanguage unless they are in the set of macrolanguages with ambiguity
+  return results.filter((result) => !result.isMacrolanguage);
+}
+
+// Filters out mis (Uncoded languages), mul (Multiple languages), zxx (no linguistic content), und (Undetermined)
+export function filterOutSpecialNonLanguageCodes(
+  results: ILanguage[]
+): ILanguage[] {
+  return results.filter(
+    (result) => result.languageType !== LanguageType.Special
+  );
+}
+
 // demarcateResults starts by making a deep clone so we aren't modifying the original results
 // Other implementations will probably also want to ensure a deep copy before modifying
 export function defaultSearchResultModifier(
@@ -277,7 +282,7 @@ export function defaultSearchResultModifier(
   modifiedResults = prioritizeLangByKeywords(
     ["chinese"],
     searchString,
-    "zho", // TODO: if we implement improved macrolanguage handling, see if we should change this to cmn
+    "cmn",
     modifiedResults
   );
   modifiedResults = prioritizeLangByKeywords(
@@ -290,7 +295,19 @@ export function defaultSearchResultModifier(
   modifiedResults = simplifyFrenchResult(modifiedResults);
   modifiedResults = simplifyChineseResult(modifiedResults);
   modifiedResults = simplifySpanishResult(modifiedResults);
-  modifiedResults = filterOutDefaultExcludedLanguages(modifiedResults);
+
+  // These are cases where it is not clear in langtags.json or not well defined what individual langs these macrolanguage codes are representing.
+  // TODO future work: handle these cases more carefully.
+  // For nor, I think we should treat is as a indiv language with two scripts, Bokmål and Nynorsk - ? https://www.ethnologue.com/language/nor/
+  // For san: according to langtags.txt, san = cls = vsn. Both cls and vsn are individual ISO639-3 languages. Not sure which to use.
+  // Look into aka and hbs further
+  modifiedResults = overrideAsIndividualLanguages(
+    ["bnc", "aka", "nor", "hbs", "san", "zap"],
+    modifiedResults
+  );
+  modifiedResults = filterOutMacrolanguages(modifiedResults);
+  modifiedResults = filterOutSpecialNonLanguageCodes(modifiedResults);
+  modifiedResults = filterOutSpecialCaseExcludedLanguages(modifiedResults);
   modifiedResults = filterScripts(scriptFilter, modifiedResults);
   return modifiedResults;
 }
