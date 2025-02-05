@@ -8,6 +8,7 @@ import {
   ILanguage,
   IRegion,
   IScript,
+  LanguageType,
 } from "@ethnolib/find-language";
 
 const UNLISTED_LANGUAGE_CODE = "qaa";
@@ -19,6 +20,7 @@ export const UNLISTED_LANGUAGE = {
   regionNames: "",
   scripts: [],
   alternativeTags: [],
+  languageType: LanguageType.Unknown,
   names: [],
 } as ILanguage;
 export function isUnlistedLanguage(selectedLanguage: ILanguage) {
