@@ -65,10 +65,10 @@ describe("Tag parsing", () => {
     ).toEqual("foo");
   });
   it("should be case insensitive", () => {
-    const result = parseLangtagFromLangChooser("uZb-CyRl-aF");
-    expect(result?.language?.exonym).toEqual("Uzbek");
+    const result = parseLangtagFromLangChooser("cE-CyRl-rU");
+    expect(result?.language?.exonym).toEqual("Chechen");
     expect(result?.script?.name).toEqual("Cyrillic");
-    expect(result?.customDetails?.region?.name).toEqual("Afghanistan");
+    expect(result?.customDetails?.region?.name).toEqual("Russian Federation");
   });
   it("should work for all combos of present and absent subtags", () => {
     // ssh, ssh-Arab, ssh-AE, ssh-x-foobar, ssh-Arab-AE, ssh-Arab-x-foobar, ssh-AE-x-foobar, ssh-Arab-AE-x-foobar

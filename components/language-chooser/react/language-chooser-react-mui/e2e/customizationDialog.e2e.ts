@@ -3,11 +3,11 @@ import {
   clearSearch,
   clickLanguageCard,
   createPageAndLoadLanguageChooser,
-  findCyrlCard,
+  findChechenCyrlCard,
   loadLanguageChooser,
   scriptCardTestId,
   search,
-  selectUzbekCard,
+  selectChechenCard,
 } from "./e2eHelpers";
 
 function customizationButtonLocator(page) {
@@ -99,7 +99,7 @@ test.describe("Customization button and dialog", () => {
   });
 
   test("if language selected, button should say 'Customize'", async () => {
-    await selectUzbekCard(page);
+    await selectChechenCard(page);
     const customizationButton = await customizationButtonLocator(page);
     await expect(customizationButton).toHaveText(/Customize.*/);
     await expect(customizationButton.getByTestId("EditIcon")).toBeVisible();
@@ -134,7 +134,7 @@ test.describe("Customization button and dialog", () => {
   });
 
   test("customize language dialog features", async () => {
-    await selectUzbekCard(page);
+    await selectChechenCard(page);
     await clickCustomizationButton(page);
     const customizationDialog = await customizationDialogLocator(page);
     await expect(customizationDialog).toBeVisible();
@@ -161,7 +161,7 @@ test.describe("Customization button and dialog", () => {
 
   test("Selected script is automatically filled into script field", async () => {
     // select cyrillic script
-    const cyrlCard = await findCyrlCard(page);
+    const cyrlCard = await findChechenCyrlCard(page);
     await cyrlCard.click();
     await clickCustomizationButton(page);
     await expect(customizationDialogLocator(page)).toBeVisible();
@@ -172,7 +172,7 @@ test.describe("Customization button and dialog", () => {
 
   test("Reopening customize dialog should maintain selected details", async () => {
     // Open customize dialog and enter a script, region, and variant name
-    await selectUzbekCard(page);
+    await selectChechenCard(page);
     await clickCustomizationButton(page);
     const customizationDialog = await customizationDialogLocator(page);
     await expect(customizationDialog).toBeVisible();
@@ -201,7 +201,7 @@ test.describe("Customization button and dialog", () => {
 
   test("Cancel should clear selections", async () => {
     // Open customize dialog and enter a script, region, and variant name
-    await selectUzbekCard(page);
+    await selectChechenCard(page);
     await clickCustomizationButton(page);
     const customizationDialog = await customizationDialogLocator(page);
     await expect(customizationDialog).toBeVisible();
@@ -224,7 +224,7 @@ test.describe("Customization button and dialog", () => {
 
   test("Selecting another langauge should clear customizations", async () => {
     // Open customize dialog and enter a script, region, and variant name
-    await selectUzbekCard(page);
+    await selectChechenCard(page);
     await clickCustomizationButton(page);
     const customizationDialog = await customizationDialogLocator(page);
     await expect(customizationDialog).toBeVisible();
@@ -251,7 +251,7 @@ test.describe("Customization button and dialog", () => {
   });
 
   test("Selecting a script in customize dialog selects that script card if it exists", async () => {
-    await selectUzbekCard(page);
+    await selectChechenCard(page);
     await clickCustomizationButton(page);
     const customizationDialog = await customizationDialogLocator(page);
     await expect(customizationDialog).toBeVisible();
@@ -298,7 +298,7 @@ test.describe("Customization button and dialog", () => {
   });
 
   test("ok button is always enabled in customize dialog, no required fields", async () => {
-    await selectUzbekCard(page);
+    await selectChechenCard(page);
     await clickCustomizationButton(page);
     const customizationDialog = await customizationDialogLocator(page);
     await expect(customizationDialog).toBeVisible();

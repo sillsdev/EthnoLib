@@ -4,8 +4,8 @@ import {
   rawIsoCode,
   codeMatches,
   prioritizeLangByKeywords,
-  filterLanguageCodes,
-  substituteInSpecialEntry,
+  filterOnLanguageCode,
+  substituteInModifiedEntry,
   defaultSearchResultModifier,
 } from "./searchResultModifiers";
 import { ILanguage } from "./findLanguageInterfaces";
@@ -108,7 +108,7 @@ describe("substitute special entry into results", () => {
       }),
     ];
     expect(
-      substituteInSpecialEntry("boo", () => specialEntry, results)
+      substituteInModifiedEntry("boo", () => specialEntry, results)
     ).toEqual(expectedResults);
   });
 });
@@ -140,7 +140,7 @@ describe("filter out language codes", () => {
         ],
       }),
     ];
-    expect(filterLanguageCodes((code) => code !== "boo", results)).toEqual(
+    expect(filterOnLanguageCode((code) => code !== "boo", results)).toEqual(
       expectedResults
     );
   });

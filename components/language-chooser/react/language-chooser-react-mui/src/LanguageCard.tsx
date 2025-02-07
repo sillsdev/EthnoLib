@@ -73,6 +73,10 @@ export const LanguageCard: React.FunctionComponent<
           {languageCardData.languageSubtag}
         </PartiallyBoldedTypography>
       </div>
+      {/* For debugging. */}
+      {/* <PartiallyBoldedTypography variant="subtitle1">
+        {`ISO 639-3 code: ${languageCardData.iso639_3_code}`}
+      </PartiallyBoldedTypography> */}
       {languageCardData.regionNames?.length > 0 && (
         <PartiallyBoldedTypography
           variant="subtitle1"

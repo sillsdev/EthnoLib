@@ -32,7 +32,7 @@ describe("searchForLanguage", () => {
   });
 
   it("should find languages by autonym", () => {
-    searchDoesFindLanguage("ўзбека", "uzb");
+    searchDoesFindLanguage("нохчийн", "che");
     searchDoesFindLanguage("Kamarakotos", "aoc");
   });
   it("should find languages by exonym", () => {

@@ -3,9 +3,9 @@ import {
   clearSearch,
   clickLanguageCard,
   createPageAndLoadLanguageChooser,
-  findCyrlCard,
+  findChechenCyrlCard,
   search,
-  selectCyrlCard,
+  selectChechenCyrlCard,
 } from "./e2eHelpers";
 
 let page: Page; // All the tests in this file use the same page object to save time; we only load the language chooser once.
@@ -46,7 +46,7 @@ test.describe("Language selection validity", () => {
   });
 
   test("Ok button enables when toggling script card", async () => {
-    const cyrlCard = await findCyrlCard(page);
+    const cyrlCard = await findChechenCyrlCard(page);
     await expectOkButtonDisabled(page);
     await cyrlCard.click();
     await expectOkButtonEnabled(page);
@@ -56,18 +56,18 @@ test.describe("Language selection validity", () => {
 
   test("Ok button disables when language card is unselected in various ways", async () => {
     // unselect language card
-    await selectCyrlCard(page);
-    await clickLanguageCard(page, "uzb");
+    await selectChechenCyrlCard(page);
+    await clickLanguageCard(page, "che");
     await expectOkButtonDisabled(page);
 
-    // select other langauge card
-    await selectCyrlCard(page);
-    await clickLanguageCard(page, "crh"); //crimean tartar, which also has multiple scripts
+    // select other language card
+    await selectChechenCyrlCard(page);
+    await clickLanguageCard(page, "ace"); // another of the results with multiple script options
     await expectOkButtonDisabled(page);
 
     // change search string
-    await selectCyrlCard(page);
-    await search(page, "uzbek ");
+    await selectChechenCyrlCard(page);
+    await search(page, "foobar");
     await expectOkButtonDisabled(page);
   });
 });

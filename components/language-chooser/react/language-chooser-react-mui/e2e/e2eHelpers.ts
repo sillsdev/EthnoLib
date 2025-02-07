@@ -42,26 +42,25 @@ export async function toggleScriptCard(page, isoCode) {
   }
 }
 
-export async function findUzbekCard(page) {
-  // search for "uzbek"
+export async function findChechenCard(page) {
   await clearSearch(page);
-  await search(page, "uzbek");
-  const uzbekCard = await page.getByTestId(languageCardTestId("uzb"));
-  await uzbekCard.scrollIntoViewIfNeeded();
-  await expect(uzbekCard).toBeVisible();
-  await expect(uzbekCard).toContainText("Uzbek");
+  await search(page, "chechen");
+  const chechenCard = await page.getByTestId(languageCardTestId("che"));
+  await chechenCard.scrollIntoViewIfNeeded();
+  await expect(chechenCard).toBeVisible();
+  await expect(chechenCard).toContainText("Chechen");
 
-  return uzbekCard;
+  return chechenCard;
 }
 
-export async function selectUzbekCard(page) {
-  const uzbekCard = await findUzbekCard(page);
-  await uzbekCard.click();
-  return uzbekCard;
+export async function selectChechenCard(page) {
+  const chechenCard = await findChechenCard(page);
+  await chechenCard.click();
+  return chechenCard;
 }
 
-export async function findCyrlCard(page) {
-  await selectUzbekCard(page);
+export async function findChechenCyrlCard(page) {
+  await selectChechenCard(page);
   // Cyrillic card is now visible and contains some text with "Cyr..."
   const cyrlCard = await page.getByTestId(scriptCardTestId("Cyrl"));
   await expect(cyrlCard).toBeVisible();
@@ -69,8 +68,8 @@ export async function findCyrlCard(page) {
   return cyrlCard;
 }
 
-export async function selectCyrlCard(page) {
-  const cyrlCard = await findCyrlCard(page);
+export async function selectChechenCyrlCard(page) {
+  const cyrlCard = await findChechenCyrlCard(page);
   await cyrlCard.click();
   return cyrlCard;
 }
