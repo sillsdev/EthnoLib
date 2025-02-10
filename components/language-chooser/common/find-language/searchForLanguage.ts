@@ -106,8 +106,5 @@ export function getLanguageBySubtag(code: string): ILanguage | undefined {
     findAllMatches: true, // in case one is a macrolanguage
   });
   const results = fuse.search(code);
-  const filteredResults = results.filter(
-    (result) => !result.item.isMacrolanguage
-  );
-  return filteredResults[0]?.item;
+  return results[0]?.item;
 }
