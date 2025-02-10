@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { expectTypeOf } from "vitest";
 import { FuseResult } from "fuse.js";
 import { codeMatches } from "./searchResultModifiers";
+import { stripDemarcation } from "./matchingSubstringDemarcation";
 
 describe("searchForLanguage", () => {
   it("should return a list of languages", () => {
@@ -107,7 +108,12 @@ describe("searchForLanguage", () => {
 
     // searching "aka", all "aka" languages should come before the "akan" language
     const akaQuery = "aka";
-    const indexOfAkan = indexOfLanguageInSearchResults(akaQuery, "aka");
+    const akaResults = searchForLanguage(akaQuery);
+    const indexOfAkan = akaResults.findIndex(
+      // We are using the exonym because the iso code may change if we adjust macrolanguage handling behavior.
+      // See macrolanguageNotes.md
+      (result) => stripDemarcation(result.item.exonym) === "Akan"
+    );
     const akaLangCodes = ["soh", "ahk", "axk", "hru", "wum"];
     for (const akaLangCode of akaLangCodes) {
       expect(
