@@ -18,6 +18,8 @@ export enum LanguageType {
   Unknown = "Unknown",
 }
 
+export const MACROLANGUAGE_SITUATION_UNKNOWN = "unknown";
+
 export interface ILanguage {
   autonym?: string;
   exonym: string;
@@ -28,7 +30,11 @@ export interface ILanguage {
   scripts: IScript[];
   variants?: string; // comma-joined
   alternativeTags: string[];
-  isMacrolanguage?: boolean;
+  // The macrolanguage for which this language is the representative language.
+  // If this is from a macrolanguage entry which we were unable to map to a representative language, value will be
+  // MACROLANGUAGE_SITUATION_UNKNOWN and desired behavior should be handled by search result modifiers.
+  // See macrolanguageNotes.md
+  isRepresentativeForMacrolang?: string;
   languageType: LanguageType;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // allow indexing by string
