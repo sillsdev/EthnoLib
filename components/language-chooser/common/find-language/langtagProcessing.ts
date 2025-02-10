@@ -3,7 +3,11 @@
 import { iso15924 } from "iso-15924";
 import langTagsJson from "./language-data/langtags.json" assert { type: "json" };
 import fs from "fs";
-import { ILanguage, IScript } from "./findLanguageInterfaces";
+import {
+  ILanguage,
+  IScript,
+  MACROLANGUAGE_SITUATION_UNKNOWN,
+} from "./findLanguageInterfaces";
 
 const COMMA_SEPARATOR = ", ";
 
@@ -199,7 +203,6 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       names: getAllPossibleNames(entry),
       scripts: new Set([entry.script]),
       alternativeTags: new Set([entry.full, ...(entry.tags || [])]),
-      isMacrolanguage: isMacrolanguage(entry.iso639_3),
       languageType: languageType(entry.iso639_3),
     } as ILanguageInternal;
   }
@@ -229,21 +232,29 @@ function parseLangtagsJson() {
   const langTags = langTagsJson as any[];
   const consolidatedLangTags = {};
   for (const entry of langTags) {
-    addOrCombineLangtagsEntry(entry, consolidatedLangTags);
-
     if (isMacrolanguage(entry.iso639_3)) {
       const indivIsoCode = macrolangsToRepresentativeLangs[entry.iso639_3];
-      if (!indivIsoCode) {
-        console.log("no indivIsoCode found for macrolang", entry.iso639_3);
-        continue;
+      if (indivIsoCode) {
+        addOrCombineLangtagsEntry(
+          {
+            ...entry,
+            iso639_3: indivIsoCode,
+            isRepresentativeForMacrolang: entry.iso639_3,
+          },
+          consolidatedLangTags
+        );
+      } else {
+        console.log("No indivIsoCode found for macrolang", entry.iso639_3);
+        addOrCombineLangtagsEntry(
+          {
+            ...entry,
+            isRepresentativeForMacrolang: MACROLANGUAGE_SITUATION_UNKNOWN,
+          },
+          consolidatedLangTags
+        );
       }
-      addOrCombineLangtagsEntry(
-        {
-          ...entry,
-          iso639_3: indivIsoCode,
-        },
-        consolidatedLangTags
-      );
+    } else {
+      addOrCombineLangtagsEntry(entry, consolidatedLangTags);
     }
   }
 
@@ -269,7 +280,7 @@ function parseLangtagsJson() {
         }),
         names: [...uncommaAll(langData.names)].filter((name) => !!name),
         alternativeTags: [...langData.alternativeTags],
-        isMacrolanguage: langData.isMacrolanguage,
+        isRepresentativeForMacrolang: langData.isRepresentativeForMacrolang,
         languageType: langData.languageType,
       } as ILanguage;
     }
