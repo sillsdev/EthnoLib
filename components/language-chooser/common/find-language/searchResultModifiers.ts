@@ -138,23 +138,6 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
   return substituteInModifiedEntry("cmn", getSimplifiedChineseResult, results);
 }
 
-// If excluding macrolanguages, use this for special cases which are technically macrolanguages but
-// should be treated as individual languages
-export function overrideAsIndividualLanguages(
-  isoCodesToOverride: string[],
-  results: ILanguage[]
-) {
-  return results.map((result) => {
-    if (isoCodesToOverride.includes(result.iso639_3_code)) {
-      return {
-        ...result,
-        isMacrolanguage: false,
-      };
-    }
-    return result;
-  });
-}
-
 export function rawIsoCode(result: ILanguage) {
   return stripDemarcation(result.iso639_3_code);
 }
@@ -263,17 +246,13 @@ export function defaultSearchResultModifier(
   modifiedResults = simplifyChineseResult(modifiedResults);
   modifiedResults = simplifySpanishResult(modifiedResults);
 
+  // TODO future work: handle these cases more carefully: "bnc", "aka", "nor", "hbs", "san", "zap"
   // These are cases where it is not clear in langtags.json or not well defined what individual langs these macrolanguage codes are representing.
-  // TODO future work: handle these cases more carefully.
+  // Currently, they are left in the results with iso639_3 code still being the macrolanguage code
+  // See find-language/macrolanguageNotes.md
   // For nor, I think we should treat is as a indiv language with two scripts, Bokmål and Nynorsk - ? https://www.ethnologue.com/language/nor/
   // For san: according to langtags.txt, san = cls = vsn. Both cls and vsn are individual ISO639-3 languages. Not sure which to use.
   // Look into aka and hbs further
-  modifiedResults = overrideAsIndividualLanguages(
-    ["bnc", "aka", "nor", "hbs", "san", "zap"],
-    modifiedResults
-  );
-  // remove all macrolangauges, now that we have already marked the exceptions as individual langauges
-  modifiedResults = modifiedResults.filter((r) => !r.isMacrolanguage);
 
   // Filters out mis (Uncoded languages), mul (Multiple languages), zxx (no linguistic content), und (Undetermined)
   modifiedResults = modifiedResults.filter(

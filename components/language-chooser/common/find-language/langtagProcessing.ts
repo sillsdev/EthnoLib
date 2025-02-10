@@ -3,7 +3,11 @@
 import { iso15924 } from "iso-15924";
 import langTagsJson from "./language-data/langtags.json" assert { type: "json" };
 import fs from "fs";
-import { ILanguage, IScript } from "./findLanguageInterfaces";
+import {
+  ILanguage,
+  IScript,
+  MACROLANGUAGE_SITUATION_UNKNOWN,
+} from "./findLanguageInterfaces";
 
 const COMMA_SEPARATOR = ", ";
 
@@ -81,6 +85,7 @@ function isMacrolanguage(iso639_3: string) {
 // We want to save the individual language codes, so gather as many macrolangauge to representative individual language
 // mappings as we can. As of 2/2025, this covers all macrolanguage codes in langtags.json except for
 // bnc, nor, san, hbs, and zap which should all be handled by search result modifiers.
+// See macrolanguageNotes.md for more explanation.
 const macrolangsToRepresentativeLangs = {};
 const langTags = langTagsJson as any[];
 for (const entry of langTags) {
@@ -188,6 +193,8 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       entry.full,
       ...(entry.tags ?? []),
     ]);
+    langs[entry.iso639_3].aliasMacrolanguage =
+      langs[entry.iso639_3].aliasMacrolanguage || entry.aliasMacrolanguage;
   } else {
     // create a new entry for this language code
     langs[entry.iso639_3] = {
@@ -198,8 +205,8 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
       scripts: new Set([entry.script]),
+      aliasMacrolanguage: entry.aliasMacrolanguage,
       alternativeTags: new Set([entry.full, ...(entry.tags || [])]),
-      isMacrolanguage: isMacrolanguage(entry.iso639_3),
       languageType: languageType(entry.iso639_3),
     } as ILanguageInternal;
   }
@@ -229,21 +236,33 @@ function parseLangtagsJson() {
   const langTags = langTagsJson as any[];
   const consolidatedLangTags = {};
   for (const entry of langTags) {
-    addOrCombineLangtagsEntry(entry, consolidatedLangTags);
-
+    // If listed with a macrolanguage code, this is a "representative language", we need to identify it by its equivalent
+    // individual language code. See macrolanguageNotes.md
     if (isMacrolanguage(entry.iso639_3)) {
       const indivIsoCode = macrolangsToRepresentativeLangs[entry.iso639_3];
-      if (!indivIsoCode) {
-        console.log("no indivIsoCode found for macrolang", entry.iso639_3);
-        continue;
+      if (indivIsoCode) {
+        addOrCombineLangtagsEntry(
+          {
+            ...entry,
+            iso639_3: indivIsoCode,
+            aliasMacrolanguage: entry.iso639_3,
+          },
+          consolidatedLangTags
+        );
+      } else {
+        // this is a data anomaly but that we do have 5 as of Feb 2025: bnc, nor, san, hbs, zap
+        // See macrolanguageNotes.md. These cases should be specially handled.
+        console.log("No indivIsoCode found for macrolang", entry.iso639_3);
+        addOrCombineLangtagsEntry(
+          {
+            ...entry,
+            aliasMacrolanguage: MACROLANGUAGE_SITUATION_UNKNOWN,
+          },
+          consolidatedLangTags
+        );
       }
-      addOrCombineLangtagsEntry(
-        {
-          ...entry,
-          iso639_3: indivIsoCode,
-        },
-        consolidatedLangTags
-      );
+    } else {
+      addOrCombineLangtagsEntry(entry, consolidatedLangTags);
     }
   }
 
@@ -269,7 +288,7 @@ function parseLangtagsJson() {
         }),
         names: [...uncommaAll(langData.names)].filter((name) => !!name),
         alternativeTags: [...langData.alternativeTags],
-        isMacrolanguage: langData.isMacrolanguage,
+        aliasMacrolanguage: langData.aliasMacrolanguage,
         languageType: langData.languageType,
       } as ILanguage;
     }
