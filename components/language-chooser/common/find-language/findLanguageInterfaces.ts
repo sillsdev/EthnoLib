@@ -16,6 +16,7 @@ export enum LanguageType {
   Living = "Living",
   Special = "Special",
   Unknown = "Unknown",
+  Custom = "Custom", // For special situation/user-entered languages that are not in langtags
 }
 
 export const MACROLANGUAGE_SITUATION_UNKNOWN = "unknown";

@@ -20,12 +20,12 @@ test.describe("Selection toggle script card behavior", () => {
 
   test("selecting langauge card makes script card visible", async () => {
     // Cyrillic card is initially not visible
-    const checenCard = await findChechenCard(page);
+    const chechenCard = await findChechenCard(page);
     const cyrlCardTestId = scriptCardTestId("Cyrl");
     await expect(page.getByTestId(cyrlCardTestId)).not.toBeVisible();
 
     // select Chechen card
-    await checenCard.click();
+    await chechenCard.click();
 
     // Cyrillic card is now visible and contains some text with "Cyr..."
     const cyrlCard = page.getByTestId(cyrlCardTestId);

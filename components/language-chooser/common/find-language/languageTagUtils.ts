@@ -22,6 +22,7 @@ export function getMaximalLangtag(langtag: string): string | undefined {
   return maximalTagLookup.get(langtag.toLowerCase());
 }
 
+// If there may be a manually entered language tag or bracket demarcation, use createTagFromOrthography instead
 export function createTag({
   languageCode,
   scriptCode,
@@ -32,7 +33,7 @@ export function createTag({
   scriptCode?: string;
   regionCode?: string;
   dialectCode?: string;
-}) {
+}): string {
   let tag = "";
   if (languageCode) {
     tag += languageCode;

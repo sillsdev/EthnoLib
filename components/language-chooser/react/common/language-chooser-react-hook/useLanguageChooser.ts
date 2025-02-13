@@ -1,5 +1,4 @@
 import {
-  codeMatches,
   ILanguage,
   IScript,
   searchForLanguage,
@@ -9,8 +8,11 @@ import {
 import { useMemo, useState } from "react";
 import { FuseResult } from "fuse.js";
 import {
+  isValidBcp47Tag,
   ICustomizableLanguageDetails,
+  isManuallyEnteredTagLanguage,
   isUnlistedLanguage,
+  languageForManuallyEnteredTag,
   parseLangtagFromLangChooser,
   UNLISTED_LANGUAGE,
 } from "./languageTagHandling";
@@ -22,14 +24,17 @@ export interface ILanguageChooser {
   customizableLanguageDetails: ICustomizableLanguageDetails;
   searchString: string;
   onSearchStringChange: (searchString: string) => void;
-  toggleSelectLanguage: (language: ILanguage) => void;
-  toggleSelectScript: (script: IScript) => void;
+  selectLanguage: (language: ILanguage) => void;
+  selectUnlistedLanguage: () => void;
+  selectManuallyEnteredTagLanguage: (manuallyEnteredTag: string) => void;
+  clearLanguageSelection: () => void;
+  selectScript: (script: IScript) => void;
+  clearScriptSelection: () => void;
   isReadyToSubmit: boolean;
   saveLanguageDetails: (
     details: ICustomizableLanguageDetails,
     script: IScript | undefined
   ) => void;
-  selectUnlistedLanguage: () => void;
   resetTo: (
     searchString: string,
     selectionLanguageTag?: string,
@@ -64,12 +69,16 @@ export const useLanguageChooser = (
 
   const isReadyToSubmit =
     !!selectedLanguage &&
+    !!customizableLanguageDetails.displayName && // we need a nonempty display name
     // either a script is selected or there are no scripts for the selected language
     (!!selectedScript || selectedLanguage?.scripts?.length === 0) &&
     // if unlisted language, name and country are required
     (!isUnlistedLanguage(selectedLanguage) ||
       (customizableLanguageDetails.dialect !== "" &&
-        customizableLanguageDetails.region?.name !== ""));
+        customizableLanguageDetails.region?.name !== "")) &&
+    // if this was a manually entered langtag, check that tag is valid BCP 47
+    (!isManuallyEnteredTagLanguage(selectedLanguage) ||
+      isValidBcp47Tag(selectedLanguage.languageSubtag));
 
   const languageData = useMemo(() => {
     if (!searchString || searchString.length < 2) {
@@ -86,28 +95,37 @@ export const useLanguageChooser = (
     initialCustomDisplayName?: string // all info can be captured in language tag except display name
   ) {
     onSearchStringChange(searchString);
+    if (!selectionLanguageTag) return;
 
-    const initialSelections = parseLangtagFromLangChooser(
+    let initialSelections = parseLangtagFromLangChooser(
       selectionLanguageTag || ""
     );
-
-    if (initialSelections?.language) {
+    if (!initialSelections) {
+      // this is a langtag requiring manual entry
+      initialSelections = {
+        language: languageForManuallyEnteredTag(selectionLanguageTag || ""),
+        script: undefined,
+        customDetails: {
+          displayName: initialCustomDisplayName,
+        },
+      };
       // TODO future work: if the selection language is lower in the search results such that its
       // language card isn't initially visible, we should automatically scroll to it
-      toggleSelectLanguage(initialSelections.language);
+      selectLanguage(initialSelections.language as ILanguage);
       if (initialSelections?.script) {
-        toggleSelectScript(initialSelections.script);
+        selectScript(initialSelections.script);
       }
-      setCustomizableLanguageDetails((c) => {
-        // toggleSelectLanguage will have set a default display name. We want to use it unless
-        // it is overridden by a initialCustomDisplayName
-        return {
-          ...(initialSelections?.customDetails ||
-            ({} as ICustomizableLanguageDetails)),
-          displayName: initialCustomDisplayName || c.displayName,
-        };
-      });
     }
+
+    setCustomizableLanguageDetails((c) => {
+      // selectLanguage will have set a default display name. We want to use it unless
+      // it is overridden by a initialCustomDisplayName
+      return {
+        ...(initialSelections?.customDetails ||
+          ({} as ICustomizableLanguageDetails)),
+        displayName: initialCustomDisplayName || c.displayName,
+      };
+    });
   }
 
   function saveLanguageDetails(
@@ -134,37 +152,36 @@ export const useLanguageChooser = (
     }
   }
 
-  function toggleSelectLanguage(language: ILanguage) {
-    if (codeMatches(language.iso639_3_code, selectedLanguage?.iso639_3_code)) {
-      // Clicking on the selected language unselects it and clears data specific to that language
-      setSelectedLanguage(undefined);
-      setSelectedScript(undefined);
-      clearCustomizableLanguageDetails();
-    } else {
-      setSelectedLanguage(language);
-      setSelectedScript(
-        // If there is only one script option for this language, automatically select it
-        language.scripts.length === 1 ? language.scripts[0] : undefined
-      );
-      setCustomizableLanguageDetails({
-        displayName: defaultDisplayName(language),
-      } as ICustomizableLanguageDetails);
-    }
-  }
-
-  function toggleSelectScript(script: IScript) {
-    if (codeMatches(script.code, selectedScript?.code)) {
-      // clicking on the selected script unselects it
-      setSelectedScript(undefined);
-    } else {
-      setSelectedScript(script);
-    }
+  function selectLanguage(language: ILanguage) {
+    setSelectedLanguage(language);
+    setSelectedScript(
+      // If there is only one script option for this language, automatically select it
+      language.scripts.length === 1 ? language.scripts[0] : undefined
+    );
+    setCustomizableLanguageDetails({
+      displayName: defaultDisplayName(language),
+    } as ICustomizableLanguageDetails);
   }
 
   function selectUnlistedLanguage() {
-    setSelectedLanguage(UNLISTED_LANGUAGE);
+    selectLanguage(UNLISTED_LANGUAGE);
+  }
+
+  function selectManuallyEnteredTagLanguage(manuallyEnteredTag: string) {
+    selectLanguage(languageForManuallyEnteredTag(manuallyEnteredTag));
+  }
+
+  function clearLanguageSelection() {
+    setSelectedLanguage(undefined);
     setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
+  }
+
+  function selectScript(script: IScript) {
+    setSelectedScript(script);
+  }
+  function clearScriptSelection() {
+    setSelectedScript(undefined);
   }
 
   function onSearchStringChange(searchString: string) {
@@ -181,15 +198,21 @@ export const useLanguageChooser = (
     customizableLanguageDetails,
     searchString,
     onSearchStringChange,
-    toggleSelectLanguage,
-    toggleSelectScript,
+    selectLanguage,
+    selectUnlistedLanguage,
+    selectManuallyEnteredTagLanguage: selectManuallyEnteredTagLanguage,
+    clearLanguageSelection,
+    selectScript,
+    clearScriptSelection,
     isReadyToSubmit,
     saveLanguageDetails,
-    selectUnlistedLanguage,
     resetTo,
   } as ILanguageChooser;
 };
 
 export function defaultDisplayName(language: ILanguage) {
+  if (isUnlistedLanguage(language) || isManuallyEnteredTagLanguage(language)) {
+    return "";
+  }
   return stripDemarcation(language.autonym || language.exonym);
 }
