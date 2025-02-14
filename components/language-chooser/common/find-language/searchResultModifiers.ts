@@ -1,9 +1,10 @@
 import { FuseResult } from "fuse.js";
-import { ILanguage, IScript } from "./findLanguageInterfaces";
+import { ILanguage, IScript, LanguageType } from "./findLanguageInterfaces";
 import {
   demarcateResults,
   stripDemarcation,
 } from "./matchingSubstringDemarcation";
+import { DEFAULT_EXCLUDED_HISTORIC_LANGUAGE_CODES } from "./defaultExcludedHistoricLanguages";
 
 export function stripResultMetadata(
   results: FuseResult<ILanguage>[]
@@ -31,7 +32,7 @@ export function modifyScripts(
   }));
 }
 
-const SCRIPT_CODES_TO_EXCLUDE = new Set([
+const DEFAULT_EXCLUDED_SCRIPT_CODES = new Set([
   "Brai",
   "Zyyy",
   "Zxxx",
@@ -41,14 +42,11 @@ const SCRIPT_CODES_TO_EXCLUDE = new Set([
   "Zsym",
 ]);
 
-const scriptFilter = (script: IScript) =>
-  !SCRIPT_CODES_TO_EXCLUDE.has(script.code);
-
 const latinScriptData = { code: "Latn", name: "Latin" } as IScript;
 
 // Replace the English result with a simpler version that only has "English" and the code on it
 function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
-  function getSpecialEntry(result: ILanguage) {
+  function getSimplifiedEnglishResult(result: ILanguage) {
     return {
       autonym: undefined, // because exonym is mandatory and we don't want to repeat it
       exonym: result.exonym, // "English",
@@ -59,14 +57,15 @@ function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
       scripts: [latinScriptData],
       variants: "",
       alternativeTags: [],
+      languageType: LanguageType.Living,
     } as ILanguage;
   }
-  return substituteInSpecialEntry("eng", getSpecialEntry, results);
+  return substituteInModifiedEntry("eng", getSimplifiedEnglishResult, results);
 }
 
 // Replace the French result with a simpler version that only has "Francais", "French" and the code on it
 function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
-  function getSpecialEntry(result: ILanguage) {
+  function getSimplifiedFrenchResult(result: ILanguage) {
     return {
       autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
       exonym: result.exonym, // "French"
@@ -77,16 +76,17 @@ function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
       scripts: [latinScriptData],
       variants: "",
       alternativeTags: [],
+      languageType: LanguageType.Living,
     } as ILanguage;
   }
-  return substituteInSpecialEntry("fra", getSpecialEntry, results);
+  return substituteInModifiedEntry("fra", getSimplifiedFrenchResult, results);
 }
 
 // langtags.json lists spanish with localnames ["castellano", "español"]
 // so castellano becomes the autonym, but we want to list español as the autonym
 // while preserving any match demarcation
 function simplifySpanishResult(results: ILanguage[]): ILanguage[] {
-  function getSpecialEntry(result: ILanguage) {
+  function getSimplifiedSpanishResult(result: ILanguage) {
     let demarcatedCastellano = result.autonym;
     if (stripDemarcation(demarcatedCastellano) !== "castellano") {
       demarcatedCastellano = "castellano";
@@ -108,11 +108,11 @@ function simplifySpanishResult(results: ILanguage[]): ILanguage[] {
       scripts: [latinScriptData],
     } as ILanguage;
   }
-  return substituteInSpecialEntry("spa", getSpecialEntry, results);
+  return substituteInModifiedEntry("spa", getSimplifiedSpanishResult, results);
 }
 
 function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
-  function getSpecialEntry(result: ILanguage) {
+  function getSimplifiedChineseResult(result: ILanguage) {
     return {
       ...result,
       autonym: "中文",
@@ -135,7 +135,24 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
       ],
     } as ILanguage;
   }
-  return substituteInSpecialEntry("zho", getSpecialEntry, results);
+  return substituteInModifiedEntry("cmn", getSimplifiedChineseResult, results);
+}
+
+// If excluding macrolanguages, use this for special cases which are technically macrolanguages but
+// should be treated as individual languages
+export function overrideAsIndividualLanguages(
+  isoCodesToOverride: string[],
+  results: ILanguage[]
+) {
+  return results.map((result) => {
+    if (isoCodesToOverride.includes(result.iso639_3_code)) {
+      return {
+        ...result,
+        isMacrolanguage: false,
+      };
+    }
+    return result;
+  });
 }
 
 export function rawIsoCode(result: ILanguage) {
@@ -156,74 +173,29 @@ export function codeMatches(
   );
 }
 
-// Replace the result which has targetCode with getSpecialEntry called on that result
-export function substituteInSpecialEntry(
+// Replace the result which has targetCode with getModifiedEntry called on that result
+export function substituteInModifiedEntry(
   targetCode: string,
-  getSpecialEntry: (result: ILanguage) => ILanguage,
+  getModifiedEntry: (result: ILanguage) => ILanguage,
   results: ILanguage[]
 ): ILanguage[] {
   return results.map((result) =>
     codeMatches(result.iso639_3_code, targetCode)
-      ? getSpecialEntry(result)
+      ? getModifiedEntry(result)
       : result
   );
 }
 
-export function filterLanguageCodes(
+export function filterOnLanguageCode(
   langCodeFilter: (value: string) => boolean,
   results: ILanguage[]
 ): ILanguage[] {
   return results.filter((result) => langCodeFilter(rawIsoCode(result) || ""));
 }
 
-const NOT_A_LANGUAGE_ENTRY_CODES = new Set([
-  "mis", //Uncoded languages
-  "mul", // Multiple languages
-  "zxx", // no linguistic content
-  "und", // Undetermined
-]);
-
-const ANCIENT_LANGUAGE_ENTRY_CODES = new Set([
-  "ang", // Old English
-  "enm", // Middle English
-  "fro", // Old French
-  "frm", // Middle French
-  "oko", // old korean
-  "sga", // Old Irish
-  "goh", // Old High German
-  "peo", // Old Persian
-  "osp", // Old Spanish
-  "lzh", // Literary Chinese
-  "ltc", // Late Middle Chinese
-  "och", // Old Chinese
-
-  // TODO future work there are a bunch more - search for things like (to 1500), (up to 700), BCE, B.C., ca., etc
-  // Filter for deprecated, historical languages etc.
-]);
-
-const SPECIAL_CASE_EXCLUDED_ENTRY_CODES = new Set([
+const EXCLUDED_PROBLEMATIC_LANGUAGE_CODES = new Set([
   "zhx", // I don't understand why this entry is in langtags.json. It is an ISO-639-5 (language collection) code covering the zho macrolanguage, has no Ethnologue entry, only listed script is Nshu
-  "cmn", // TODO when we implement macrolanguage handling, see if the situation is taken care of and we can remove this exception.
-  // In langtags.json, most chinese entries have ISO 639-3 code "zho" (which is the macrolanguage code) except zh-Brai-CN and zh-Hant-ES which have "cmn"
-  // so we end up with two search results and don't want to keep the "cmn" one
 ]);
-
-const DEFAULT_EXCLUDED_ENTRY_CODES = new Set([
-  ...NOT_A_LANGUAGE_ENTRY_CODES,
-  ...ANCIENT_LANGUAGE_ENTRY_CODES,
-  ...SPECIAL_CASE_EXCLUDED_ENTRY_CODES,
-]);
-
-export function filterOutDefaultExcludedLanguages(
-  results: ILanguage[]
-): ILanguage[] {
-  return filterLanguageCodes(
-    ((code) => !DEFAULT_EXCLUDED_ENTRY_CODES.has(code)) as (
-      value: string
-    ) => boolean,
-    results
-  );
-}
 
 // if user starts typing keyword, the language option with code langCodeToPrioritize should come up first.
 // Note that this re-orders results but does not add
@@ -277,7 +249,7 @@ export function defaultSearchResultModifier(
   modifiedResults = prioritizeLangByKeywords(
     ["chinese"],
     searchString,
-    "zho", // TODO: if we implement improved macrolanguage handling, see if we should change this to cmn
+    "cmn",
     modifiedResults
   );
   modifiedResults = prioritizeLangByKeywords(
@@ -290,7 +262,37 @@ export function defaultSearchResultModifier(
   modifiedResults = simplifyFrenchResult(modifiedResults);
   modifiedResults = simplifyChineseResult(modifiedResults);
   modifiedResults = simplifySpanishResult(modifiedResults);
-  modifiedResults = filterOutDefaultExcludedLanguages(modifiedResults);
-  modifiedResults = filterScripts(scriptFilter, modifiedResults);
+
+  // These are cases where it is not clear in langtags.json or not well defined what individual langs these macrolanguage codes are representing.
+  // TODO future work: handle these cases more carefully.
+  // For nor, I think we should treat is as a indiv language with two scripts, Bokmål and Nynorsk - ? https://www.ethnologue.com/language/nor/
+  // For san: according to langtags.txt, san = cls = vsn. Both cls and vsn are individual ISO639-3 languages. Not sure which to use.
+  // Look into aka and hbs further
+  modifiedResults = overrideAsIndividualLanguages(
+    ["bnc", "aka", "nor", "hbs", "san", "zap"],
+    modifiedResults
+  );
+  // remove all macrolangauges, now that we have already marked the exceptions as individual langauges
+  modifiedResults = modifiedResults.filter((r) => !r.isMacrolanguage);
+
+  // Filters out mis (Uncoded languages), mul (Multiple languages), zxx (no linguistic content), und (Undetermined)
+  modifiedResults = modifiedResults.filter(
+    (r) => r.languageType !== LanguageType.Special
+  );
+
+  modifiedResults = filterOnLanguageCode(
+    (code) => !EXCLUDED_PROBLEMATIC_LANGUAGE_CODES.has(code),
+    modifiedResults
+  );
+  modifiedResults = filterOnLanguageCode(
+    (code) => !DEFAULT_EXCLUDED_HISTORIC_LANGUAGE_CODES.has(code),
+    modifiedResults
+  );
+
+  modifiedResults = filterScripts(
+    (s) => !DEFAULT_EXCLUDED_SCRIPT_CODES.has(s.code),
+    modifiedResults
+  );
+
   return modifiedResults;
 }
