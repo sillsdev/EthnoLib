@@ -22,6 +22,8 @@ export function getMaximalLangtag(langtag: string): string | undefined {
   return maximalTagLookup.get(langtag.toLowerCase());
 }
 
+// This is pretty naive. If you are using the language-chooser-react-hook and there may be a manually entered language
+// tag or bracket demarcation, use createTagFromOrthography in language-chooser-react-hook instead
 export function createTag({
   languageCode,
   scriptCode,
@@ -32,7 +34,7 @@ export function createTag({
   scriptCode?: string;
   regionCode?: string;
   dialectCode?: string;
-}) {
+}): string {
   let tag = "";
   if (languageCode) {
     tag += languageCode;
