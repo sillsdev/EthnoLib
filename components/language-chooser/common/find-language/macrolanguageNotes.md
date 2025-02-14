@@ -1,149 +1,91 @@
 # About macrolanguage handling
 
-TODO
+This is about ISO 639-3 codes which represent collections of languages and have a one-to-many correspondence with ISO 630-3 codes which denote individual languages.
 
-<!-- > [!warning]
-> Note much of the behavior described in this document has been backed out of the initial release of the language chooser and will be implemented in a future release.
+See also
 
-- This is about ISO 639-3 codes which represent collections of languages and have a one-to-many correspondence with ISO 630-3 codes which denote individual languages.
+  <!-- - https://issues.bloomlibrary.org/youtrack/issue/BL-12657/Issues-with-macrolanguage-codes-in-the-language-picker -->
 
-- See also
+- https://github.com/silnrsi/langtags/blob/master/doc/langtags.md#macro-languages
+- https://iso639-3.sil.org/code_tables/macrolanguage_mappings/
 
-  - https://issues.bloomlibrary.org/youtrack/issue/BL-12657/Issues-with-macrolanguage-codes-in-the-language-picker
-  - https://github.com/silnrsi/langtags/blob/master/doc/langtags.md#macro-languages
-  - https://iso639-3.sil.org/code_tables/macrolanguage_mappings/
+According to the langtags.json documentation:
 
-### A simple (and somewhat typical) example of how macrolanguages appear to be handled in Langtags.json
+> For many macro languages, there is a representative language for that macro language. In many cases the macro language code is more popular than the representative langauge code. Thus, for example, in the CLDR, the macro language code is used instead of the representative language code. For this reason, langtags.json unifies the representative language tags into the macro language tag set rather than having a separate tag set for them, and gives the tag for the tag set in terms of the macro language rather than the representative language. (https://github.com/silnrsi/langtags/blob/master/doc/langtags.md#macro-languages)
 
-`chm` (mari) is a macrolanguage which has individual languages `mhr` (Eastern Mari) and `mrj` (Western Mari). There are three relevant entries in Langtags.json, below. In this langauge chooser, the language options we offer users are based on the `iso639_3` field. The "Western Mari" entry is no problem and from it we create a language option with the "mrj" code. However, there is no entry which has `iso639_3` value `mhr`; but rather the two entries with `iso639_3` values of `chm` appear to be about the `mhr` language Western Mari. According to th langtags.json documentation: [For many macro languages, there is a representative language [in this case mhr] for that macro language [in this case chm]. In many cases the macro language code is more popular than the representative langauge code. Thus, for example, in the CLDR, the macro language code is used instead of the representative language code. For this reason, langtags.json unifies the representative language tags into the macro language tag set rather than having a separate tag set for them, and gives the tag for the tag set in terms of the macro language rather than the representative language.](https://github.com/silnrsi/langtags/blob/master/doc/langtags.md#macro-languages)
+> We follow CLDR in giving every macro language a default concrete language that is mapped to it. Thus, for example: _ps = pbu = pbu-AF = pbu-Arab = pbu-Arab-AF = \*ps-AF = ps-Arab = ps-Arab-AF_ which says that while Pashto is a macro language, the default language in that set is Northern Pashto and that Northern Pashto will be mapped to the macro language due to their equivalence. (https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#macro-languages-1)
 
-However, at least for the purposes of Bloom, we want the users to pick the specific language code. So since `mhr` is an ISO 639-3 code that shows up as an alternative tag in the `tags` field of those two entries, we create an additional language option which has code `mhr` but contains info from those two entries and therefore is otherwise a duplicate of the `chm` language option coallesced from these entries. (in languageData.json I have marked these additionally created entries with `isForMacrolanguageDisambiguation = true`). -->
+A illustrative example of how this library handles macrolanguages: For the macrolanguage `pus` (Pashto), there are 4 relevant entries in langtags.json (listed below). From the first (ps-Arab-AF), we can detect that `pus`/`ps` is mapped to/equivalent to representative language `pbu` as described above. (`ps` is the ISO 639-1 equivalent of `pus`.) We therefore know the second entry (ps-Arab-PK) is also for language `pbu`. Since this language chooser delineates languages firstly by their ISO 639-3 codes, we combine the first two entries. We mark the result with `isRepresentativeForMacrolang: pus`. The `pbt` and `pst` entries we straightforwardly handle as normal individual languages.
 
-<!-- TODO about adding the macrolanguage one to EXCLUDABLE_MACROLANGUAGE_ENTRY_CODES -->
-<!--
+There are a few entries in langtags.json for which we cannot straightforwardly determine the individual language. These we mark with `isRepresentativeForMacrolang: unknown` and keep the iso639-3 code despite it being a macrolanguage code. For the react language chooser, the desired behavior for these situations should be handled in search result modifiers. As of January 2025, these entries are `bnc`, `nor`, `san`, `hbs`, and `zap`. Other unusual situations we are aware of are `aka` and `zhx`, these may also warrant special checking.
+
 ```
     {
-        "full": "mrj-Cyrl-RU",
-        "iana": [ "Western Mari" ],
-        "iso639_3": "mrj",
-        "latnnames": [ "Kyryk mary jÿlmÿ", "Kyryk mary" ],
-        "localnames": [ "Кырык мары йӹлмӹ", "кырык мары" ],
-        "macrolang": "chm",
-        "name": "Mari, Hill",
-        "names": [ "Cheremis", "Gorno-Mariy", "High Mari", "Highland Mari", "Mari-Hills", "Western Mari" ],
-        "region": "RU",
-        "regionname": "Russian Federation",
-        "script": "Cyrl",
-        "sldr": false,
-        "tag": "mrj",
-        "tags": [ "mrj-Cyrl", "mrj-RU" ],
-        "windows": "mrj-Cyrl"
-    },
-    ...
-        {
-        "full": "chm-Cyrl-RU",
-        "iana": [ "Mari (Russia)" ],
-        "iso639_3": "chm",
-        "latnnames": [ "Olyk Marij", "Olyk Marij jylme" ],
-        "localnames": [ "олык марий", "олык марий йылме" ],
-        "name": "Mari (Russia)",
-        "names": [ "Cheremis", "Cheremiss", "Cheremissian", "Eastern Cheremis", "Eastern Mari", "Low Mari", "Lowland Mari", "Lugovo Mari", "Mari", "Mari oriental", "Mari, Meadow", "Mari-Woods", "More", "Ostčeremissisch", "Szeremissi", "Tscheremissisch", "Woods Mari", "tchérémisse", "Čeremissisch" ],
-        "region": "RU",
-        "regionname": "Russian Federation",
-        "regions": [ "KZ" ],
-        "script": "Cyrl",
-        "sldr": false,
-        "tag": "chm",
-        "tags": [ "chm-Cyrl", "chm-RU", "mhr", "mhr-Cyrl", "mhr-Cyrl-RU", "mhr-RU" ],
-        "windows": "chm-Cyrl"
+        "full": "ps-Arab-AF",
+        "iana": [ "Pushto", "Pashto" ],
+        "iso639_3": "pus",
+        "latnnames": [ "Pashto" ],
+        "localname": "پښتو",
+        "localnames": [ "پښتو" ],
+        "name": "Pushto",
+        "names": [ "Afghan", "Eastern Afghan Pashto", "Northwestern Pakhto", "Pakhto", "Pakhtoo", "Pakhtoon", "Pakhtun", "Paktu", "Pashto", "Pashto, Northern", "Pashtoon", "Pashtu", "Passtoo", "Pusto", "Sharqi", "Yousafzai Pashto", "Yusufzai Pashto" ],
+        "region": "AF",
+        "regionname": "Afghanistan",
+        "regions": [ "AE", "CA", "IN", "US" ],
+        "script": "Arab",
+        "sldr": true,
+        "suppress": true,
+        "tag": "ps",
+        "tags": [ "pbu", "pbu-AF", "pbu-Arab", "pbu-Arab-AF", "ps-AF", "ps-Arab" ],
+        "windows": "ps"
     },
     {
-        "full": "chm-Latn-RU",
-        "iana": [ "Mari (Russia)" ],
-        "iso639_3": "chm",
-        "name": "Mari (Russia)",
-        "names": [ "Cheremis", "Cheremiss", "Cheremissian", "Eastern Cheremis", "Eastern Mari", "Low Mari", "Lowland Mari", "Lugovo Mari", "Mari", "Mari oriental", "Mari, Meadow", "Mari-Woods", "More", "Ostčeremissisch", "Szeremissi", "Tscheremissisch", "Woods Mari", "tchérémisse", "Čeremissisch" ],
-        "region": "RU",
-        "regionname": "Russian Federation",
-        "regions": [ "KZ" ],
-        "script": "Latn",
-        "sldr": false,
-        "tag": "chm-Latn",
-        "tags": [ "mhr-Latn", "mhr-Latn-RU" ],
-        "windows": "chm-Latn"
+        "full": "ps-Arab-PK",
+        "iana": [ "Pushto", "Pashto" ],
+        "iso639_3": "pus",
+        "localname": "پښتو",
+        "name": "Pushto",
+        "names": [ "Pashto" ],
+        "region": "PK",
+        "regionname": "Pakistan",
+        "script": "Arab",
+        "sldr": true,
+        "tag": "ps-PK",
+        "windows": "ps-Arab-PK"
     },
-
-``` -->
-<!--
-### A more complicated example -->
-
-<!-- [`aka` (Akan) is a macro language which has individual languages `fat` (Fanti) and `twi` (Twi)](https://iso639-3.sil.org/code_tables/macrolanguage_mappings/data?code=aka&name=). However, [Akan itself is listed as a language in Ethnologue](https://www.ethnologue.com/language/aka/) and Fanti and Twi are only listed as dialects of Akan, though the page notes that "The two main subdivisions of Akan are assigned codes in the ISO 639-3 standard: Fanti (fat) and Twi (twi)." So it seems like (at least for the purposes of Bloom) we would want users to be able to pick `aka` even though it is technically a macrolanguage. And, the relevant entries in Langtags.json are as below. The `twi` code does not even show up anywhere in langtags.json at all.
-
+    {
+        "full": "pbt-Arab-AF",
+        "iana": [ "Southern Pashto" ],
+        "iso639_3": "pbt",
+        "latnnames": [ "Pax̌tō" ],
+        "localnames": [ "پښتو" ],
+        "macrolang": "ps",
+        "name": "Pashto, Southern",
+        "names": [ "Kandahari Pashto", "Paktu", "Pashtu", "Pushto", "Pushtu", "Qandahari Pashto", "Quetta-Kandahari Pashto", "Southern Pashto", "Southwestern Pashto" ],
+        "region": "AF",
+        "regionname": "Afghanistan",
+        "regions": [ "AE", "IR", "PK", "TJ", "TM" ],
+        "script": "Arab",
+        "sldr": false,
+        "tag": "pbt",
+        "tags": [ "pbt-AF", "pbt-Arab" ],
+        "windows": "pbt-Arab"
+    },
+    {
+        "full": "pst-Arab-PK",
+        "iana": [ "Central Pashto" ],
+        "iso639_3": "pst",
+        "latnnames": [ "Pashto" ],
+        "localnames": [ "پښتو" ],
+        "macrolang": "ps",
+        "name": "Pashto, Central",
+        "names": [ "Central Pashto", "Mahsudi" ],
+        "region": "PK",
+        "regionname": "Pakistan",
+        "script": "Arab",
+        "sldr": false,
+        "tag": "pst",
+        "tags": [ "pst-Arab", "pst-PK" ],
+        "windows": "pst-Arab"
+    },
 ```
-   {
-       "full": "ak-Latn-GH",
-       "iana": [ "Akan" ],
-       "iso639_3": "aka",
-       "localname": "Akan",
-       "localnames": [ "Akan" ],
-       "name": "Akan",
-       "region": "GH",
-       "regionname": "Ghana",
-       "regions": [ "AU", "CA", "GB", "LR", "NL" ],
-       "script": "Latn",
-       "sldr": true,
-       "tag": "ak",
-       "tags": [ "ak-GH", "ak-Latn", "fat", "fat-GH", "fat-Latn", "fat-Latn-GH", "tw", "tw-GH", "tw-Latn", "tw-Latn-GH" ],
-       "variants": [ "akuapem", "asante" ],
-       "windows": "ak-Latn"
-   },
-   {
-       "full": "ak-Arab-GH",
-       "iana": [ "Akan" ],
-       "iso639_3": "aka",
-       "name": "Akan",
-       "nophonvars": true,
-       "region": "GH",
-       "regionname": "Ghana",
-       "regions": [ "CA", "GB", "LR" ],
-       "script": "Arab",
-       "sldr": false,
-       "tag": "ak-Arab",
-       "windows": "ak-Arab"
-   },
-   {
-       "full": "ak-Brai-GH",
-       "iana": [ "Akan" ],
-       "iso639_3": "aka",
-       "name": "Akan",
-       "nophonvars": true,
-       "region": "GH",
-       "regionname": "Ghana",
-       "regions": [ "AU", "CA", "GB", "LR", "NL" ],
-       "script": "Brai",
-       "sldr": false,
-       "tag": "ak-Brai",
-       "tags": [ "tw-Brai", "tw-Brai-GH" ],
-       "windows": "ak-Brai"
-   },
-```
-
-TODO future work: For now, because we have at least one situation like this, we aren't blanket cutting out macrolanguages but should eventually figure out a way of determining which macrolanguages are actually valid options. -->
-
-<!-- From the ISO 639-3 site, Akan is a macrolanguage with child languages Twi and Fanti. However, in Ethnologue, Akan has a page (https://www.ethnologue.com/language/aka/) that lists Twi and Fanti as dialects, but Twi and Fanti do not have pages. In fact, the ISO 639-3 site has links attempting to access nonexistent Twi and Fanti Ethnologue pages.
-
-Relatedly, the names "Fanti" and "Twi" do not appear in connection to the ak/fat/tw languages in langtags.json, despite being the names given in ISO 639-3.
-
-Another similar situation is Sanskrit, which is also listed as a macrolanguage in ISO 639-3, and yet it has an Ethnologue page which does not call it a macrolanguage, and its child languages (Classical Sanskrit - cls and Vedic Sanskrit - vsn) do not.
-
-Are there other similar situations?
-
-I am working on the language chooser for Bloom. We usually do not want users to select macrolanguages. Would it be a problem if users can select
-languages "fat" and "twi" but not "aka" (at least not easily)?
-
-And then multiple child codes zap Set(3) { 'zap', 'zai', 'zcd' } - ZAI and ZCD listed as equivalent despite ethnologue not even saying they are closest zapotecs to each other
-
-del - us vs canada
-
-nor - ???
- -->
