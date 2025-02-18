@@ -37,6 +37,7 @@ test.describe("Language selection validity", () => {
     await expectOkButtonDisabled(page);
   });
 
+  // TODO
   test("toggling a language with only 1 script option toggles the ok button disabling", async () => {
     await search(page, "russian");
     await clickLanguageCard(page, "rus");

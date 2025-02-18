@@ -24,12 +24,13 @@ Install with npm: `npm i @ethnolib/language-chooser-react-hook`
 - `customizableLanguageDetails: ICustomizableLanguageDetails` - A React state variable for storing any custom display name, region, or dialect information the user has entered. Set by `saveLanguageDetails` and `resetTo`. Automatically cleared whenever the `selectedLanguage` changes.
 - `searchString: string` - A React state variable. Value is set by the `searchString` argument of the most recent call to `onSearchStringChange`.
 - `onSearchStringChange: (searchString: string) => void` - Should be called whenever the user makes changes to the search string (debouncing first is recommended).
-
+<!-- TODO we got rid of toggle. update -->
 - `toggleSelectLanguage: (language: ILanguage) => void` - If `language` is the `selectedLanguage`, clears the `selectedLanguage`. Otherwise, sets `selectedLanguage` to `language`. If selecting a language that has only one script option, this will automatically set `selectedScript` to that script.
 - `toggleSelectScript: (script: IScript) => void` - If `script` is the `selectedScript`, clears the `selectedScript`. Otherwise, sets `selectedScript` to `script`.
 - `isReadyToSubmit: boolean` - Returns true if the user has selected a language and, if that language requires a script selection, has selected a script.
 - `saveLanguageDetails: ( details: ICustomizableLanguageDetails, script: IScript | undefined ) => void` - Sets `customizableLanguageDetails` and `selectedScript`
 - `selectUnlistedLanguage: () => void` - Set the `selectedLanguage` to "Unknown Language" with code "qaa". To be used for languages that are not in the database.
+<!-- TODO update this file -->
 - `resetTo: (initialState: IOrthography) => void` - For restoring preexisting data when the LanguageChooser is first opened. Sets `selectedLanguage`, `selectedScript`, and `customizableLanguageDetails` to the values in `initialState`.
 
 ### Example

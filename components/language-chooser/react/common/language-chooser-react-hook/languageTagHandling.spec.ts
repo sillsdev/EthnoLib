@@ -2,8 +2,10 @@ import { expect, it, describe } from "vitest";
 import {
   defaultRegionForLangTag,
   parseLangtagFromLangChooser,
+  createTagFromOrthography,
+  languageForManuallyEnteredTag,
 } from "./languageTagHandling";
-import { getRegionBySubtag } from "@ethnolib/find-language";
+import { getRegionBySubtag, LanguageType } from "@ethnolib/find-language";
 describe("Tag parsing", () => {
   it("should find a language by 2 letter language subtag", () => {
     expect(parseLangtagFromLangChooser("ja")?.language?.exonym).toEqual(
@@ -155,5 +157,43 @@ describe("defaultRegionForLangTag", () => {
     expect(defaultRegionForLangTag("uz-Taml-x-foobar")?.name).toEqual(
       "Uzbekistan"
     );
+  });
+});
+
+describe("createTagFromOrthography", () => {
+  it("should return undefined if orthography object has no language", () => {
+    expect(createTagFromOrthography({})).toBeUndefined();
+    expect(
+      createTagFromOrthography({
+        script: { code: "foo", name: "bar" },
+        customDetails: {},
+      })
+    ).toBeUndefined();
+  });
+  it("should return the manually entered tag for the language objected created from a manually entered tag", () => {
+    const manualTag = "zz-zzz-x-foobar";
+    expect(
+      createTagFromOrthography({
+        language: languageForManuallyEnteredTag(manualTag),
+      })
+    ).toEqual(manualTag);
+  });
+  it("should ignore substring demarcation", () => {
+    expect(
+      createTagFromOrthography({
+        language: {
+          languageSubtag: "e[n]",
+          exonym: "English",
+          scripts: [],
+          iso639_3_code: "e[n]g",
+          regionNames: "",
+          names: [],
+          alternativeTags: [],
+          languageType: LanguageType.Living,
+        },
+        script: { code: "Latn", name: "Latin" },
+        customDetails: { dialect: "[foo]bar" },
+      })
+    ).toEqual("en-Latn-x-foobar");
   });
 });

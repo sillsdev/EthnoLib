@@ -97,3 +97,7 @@ describe("get maximal equivalent version of langtag", () => {
     expect(getMaximalLangtag("frm-Cyrl")).toBeUndefined();
   });
 });
+
+// TODO create tag from orthography with custom tag
+// e2e test with custom language displaying in tag
+// reopen language picker, with both manually entered and normal langtags

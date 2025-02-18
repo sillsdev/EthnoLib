@@ -37,6 +37,8 @@ export interface ILanguage {
   // See macrolanguageNotes.md
   aliasMacrolanguage?: string;
   languageType: LanguageType;
+  // This field should only be used for a language that was manually entered, i.e. the full langtag is not in langtags.json
+  manuallyEnteredTag?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // allow indexing by string
 }

@@ -27,10 +27,7 @@ export const UNLISTED_LANGUAGE = {
 export function isUnlistedLanguage(
   selectedLanguage: ILanguage | undefined
 ): boolean {
-  return (
-    !!selectedLanguage &&
-    codeMatches(selectedLanguage.iso639_3_code, UNLISTED_LANGUAGE_CODE)
-  );
+  return codeMatches(selectedLanguage?.iso639_3_code, UNLISTED_LANGUAGE_CODE);
 }
 
 const CODE_FOR_MANUALLY_ENTERED_TAG = "manuallyEnteredTag";
@@ -39,7 +36,7 @@ export function languageForManuallyEnteredTag(
 ): ILanguage {
   return {
     iso639_3_code: CODE_FOR_MANUALLY_ENTERED_TAG,
-    languageSubtag: manuallyEnteredTag,
+    languageSubtag: CODE_FOR_MANUALLY_ENTERED_TAG,
     autonym: undefined,
     exonym: "",
     regionNames: "",
@@ -47,15 +44,16 @@ export function languageForManuallyEnteredTag(
     alternativeTags: [],
     names: [],
     languageType: LanguageType.Custom,
+    manuallyEnteredTag,
   } as ILanguage;
 }
 
 export function isManuallyEnteredTagLanguage(
   selectedLanguage: ILanguage | undefined
 ): boolean {
-  return (
-    !!selectedLanguage &&
-    codeMatches(selectedLanguage.iso639_3_code, CODE_FOR_MANUALLY_ENTERED_TAG)
+  return codeMatches(
+    selectedLanguage?.iso639_3_code,
+    CODE_FOR_MANUALLY_ENTERED_TAG
   );
 }
 
