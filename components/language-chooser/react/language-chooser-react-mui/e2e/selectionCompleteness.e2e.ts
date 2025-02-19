@@ -70,4 +70,30 @@ test.describe("Language selection validity", () => {
     await search(page, "foobar");
     await expectOkButtonDisabled(page);
   });
+
+  test("Ok button disables if display name is empty", async () => {
+    await selectChechenCyrlCard(page);
+    await expectOkButtonEnabled(page);
+    await page.locator("#language-name-bar").fill("");
+    await expectOkButtonDisabled(page);
+  });
+
+  test("If manually selected language tag, OK is disabled until display name is entered then enabled", async () => {
+    await page.getByTestId("customization-button").click();
+    const customizationDialogTagPreview = await page.getByTestId(
+      "customization-dialog-tag-preview"
+    );
+    await expect(customizationDialogTagPreview).toBeVisible();
+    // clicking the tag preview will trigger a windows.prompt dialog, enter zzz into it
+    page.on("dialog", (dialog) => dialog.accept("zzz"));
+    await customizationDialogTagPreview.click({ modifiers: ["Control"] });
+    await expect(customizationDialogTagPreview).not.toBeVisible();
+    // We should be forcing the user to enter a display name
+    await expect(page.locator("#language-name-bar")).toHaveText("");
+    // And giving them the red "required" label until they do
+    await expect(page.getByText("required")).toBeVisible();
+    await expectOkButtonDisabled(page);
+    await page.locator("#language-name-bar").fill("foobar");
+    await expectOkButtonEnabled(page);
+  });
 });
