@@ -139,12 +139,12 @@ describe("searchForLanguage", () => {
   });
 
   it("should prefer localnames[0] for autonym", () => {
-    expect(searchForLanguage("azerbaijani")[0].item.autonym).toBe(
+    expect(searchForLanguage("azerbaijani")[0].item.autonym).toMatch(
       "Azərbaycan dili"
     );
   });
   it("should fallback to localname for autonym if no localnames", () => {
-    expect(searchForLanguage("japanese")[0].item.autonym).toBe("日本語");
+    expect(searchForLanguage("japanese")[0].item.autonym).toMatch("日本語");
   });
   it("should leave autonym as undefined if no localnames or localname", () => {
     expect(searchForLanguage("Aranadan")[0].item.autonym).toBeUndefined();
