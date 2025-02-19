@@ -1,23 +1,17 @@
 import { test, expect, Page } from "@playwright/test";
 import {
   clearSearch,
+  clickCustomizationButton,
   clickLanguageCard,
   createPageAndLoadLanguageChooser,
+  customizationButtonLocator,
   findChechenCyrlCard,
   loadLanguageChooser,
+  manuallyEnterLanguageTag,
   scriptCardTestId,
   search,
   selectChechenCard,
 } from "./e2eHelpers";
-
-function customizationButtonLocator(page) {
-  return page.getByTestId("customization-button");
-}
-
-async function clickCustomizationButton(page) {
-  const button = await customizationButtonLocator(page);
-  await button.click();
-}
 
 function customizationDialogLocator(page) {
   return page.getByTestId("customization-dialog");
@@ -77,19 +71,23 @@ function enterName(customizationDialog, name) {
 
 let page: Page; // All the tests in this file use the same page object to save time; we only reload the language chooser when necessary
 
+async function resetBeforeEach() {
+  // close customization dialog if open
+  const customizationDialog = await customizationDialogLocator(page);
+  if (await customizationDialog.isVisible()) {
+    await cancelButtonLocator(customizationDialog).click();
+  }
+  // clear search
+  await clearSearch(page);
+}
+
 test.describe("Customization button and dialog", () => {
   test.beforeAll(async ({ browser }) => {
     page = await createPageAndLoadLanguageChooser(browser);
   });
 
   test.beforeEach(async () => {
-    // close customization dialog if open
-    const customizationDialog = await customizationDialogLocator(page);
-    if (await customizationDialog.isVisible()) {
-      await cancelButtonLocator(customizationDialog).click();
-    }
-    // clear search
-    await clearSearch(page);
+    resetBeforeEach();
   });
 
   test("no language selected, button should say 'Create Unlisted Language'", async () => {
@@ -103,6 +101,23 @@ test.describe("Customization button and dialog", () => {
     const customizationButton = await customizationButtonLocator(page);
     await expect(customizationButton).toHaveText(/Customize.*/);
     await expect(customizationButton.getByTestId("EditIcon")).toBeVisible();
+  });
+
+  test("if manually entered language tag, button should say 'Edit Language Tag'", async () => {
+    await manuallyEnterLanguageTag(page, "zzz-Foo-x-barbaz");
+    const customizationButton = await customizationButtonLocator(page);
+    await expect(customizationButton).toHaveText(/Edit Language Tag.*/);
+    await expect(customizationButton.getByTestId("EditIcon")).toBeVisible();
+  });
+
+  test("if manually entered language tag, clicking button should open windows prompt to edit the tag", async () => {
+    await manuallyEnterLanguageTag(page, "zzz-Foo-x-barbaz");
+    await page.on("dialog", (dialog) => {
+      expect(dialog.type()).toBe("prompt");
+      expect(dialog.message()).toBe(
+        /.*If this user interface is not offering you a code that you know is valid ISO 639 code, you can enter it here.*/
+      );
+    });
   });
 
   test("dialog starts closed; open and cancel dialog", async () => {
@@ -312,5 +327,46 @@ test.describe("Customization button and dialog", () => {
     const customizationDialog = await customizationDialogLocator(page);
     await expect(customizationDialog).toBeVisible();
     await expect(customizationDialog.getByLabel("Name")).toHaveValue("foo");
+  });
+});
+
+test.describe("Manually entered language tag behavior", () => {
+  test.beforeAll(async ({ browser }) => {
+    page = await createPageAndLoadLanguageChooser(browser);
+  });
+
+  test.beforeEach(async () => {
+    resetBeforeEach();
+  });
+
+  test("invalid manually entered tag gets rejected, leaves selection untouched", async () => {
+    await selectChechenCard(page);
+    await clickCustomizationButton(page);
+    const customizationDialogTagPreview = await page.getByTestId(
+      "customization-dialog-tag-preview"
+    );
+    const chechenTag = "che-Cyrl";
+    await expect(customizationDialogTagPreview).toContainText(chechenTag);
+    // clicking the tag preview will trigger a windows.prompt dialog, enter an invalid tag
+    page.on("dialog", (dialog) => dialog.accept("invalid-tag!"));
+    await customizationDialogTagPreview.click({ modifiers: ["Control"] });
+    // Dialog should still be up with chechen tag
+    await expect(customizationDialogTagPreview).toContainText(chechenTag);
+  });
+
+  test("response to valid manually entered language tag submission", async () => {
+    const tag = "zzz-Foo-x-barbaz";
+    await manuallyEnterLanguageTag(page, tag);
+    // expect tag to be visible on the right panel
+    await expect(page.getByTestId("right-panel-langtag-preview")).toContainText(
+      tag
+    );
+
+    // Should have closed the dialog
+    await expect(customizationDialogLocator(page)).not.toBeVisible();
+
+    // search should be cleared and there should be no option cards
+    await expect(page.locator("#search-bar").inputValue()).toBe("");
+    await expect(page.locator(".option-card-button").count()).toBe(0);
   });
 });

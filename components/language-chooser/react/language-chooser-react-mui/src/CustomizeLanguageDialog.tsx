@@ -2,7 +2,9 @@
 import { css } from "@emotion/react";
 import * as React from "react";
 import {
+  isValidBcp47Tag,
   ICustomizableLanguageDetails,
+  isManuallyEnteredTagLanguage,
   isUnlistedLanguage,
 } from "@ethnolib/language-chooser-react-hook";
 import {
@@ -16,8 +18,12 @@ import {
   Typography,
   Card,
   useTheme,
+  Tooltip,
+  Stack,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import WarningIcon from "@mui/icons-material/Warning";
 import { TextInput } from "./TextInput";
 import {
   getAllRegions,
@@ -60,6 +66,10 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
     script: IScript | undefined
   ) => void;
   selectUnlistedLanguage: () => void;
+  promptForManualTagEntry: (
+    defaultValue: string | undefined,
+    cancelIfEmtpy?: boolean
+  ) => void;
   searchString: string;
   onClose: () => void;
 }> = (props) => {
@@ -83,7 +93,10 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   // name (dialect) and country (region) are required for unlisted language
   const isReadyToSubmit =
     !isUnlistedLanguageDialog ||
-    (dialogSelectedDialect !== "" && dialogSelectedRegion.label !== "");
+    (dialogSelectedDialect !== "" &&
+      dialogSelectedRegion.label !== "" &&
+      !isManuallyEnteredTagLanguage(props.selectedLanguage)) ||
+    isValidBcp47Tag(props.selectedLanguage?.languageSubtag);
 
   const theme = useTheme();
 
@@ -261,23 +274,90 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             }}
           />
         )}
-        <Typography>
-          BCP 47 Tag:{" "}
-          <span
+        <div
+          onClick={(event) => {
+            if (event.ctrlKey) {
+              props.promptForManualTagEntry(undefined, true);
+            }
+          }}
+          css={css`
+            // Since we are trying to detect CTRL+clicks on this so it should be about the size of its visible contents
+            width: fit-content;
+          `}
+        >
+          <Typography
+            data-testid="customization-dialog-tag-preview"
             css={css`
-              font-weight: bold;
+              // We will be trying to detect CTRL+clicks on this so it should be about the size of its visible contents
+              width: fit-content;
             `}
           >
-            {createTag({
-              languageCode: stripDemarcation(
-                props.selectedLanguage?.languageSubtag
-              ),
-              scriptCode: stripDemarcation(dialogSelectedScript?.id),
-              regionCode: stripDemarcation(dialogSelectedRegion?.id),
-              dialectCode: stripDemarcation(dialogSelectedDialect),
-            })}
-          </span>
-        </Typography>
+            BCP 47 Tag:{" "}
+            <span
+              css={css`
+                font-weight: bold;
+              `}
+            >
+              {createTag({
+                languageCode: stripDemarcation(
+                  props.selectedLanguage?.languageSubtag
+                ),
+                scriptCode: stripDemarcation(dialogSelectedScript?.id),
+                regionCode: stripDemarcation(dialogSelectedRegion?.id),
+                dialectCode: stripDemarcation(dialogSelectedDialect),
+              })}
+            </span>
+            <Tooltip
+              title={
+                <div
+                  css={css`
+                    font-size: 0.75rem;
+                  `}
+                >
+                  {/* Have MUI align the icon */}
+                  <Stack alignItems="center" direction="row" gap={0.5}>
+                    <WarningIcon
+                      css={css`
+                        font-size: inherit;
+                      `}
+                    />
+                    <Typography
+                      css={css`
+                        font-size: inherit;
+                      `}
+                    >
+                      Advanced
+                    </Typography>
+                  </Stack>
+
+                  <Typography
+                    css={css`
+                      font-size: inherit;
+                      a {
+                        color: inherit; // same color as the rest of the text. Otherwise it is by default hard to see on the dark background
+                      }
+                    `}
+                  >
+                    If this user interface is not offering you a code that you
+                    know is valid{" "}
+                    <a href="https://en.wikipedia.org/wiki/IETF_language_tag">
+                      BCP 47 code
+                    </a>
+                    , you can enter it by hand. Hold down CTRL key while
+                    clicking on this tag.
+                  </Typography>
+                </div>
+              }
+            >
+              <InfoOutlinedIcon
+                css={css`
+                  margin-left: 5px;
+                  font-size: inherit;
+                `}
+              />
+            </Tooltip>
+          </Typography>
+        </div>
       </DialogContent>
       {/* // TODO abstract out these buttons which are copied from app.tsx */}
       <DialogActions

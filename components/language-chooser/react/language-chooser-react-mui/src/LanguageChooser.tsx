@@ -2,26 +2,27 @@
 import { css, ThemeProvider } from "@emotion/react";
 
 import {
+  Button,
   createTheme,
   Icon,
   IconButton,
   InputAdornment,
-  lighten,
   List,
   ListItem,
   OutlinedInput,
+  Stack,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
-
+import EditIcon from "@mui/icons-material/Edit";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   codeMatches,
   ILanguage,
   IScript,
-  stripDemarcation,
-  createTag,
   deepStripDemarcation,
 } from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
@@ -32,10 +33,12 @@ import {
   IOrthography,
   ILanguageChooser,
   createTagFromOrthography,
+  isManuallyEnteredTagLanguage,
+  isValidBcp47Tag,
+  isReadyToSubmit,
 } from "@ethnolib/language-chooser-react-hook";
 import { debounce } from "lodash";
 import "./styles.css";
-import { CustomizeLanguageButton } from "./CustomizeLanguageButton";
 import { useEffect, useRef, useState } from "react";
 import { CustomizeLanguageDialog } from "./CustomizeLanguageDialog";
 import LazyLoad from "react-lazyload";
@@ -159,7 +162,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
 
   useEffect(() => {
     if (props.onSelectionChange) {
-      if (lp.isReadyToSubmit) {
+      if (lp.readyToSubmit) {
         const resultingOrthography = deepStripDemarcation({
           language: lp.selectedLanguage,
           script: lp.selectedScript,
@@ -187,16 +190,15 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
     useState(false);
 
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
-  const currentTagPreview = createTag({
-    languageCode: stripDemarcation(lp.selectedLanguage?.languageSubtag),
-    scriptCode: stripDemarcation(lp.selectedScript?.code),
-    regionCode: stripDemarcation(lp.customizableLanguageDetails?.region?.code),
-    dialectCode: lp.selectedLanguage
-      ? lp.customizableLanguageDetails?.dialect
-      : lp.searchString, // we put the searchString in only when there is no language selected.
+  const currentTagPreview = createTagFromOrthography({
+    language: lp.selectedLanguage,
+    script: lp.selectedScript,
+    customDetails: lp.selectedLanguage
+      ? lp.customizableLanguageDetails
+      : { dialect: lp.searchString }, // we put the searchString in only when there is no language selected.
     // And in that case we don't show a language tag preview on the right panel anyway. Therefore the
     // search string never shows up in the right panel tag preview
-  });
+  } as IOrthography);
 
   let searchInputRef: HTMLInputElement | null = null;
   const clearSearchText = () => {
@@ -212,6 +214,58 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
     ...originalTheme,
     typography: languageChooserTypography,
   });
+
+  function toggleSelectLanguage(language: ILanguage) {
+    if (
+      codeMatches(language.iso639_3_code, lp.selectedLanguage?.iso639_3_code)
+    ) {
+      // Clicking on the selected language unselects it
+      lp.clearLanguageSelection();
+    } else {
+      lp.selectLanguage(language);
+    }
+  }
+
+  function toggleSelectScript(script: IScript) {
+    if (codeMatches(script.code, lp.selectedScript?.code)) {
+      // clicking on the selected script unselects it
+      lp.clearScriptSelection();
+    } else {
+      lp.selectScript(script);
+    }
+  }
+
+  const showUnlistedLanguageOptions =
+    !lp.selectedLanguage || isUnlistedLanguage(lp.selectedLanguage);
+
+  const manualTagLanguageSelected = isManuallyEnteredTagLanguage(
+    lp.selectedLanguage
+  );
+
+  function promptForManualTagEntry(
+    defaultValue: string | undefined,
+    cancelIfEmpty?: boolean // If true, then pressing ok with empty input is treated the same as pressing cancel, otherwise it will clear the selection
+    // Probably makes sense to use cancelIfEmpty when there is no default value
+  ): void {
+    const customTag = window.prompt(
+      "If this user interface is not offering you a code that you know is valid ISO 639 code, you can enter it here:",
+      defaultValue
+    );
+    if (customTag === null || (cancelIfEmpty && customTag.length === 0)) {
+      return;
+    }
+    if (customTag && !isValidBcp47Tag(customTag)) {
+      alert(`This is not in a valid IETF BCP 47 format: ${customTag}`);
+      return;
+    }
+    // clear previous search string and selection
+    clearSearchText();
+    setCustomizeLanguageDialogOpen(false);
+
+    if (customTag.length > 0) {
+      lp.selectManuallyEnteredTagLanguage(customTag);
+    }
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -326,7 +380,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                       `}
                       languageCardData={language}
                       isSelected={isSelectedLanguageCard}
-                      onClick={() => lp.toggleSelectLanguage(language)}
+                      onClick={() => toggleSelectLanguage(language)}
                       // If languageCardBackgroundColorOverride is not provided, LanguageCard will fall back toa default based on the primary color
                       backgroundColorWhenSelected={
                         props.languageCardBackgroundColorOverride
@@ -367,7 +421,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                                     script.code,
                                     lp.selectedScript?.code
                                   )}
-                                  onClick={() => lp.toggleSelectScript(script)}
+                                  onClick={() => toggleSelectScript(script)}
                                   // If scriptCardBackgroundColorOverride is not provided, ScriptCard will fall back to a default based on the primary color
                                   backgroundColorWhenSelected={
                                     props.scriptCardBackgroundColorOverride
@@ -386,18 +440,108 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
               );
             })}
           </div>
-          <div id="bottom-of-left-pane">
-            <CustomizeLanguageButton
-              currentTagPreview={currentTagPreview}
-              forUnlistedLanguage={
-                !lp.selectedLanguage || isUnlistedLanguage(lp.selectedLanguage)
-              }
+          <div
+            id="bottom-of-left-pane"
+            css={css`
+              padding-top: 10px;
+            `}
+          >
+            <Button
+              data-testid="customization-button"
+              variant="outlined"
+              color="primary"
               css={css`
                 min-width: 60%;
-                margin-top: 10px;
+                border: 1.5px solid ${theme.palette.grey[300]};
+                :hover {
+                  border-color: ${theme.palette.text.primary};
+                }
+                background-color: ${theme.palette.background.paper};
+                box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                text-transform: none;
+                padding: 5px 7px;
               `}
-              onClick={() => setCustomizeLanguageDialogOpen(true)}
-            ></CustomizeLanguageButton>
+              onClick={() =>
+                manualTagLanguageSelected
+                  ? promptForManualTagEntry(currentTagPreview)
+                  : setCustomizeLanguageDialogOpen(true)
+              }
+            >
+              {/* Have MUI align the icon */}
+              <Stack
+                alignItems="center"
+                direction="row"
+                gap={0.5}
+                css={css`
+                  color: ${theme.palette.text.primary};
+                `}
+              >
+                {!showUnlistedLanguageOptions && (
+                  <EditIcon
+                    css={css`
+                      font-size: 1rem;
+                    `}
+                  />
+                )}
+                <Typography
+                  css={css`
+                    text-transform: uppercase;
+                    font-size: 0.75rem;
+                    font-weight: bold;
+                  `}
+                >
+                  {showUnlistedLanguageOptions
+                    ? "Create Unlisted Language"
+                    : manualTagLanguageSelected
+                      ? "Edit Language Tag"
+                      : "Customize"}
+                </Typography>
+              </Stack>
+
+              <div
+                css={css`
+                  display: flex;
+                  align-items: center;
+                  width: 100%;
+                  justify-content: space-between;
+                `}
+              >
+                <Typography
+                  variant="body2"
+                  css={css`
+                    text-align: left;
+                    color: ${theme.palette.grey[700]};
+                  `}
+                >
+                  {currentTagPreview}
+                </Typography>
+                {!manualTagLanguageSelected && (
+                  <Tooltip
+                    title={
+                      <Typography
+                        css={css`
+                          font-size: 0.75rem;
+                        `}
+                      >
+                        {showUnlistedLanguageOptions
+                          ? "If you cannot find a language and it does not appear in ethnologue.com, you can instead define the language here."
+                          : "If you found the main language but need to change some of the specifics like Script or Dialect, you can do that here."}
+                      </Typography>
+                    }
+                  >
+                    <InfoOutlinedIcon
+                      css={css`
+                        color: ${theme.palette.grey[700]};
+                        margin-left: 10px;
+                      `}
+                    />
+                  </Tooltip>
+                )}
+              </div>
+            </Button>
           </div>
         </div>
         <div
@@ -421,6 +565,19 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                 <FormFieldLabel
                   htmlFor="language-name-bar"
                   label="Display this language this way"
+                  required={
+                    // If submission is prevented only because a display name is still needed, show the red "required" label
+                    !lp.readyToSubmit &&
+                    // We would be ready to submit if we just added a display name
+                    isReadyToSubmit({
+                      language: lp.selectedLanguage,
+                      script: lp.selectedScript,
+                      customDetails: {
+                        ...lp.customizableLanguageDetails,
+                        displayName: "hypotheticalDisplayName",
+                      },
+                    })
+                  }
                 />
                 <OutlinedInput
                   type="text"
@@ -449,6 +606,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                 />
                 <Typography
                   variant="body2"
+                  data-testid="right-panel-langtag-preview"
                   css={css`
                     color: ${theme.palette.grey[700]};
                   `}
@@ -469,6 +627,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
         customizableLanguageDetails={lp.customizableLanguageDetails}
         saveLanguageDetails={lp.saveLanguageDetails}
         selectUnlistedLanguage={lp.selectUnlistedLanguage}
+        promptForManualTagEntry={promptForManualTagEntry}
         searchString={lp.searchString}
         onClose={() => setCustomizeLanguageDialogOpen(false)}
       />

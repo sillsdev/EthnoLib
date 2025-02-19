@@ -73,3 +73,26 @@ export async function selectChechenCyrlCard(page) {
   await cyrlCard.click();
   return cyrlCard;
 }
+
+export function customizationButtonLocator(page) {
+  return page.getByTestId("customization-button");
+}
+
+export async function clickCustomizationButton(page) {
+  const button = await customizationButtonLocator(page);
+  await button.click();
+}
+
+// Should only be used with valid BCP 47 tags
+export async function manuallyEnterLanguageTag(page, tag) {
+  await clickCustomizationButton(page);
+  const customizationDialogTagPreview = await page.getByTestId(
+    "customization-dialog-tag-preview"
+  );
+  await expect(customizationDialogTagPreview).toBeVisible();
+  // clicking the tag preview will trigger a windows.prompt dialog, enter zzz into it
+  page.on("dialog", (dialog) => dialog.accept(tag));
+  await customizationDialogTagPreview.click({ modifiers: ["Control"] });
+  // Check that the tag was accepted. Not a robust check, but see that it is at least visible somewhere
+  await expect(page.getByText(/.*tag.*/)).toBeVisible();
+}

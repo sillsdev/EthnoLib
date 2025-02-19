@@ -22,6 +22,8 @@ export function getMaximalLangtag(langtag: string): string | undefined {
   return maximalTagLookup.get(langtag.toLowerCase());
 }
 
+// This is pretty naive. If you are using the language-chooser-react-hook and there may be a manually entered language
+// tag or bracket demarcation, use createTagFromOrthography in language-chooser-react-hook instead
 export function createTag({
   languageCode,
   scriptCode,
@@ -32,7 +34,7 @@ export function createTag({
   scriptCode?: string;
   regionCode?: string;
   dialectCode?: string;
-}) {
+}): string {
   let tag = "";
   if (languageCode) {
     tag += languageCode;
@@ -49,10 +51,10 @@ export function createTag({
   // TODO future work: If we ever make the language chooser aware of registered variants, some should not be preceded by the "-x-"
   // For example, compare aai-x-suboro and be-tarask in langtags.txt and langtags.json
   if (!languageCode || dialectCode) {
-    tag += "-x";
+    tag += "-x-";
   }
   if (dialectCode) {
-    tag += `-${dialectCode}`;
+    tag += `${dialectCode}`;
   }
   return getShortestSufficientLangtag(tag) || tag;
 }
