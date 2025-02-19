@@ -2,8 +2,14 @@ import { expect, it, describe } from "vitest";
 import {
   defaultRegionForLangTag,
   parseLangtagFromLangChooser,
+  createTagFromOrthography,
+  languageForManuallyEnteredTag,
+  isValidBcp47Tag,
+  isManuallyEnteredTagLanguage,
+  UNLISTED_LANGUAGE,
+  isUnlistedLanguage,
 } from "./languageTagHandling";
-import { getRegionBySubtag } from "@ethnolib/find-language";
+import { getRegionBySubtag, LanguageType } from "@ethnolib/find-language";
 describe("Tag parsing", () => {
   it("should find a language by 2 letter language subtag", () => {
     expect(parseLangtagFromLangChooser("ja")?.language?.exonym).toEqual(
@@ -155,5 +161,96 @@ describe("defaultRegionForLangTag", () => {
     expect(defaultRegionForLangTag("uz-Taml-x-foobar")?.name).toEqual(
       "Uzbekistan"
     );
+  });
+});
+
+describe("createTagFromOrthography", () => {
+  it("should return qaa-x- if orthography object has no language", () => {
+    expect(createTagFromOrthography({})).toEqual("qaa-x-");
+    expect(
+      createTagFromOrthography({
+        customDetails: { dialect: "foobar" },
+      })
+    ).toEqual("qaa-x-foobar");
+  });
+  it("should return the manually entered tag for the language objected created from a manually entered tag", () => {
+    const manualTag = "zz-zzz-x-foobar";
+    expect(
+      createTagFromOrthography({
+        language: languageForManuallyEnteredTag(manualTag),
+      })
+    ).toEqual(manualTag);
+  });
+  it("should ignore substring demarcation", () => {
+    expect(
+      createTagFromOrthography({
+        language: {
+          languageSubtag: "e[n]",
+          exonym: "English",
+          scripts: [],
+          iso639_3_code: "e[n]g",
+          regionNames: "",
+          names: [],
+          alternativeTags: [],
+          languageType: LanguageType.Living,
+        },
+        script: { code: "Latn", name: "Latin" },
+        customDetails: { dialect: "[foo]bar" },
+      })
+    ).toEqual("en-Latn-x-foobar");
+  });
+});
+
+describe("isValidBcp47Tag checking is sane", () => {
+  it("should return true for normal valid tags", () => {
+    expect(isValidBcp47Tag("en")).toBeTruthy();
+    expect(isValidBcp47Tag("en-Latn")).toBeTruthy();
+    expect(isValidBcp47Tag("en-Latn-US")).toBeTruthy();
+    expect(isValidBcp47Tag("en-Latn-US-x-foobar")).toBeTruthy();
+    expect(isValidBcp47Tag("en-x-foobar")).toBeTruthy();
+    expect(isValidBcp47Tag("en-US")).toBeTruthy();
+  });
+
+  it("should return true for macrolang-indiv lang formatted tags, including sign language tags", () => {
+    expect(isValidBcp47Tag("zh-cmn")).toBeTruthy();
+    expect(isValidBcp47Tag("sgn-ads-GH")).toBeTruthy();
+  });
+
+  it("should return true for unrecognized tags in the right format", () => {
+    expect(isValidBcp47Tag("zzz")).toBeTruthy();
+    expect(isValidBcp47Tag("zz-zzz-Zfoo-ZZ")).toBeTruthy();
+  });
+
+  it("should return true for BCP-47 recognized irregular and regular tags", () => {
+    expect(isValidBcp47Tag("en-GB-oed")).toBeTruthy();
+    expect(isValidBcp47Tag("i-ami")).toBeTruthy();
+    expect(isValidBcp47Tag("i-navajo")).toBeTruthy();
+    expect(isValidBcp47Tag("art-lojban")).toBeTruthy();
+  });
+  it("should return true for singleton-format BCP-47 tags", () => {
+    expect(isValidBcp47Tag("en-a-bbb-x-a-ccc")).toBeTruthy();
+    expect(
+      isValidBcp47Tag("en-Latn-GB-boont-r-extended-sequence-x-private")
+    ).toBeTruthy();
+  });
+  it("should return false for various invalid formats", () => {
+    expect(isValidBcp47Tag("")).toBeFalsy();
+    expect(isValidBcp47Tag("en-")).toBeFalsy();
+    expect(isValidBcp47Tag("en-Latn-")).toBeFalsy();
+    expect(isValidBcp47Tag("e")).toBeFalsy();
+    expect(
+      isValidBcp47Tag("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    ).toBeFalsy();
+  });
+});
+
+describe("sanity checks for isUnlistedLanguage and isManuallyEnteredTagLanguage", () => {
+  it("isUnlistedLanguage returns true for a UNLISTED_LANGUAGE", () => {
+    expect(isUnlistedLanguage(UNLISTED_LANGUAGE)).toEqual(true);
+  });
+  it("languageForManuallyEnteredTag creates a language that isManuallyEnteredTagLanguage", () => {
+    expect(
+      isManuallyEnteredTagLanguage(languageForManuallyEnteredTag("foo"))
+    ).toEqual(true);
   });
 });
