@@ -33,13 +33,13 @@ jobs:
 
       # We've configured nx to update version numbers in the primary package.json files (rather than in the dist builds to be published)
       # Therefore this step must be done before build so that the new version numbers are copied to dist/package.json
-      - name: Update version numbers in the persistant package.json files
+      - name: Update version numbers in the persistent package.json files
         run: npx nx release version
 
       - name: Build package
         run: npx nx build @ethnolib/language-chooser-react-mui
 
-      # find-language is a dependency of langauge-chooser-react-mui so it will have been built in the build step
+      # find-language is a dependency of language-chooser-react-mui so it will have been built in the build step
       - name: Run unit tests
         run: npx nx run-many --all --target=test
 
