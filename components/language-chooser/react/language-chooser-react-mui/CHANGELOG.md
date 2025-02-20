@@ -1,3 +1,16 @@
+## 0.0.30 (2025-02-20)
+
+
+### 🩹 Fixes
+
+- BL-14201 more changes to macrolanguage handling ([c97e6c6](https://github.com/sillsdev/EthnoLib/commit/c97e6c6))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.13
+- Updated @ethnolib/find-language to 0.0.19
+
 ## 0.0.29 (2025-01-30)
 
 

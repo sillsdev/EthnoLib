@@ -1,3 +1,10 @@
+## 0.0.19 (2025-02-20)
+
+
+### 🩹 Fixes
+
+- BL-14201 more changes to macrolanguage handling ([c97e6c6](https://github.com/sillsdev/EthnoLib/commit/c97e6c6))
+
 ## 0.0.18 (2025-01-30)
 
 

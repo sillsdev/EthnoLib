@@ -1,3 +1,15 @@
+## 0.0.13 (2025-02-20)
+
+
+### 🩹 Fixes
+
+- BL-14201 more changes to macrolanguage handling ([c97e6c6](https://github.com/sillsdev/EthnoLib/commit/c97e6c6))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.0.19
+
 ## 0.0.12 (2025-01-28)
 
 
