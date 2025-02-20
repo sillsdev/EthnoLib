@@ -35,7 +35,7 @@ async function enterScript(customizationDialog, scriptName) {
     .locator("#customize-script-field-wrapper")
     .getByLabel("Open")
     .click();
-  await customizationDialog.getByRole("option", { name: scriptName }).click();
+  await page.getByRole("option", { name: scriptName }).click();
 }
 
 function regionFieldLocator(customizationDialog) {
@@ -48,7 +48,7 @@ async function enterRegion(customizationDialog, regionName) {
     .locator("#customize-region-field-wrapper")
     .getByLabel("Open")
     .click();
-  await customizationDialog.getByRole("option", { name: regionName }).click();
+  await page.getByRole("option", { name: regionName }).click();
 }
 
 function variantFieldLocator(customizationDialog) {
@@ -290,7 +290,7 @@ test.describe("Customization button and dialog", () => {
       .locator("#customize-script-field-wrapper")
       .getByLabel("Open")
       .click();
-    await customizationDialog
+    await page
       .getByRole("option", { name: "Arabic" })
       .filter({ hasNotText: "Arabic (Nastaliq variant)" })
       .click();
