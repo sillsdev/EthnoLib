@@ -1,3 +1,10 @@
+## 0.0.31 (2025-02-20)
+
+
+### 🩹 Fixes
+
+- BL-14355 don't preselect default script ([a5b3029](https://github.com/sillsdev/EthnoLib/commit/a5b3029))
+
 ## 0.0.30 (2025-02-20)
 
 
