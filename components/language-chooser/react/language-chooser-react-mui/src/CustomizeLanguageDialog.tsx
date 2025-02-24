@@ -216,7 +216,6 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               ) => {
                 setDialogSelectedScript(newValue || EMPTY_COMBOBOX_VALUE);
               }}
-              disablePortal
               options={getAllScriptOptions()}
               renderInput={(params) => <TextField {...params} />}
               size={"small"}
@@ -239,7 +238,6 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             ) => {
               setDialogSelectedRegion(newValue || EMPTY_COMBOBOX_VALUE);
             }}
-            disablePortal
             options={getAllRegionOptions()}
             renderInput={(params) => <TextField {...params} />}
             size={"small"}
