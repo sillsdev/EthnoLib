@@ -103,7 +103,6 @@ export function getLanguageBySubtag(code: string): ILanguage | undefined {
   const fuse = new Fuse(languages as ILanguage[], {
     keys: ["languageSubtag", "iso639_3_code"],
     threshold: 0, // exact matches only
-    findAllMatches: true, // in case one is a macrolanguage
   });
   const results = fuse.search(code);
   return results[0]?.item;

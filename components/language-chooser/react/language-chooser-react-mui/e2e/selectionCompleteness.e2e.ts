@@ -4,6 +4,7 @@ import {
   clickLanguageCard,
   createPageAndLoadLanguageChooser,
   findChechenCyrlCard,
+  manuallyEnterValidLanguageTag,
   search,
   selectChechenCyrlCard,
 } from "./e2eHelpers";
@@ -69,5 +70,23 @@ test.describe("Language selection validity", () => {
     await selectChechenCyrlCard(page);
     await search(page, "foobar");
     await expectOkButtonDisabled(page);
+  });
+
+  test("Ok button disables if display name is empty", async () => {
+    await selectChechenCyrlCard(page);
+    await expectOkButtonEnabled(page);
+    await page.locator("#language-name-bar").fill("");
+    await expectOkButtonDisabled(page);
+  });
+
+  test("If manually selected language tag, OK is disabled until display name is entered then enabled", async () => {
+    await manuallyEnterValidLanguageTag(page, "zzz");
+    // We should be forcing the user to enter a display name
+    await expect(page.locator("#language-name-bar")).toHaveText("");
+    // And giving them the red "required" label until they do
+    await expect(page.getByText("required")).toBeVisible();
+    await expectOkButtonDisabled(page);
+    await page.locator("#language-name-bar").fill("foobar");
+    await expectOkButtonEnabled(page);
   });
 });
