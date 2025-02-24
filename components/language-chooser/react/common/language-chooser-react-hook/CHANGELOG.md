@@ -1,3 +1,15 @@
+## 0.0.14 (2025-02-24)
+
+
+### 🩹 Fixes
+
+- BL-14203 manual override for langtags ([2a6ced8](https://github.com/sillsdev/EthnoLib/commit/2a6ced8))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.0.20
+
 ## 0.0.13 (2025-02-20)
 
 

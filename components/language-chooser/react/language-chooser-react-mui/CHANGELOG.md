@@ -1,3 +1,16 @@
+## 0.0.32 (2025-02-24)
+
+
+### 🩹 Fixes
+
+- BL-14203 manual override for langtags ([2a6ced8](https://github.com/sillsdev/EthnoLib/commit/2a6ced8))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.14
+- Updated @ethnolib/find-language to 0.0.20
+
 ## 0.0.31 (2025-02-20)
 
 

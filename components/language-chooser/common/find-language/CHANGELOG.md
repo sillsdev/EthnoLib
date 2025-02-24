@@ -1,3 +1,10 @@
+## 0.0.20 (2025-02-24)
+
+
+### 🩹 Fixes
+
+- BL-14203 manual override for langtags ([2a6ced8](https://github.com/sillsdev/EthnoLib/commit/2a6ced8))
+
 ## 0.0.19 (2025-02-20)
 
 
