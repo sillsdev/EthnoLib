@@ -18,6 +18,7 @@ import {
   Typography,
   Card,
   useTheme,
+  Tooltip,
   Stack,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
@@ -34,7 +35,6 @@ import {
   createTag,
 } from "@ethnolib/find-language";
 import { FormFieldLabel } from "./FormFieldLabel";
-import { PrimaryTooltip } from "./PrimaryTooltip";
 
 // ISO-3166-1 is a region code to region name lookup
 function getAllRegionOptions() {
@@ -309,7 +309,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                 dialectCode: stripDemarcation(dialogSelectedDialect),
               })}
             </span>
-            <PrimaryTooltip
+            <Tooltip
               title={
                 <div
                   css={css`
@@ -357,7 +357,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                   font-size: inherit;
                 `}
               />
-            </PrimaryTooltip>
+            </Tooltip>
           </Typography>
         </div>
       </DialogContent>
