@@ -4,6 +4,7 @@ import { css, ThemeProvider } from "@emotion/react";
 import {
   Button,
   createTheme,
+  Fade,
   Icon,
   IconButton,
   InputAdornment,
@@ -11,7 +12,6 @@ import {
   ListItem,
   OutlinedInput,
   Stack,
-  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -45,6 +45,7 @@ import LazyLoad from "react-lazyload";
 import { FuseResult } from "fuse.js";
 import { FormFieldLabel } from "./FormFieldLabel";
 import { TypographyOptions } from "@mui/material/styles/createTypography";
+import { PrimaryTooltip } from "./PrimaryTooltip";
 
 // so we can put "lighter" in the mui theme palette
 // https://mui.com/material-ui/customization/palette/#typescript-2
@@ -128,6 +129,21 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // We only want this to run once
 
+  const [customizeLanguageDialogOpen, setCustomizeLanguageDialogOpen] =
+    useState(false);
+
+  // Show a tooltip prompting user to start typing, only on first load, until they start typing
+  const [showInitialPrompt, setShowInitialPrompt] = useState(
+    !props.initialSearchString
+  );
+  useEffect(() => {
+    if (showInitialPrompt && (lp.searchString || customizeLanguageDialogOpen)) {
+      setShowInitialPrompt(false);
+    }
+    // No reason for this to be triggered by changes to showInitialPrompt
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lp.searchString, customizeLanguageDialogOpen]);
+
   // on first load, if there is an initialSelectionLanguageTag, we want to scroll to the selected language card
   const [initialScrollingNeeded, setInitialScrollingNeeded] = useState(
     !!props.initialSelectionLanguageTag
@@ -185,9 +201,6 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   useEffect(() => {
     languageCardListRef.current?.scrollTo(0, 0);
   }, [lp.languageData]);
-
-  const [customizeLanguageDialogOpen, setCustomizeLanguageDialogOpen] =
-    useState(false);
 
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTagFromOrthography({
@@ -267,6 +280,16 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
     }
   }
 
+  // When a card is selected, scroll that card to the top, so that if it has script cards under it they become visible
+  useEffect(() => {
+    if (selectedLanguageCardRef.current && lp.selectedLanguage) {
+      selectedLanguageCardRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [lp.selectedLanguage]);
+
   return (
     <ThemeProvider theme={theme}>
       <div
@@ -294,52 +317,79 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
             htmlFor="search-bar"
             label="Search by name, code, or country"
           />
-          <OutlinedInput
-            type="text"
-            inputRef={(el) => (searchInputRef = el)} // for displaying initial search string
-            css={css`
-              background-color: white;
-              margin-bottom: 10px;
-              width: 100%;
-              min-width: 100px;
-              padding-left: 10px;
-              padding-right: 10px;
-            `}
-            inputProps={{
-              spellCheck: false,
-            }}
-            size="small"
-            startAdornment={
-              <InputAdornment
-                position="start"
-                css={css`
-                  margin-left: 0;
-                  color: ${theme.palette.grey[400]};
-                `}
-              >
-                <Icon component={SearchIcon} />
-              </InputAdornment>
+          <PrimaryTooltip
+            title={
+              <>
+                Start typing to find your language.
+                <br />
+                <br />
+                We have a list of almost every known language, where it is
+                spoken, and how it is written.
+              </>
             }
-            endAdornment={
-              <IconButton
-                data-testid="clear-search-X-button"
-                onClick={clearSearchText}
-                css={css`
-                  padding-right: 0px;
-                `}
-              >
-                <ClearIcon />
-              </IconButton>
-            }
-            id="search-bar"
-            data-testid="search-bar"
-            fullWidth
-            onChange={(e) => {
-              debounce(async () => {
-                lp.onSearchStringChange(e.target.value);
-              }, 0)();
+            placement="right"
+            open={showInitialPrompt}
+            onClose={() => setShowInitialPrompt(false)}
+            disableFocusListener
+            disableHoverListener
+            disableTouchListener
+            slots={{
+              transition: Fade,
             }}
-          />
+            slotProps={{
+              transition: { timeout: 200 },
+            }}
+          >
+            {/* Wrapping div stabilizes the tooltip position */}
+            <div>
+              <OutlinedInput
+                type="text"
+                inputRef={(el) => (searchInputRef = el)} // for displaying initial search string
+                css={css`
+                  background-color: white;
+                  margin-bottom: 10px;
+                  width: 100%;
+                  min-width: 100px;
+                  padding-left: 10px;
+                  padding-right: 10px;
+                `}
+                inputProps={{
+                  spellCheck: false,
+                }}
+                size="small"
+                startAdornment={
+                  <InputAdornment
+                    position="start"
+                    css={css`
+                      margin-left: 0;
+                      color: ${theme.palette.grey[400]};
+                    `}
+                  >
+                    <Icon component={SearchIcon} />
+                  </InputAdornment>
+                }
+                endAdornment={
+                  <IconButton
+                    data-testid="clear-search-X-button"
+                    onClick={clearSearchText}
+                    css={css`
+                      padding-right: 0px;
+                    `}
+                  >
+                    <ClearIcon />
+                  </IconButton>
+                }
+                id="search-bar"
+                data-testid="search-bar"
+                fullWidth
+                onChange={(e) => {
+                  debounce(async () => {
+                    lp.onSearchStringChange(e.target.value);
+                  }, 0)();
+                }}
+              />
+            </div>
+          </PrimaryTooltip>
           <div
             id="language-card-list"
             css={css`
@@ -394,46 +444,52 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                       lp.selectedLanguage?.iso639_3_code
                     ) &&
                       language.scripts.length > 1 && (
-                        <List
-                          css={css`
-                            display: flex;
-                            flex-direction: row;
-                            justify-content: flex-end;
-                            flex-wrap: wrap;
-                            padding: 0px 0px 20px 30px;
-                          `}
+                        <PrimaryTooltip
+                          title="Select a script"
+                          placement="right"
+                          open={!lp.selectedScript}
                         >
-                          {language.scripts.map((script: IScript) => {
-                            return (
-                              <ListItem
-                                key={script.code}
-                                css={css`
-                                  padding: 5px 10px;
-                                  width: fit-content;
-                                `}
-                              >
-                                <ScriptCard
+                          <List
+                            css={css`
+                              display: flex;
+                              flex-direction: row;
+                              justify-content: flex-end;
+                              flex-wrap: wrap;
+                              padding: 0px 0px 20px 30px;
+                            `}
+                          >
+                            {language.scripts.map((script: IScript) => {
+                              return (
+                                <ListItem
+                                  key={script.code}
                                   css={css`
-                                    min-width: 100px;
+                                    padding: 5px 10px;
+                                    width: fit-content;
                                   `}
-                                  scriptData={script}
-                                  isSelected={codeMatches(
-                                    script.code,
-                                    lp.selectedScript?.code
-                                  )}
-                                  onClick={() => toggleSelectScript(script)}
-                                  // If scriptCardBackgroundColorOverride is not provided, ScriptCard will fall back to a default based on the primary color
-                                  backgroundColorWhenSelected={
-                                    props.scriptCardBackgroundColorOverride
-                                  }
-                                  backgroundColorWhenNotSelected={
-                                    theme.palette.background.paper
-                                  }
-                                />
-                              </ListItem>
-                            );
-                          })}
-                        </List>
+                                >
+                                  <ScriptCard
+                                    css={css`
+                                      min-width: 100px;
+                                    `}
+                                    scriptData={script}
+                                    isSelected={codeMatches(
+                                      script.code,
+                                      lp.selectedScript?.code
+                                    )}
+                                    onClick={() => toggleSelectScript(script)}
+                                    // If scriptCardBackgroundColorOverride is not provided, ScriptCard will fall back to a default based on the primary color
+                                    backgroundColorWhenSelected={
+                                      props.scriptCardBackgroundColorOverride
+                                    }
+                                    backgroundColorWhenNotSelected={
+                                      theme.palette.background.paper
+                                    }
+                                  />
+                                </ListItem>
+                              );
+                            })}
+                          </List>
+                        </PrimaryTooltip>
                       )}
                   </LazyLoad>
                 </div>
@@ -519,17 +575,11 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                   {currentTagPreview}
                 </Typography>
                 {!manualTagLanguageSelected && (
-                  <Tooltip
+                  <PrimaryTooltip
                     title={
-                      <Typography
-                        css={css`
-                          font-size: 0.75rem;
-                        `}
-                      >
-                        {showUnlistedLanguageOptions
-                          ? "If you cannot find a language and it does not appear in ethnologue.com, you can instead define the language here."
-                          : "If you found the main language but need to change some of the specifics like Script or Dialect, you can do that here."}
-                      </Typography>
+                      showUnlistedLanguageOptions
+                        ? "If you cannot find a language and it does not appear in ethnologue.com, you can instead define the language here."
+                        : "If you found the main language but need to change some of the specifics like Script or Dialect, you can do that here."
                     }
                   >
                     <InfoOutlinedIcon
@@ -538,7 +588,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                         margin-left: 10px;
                       `}
                     />
-                  </Tooltip>
+                  </PrimaryTooltip>
                 )}
               </div>
             </Button>
