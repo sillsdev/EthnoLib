@@ -1,3 +1,10 @@
+## 0.0.33 (2025-02-24)
+
+
+### 🩹 Fixes
+
+- BL-14361 tooltip prompts ([33f32f4](https://github.com/sillsdev/EthnoLib/commit/33f32f4))
+
 ## 0.0.32 (2025-02-24)
 
 
