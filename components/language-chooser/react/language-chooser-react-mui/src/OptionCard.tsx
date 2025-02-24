@@ -35,12 +35,20 @@ export const OptionCard: React.FunctionComponent<
     <CardActionArea
       onClick={onClick || (() => undefined)}
       className={`option-card-button ${isSelected && "selected-option-card-button"} ${className}`}
+      css={css`
+        display: flex;
+        flex-direction: column;
+      `}
     >
       <Card
         variant="outlined"
         css={css`
           position: relative; // so children can be positioned absolutely
           box-shadow: ${theme.palette.grey[400]} 0px 3px 5px;
+
+          // fill up the entire card action area
+          flex-grow: 1;
+          width: 100%;
         `}
         sx={{
           bgcolor: `${backgroundColor}`,
