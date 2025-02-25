@@ -189,4 +189,15 @@ describe("getLanguageBySubtag", () => {
     expect(getLanguageBySubtag("aaa")?.exonym).toEqual("Ghotuo");
     expect(getLanguageBySubtag("ab")?.exonym).toEqual("Abkhaz");
   });
+  it("should use searchResultModifier if provided", () => {
+    const foobar = "foobar";
+    const modifier = (
+      results: FuseResult<ILanguage>[],
+      _searchString: string
+    ) =>
+      results.map((result) => {
+        return { ...result.item, exonym: foobar };
+      });
+    expect(getLanguageBySubtag("en", modifier)?.exonym).toEqual(foobar);
+  });
 });

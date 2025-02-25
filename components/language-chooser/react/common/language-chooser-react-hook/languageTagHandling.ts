@@ -11,6 +11,7 @@ import {
   IScript,
   LanguageType,
 } from "@ethnolib/find-language";
+import { FuseResult } from "fuse.js";
 
 const UNLISTED_LANGUAGE_CODE = "qaa";
 export const UNLISTED_LANGUAGE = {
@@ -100,7 +101,11 @@ export function createTagFromOrthography(orthography: IOrthography): string {
 // undefined if it encounters any of these, e.g. in cases where a langtag was manually
 // entered in the language chooser.
 export function parseLangtagFromLangChooser(
-  languageTag: string // must be the default language subtag for the language
+  languageTag: string, // must be the default language subtag for the language
+  searchResultModifier?: (
+    results: FuseResult<ILanguage>[],
+    searchString: string
+  ) => ILanguage[]
 ): IOrthography | undefined {
   const parts = languageTag.split(/-[xX]-/);
   const privateUseSubtag = parts[1];
@@ -115,7 +120,7 @@ export function parseLangtagFromLangChooser(
   if (isUnlistedLanguage) {
     language = UNLISTED_LANGUAGE;
   } else {
-    language = getLanguageBySubtag(languageSubtag || "");
+    language = getLanguageBySubtag(languageSubtag || "", searchResultModifier);
   }
   if (!language) {
     console.log(
@@ -195,9 +200,18 @@ export function parseLangtagFromLangChooser(
   } as IOrthography;
 }
 
-export function defaultRegionForLangTag(languageTag: string) {
+export function defaultRegionForLangTag(
+  languageTag: string,
+  searchResultModifier?: (
+    results: FuseResult<ILanguage>[],
+    searchString: string
+  ) => ILanguage[]
+): IRegion | undefined {
   // if languageTag already has a region tag in it, use that
-  const orthography = parseLangtagFromLangChooser(languageTag);
+  const orthography = parseLangtagFromLangChooser(
+    languageTag,
+    searchResultModifier
+  );
   if (orthography?.customDetails?.region) {
     return orthography.customDetails.region;
   }
@@ -212,6 +226,9 @@ export function defaultRegionForLangTag(languageTag: string) {
     getMaximalLangtag(`${languageSubtag}-${scriptSubtag}`) ||
     getMaximalLangtag(`${languageSubtag}`) ||
     "";
-  const maximalTagOrthography = parseLangtagFromLangChooser(maximalTag);
+  const maximalTagOrthography = parseLangtagFromLangChooser(
+    maximalTag,
+    searchResultModifier
+  );
   return maximalTagOrthography?.customDetails?.region;
 }
