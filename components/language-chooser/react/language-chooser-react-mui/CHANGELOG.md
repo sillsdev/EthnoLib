@@ -1,3 +1,10 @@
+## 0.0.34 (2025-02-25)
+
+
+### 🩹 Fixes
+
+- BL-14315 unwanted scrollbar in customization dialog ([5995465](https://github.com/sillsdev/EthnoLib/commit/5995465))
+
 ## 0.0.33 (2025-02-24)
 
 
