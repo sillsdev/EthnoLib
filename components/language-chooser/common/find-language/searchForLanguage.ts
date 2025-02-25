@@ -99,11 +99,19 @@ export function searchForLanguage(
 }
 
 // get language (not macrolanguage) with exact match on subtag
-export function getLanguageBySubtag(code: string): ILanguage | undefined {
+export function getLanguageBySubtag(
+  code: string,
+  searchResultModifier?: (
+    results: FuseResult<ILanguage>[],
+    searchString: string
+  ) => ILanguage[]
+): ILanguage | undefined {
   const fuse = new Fuse(languages as ILanguage[], {
     keys: ["languageSubtag", "iso639_3_code"],
     threshold: 0, // exact matches only
   });
-  const results = fuse.search(code);
-  return results[0]?.item;
+  const rawResults = fuse.search(code);
+  return searchResultModifier
+    ? searchResultModifier(rawResults, code)[0]
+    : rawResults[0]?.item;
 }

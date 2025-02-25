@@ -94,7 +94,8 @@ export const useLanguageChooser = (
     if (!selectionLanguageTag) return;
 
     let initialSelections = parseLangtagFromLangChooser(
-      selectionLanguageTag || ""
+      selectionLanguageTag || "",
+      searchResultModifier
     );
     if (selectionLanguageTag && !initialSelections) {
       // we failed to parse the tag, meaning this is a langtag requiring manual entry

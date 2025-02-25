@@ -9,7 +9,12 @@ import {
   UNLISTED_LANGUAGE,
   isUnlistedLanguage,
 } from "./languageTagHandling";
-import { getRegionBySubtag, LanguageType } from "@ethnolib/find-language";
+import {
+  getRegionBySubtag,
+  ILanguage,
+  LanguageType,
+} from "@ethnolib/find-language";
+import { FuseResult } from "fuse.js";
 describe("Tag parsing", () => {
   it("should find a language by 2 letter language subtag", () => {
     expect(parseLangtagFromLangChooser("ja")?.language?.exonym).toEqual(
@@ -120,27 +125,43 @@ describe("Tag parsing", () => {
       ssh_Arab_x_foobar_result?.customDetails?.region?.name
     ).toBeUndefined();
     expect(ssh_Arab_x_foobar_result?.customDetails?.dialect).toEqual("foobar");
+
+    const ssh_AE_x_foobar_result =
+      parseLangtagFromLangChooser("ssh-AE-x-foobar");
+    expect(ssh_AE_x_foobar_result?.language?.exonym).toEqual("Shihhi Arabic");
+    expect(ssh_AE_x_foobar_result?.script?.name).toEqual("Arabic");
+    expect(ssh_AE_x_foobar_result?.customDetails?.region?.name).toEqual(
+      "United Arab Emirates"
+    );
+    expect(ssh_AE_x_foobar_result?.customDetails?.dialect).toEqual("foobar");
+
+    const ssh_Arab_AE_x_foobar_result = parseLangtagFromLangChooser(
+      "ssh-Arab-AE-x-foobar"
+    );
+    expect(ssh_Arab_AE_x_foobar_result?.language?.exonym).toEqual(
+      "Shihhi Arabic"
+    );
+    expect(ssh_Arab_AE_x_foobar_result?.script?.name).toEqual("Arabic");
+    expect(ssh_Arab_AE_x_foobar_result?.customDetails?.region?.name).toEqual(
+      "United Arab Emirates"
+    );
+    expect(ssh_Arab_AE_x_foobar_result?.customDetails?.dialect).toEqual(
+      "foobar"
+    );
   });
-
-  const ssh_AE_x_foobar_result = parseLangtagFromLangChooser("ssh-AE-x-foobar");
-  expect(ssh_AE_x_foobar_result?.language?.exonym).toEqual("Shihhi Arabic");
-  expect(ssh_AE_x_foobar_result?.script?.name).toEqual("Arabic");
-  expect(ssh_AE_x_foobar_result?.customDetails?.region?.name).toEqual(
-    "United Arab Emirates"
-  );
-  expect(ssh_AE_x_foobar_result?.customDetails?.dialect).toEqual("foobar");
-
-  const ssh_Arab_AE_x_foobar_result = parseLangtagFromLangChooser(
-    "ssh-Arab-AE-x-foobar"
-  );
-  expect(ssh_Arab_AE_x_foobar_result?.language?.exonym).toEqual(
-    "Shihhi Arabic"
-  );
-  expect(ssh_Arab_AE_x_foobar_result?.script?.name).toEqual("Arabic");
-  expect(ssh_Arab_AE_x_foobar_result?.customDetails?.region?.name).toEqual(
-    "United Arab Emirates"
-  );
-  expect(ssh_Arab_AE_x_foobar_result?.customDetails?.dialect).toEqual("foobar");
+  it("uses searchResultModifier if provided", () => {
+    const foobar = "foobar";
+    const modifier = (
+      results: FuseResult<ILanguage>[],
+      _searchString: string
+    ) =>
+      results.map((result) => {
+        return { ...result.item, exonym: foobar };
+      });
+    expect(
+      parseLangtagFromLangChooser("en", modifier)?.language?.exonym
+    ).toEqual(foobar);
+  });
 });
 
 describe("defaultRegionForLangTag", () => {
@@ -161,6 +182,18 @@ describe("defaultRegionForLangTag", () => {
     expect(defaultRegionForLangTag("uz-Taml-x-foobar")?.name).toEqual(
       "Uzbekistan"
     );
+  });
+
+  it("uses searchResultModifier if provided", () => {
+    // If using a search result modifier that filters out all results, we should no longer find a region
+    const searchResultModifier = (
+      _results: FuseResult<ILanguage>[],
+      _searchString: string
+    ): ILanguage[] => {
+      return [];
+    };
+    expect(defaultRegionForLangTag("uz")).not.toBeUndefined();
+    expect(defaultRegionForLangTag("uz", searchResultModifier)).toBeUndefined();
   });
 });
 

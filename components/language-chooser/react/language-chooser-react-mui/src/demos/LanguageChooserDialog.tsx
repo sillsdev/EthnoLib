@@ -12,10 +12,7 @@ import {
 
 import "../styles.css";
 import { ILanguageChooserProps, LanguageChooser } from "../LanguageChooser";
-import {
-  IOrthography,
-  parseLangtagFromLangChooser,
-} from "@ethnolib/language-chooser-react-hook";
+import { IOrthography } from "@ethnolib/language-chooser-react-hook";
 import React from "react";
 
 export const LanguageChooserDialog: React.FunctionComponent<
@@ -34,12 +31,8 @@ export const LanguageChooserDialog: React.FunctionComponent<
   dialogHeight,
   ...languageChooserProps
 }) => {
-  const initialSelection: IOrthography | undefined =
-    parseLangtagFromLangChooser(
-      languageChooserProps.initialSelectionLanguageTag || ""
-    );
   const [pendingSelection, setPendingSelection] = React.useState(
-    initialSelection || ({} as IOrthography)
+    {} as IOrthography
   );
   const [pendingLanguageTag, setPendingLanguageTag] = React.useState(
     languageChooserProps.initialSelectionLanguageTag || ""
