@@ -1,3 +1,10 @@
+## 0.0.21 (2025-02-25)
+
+
+### 🩹 Fixes
+
+- BL-14355 fix preloaded langs inconsistency ([f6f9974](https://github.com/sillsdev/EthnoLib/commit/f6f9974))
+
 ## 0.0.20 (2025-02-24)
 
 

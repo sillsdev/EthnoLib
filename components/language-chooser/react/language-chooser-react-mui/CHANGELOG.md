@@ -1,3 +1,18 @@
+## 0.0.35 (2025-02-25)
+
+
+### 🩹 Fixes
+
+- BL-14355 fix preloaded langs inconsistency ([f6f9974](https://github.com/sillsdev/EthnoLib/commit/f6f9974))
+
+- BL-14361 tooltip prompts ([23450b0](https://github.com/sillsdev/EthnoLib/commit/23450b0))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.15
+- Updated @ethnolib/find-language to 0.0.21
+
 ## 0.0.34 (2025-02-25)
 
 

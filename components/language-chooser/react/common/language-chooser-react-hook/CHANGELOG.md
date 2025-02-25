@@ -1,3 +1,15 @@
+## 0.0.15 (2025-02-25)
+
+
+### 🩹 Fixes
+
+- BL-14355 fix preloaded langs inconsistency ([f6f9974](https://github.com/sillsdev/EthnoLib/commit/f6f9974))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.0.21
+
 ## 0.0.14 (2025-02-24)
 
 
