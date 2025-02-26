@@ -103,9 +103,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   // To clear stale values and dynamically prepopulate form every time it is opened
   React.useEffect(() => {
     setDialogSelectedScript(
-      // Prepopulate with the selected script only if this language has multiple associated scripts; otherwise the selected script is the default which we can take for granted
-      props.selectedScript?.code &&
-        (props.selectedLanguage?.scripts?.length || 0) > 1
+      props.selectedScript?.code
         ? {
             label: props.selectedScript.name,
             id: props.selectedScript.code,
