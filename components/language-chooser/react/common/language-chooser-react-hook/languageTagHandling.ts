@@ -83,9 +83,18 @@ export function createTagFromOrthography(orthography: IOrthography): string {
     // This is a custom langtag the user entered by hand
     return strippedOrthography.language?.manuallyEnteredTag || "";
   }
+  // If there is only one script for this language, it is implied and so extraneous in the language tag
+  const scriptCode =
+    strippedOrthography.language?.scripts.length === 1 &&
+    codeMatches(
+      strippedOrthography.script?.code,
+      strippedOrthography.language.scripts[0].code
+    )
+      ? undefined
+      : strippedOrthography.script?.code;
   return createTag({
     languageCode: strippedOrthography.language?.languageSubtag,
-    scriptCode: strippedOrthography.script?.code,
+    scriptCode,
     regionCode: strippedOrthography.customDetails?.region?.code,
     dialectCode: strippedOrthography.customDetails?.dialect,
   });
