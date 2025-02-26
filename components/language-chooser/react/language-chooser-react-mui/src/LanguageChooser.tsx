@@ -448,6 +448,14 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                           title="Select a script"
                           placement="right"
                           open={!lp.selectedScript}
+                          css={css`
+                            // hide popper when reference element (the script cards) is scrolled out of view
+                            // https://popper.js.org/docs/v2/modifiers/hide/
+                            &[data-popper-reference-hidden] {
+                              visibility: hidden;
+                              pointer-events: none;
+                            }
+                          `}
                         >
                           <List
                             css={css`
