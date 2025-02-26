@@ -1,3 +1,10 @@
+## 0.0.36 (2025-02-26)
+
+
+### 🩹 Fixes
+
+- BL-14361 hide tooltip when reference element scrolls out of view ([10cd7c3](https://github.com/sillsdev/EthnoLib/commit/10cd7c3))
+
 ## 0.0.35 (2025-02-25)
 
 
