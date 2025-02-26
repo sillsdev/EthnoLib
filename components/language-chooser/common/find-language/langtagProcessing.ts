@@ -78,6 +78,21 @@ function isMacrolanguage(iso639_3: string) {
   return isoCodesDetails[iso639_3]?.isMacrolanguage || false;
 }
 
+const macrolangsFile = fs.readFileSync(
+  "language-data/iso-639-3-macrolanguages.tab",
+  "utf8"
+);
+const indivlangsToMacrolangs = {};
+for (const line of macrolangsFile.split("\n")) {
+  if (line.length === 0) {
+    continue;
+  }
+  const parts = line.split("\t");
+  const macrolangCode = parts[0];
+  const indivLangCode = parts[1];
+  indivlangsToMacrolangs[indivLangCode] = macrolangCode;
+}
+
 // From the Langtags repo:
 // "For many macro languages, there is a representative language for that macrolanguage. In many cases the macro language code is more popular than the representative langauge code. Thus, for example, in the CLDR, the macro language code is used instead of the representative language code. For this reason, langtags.json unifies the representative language tags into the macro language tag set rather than having a separate tag set for them, and gives the tag for the tag set in terms of the macro language rather than the representative language."
 // So in langtags.json, for representative languages, the iso639_3 field is often the macrolangauge code,
@@ -193,8 +208,9 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       entry.full,
       ...(entry.tags ?? []),
     ]);
-    langs[entry.iso639_3].aliasMacrolanguage =
-      langs[entry.iso639_3].aliasMacrolanguage || entry.aliasMacrolanguage;
+    langs[entry.iso639_3].aliasMacrolanguageCode =
+      langs[entry.iso639_3].aliasMacrolanguageCode ||
+      entry.aliasMacrolanguageCode;
   } else {
     // create a new entry for this language code
     langs[entry.iso639_3] = {
@@ -205,17 +221,18 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
       scripts: new Set([entry.script]),
-      aliasMacrolanguage: entry.aliasMacrolanguage,
+      macrolanguageCode: indivlangsToMacrolangs[entry.iso639_3],
+      aliasMacrolanguageCode: entry.aliasMacrolanguageCode,
       alternativeTags: new Set([entry.full, ...(entry.tags || [])]),
       languageType: languageType(entry.iso639_3),
     } as ILanguageInternal;
   }
 }
 
-function findIndivIsoCode(macrolangEntry: any) {
-  const macrolangCode = macrolangEntry.iso639_3;
+function findIndivIsoCode(macrolangCodeEntry: any) {
+  const macrolangCode = macrolangCodeEntry.iso639_3;
   const alreadyFoundChildCodes = new Set();
-  for (const tag of macrolangEntry.tags || []) {
+  for (const tag of macrolangCodeEntry.tags || []) {
     const childCode = findPotentialIso639_3Code(tag);
     if (childCode && childCode !== macrolangCode) {
       alreadyFoundChildCodes.add(childCode);
@@ -245,7 +262,7 @@ function parseLangtagsJson() {
           {
             ...entry,
             iso639_3: indivIsoCode,
-            aliasMacrolanguage: entry.iso639_3,
+            aliasMacrolanguageCode: entry.iso639_3,
           },
           consolidatedLangTags
         );
@@ -256,7 +273,7 @@ function parseLangtagsJson() {
         addOrCombineLangtagsEntry(
           {
             ...entry,
-            aliasMacrolanguage: MACROLANGUAGE_SITUATION_UNKNOWN,
+            aliasMacrolanguageCode: MACROLANGUAGE_SITUATION_UNKNOWN,
           },
           consolidatedLangTags
         );
@@ -288,7 +305,7 @@ function parseLangtagsJson() {
         }),
         names: [...uncommaAll(langData.names)].filter((name) => !!name),
         alternativeTags: [...langData.alternativeTags],
-        aliasMacrolanguage: langData.aliasMacrolanguage,
+        aliasMacrolanguageCode: langData.aliasMacrolanguageCode,
         languageType: langData.languageType,
       } as ILanguage;
     }

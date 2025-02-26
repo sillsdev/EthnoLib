@@ -151,6 +151,25 @@ describe("searchForLanguage", () => {
   });
 });
 
+describe("Macrolanguage handling", () => {
+  //macrolanguages
+  it("searching for macrolanguage name should yield all child languages and the macrolanguage code should not be included", () => {
+    searchDoesFindLanguage("Delaware", "umu");
+    searchDoesFindLanguage("Delaware", "unm");
+    searchDoesNotFindLanguage("Delaware", "del");
+  });
+
+  it("searching for macrolanguage code should yield all child languages", () => {
+    searchDoesFindLanguage("del", "umu");
+    searchDoesFindLanguage("del", "unm");
+  });
+
+  // indiv should come up when searched for by macrolanguage name
+  // data from entries listed under macrolanguages should get combined into the indiv language
+  // weird cases should still be present somehow
+  // normal macrolanguage tag should not be in iso code in the results
+});
+
 function searchDoesFindLanguage(query: string, expectedLanguageCode: string) {
   const results = searchForLanguage(query);
   expect(results.length).toBeGreaterThan(0);
