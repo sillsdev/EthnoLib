@@ -1,3 +1,15 @@
+## 0.0.38 (2025-02-27)
+
+
+### 🩹 Fixes
+
+- BL-14355: fix logic around validity of customized selections ([8141f45](https://github.com/sillsdev/EthnoLib/commit/8141f45))
+
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.16
+
 ## 0.0.37 (2025-02-27)
 
 
