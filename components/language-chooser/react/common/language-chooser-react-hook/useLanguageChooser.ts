@@ -131,8 +131,13 @@ export const useLanguageChooser = (
     details: ICustomizableLanguageDetails,
     script: IScript | undefined
   ) {
-    setSelectedScript(script);
     setCustomizableLanguageDetails(details);
+
+    // If the provided script is empty but this language only has one script, automatically go back to that implied script
+    if (!script && selectedLanguage?.scripts.length === 1) {
+      script = selectedLanguage.scripts[0];
+    }
+    setSelectedScript(script);
   }
 
   function getModifiedSearchResults(
