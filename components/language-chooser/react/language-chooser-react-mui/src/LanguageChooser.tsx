@@ -455,6 +455,14 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                               visibility: hidden;
                               pointer-events: none;
                             }
+
+                            // Also hide the popper if the customization dialog is open
+                            ${customizeLanguageDialogOpen
+                              ? `
+                              visibility: hidden;
+                              pointer-events: none;
+                            `
+                              : ""}
                           `}
                         >
                           <List
