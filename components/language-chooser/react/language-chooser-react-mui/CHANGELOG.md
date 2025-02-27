@@ -1,3 +1,10 @@
+## 0.0.37 (2025-02-27)
+
+
+### 🩹 Fixes
+
+- BL-14361: hide tooltip when customization dialog is open on top ([5fbbcd2](https://github.com/sillsdev/EthnoLib/commit/5fbbcd2))
+
 ## 0.0.36 (2025-02-26)
 
 
