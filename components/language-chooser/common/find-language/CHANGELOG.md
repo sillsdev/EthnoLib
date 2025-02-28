@@ -1,3 +1,10 @@
+## 0.0.22 (2025-02-28)
+
+
+### 🩹 Fixes
+
+- BL-14325 add script samples for major indian scripts ([439f771](https://github.com/sillsdev/EthnoLib/commit/439f771))
+
 ## 0.0.21 (2025-02-25)
 
 
