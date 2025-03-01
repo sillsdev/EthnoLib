@@ -107,8 +107,6 @@ export const useLanguageChooser = (
         },
       };
     }
-    // TODO future work: if the selection language is lower in the search results such that its
-    // language card isn't initially visible, we should automatically scroll to it
     if (initialSelections?.language) {
       selectLanguage(initialSelections?.language as ILanguage);
     }
