@@ -19,12 +19,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import {
-  codeMatches,
-  ILanguage,
-  IScript,
-  deepStripDemarcation,
-} from "@ethnolib/find-language";
+import { codeMatches, ILanguage, IScript } from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import { ScriptCard } from "./ScriptCard";
 import {
@@ -115,7 +110,10 @@ export interface ILanguageChooserProps {
 export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   props
 ) => {
-  const lp: ILanguageChooser = useLanguageChooser(props.searchResultModifier);
+  const lp: ILanguageChooser = useLanguageChooser(
+    props.onSelectionChange,
+    props.searchResultModifier
+  );
 
   useEffect(() => {
     if (searchInputRef) {
@@ -173,29 +171,6 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
       props.initialSelectionLanguageTag,
     ]
   );
-
-  const [previousStateWasValidSelection, setPreviousStateWasValidSelection] =
-    useState(false);
-
-  useEffect(() => {
-    if (props.onSelectionChange) {
-      if (lp.readyToSubmit) {
-        const resultingOrthography = deepStripDemarcation({
-          language: lp.selectedLanguage,
-          script: lp.selectedScript,
-          customDetails: lp.customizableLanguageDetails,
-        }) as IOrthography;
-        props.onSelectionChange(
-          resultingOrthography,
-          createTagFromOrthography(resultingOrthography)
-        );
-        setPreviousStateWasValidSelection(true);
-      } else if (previousStateWasValidSelection) {
-        props.onSelectionChange(undefined, undefined);
-        setPreviousStateWasValidSelection(false);
-      }
-    }
-  }, [lp.selectedLanguage, lp.selectedScript, lp.customizableLanguageDetails]);
 
   // Scroll to top whenever the language list changes
   const languageCardListRef = useRef<HTMLDivElement>(null);

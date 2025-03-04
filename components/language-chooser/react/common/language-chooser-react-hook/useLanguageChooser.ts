@@ -4,8 +4,9 @@ import {
   searchForLanguage,
   stripResultMetadata,
   stripDemarcation,
+  deepStripDemarcation,
 } from "@ethnolib/find-language";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FuseResult } from "fuse.js";
 import {
   isValidBcp47Tag,
@@ -16,6 +17,7 @@ import {
   parseLangtagFromLangChooser,
   UNLISTED_LANGUAGE,
   IOrthography,
+  createTagFromOrthography,
 } from "./languageTagHandling";
 
 export interface ILanguageChooser {
@@ -44,6 +46,10 @@ export interface ILanguageChooser {
 }
 
 export const useLanguageChooser = (
+  onSelectionChange?: (
+    orthography: IOrthography | undefined,
+    langtag: string | undefined
+  ) => void,
   searchResultModifier?: (
     results: FuseResult<ILanguage>[],
     searchString: string
@@ -195,6 +201,29 @@ export const useLanguageChooser = (
     setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
   }
+
+  const [previousStateWasValidSelection, setPreviousStateWasValidSelection] =
+    useState(false);
+
+  useEffect(() => {
+    if (onSelectionChange) {
+      if (readyToSubmit) {
+        const resultingOrthography = deepStripDemarcation({
+          language: selectedLanguage,
+          script: selectedScript,
+          customDetails: customizableLanguageDetails,
+        }) as IOrthography;
+        onSelectionChange(
+          resultingOrthography,
+          createTagFromOrthography(resultingOrthography)
+        );
+        setPreviousStateWasValidSelection(true);
+      } else if (previousStateWasValidSelection) {
+        onSelectionChange(undefined, undefined);
+        setPreviousStateWasValidSelection(false);
+      }
+    }
+  }, [selectedLanguage, selectedScript, customizableLanguageDetails]);
 
   return {
     languageData,
