@@ -48,8 +48,8 @@ function getAllRegionOptions() {
 function getAllScriptOptions() {
   return getAllScripts().map((script: IScript) => {
     return {
-      label: script.name,
-      id: script.code,
+      label: script.scriptName,
+      id: script.scriptCode,
     };
   });
 }
@@ -96,7 +96,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   React.useEffect(() => {
     setDialogSelectedScript(
       // Prepopulate with the selected script only if this language has multiple associated scripts; otherwise the selected script is the default which we can take for granted
-      props.selectedScript?.code &&
+      props.selectedScript?.scriptCode &&
         (props.selectedLanguage?.scripts?.length || 0) > 1
         ? props.selectedScript
         : undefined
@@ -192,8 +192,8 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             <Autocomplete
               id="customize-script-field"
               value={{
-                label: dialogSelectedScript?.name || "",
-                id: dialogSelectedScript?.code || "",
+                label: dialogSelectedScript?.scriptName || "",
+                id: dialogSelectedScript?.scriptCode || "",
               }}
               onChange={(
                 _event,
@@ -202,8 +202,8 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                 setDialogSelectedScript(
                   newValue
                     ? ({
-                        code: newValue.id,
-                        name: newValue.label,
+                        scriptCode: newValue.id,
+                        scriptName: newValue.label,
                       } as IScript)
                     : undefined
                 );

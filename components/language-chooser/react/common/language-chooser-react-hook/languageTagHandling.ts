@@ -87,11 +87,11 @@ export function createTagFromOrthography(orthography: IOrthography): string {
   const scriptCode =
     strippedOrthography.language?.scripts.length === 1 &&
     codeMatches(
-      strippedOrthography.script?.code,
-      strippedOrthography.language.scripts[0].code
+      strippedOrthography.script?.scriptCode,
+      strippedOrthography.language.scripts[0].scriptCode
     )
       ? undefined
-      : strippedOrthography.script?.code;
+      : strippedOrthography.script?.scriptCode;
   return createTag({
     languageCode: strippedOrthography.language?.languageSubtag,
     scriptCode,
@@ -227,7 +227,7 @@ export function defaultRegionForLangTag(
 
   // Otherwise, the maximal equivalent language tag will have the region code
   const languageSubtag = orthography?.language?.languageSubtag;
-  const scriptSubtag = orthography?.script?.code;
+  const scriptSubtag = orthography?.script?.scriptCode;
 
   // Take the most specific/relevant matching maximal tag that we are able to find
   const maximalTag =

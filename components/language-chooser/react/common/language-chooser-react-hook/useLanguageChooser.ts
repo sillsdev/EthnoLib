@@ -254,7 +254,7 @@ export function defaultDisplayName(language?: ILanguage, script?: IScript) {
   }
 
   return stripDemarcation(
-    script?.autonym || language.autonym || language.exonym
+    script?.languageNameInScript || language.autonym || language.exonym
   );
 }
 

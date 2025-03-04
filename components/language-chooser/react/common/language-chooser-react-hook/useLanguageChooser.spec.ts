@@ -4,14 +4,14 @@ import {
   languageForManuallyEnteredTag,
   UNLISTED_LANGUAGE,
 } from "./languageTagHandling";
-import { LanguageType } from "@ethnolib/find-language";
+import { IRegion, IScript, LanguageType } from "@ethnolib/find-language";
 
 describe("isReadyToSubmit", () => {
   // Test fixture for IScript
-  const latinScript = { code: "Latn", name: "Latin" };
+  const latinScript = { scriptCode: "Latn", scriptName: "Latin" } as IScript;
 
   // Test fixture for IRegion
-  const testRegion = { name: "Test Region", code: "TST" };
+  const testRegion = { name: "Test Region", code: "TST" } as IRegion;
 
   const regularLanguage = {
     autonym: "foo",
