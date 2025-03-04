@@ -41,12 +41,23 @@ describe("isReadyToSubmit", () => {
     expect(isReadyToSubmit({})).toBe(false);
   });
 
-  it("returns false if no display name is provided", () => {
+  it("returns false if empty or whitespace custom display name is given", () => {
     expect(
       isReadyToSubmit({
         language: regularLanguage,
         script: regularLanguage.scripts[0],
-        customDetails: {},
+        customDetails: {
+          displayName: "",
+        },
+      })
+    ).toBe(false);
+    expect(
+      isReadyToSubmit({
+        language: regularLanguage,
+        script: regularLanguage.scripts[0],
+        customDetails: {
+          displayName: " ",
+        },
       })
     ).toBe(false);
   });
@@ -108,6 +119,21 @@ describe("isReadyToSubmit", () => {
             displayName: "Test",
             region: testRegion,
           },
+        })
+      ).toBe(false);
+    });
+
+    it("returns false for unlisted or manually entered tag with no display name", () => {
+      expect(
+        isReadyToSubmit({
+          language: languageForManuallyEnteredTag("zzz-Foo"),
+          customDetails: {},
+        })
+      ).toBe(false);
+      expect(
+        isReadyToSubmit({
+          language: UNLISTED_LANGUAGE,
+          customDetails: {},
         })
       ).toBe(false);
     });

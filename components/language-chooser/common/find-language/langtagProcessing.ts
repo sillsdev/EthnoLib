@@ -138,7 +138,7 @@ interface ILanguageInternal {
   languageSubtag: string;
   regionNames: Set<string>; // ISO 3166 codes
   names: Set<string>;
-  scripts: Set<string>;
+  scripts: any; // this will be an object where the keys are script codes and the values are IScript objects
   alternativeTags: Set<string>;
 }
 
@@ -177,13 +177,26 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
     // We already have an entry with this code, combine with it
 
     // We prioritize autonyms from the "localnames" field (which matches ethnologue if present)
-    // over the "localname" field (which may be specific to a language/region/script combo)
+    // over the "localname" field (which is from CLDR and may be specific to a region e.g. "español de México")
     // Some languages may have an entry with "localname" but not "localname" and another entry with "localname" but not "localnames"
     langs[entry.iso639_3].autonym = entry.localnames
       ? entry.localnames[0]
       : langs[entry.iso639_3].autonym || entry.localname;
     langs[entry.iso639_3].regionNames.add(entry.regionname);
-    langs[entry.iso639_3].scripts.add(entry.script);
+    if (
+      // some languages will have multiple entries with the same script. If so we just want to make sure we take one that has an autonym if possible
+      !langs[entry.iso639_3].scripts[entry.script] ||
+      (entry.localnames?.length || 0) > 0
+    ) {
+      langs[entry.iso639_3].scripts[entry.script] = {
+        code: entry.script,
+        name: scriptNames[entry.script],
+        autonym:
+          (entry.localnames || [undefined])[0] ||
+          langs[entry.iso639_3].scripts[entry.script]?.autonym ||
+          entry.localname,
+      } as IScript;
+    }
     langs[entry.iso639_3].names = new Set([
       ...langs[entry.iso639_3].names,
       ...getAllPossibleNames(entry),
@@ -196,6 +209,13 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
     langs[entry.iso639_3].aliasMacrolanguage =
       langs[entry.iso639_3].aliasMacrolanguage || entry.aliasMacrolanguage;
   } else {
+    const scriptCode = entry.script;
+    const scripts = {};
+    scripts[scriptCode] = {
+      code: scriptCode,
+      name: scriptNames[scriptCode],
+      autonym: (entry.localnames || [undefined])[0] || entry.localname,
+    } as IScript;
     // create a new entry for this language code
     langs[entry.iso639_3] = {
       autonym: entry.localnames ? entry.localnames[0] : entry.localname,
@@ -204,7 +224,7 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       languageSubtag: entry.tag.split("-")[0], // might be 2-letter
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
-      scripts: new Set([entry.script]),
+      scripts,
       aliasMacrolanguage: entry.aliasMacrolanguage,
       alternativeTags: new Set([entry.full, ...(entry.tags || [])]),
       languageType: languageType(entry.iso639_3),
@@ -280,12 +300,7 @@ function parseLangtagsJson() {
         regionNames: [...(uncommaAll(langData.regionNames) as Set<string>)]
           .filter((regionName) => !!regionName)
           .join(COMMA_SEPARATOR),
-        scripts: [...new Set([...langData.scripts])].map((scriptCode) => {
-          return {
-            code: scriptCode,
-            name: uncomma(scriptNames[scriptCode]),
-          } as IScript;
-        }),
+        scripts: Object.values(langData.scripts),
         names: [...uncommaAll(langData.names)].filter((name) => !!name),
         alternativeTags: [...langData.alternativeTags],
         aliasMacrolanguage: langData.aliasMacrolanguage,

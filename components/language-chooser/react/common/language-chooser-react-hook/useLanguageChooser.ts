@@ -114,14 +114,19 @@ export const useLanguageChooser = (
       selectScript(initialSelections.script);
     }
 
-    setCustomizableLanguageDetails((c) => {
-      // selectLanguage will have set a default display name. We want to use it unless
-      // it is overridden by a initialCustomDisplayName
-      return {
-        ...(initialSelections?.customDetails ||
-          ({} as ICustomizableLanguageDetails)),
-        displayName: initialCustomDisplayName || c.displayName,
-      };
+    setCustomizableLanguageDetails({
+      ...(initialSelections?.customDetails ||
+        ({} as ICustomizableLanguageDetails)),
+      // we only save the custom display name if it is different from the default
+      displayName:
+        initialCustomDisplayName &&
+        initialCustomDisplayName !==
+          defaultDisplayName(
+            initialSelections?.language,
+            initialSelections?.script
+          )
+          ? initialCustomDisplayName
+          : undefined,
     });
   }
 
@@ -160,9 +165,7 @@ export const useLanguageChooser = (
       // If there is only one script option for this language, automatically select it
       language.scripts.length === 1 ? language.scripts[0] : undefined
     );
-    setCustomizableLanguageDetails({
-      displayName: defaultDisplayName(language),
-    } as ICustomizableLanguageDetails);
+    clearCustomizableLanguageDetails();
   }
 
   function selectUnlistedLanguage() {
@@ -212,17 +215,42 @@ export const useLanguageChooser = (
   } as ILanguageChooser;
 };
 
-export function defaultDisplayName(language: ILanguage) {
-  if (isUnlistedLanguage(language) || isManuallyEnteredTagLanguage(language)) {
-    return "";
+export function defaultDisplayName(language?: ILanguage, script?: IScript) {
+  if (
+    !language ||
+    isUnlistedLanguage(language) ||
+    isManuallyEnteredTagLanguage(language)
+  ) {
+    return undefined;
   }
-  return stripDemarcation(language.autonym || language.exonym);
+
+  return stripDemarcation(
+    script?.autonym || language.autonym || language.exonym
+  );
+}
+
+function hasValidDisplayName(selection: IOrthography) {
+  if (!selection.language) {
+    return false;
+  }
+  // Check that user has not entered an empty string or whitespace only in the custom display name
+  if (
+    typeof selection.customDetails?.displayName === "string" &&
+    !selection.customDetails?.displayName?.trim()
+  ) {
+    return false;
+  }
+  // Check that we have a default display name and/or a custom display name
+  return (
+    !!defaultDisplayName(selection.language, selection.script) ||
+    !!selection.customDetails?.displayName
+  );
 }
 
 export function isReadyToSubmit(selection: IOrthography): boolean {
   return (
     !!selection.language &&
-    !!selection.customDetails?.displayName && // we need a nonempty display name
+    hasValidDisplayName(selection) &&
     // either a script is selected or there are no scripts for the selected language
     (!!selection.script || selection.language?.scripts?.length === 0) &&
     // if unlisted language, name and country are required

@@ -5,7 +5,7 @@ import {
   getLanguageBySubtag,
   getMaximalLangtag,
   getRegionBySubtag,
-  getScriptBySubtag,
+  getScriptForLanguage,
   ILanguage,
   IRegion,
   IScript,
@@ -153,7 +153,7 @@ export function parseLangtagFromLangChooser(
   // First, check if there is an explicit script subtag
   let scriptSubtag = subtags.find((s) => scriptRegex.test(s));
   if (scriptSubtag) {
-    script = getScriptBySubtag(scriptSubtag);
+    script = getScriptForLanguage(scriptSubtag, language);
   }
   // if we recieved a script subtag but were unable to map it to a ISO 15924 script code, this is a tag requiring manual entry
   if (scriptSubtag && !script) {
@@ -180,7 +180,7 @@ export function parseLangtagFromLangChooser(
       .split(/-[xX]-/)[0]
       .split("-")
       .find((s) => scriptRegex.test(s));
-    script = getScriptBySubtag(scriptSubtag || "");
+    script = getScriptForLanguage(scriptSubtag || "", language);
   }
 
   // if the langtag has subtags (excluding private use section) that are not the language, script, or region tags,

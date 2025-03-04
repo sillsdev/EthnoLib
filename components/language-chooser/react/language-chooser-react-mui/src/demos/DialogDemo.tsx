@@ -42,7 +42,7 @@ export const DialogDemo: React.FunctionComponent<{
       ...(initialSelection.customDetails || []),
       displayName:
         languageChooserDialogProps.initialCustomDisplayName ??
-        defaultDisplayName(initialSelection.language),
+        defaultDisplayName(initialSelection.language, initialSelection.script),
     };
   }
 
@@ -111,7 +111,11 @@ export const DialogDemo: React.FunctionComponent<{
             >
               <Typography component="div" css={css``}>
                 Language Display Name:{" "}
-                {selectedValue?.customDetails?.displayName}
+                {selectedValue?.customDetails?.displayName ||
+                  defaultDisplayName(
+                    selectedValue.language,
+                    selectedValue?.script
+                  )}
                 <br />
                 Language Code: {selectedValue?.language?.languageSubtag}
                 <br />

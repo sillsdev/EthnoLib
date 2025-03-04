@@ -36,6 +36,7 @@ import {
   isManuallyEnteredTagLanguage,
   isValidBcp47Tag,
   isReadyToSubmit,
+  defaultDisplayName,
 } from "@ethnolib/language-chooser-react-hook";
 import { debounce } from "lodash";
 import "./styles.css";
@@ -659,7 +660,14 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                   id="language-name-bar"
                   size="small"
                   fullWidth
-                  value={lp.customizableLanguageDetails.displayName}
+                  value={
+                    lp.customizableLanguageDetails.displayName !== undefined
+                      ? lp.customizableLanguageDetails.displayName
+                      : defaultDisplayName(
+                          lp.selectedLanguage,
+                          lp.selectedScript
+                        )
+                  }
                   onChange={(e) => {
                     lp.saveLanguageDetails(
                       {
