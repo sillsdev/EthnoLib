@@ -62,7 +62,7 @@ export const useLanguageChooser = (
   const [selectedScript, setSelectedScript] = useState<IScript | undefined>();
 
   const EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS = {
-    displayName: undefined,
+    customDisplayName: undefined,
     region: undefined,
     dialect: undefined,
   } as ICustomizableLanguageDetails;
@@ -109,7 +109,7 @@ export const useLanguageChooser = (
         language: languageForManuallyEnteredTag(selectionLanguageTag || ""),
         script: undefined,
         customDetails: {
-          displayName: initialCustomDisplayName,
+          customDisplayName: initialCustomDisplayName,
         },
       };
     }
@@ -124,7 +124,7 @@ export const useLanguageChooser = (
       ...(initialSelections?.customDetails ||
         ({} as ICustomizableLanguageDetails)),
       // we only save the custom display name if it is different from the default
-      displayName:
+      customDisplayName:
         initialCustomDisplayName &&
         initialCustomDisplayName !==
           defaultDisplayName(
@@ -264,15 +264,15 @@ function hasValidDisplayName(selection: IOrthography) {
   }
   // Check that user has not entered an empty string or whitespace only in the custom display name
   if (
-    typeof selection.customDetails?.displayName === "string" &&
-    !selection.customDetails?.displayName?.trim()
+    typeof selection.customDetails?.customDisplayName === "string" &&
+    !selection.customDetails?.customDisplayName?.trim()
   ) {
     return false;
   }
   // Check that we have a default display name and/or a custom display name
   return (
     !!defaultDisplayName(selection.language, selection.script) ||
-    !!selection.customDetails?.displayName
+    !!selection.customDetails?.customDisplayName
   );
 }
 

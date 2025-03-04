@@ -66,7 +66,7 @@ export function isValidBcp47Tag(tag: string | undefined): boolean {
 }
 
 export interface ICustomizableLanguageDetails {
-  displayName?: string;
+  customDisplayName?: string;
   region?: IRegion;
   dialect?: string;
 }
@@ -201,7 +201,7 @@ export function parseLangtagFromLangChooser(
     language,
     script,
     customDetails: {
-      displayName: undefined,
+      customDisplayName: undefined,
       region,
       // TODO future work: improve handling if we get both. Currently, we should not be getting variantSubtags.
       dialect: privateUseSubtag || variantSubtag,

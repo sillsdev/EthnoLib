@@ -616,7 +616,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                       script: lp.selectedScript,
                       customDetails: {
                         ...lp.customizableLanguageDetails,
-                        displayName: "hypotheticalDisplayName",
+                        customDisplayName: "hypotheticalDisplayName",
                       },
                     })
                   }
@@ -636,8 +636,9 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                   size="small"
                   fullWidth
                   value={
-                    lp.customizableLanguageDetails.displayName !== undefined
-                      ? lp.customizableLanguageDetails.displayName
+                    lp.customizableLanguageDetails.customDisplayName !==
+                    undefined
+                      ? lp.customizableLanguageDetails.customDisplayName
                       : defaultDisplayName(
                           lp.selectedLanguage,
                           lp.selectedScript
@@ -647,7 +648,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                     lp.saveLanguageDetails(
                       {
                         ...lp.customizableLanguageDetails,
-                        displayName: e.target.value,
+                        customDisplayName: e.target.value,
                       },
                       lp.selectedScript
                     );

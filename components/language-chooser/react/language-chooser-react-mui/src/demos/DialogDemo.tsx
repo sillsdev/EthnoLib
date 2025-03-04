@@ -40,7 +40,7 @@ export const DialogDemo: React.FunctionComponent<{
   if (initialSelection?.language) {
     initialSelection.customDetails = {
       ...(initialSelection.customDetails || []),
-      displayName:
+      customDisplayName:
         languageChooserDialogProps.initialCustomDisplayName ??
         defaultDisplayName(initialSelection.language, initialSelection.script),
     };
@@ -111,7 +111,7 @@ export const DialogDemo: React.FunctionComponent<{
             >
               <Typography component="div" css={css``}>
                 Language Display Name:{" "}
-                {selectedValue?.customDetails?.displayName ||
+                {selectedValue?.customDetails?.customDisplayName ||
                   defaultDisplayName(
                     selectedValue.language,
                     selectedValue?.script

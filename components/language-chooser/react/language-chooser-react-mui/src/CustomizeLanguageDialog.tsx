@@ -393,9 +393,9 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               props.saveLanguageDetails(
                 {
                   // For unlisted languages, automatically copy the Name they entered to be the display name
-                  displayName: isUnlistedLanguageDialog
+                  customDisplayName: isUnlistedLanguageDialog
                     ? dialogSelectedDialect
-                    : props.customizableLanguageDetails.displayName,
+                    : props.customizableLanguageDetails.customDisplayName,
                   region: dialogSelectedRegion,
                   dialect: dialogSelectedDialect,
                 } as ICustomizableLanguageDetails,

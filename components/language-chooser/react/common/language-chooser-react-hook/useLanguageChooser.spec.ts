@@ -47,7 +47,7 @@ describe("isReadyToSubmit", () => {
         language: regularLanguage,
         script: regularLanguage.scripts[0],
         customDetails: {
-          displayName: "",
+          customDisplayName: "",
         },
       })
     ).toBe(false);
@@ -56,7 +56,7 @@ describe("isReadyToSubmit", () => {
         language: regularLanguage,
         script: regularLanguage.scripts[0],
         customDetails: {
-          displayName: " ",
+          customDisplayName: " ",
         },
       })
     ).toBe(false);
@@ -66,7 +66,7 @@ describe("isReadyToSubmit", () => {
     expect(
       isReadyToSubmit({
         language: regularLanguage,
-        customDetails: { displayName: "English" },
+        customDetails: { customDisplayName: "English" },
       })
     ).toBe(false);
   });
@@ -76,7 +76,7 @@ describe("isReadyToSubmit", () => {
       isReadyToSubmit({
         language: regularLanguage,
         script: regularLanguage.scripts[0],
-        customDetails: { displayName: "English" },
+        customDetails: { customDisplayName: "English" },
       })
     ).toBe(true);
   });
@@ -85,7 +85,7 @@ describe("isReadyToSubmit", () => {
     expect(
       isReadyToSubmit({
         language: scriptlessLanguage,
-        customDetails: { displayName: "Test Language" },
+        customDetails: { customDisplayName: "Test Language" },
       })
     ).toBe(true);
   });
@@ -96,7 +96,7 @@ describe("isReadyToSubmit", () => {
         isReadyToSubmit({
           language: UNLISTED_LANGUAGE,
           customDetails: {
-            displayName: "Test",
+            customDisplayName: "Test",
             dialect: "test",
           },
         })
@@ -116,7 +116,7 @@ describe("isReadyToSubmit", () => {
         isReadyToSubmit({
           language: UNLISTED_LANGUAGE,
           customDetails: {
-            displayName: "Test",
+            customDisplayName: "Test",
             region: testRegion,
           },
         })
@@ -143,7 +143,7 @@ describe("isReadyToSubmit", () => {
         isReadyToSubmit({
           language: UNLISTED_LANGUAGE,
           customDetails: {
-            displayName: "Test",
+            customDisplayName: "Test",
             region: testRegion,
             dialect: "Test Dialect",
           },
@@ -159,7 +159,7 @@ describe("isReadyToSubmit", () => {
       expect(
         isReadyToSubmit({
           language: { ...manualLanguage, manuallyEnteredTag: "invalid-tag!" },
-          customDetails: { displayName: "Test" },
+          customDetails: { customDisplayName: "Test" },
         })
       ).toBe(false);
     });
@@ -168,7 +168,7 @@ describe("isReadyToSubmit", () => {
       expect(
         isReadyToSubmit({
           language: manualLanguage,
-          customDetails: { displayName: "Test" },
+          customDetails: { customDisplayName: "Test" },
         })
       ).toBe(true);
     });
