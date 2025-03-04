@@ -21,7 +21,7 @@ import {
 } from "./languageTagHandling";
 
 export interface ILanguageChooser {
-  languageData: ILanguage[];
+  languageResults: ILanguage[];
   selectedLanguage: ILanguage | undefined;
   selectedScript: IScript | undefined;
   customizableLanguageDetails: ICustomizableLanguageDetails;
@@ -80,7 +80,7 @@ export const useLanguageChooser = (
     customDetails: customizableLanguageDetails,
   });
 
-  const languageData = useMemo(() => {
+  const languageResults = useMemo(() => {
     if (!searchString || searchString.length < 2) {
       return [];
     }
@@ -226,7 +226,7 @@ export const useLanguageChooser = (
   }, [selectedLanguage, selectedScript, customizableLanguageDetails]);
 
   return {
-    languageData,
+    languageResults,
     selectedLanguage,
     selectedScript,
     customizableLanguageDetails,

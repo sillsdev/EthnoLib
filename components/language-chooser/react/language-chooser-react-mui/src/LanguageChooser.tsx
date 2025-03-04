@@ -176,7 +176,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   const languageCardListRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     languageCardListRef.current?.scrollTo(0, 0);
-  }, [lp.languageData]);
+  }, [lp.languageResults]);
 
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTagFromOrthography({
@@ -376,7 +376,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
             `}
             ref={languageCardListRef}
           >
-            {lp.languageData.map((language, index) => {
+            {lp.languageResults.map((language, index) => {
               const isSelectedLanguageCard = codeMatches(
                 language.iso639_3_code,
                 lp.selectedLanguage?.iso639_3_code
