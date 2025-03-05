@@ -4,8 +4,9 @@ export interface IRegion {
 }
 
 export interface IScript {
-  code: string;
-  name: string;
+  scriptCode: string;
+  scriptName: string;
+  languageNameInScript?: string;
 }
 
 export enum LanguageType {

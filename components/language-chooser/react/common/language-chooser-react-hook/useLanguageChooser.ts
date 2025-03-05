@@ -4,8 +4,9 @@ import {
   searchForLanguage,
   stripResultMetadata,
   stripDemarcation,
+  deepStripDemarcation,
 } from "@ethnolib/find-language";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FuseResult } from "fuse.js";
 import {
   isValidBcp47Tag,
@@ -16,10 +17,11 @@ import {
   parseLangtagFromLangChooser,
   UNLISTED_LANGUAGE,
   IOrthography,
+  createTagFromOrthography,
 } from "./languageTagHandling";
 
 export interface ILanguageChooser {
-  languageData: ILanguage[];
+  languageResults: ILanguage[];
   selectedLanguage: ILanguage | undefined;
   selectedScript: IScript | undefined;
   customizableLanguageDetails: ICustomizableLanguageDetails;
@@ -44,6 +46,10 @@ export interface ILanguageChooser {
 }
 
 export const useLanguageChooser = (
+  onSelectionChange?: (
+    orthography: IOrthography | undefined,
+    langtag: string | undefined
+  ) => void,
   searchResultModifier?: (
     results: FuseResult<ILanguage>[],
     searchString: string
@@ -56,7 +62,7 @@ export const useLanguageChooser = (
   const [selectedScript, setSelectedScript] = useState<IScript | undefined>();
 
   const EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS = {
-    displayName: undefined,
+    customDisplayName: undefined,
     region: undefined,
     dialect: undefined,
   } as ICustomizableLanguageDetails;
@@ -74,7 +80,7 @@ export const useLanguageChooser = (
     customDetails: customizableLanguageDetails,
   });
 
-  const languageData = useMemo(() => {
+  const languageResults = useMemo(() => {
     if (!searchString || searchString.length < 2) {
       return [];
     }
@@ -103,7 +109,7 @@ export const useLanguageChooser = (
         language: languageForManuallyEnteredTag(selectionLanguageTag || ""),
         script: undefined,
         customDetails: {
-          displayName: initialCustomDisplayName,
+          customDisplayName: initialCustomDisplayName,
         },
       };
     }
@@ -114,14 +120,19 @@ export const useLanguageChooser = (
       selectScript(initialSelections.script);
     }
 
-    setCustomizableLanguageDetails((c) => {
-      // selectLanguage will have set a default display name. We want to use it unless
-      // it is overridden by a initialCustomDisplayName
-      return {
-        ...(initialSelections?.customDetails ||
-          ({} as ICustomizableLanguageDetails)),
-        displayName: initialCustomDisplayName || c.displayName,
-      };
+    setCustomizableLanguageDetails({
+      ...(initialSelections?.customDetails ||
+        ({} as ICustomizableLanguageDetails)),
+      // we only save the custom display name if it is different from the default
+      customDisplayName:
+        initialCustomDisplayName &&
+        initialCustomDisplayName !==
+          defaultDisplayName(
+            initialSelections?.language,
+            initialSelections?.script
+          )
+          ? initialCustomDisplayName
+          : undefined,
     });
   }
 
@@ -160,9 +171,7 @@ export const useLanguageChooser = (
       // If there is only one script option for this language, automatically select it
       language.scripts.length === 1 ? language.scripts[0] : undefined
     );
-    setCustomizableLanguageDetails({
-      displayName: defaultDisplayName(language),
-    } as ICustomizableLanguageDetails);
+    clearCustomizableLanguageDetails();
   }
 
   function selectUnlistedLanguage() {
@@ -193,8 +202,31 @@ export const useLanguageChooser = (
     clearCustomizableLanguageDetails();
   }
 
+  const [previousStateWasValidSelection, setPreviousStateWasValidSelection] =
+    useState(false);
+
+  useEffect(() => {
+    if (onSelectionChange) {
+      if (readyToSubmit) {
+        const resultingOrthography = deepStripDemarcation({
+          language: selectedLanguage,
+          script: selectedScript,
+          customDetails: customizableLanguageDetails,
+        }) as IOrthography;
+        onSelectionChange(
+          resultingOrthography,
+          createTagFromOrthography(resultingOrthography)
+        );
+        setPreviousStateWasValidSelection(true);
+      } else if (previousStateWasValidSelection) {
+        onSelectionChange(undefined, undefined);
+        setPreviousStateWasValidSelection(false);
+      }
+    }
+  }, [selectedLanguage, selectedScript, customizableLanguageDetails]);
+
   return {
-    languageData,
+    languageResults,
     selectedLanguage,
     selectedScript,
     customizableLanguageDetails,
@@ -212,17 +244,42 @@ export const useLanguageChooser = (
   } as ILanguageChooser;
 };
 
-export function defaultDisplayName(language: ILanguage) {
-  if (isUnlistedLanguage(language) || isManuallyEnteredTagLanguage(language)) {
-    return "";
+export function defaultDisplayName(language?: ILanguage, script?: IScript) {
+  if (
+    !language ||
+    isUnlistedLanguage(language) ||
+    isManuallyEnteredTagLanguage(language)
+  ) {
+    return undefined;
   }
-  return stripDemarcation(language.autonym || language.exonym);
+
+  return stripDemarcation(
+    script?.languageNameInScript || language.autonym || language.exonym
+  );
+}
+
+function hasValidDisplayName(selection: IOrthography) {
+  if (!selection.language) {
+    return false;
+  }
+  // Check that user has not entered an empty string or whitespace only in the custom display name
+  if (
+    typeof selection.customDetails?.customDisplayName === "string" &&
+    !selection.customDetails?.customDisplayName?.trim()
+  ) {
+    return false;
+  }
+  // Check that we have a default display name and/or a custom display name
+  return (
+    !!defaultDisplayName(selection.language, selection.script) ||
+    !!selection.customDetails?.customDisplayName
+  );
 }
 
 export function isReadyToSubmit(selection: IOrthography): boolean {
   return (
     !!selection.language &&
-    !!selection.customDetails?.displayName && // we need a nonempty display name
+    hasValidDisplayName(selection) &&
     // either a script is selected or there are no scripts for the selected language
     (!!selection.script || selection.language?.scripts?.length === 0) &&
     // if unlisted language, name and country are required

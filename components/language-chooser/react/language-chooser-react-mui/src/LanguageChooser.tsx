@@ -19,12 +19,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import {
-  codeMatches,
-  ILanguage,
-  IScript,
-  deepStripDemarcation,
-} from "@ethnolib/find-language";
+import { codeMatches, ILanguage, IScript } from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import { ScriptCard } from "./ScriptCard";
 import {
@@ -36,6 +31,7 @@ import {
   isManuallyEnteredTagLanguage,
   isValidBcp47Tag,
   isReadyToSubmit,
+  defaultDisplayName,
 } from "@ethnolib/language-chooser-react-hook";
 import { debounce } from "lodash";
 import "./styles.css";
@@ -114,7 +110,10 @@ export interface ILanguageChooserProps {
 export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   props
 ) => {
-  const lp: ILanguageChooser = useLanguageChooser(props.searchResultModifier);
+  const lp: ILanguageChooser = useLanguageChooser(
+    props.onSelectionChange,
+    props.searchResultModifier
+  );
 
   useEffect(() => {
     if (searchInputRef) {
@@ -173,34 +172,11 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
     ]
   );
 
-  const [previousStateWasValidSelection, setPreviousStateWasValidSelection] =
-    useState(false);
-
-  useEffect(() => {
-    if (props.onSelectionChange) {
-      if (lp.readyToSubmit) {
-        const resultingOrthography = deepStripDemarcation({
-          language: lp.selectedLanguage,
-          script: lp.selectedScript,
-          customDetails: lp.customizableLanguageDetails,
-        }) as IOrthography;
-        props.onSelectionChange(
-          resultingOrthography,
-          createTagFromOrthography(resultingOrthography)
-        );
-        setPreviousStateWasValidSelection(true);
-      } else if (previousStateWasValidSelection) {
-        props.onSelectionChange(undefined, undefined);
-        setPreviousStateWasValidSelection(false);
-      }
-    }
-  }, [lp.selectedLanguage, lp.selectedScript, lp.customizableLanguageDetails]);
-
   // Scroll to top whenever the language list changes
   const languageCardListRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     languageCardListRef.current?.scrollTo(0, 0);
-  }, [lp.languageData]);
+  }, [lp.languageResults]);
 
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTagFromOrthography({
@@ -240,7 +216,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   }
 
   function toggleSelectScript(script: IScript) {
-    if (codeMatches(script.code, lp.selectedScript?.code)) {
+    if (codeMatches(script.scriptCode, lp.selectedScript?.scriptCode)) {
       // clicking on the selected script unselects it
       lp.clearScriptSelection();
     } else {
@@ -400,7 +376,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
             `}
             ref={languageCardListRef}
           >
-            {lp.languageData.map((language, index) => {
+            {lp.languageResults.map((language, index) => {
               const isSelectedLanguageCard = codeMatches(
                 language.iso639_3_code,
                 lp.selectedLanguage?.iso639_3_code
@@ -477,7 +453,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                             {language.scripts.map((script: IScript) => {
                               return (
                                 <ListItem
-                                  key={script.code}
+                                  key={script.scriptCode}
                                   css={css`
                                     padding: 5px 10px;
                                     width: fit-content;
@@ -489,8 +465,8 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                                     `}
                                     scriptData={script}
                                     isSelected={codeMatches(
-                                      script.code,
-                                      lp.selectedScript?.code
+                                      script.scriptCode,
+                                      lp.selectedScript?.scriptCode
                                     )}
                                     onClick={() => toggleSelectScript(script)}
                                     // If scriptCardBackgroundColorOverride is not provided, ScriptCard will fall back to a default based on the primary color
@@ -640,7 +616,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                       script: lp.selectedScript,
                       customDetails: {
                         ...lp.customizableLanguageDetails,
-                        displayName: "hypotheticalDisplayName",
+                        customDisplayName: "hypotheticalDisplayName",
                       },
                     })
                   }
@@ -659,12 +635,20 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                   id="language-name-bar"
                   size="small"
                   fullWidth
-                  value={lp.customizableLanguageDetails.displayName}
+                  value={
+                    lp.customizableLanguageDetails.customDisplayName !==
+                    undefined
+                      ? lp.customizableLanguageDetails.customDisplayName
+                      : defaultDisplayName(
+                          lp.selectedLanguage,
+                          lp.selectedScript
+                        )
+                  }
                   onChange={(e) => {
                     lp.saveLanguageDetails(
                       {
                         ...lp.customizableLanguageDetails,
-                        displayName: e.target.value,
+                        customDisplayName: e.target.value,
                       },
                       lp.selectedScript
                     );
@@ -686,7 +670,9 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
         </div>
       </div>
       <CustomizeLanguageDialog
-        key={lp.selectedLanguage?.iso639_3 + "_" + lp.selectedScript?.code} // This is to force a re-render when the user has changed language or script selection and then reopens dialog
+        key={
+          lp.selectedLanguage?.iso639_3 + "_" + lp.selectedScript?.scriptCode
+        } // This is to force a re-render when the user has changed language or script selection and then reopens dialog
         open={customizeLanguageDialogOpen}
         selectedLanguage={lp.selectedLanguage}
         selectedScript={lp.selectedScript}

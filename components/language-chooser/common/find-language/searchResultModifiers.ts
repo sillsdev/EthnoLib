@@ -42,7 +42,7 @@ const DEFAULT_EXCLUDED_SCRIPT_CODES = new Set([
   "Zsym",
 ]);
 
-const latinScriptData = { code: "Latn", name: "Latin" } as IScript;
+const latinScriptData = { scriptCode: "Latn", scriptName: "Latin" } as IScript;
 
 // Replace the English result with a simpler version that only has "English" and the code on it
 function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
@@ -54,7 +54,9 @@ function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
       languageSubtag: result.languageSubtag,
       regionNames: "",
       names: [],
-      scripts: [latinScriptData],
+      scripts: [
+        { ...latinScriptData, languageNameInScript: "English" } as IScript,
+      ],
       variants: "",
       alternativeTags: [],
       languageType: LanguageType.Living,
@@ -67,13 +69,15 @@ function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
 function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
   function getSimplifiedFrenchResult(result: ILanguage) {
     return {
-      autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
+      autonym: result.autonym, // this will be "français", but we want to keep demarcation in case user typed "Francais"
       exonym: result.exonym, // "French"
       iso639_3_code: result.iso639_3_code,
       languageSubtag: result.languageSubtag,
       regionNames: "",
       names: [],
-      scripts: [latinScriptData],
+      scripts: [
+        { ...latinScriptData, languageNameInScript: "français" } as IScript,
+      ],
       variants: "",
       alternativeTags: [],
       languageType: LanguageType.Living,
@@ -105,7 +109,9 @@ function simplifySpanishResult(results: ILanguage[]): ILanguage[] {
           (name) => name !== demarcatedCastellano && name !== demarcatedEspanol
         ),
       ],
-      scripts: [latinScriptData],
+      scripts: [
+        { ...latinScriptData, languageNameInScript: "español" } as IScript,
+      ],
     } as ILanguage;
   }
   return substituteInModifiedEntry("spa", getSimplifiedSpanishResult, results);
@@ -124,14 +130,16 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
       ),
       scripts: [
         {
-          code: "Hans",
-          name: "Chinese (Simplified)",
+          scriptCode: "Hans",
+          scriptName: "Chinese (Simplified)",
+          languageNameInScript: "中文",
         } as IScript,
         {
-          code: "Hant",
-          name: "Chinese (Traditional)",
+          scriptCode: "Hant",
+          scriptName: "Chinese (Traditional)",
+          languageNameInScript: "中文",
         } as IScript,
-        latinScriptData,
+        latinScriptData, // zh-Latn doesn't have a localnames/localname in langtags.json
       ],
     } as ILanguage;
   }
@@ -269,7 +277,7 @@ export function defaultSearchResultModifier(
   );
 
   modifiedResults = filterScripts(
-    (s) => !DEFAULT_EXCLUDED_SCRIPT_CODES.has(s.code),
+    (s) => !DEFAULT_EXCLUDED_SCRIPT_CODES.has(s.scriptCode),
     modifiedResults
   );
 

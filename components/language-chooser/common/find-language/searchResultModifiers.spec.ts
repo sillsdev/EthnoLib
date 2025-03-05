@@ -8,10 +8,17 @@ import {
   substituteInModifiedEntry,
   defaultSearchResultModifier,
 } from "./searchResultModifiers";
-import { ILanguage } from "./findLanguageInterfaces";
+import { ILanguage, IScript } from "./findLanguageInterfaces";
 import { createTestLanguageEntry } from "./testUtils";
 import { searchForLanguage } from "./searchForLanguage";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
+
+const latinScript = { scriptCode: "Latn", scriptName: "Latin" } as IScript;
+const brailleScript = { scriptCode: "Brai", scriptName: "Braille" } as IScript;
+const specialScript = {
+  scriptCode: "specialCode",
+  scriptName: "specialScript",
+} as IScript;
 
 describe("filter scripts", () => {
   it("should filter out scripts", () => {
@@ -19,22 +26,19 @@ describe("filter scripts", () => {
       createTestLanguageEntry({
         exonym: "foo",
         iso639_3_code: "bar",
-        scripts: [
-          { code: "Latn", name: "Latin" },
-          { code: "Brai", name: "Braille" },
-        ],
+        scripts: [latinScript, brailleScript],
       }),
       createTestLanguageEntry({
         exonym: "baz",
         iso639_3_code: "boo",
-        scripts: [{ code: "Brai", name: "Braille" }],
+        scripts: [brailleScript],
       }),
     ];
     const expectedFilteredResults = [
       createTestLanguageEntry({
         exonym: "foo",
         iso639_3_code: "bar",
-        scripts: [{ code: "Latn", name: "Latin" }],
+        scripts: [latinScript],
       }),
       createTestLanguageEntry({
         exonym: "baz",
@@ -42,9 +46,12 @@ describe("filter scripts", () => {
         scripts: [],
       }),
     ];
-    expect(filterScripts((script) => script.code !== "Brai", results)).toEqual(
-      expectedFilteredResults
-    );
+    expect(
+      filterScripts(
+        (script) => script.scriptCode !== brailleScript.scriptCode,
+        results
+      )
+    ).toEqual(expectedFilteredResults);
   });
 });
 
@@ -72,22 +79,19 @@ describe("substitute special entry into results", () => {
       createTestLanguageEntry({
         exonym: "foo",
         iso639_3_code: "bar",
-        scripts: [
-          { code: "Latn", name: "Latin" },
-          { code: "Brai", name: "Braille" },
-        ],
+        scripts: [latinScript, brailleScript],
       }),
       createTestLanguageEntry({
         exonym: "baz",
         iso639_3_code: "boo",
-        scripts: [{ code: "Brai", name: "Braille" }],
+        scripts: [brailleScript],
       }),
     ];
 
     const specialEntry = createTestLanguageEntry({
       exonym: "special entry exonym",
       iso639_3_code: "boo",
-      scripts: [{ code: "specialCode", name: "specialScript" }],
+      scripts: [specialScript],
       variants: "yay",
     });
 
@@ -95,15 +99,12 @@ describe("substitute special entry into results", () => {
       createTestLanguageEntry({
         exonym: "foo",
         iso639_3_code: "bar",
-        scripts: [
-          { code: "Latn", name: "Latin" },
-          { code: "Brai", name: "Braille" },
-        ],
+        scripts: [latinScript, brailleScript],
       }),
       createTestLanguageEntry({
         exonym: "special entry exonym",
         iso639_3_code: "boo",
-        scripts: [{ code: "specialCode", name: "specialScript" }],
+        scripts: [specialScript],
         variants: "yay",
       }),
     ];
@@ -119,25 +120,19 @@ describe("filter out language codes", () => {
       createTestLanguageEntry({
         exonym: "foo",
         iso639_3_code: "bar",
-        scripts: [
-          { code: "Latn", name: "Latin" },
-          { code: "Brai", name: "Braille" },
-        ],
+        scripts: [latinScript, brailleScript],
       }),
       createTestLanguageEntry({
         exonym: "baz",
         iso639_3_code: "boo",
-        scripts: [{ code: "Brai", name: "Braille" }],
+        scripts: [brailleScript],
       }),
     ];
     const expectedResults = [
       createTestLanguageEntry({
         exonym: "foo",
         iso639_3_code: "bar",
-        scripts: [
-          { code: "Latn", name: "Latin" },
-          { code: "Brai", name: "Braille" },
-        ],
+        scripts: [latinScript, brailleScript],
       }),
     ];
     expect(filterOnLanguageCode((code) => code !== "boo", results)).toEqual(
