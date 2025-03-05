@@ -12,6 +12,7 @@ import {
   List,
   ListItem,
   OutlinedInput,
+  Skeleton,
   Stack,
   Typography,
   useTheme,
@@ -116,16 +117,27 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
 ) => {
   const lp: ILanguageChooser = useLanguageChooser(props.searchResultModifier);
 
+  // If we need to show language cards on initial load, we paint the language chooser first and then show skeleton until the cards are ready
+  const [isWaitingForResults, setIsWaitingForResults] = useState(false);
+
   useEffect(() => {
     if (searchInputRef) {
       searchInputRef.value = props.initialSearchString || "";
       searchInputRef.focus();
     }
-    lp.resetTo(
-      props.initialSearchString || "",
-      props.initialSelectionLanguageTag,
-      props.initialCustomDisplayName
-    );
+    if (props.initialSearchString) {
+      // Show the skeleton while waiting for search results
+      setIsWaitingForResults(true);
+    }
+    setTimeout(() => {
+      // This can take a bit, so push it to the end of the event queue so that we paint the rest of the component first
+      lp.resetTo(
+        props.initialSearchString || "",
+        props.initialSelectionLanguageTag,
+        props.initialCustomDisplayName
+      );
+      setIsWaitingForResults(false);
+    }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // We only want this to run once
 
@@ -405,6 +417,17 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
               `}
               ref={languageCardListRef}
             >
+              {isWaitingForResults &&
+                Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton
+                    key={i}
+                    variant="rounded"
+                    height={LANG_CARD_MIN_HEIGHT}
+                    css={css`
+                      margin: 5px 0px;
+                    `}
+                  />
+                ))}
               {lp.languageData.map((language, index) => {
                 const isSelectedLanguageCard = codeMatches(
                   language.iso639_3_code,
@@ -433,7 +456,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                         css={css`
                           min-height: ${LANG_CARD_MIN_HEIGHT};
                           flex-direction: column;
-                          margin: 5px 10px 5px 0px;
+                          margin: 5px 0px;
                         `}
                         languageCardData={language}
                         isSelected={isSelectedLanguageCard}
