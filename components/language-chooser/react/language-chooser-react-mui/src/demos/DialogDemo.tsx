@@ -13,7 +13,6 @@ import {
   IOrthography,
   parseLangtagFromLangChooser,
 } from "@ethnolib/language-chooser-react-hook";
-import "../styles.css";
 import { LanguageChooserDialog } from "./LanguageChooserDialog";
 import React from "react";
 import { DummyRightPanelComponent } from "./DummyRightPanelComponent";
@@ -83,6 +82,12 @@ export const DialogDemo: React.FunctionComponent<{
     <ThemeProvider theme={baseTheme}>
       <div
         css={css`
+          *,
+          *:before,
+          *:after {
+            box-sizing: border-box;
+          }
+
           width: 100%;
           height: 100vh;
           padding: 17px;

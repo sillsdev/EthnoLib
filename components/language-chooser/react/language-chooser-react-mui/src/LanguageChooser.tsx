@@ -38,7 +38,6 @@ import {
   isReadyToSubmit,
 } from "@ethnolib/language-chooser-react-hook";
 import { debounce } from "lodash";
-import "./styles.css";
 import { useEffect, useRef, useState } from "react";
 import { CustomizeLanguageDialog } from "./CustomizeLanguageDialog";
 import LazyLoad from "react-lazyload";
@@ -291,10 +290,16 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   }, [lp.selectedLanguage]);
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme} css={css``}>
       <div
         id="lang-chooser-body"
         css={css`
+          *,
+          *:before,
+          *:after {
+            box-sizing: border-box;
+          }
+
           flex-grow: 1;
           display: flex;
           width: 100%;
