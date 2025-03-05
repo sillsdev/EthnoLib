@@ -45,7 +45,8 @@
     "projectsRelationship": "independent",
     "version": {
       "generatorOptions": {
-        "packageRoot": "{projectRoot}"
+        "packageRoot": "{projectRoot}",
+        "updateDependents": "auto"
       },
       "conventionalCommits": true
     },
