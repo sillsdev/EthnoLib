@@ -5,12 +5,12 @@ import {
   AppBar,
   Button,
   Dialog,
+  ThemeProvider,
   Toolbar,
   Typography,
   useTheme,
 } from "@mui/material";
 
-import "../styles.css";
 import { ILanguageChooserProps, LanguageChooser } from "../LanguageChooser";
 import { IOrthography } from "@ethnolib/language-chooser-react-hook";
 import React from "react";
@@ -46,43 +46,45 @@ export const LanguageChooserDialog: React.FunctionComponent<
   }
   const theme = useTheme();
   const dialogActionButtons = (
-    <div
-      id="dialog-action-buttons-container"
-      css={css`
-        width: 100%;
-        display: flex;
-        justify-content: flex-end;
-        padding-top: 15px;
-        padding-bottom: 5px;
-      `}
-    >
-      <Button
-        data-testid="lang-chooser-dialog-ok-button"
+    <ThemeProvider theme={theme}>
+      <div
+        id="dialog-action-buttons-container"
         css={css`
-          margin-left: auto;
-          margin-right: 10px;
-          min-width: 100px;
+          width: 100%;
+          display: flex;
+          justify-content: flex-end;
+          padding-top: 15px;
+          padding-bottom: 5px;
         `}
-        variant="contained"
-        color="primary"
-        disabled={pendingSelection.language === undefined}
-        onClick={() => {
-          onOk(pendingSelection, pendingLanguageTag);
-        }}
       >
-        OK
-      </Button>
-      <Button
-        css={css`
-          min-width: 100px;
-        `}
-        variant="outlined"
-        color="primary"
-        onClick={onCancel}
-      >
-        Cancel
-      </Button>
-    </div>
+        <Button
+          data-testid="lang-chooser-dialog-ok-button"
+          css={css`
+            margin-left: auto;
+            margin-right: 10px;
+            min-width: 100px;
+          `}
+          variant="contained"
+          color="primary"
+          disabled={pendingSelection.language === undefined}
+          onClick={() => {
+            onOk(pendingSelection, pendingLanguageTag);
+          }}
+        >
+          OK
+        </Button>
+        <Button
+          css={css`
+            min-width: 100px;
+          `}
+          variant="outlined"
+          color="primary"
+          onClick={onCancel}
+        >
+          Cancel
+        </Button>
+      </div>
+    </ThemeProvider>
   );
 
   return (
