@@ -1,3 +1,9 @@
+## 0.0.40 (2025-03-05)
+
+### 🩹 Fixes
+
+- BL-14377 use mui css baseline which has box-sizing: border-box ([6280c3b](https://github.com/sillsdev/EthnoLib/commit/6280c3b))
+
 ## 0.0.39 (2025-03-05)
 
 ### 🩹 Fixes
