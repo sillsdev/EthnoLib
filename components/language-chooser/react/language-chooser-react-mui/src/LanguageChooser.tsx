@@ -2,6 +2,7 @@
 import { css, ThemeProvider } from "@emotion/react";
 
 import {
+  ScopedCssBaseline,
   Button,
   createTheme,
   Fade,
@@ -38,7 +39,6 @@ import {
   isReadyToSubmit,
 } from "@ethnolib/language-chooser-react-hook";
 import { debounce } from "lodash";
-import "./styles.css";
 import { useEffect, useRef, useState } from "react";
 import { CustomizeLanguageDialog } from "./CustomizeLanguageDialog";
 import LazyLoad from "react-lazyload";
@@ -292,411 +292,419 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
 
   return (
     <ThemeProvider theme={theme}>
-      <div
-        id="lang-chooser-body"
+      <ScopedCssBaseline // Puts box-sizing: border-box and other "normalizations" on all descendants
         css={css`
-          flex-grow: 1;
-          display: flex;
-          width: 100%;
           height: 100%;
         `}
       >
         <div
-          id="left-pane"
+          id="lang-chooser-body"
           css={css`
             flex-grow: 1;
-            // height: 100%;
-            position: relative;
-            display: flex; // to make the language list overflow scroll work
-            flex-direction: column;
-            padding: 10px 10px 10px 15px;
-            background-color: ${theme.palette.grey[50]};
-          `}
-        >
-          <FormFieldLabel
-            htmlFor="search-bar"
-            label="Search by name, code, or country"
-          />
-          <PrimaryTooltip
-            title={
-              <>
-                Start typing to find your language.
-                <br />
-                <br />
-                We have a list of almost every known language, where it is
-                spoken, and how it is written.
-              </>
-            }
-            placement="right"
-            open={showInitialPrompt}
-            onClose={() => setShowInitialPrompt(false)}
-            disableFocusListener
-            disableHoverListener
-            disableTouchListener
-            slots={{
-              transition: Fade,
-            }}
-            slotProps={{
-              transition: { timeout: 200 },
-            }}
-          >
-            {/* Wrapping div stabilizes the tooltip position */}
-            <div>
-              <OutlinedInput
-                type="text"
-                inputRef={(el) => (searchInputRef = el)} // for displaying initial search string
-                css={css`
-                  background-color: white;
-                  margin-bottom: 10px;
-                  width: 100%;
-                  min-width: 100px;
-                  padding-left: 10px;
-                  padding-right: 10px;
-                `}
-                inputProps={{
-                  spellCheck: false,
-                }}
-                size="small"
-                startAdornment={
-                  <InputAdornment
-                    position="start"
-                    css={css`
-                      margin-left: 0;
-                      color: ${theme.palette.grey[400]};
-                    `}
-                  >
-                    <Icon component={SearchIcon} />
-                  </InputAdornment>
-                }
-                endAdornment={
-                  <IconButton
-                    data-testid="clear-search-X-button"
-                    onClick={clearSearchText}
-                    css={css`
-                      padding-right: 0px;
-                    `}
-                  >
-                    <ClearIcon />
-                  </IconButton>
-                }
-                id="search-bar"
-                data-testid="search-bar"
-                fullWidth
-                onChange={(e) => {
-                  debounce(async () => {
-                    lp.onSearchStringChange(e.target.value);
-                  }, 0)();
-                }}
-              />
-            </div>
-          </PrimaryTooltip>
-          <div
-            id="language-card-list"
-            css={css`
-              overflow-y: auto;
-              scrollbar-width: thick;
-              flex-basis: 0;
-              flex-grow: 1;
-            `}
-            ref={languageCardListRef}
-          >
-            {lp.languageData.map((language, index) => {
-              const isSelectedLanguageCard = codeMatches(
-                language.iso639_3_code,
-                lp.selectedLanguage?.iso639_3_code
-              );
-              return (
-                <div
-                  key={index}
-                  // We use this ref to scroll the initially selected language card into view
-                  ref={
-                    isSelectedLanguageCard ? selectedLanguageCardRef : undefined
-                  }
-                >
-                  <LazyLoad
-                    offset={500} // Load a 500px buffer under the visible area so we don't have to get the calculation perfect
-                    height={LANG_CARD_MIN_HEIGHT} // needs to match the min-height we set on the language card
-                    overflow={true}
-                    // Enhance: If we need to speed things up, it would be more efficient to use the iso code as the key
-                    // though that currently would cause lazyload to show gaps (placeholders?) in the list (try searching "eng")
-                    // so we would probably need to use forceCheck on the lazyload
-                    key={index}
-                  >
-                    <LanguageCard
-                      css={css`
-                        min-height: ${LANG_CARD_MIN_HEIGHT};
-                        flex-direction: column;
-                        margin: 5px 10px 5px 0px;
-                      `}
-                      languageCardData={language}
-                      isSelected={isSelectedLanguageCard}
-                      onClick={() => toggleSelectLanguage(language)}
-                      // If languageCardBackgroundColorOverride is not provided, LanguageCard will fall back toa default based on the primary color
-                      backgroundColorWhenSelected={
-                        props.languageCardBackgroundColorOverride
-                      }
-                      backgroundColorWhenNotSelected={
-                        theme.palette.background.paper
-                      }
-                    ></LanguageCard>
-                    {codeMatches(
-                      language.iso639_3_code,
-                      lp.selectedLanguage?.iso639_3_code
-                    ) &&
-                      language.scripts.length > 1 && (
-                        <PrimaryTooltip
-                          title="Select a script"
-                          placement="right"
-                          open={!lp.selectedScript}
-                          css={css`
-                            // hide popper when reference element (the script cards) is scrolled out of view
-                            // https://popper.js.org/docs/v2/modifiers/hide/
-                            &[data-popper-reference-hidden] {
-                              visibility: hidden;
-                              pointer-events: none;
-                            }
-
-                            // Also hide the popper if the customization dialog is open
-                            ${customizeLanguageDialogOpen
-                              ? `
-                              visibility: hidden;
-                              pointer-events: none;
-                            `
-                              : ""}
-                          `}
-                        >
-                          <List
-                            css={css`
-                              display: flex;
-                              flex-direction: row;
-                              justify-content: flex-end;
-                              flex-wrap: wrap;
-                              padding: 0px 0px 20px 30px;
-                            `}
-                          >
-                            {language.scripts.map((script: IScript) => {
-                              return (
-                                <ListItem
-                                  key={script.code}
-                                  css={css`
-                                    padding: 5px 10px;
-                                    width: fit-content;
-                                  `}
-                                >
-                                  <ScriptCard
-                                    css={css`
-                                      min-width: 100px;
-                                    `}
-                                    scriptData={script}
-                                    isSelected={codeMatches(
-                                      script.code,
-                                      lp.selectedScript?.code
-                                    )}
-                                    onClick={() => toggleSelectScript(script)}
-                                    // If scriptCardBackgroundColorOverride is not provided, ScriptCard will fall back to a default based on the primary color
-                                    backgroundColorWhenSelected={
-                                      props.scriptCardBackgroundColorOverride
-                                    }
-                                    backgroundColorWhenNotSelected={
-                                      theme.palette.background.paper
-                                    }
-                                  />
-                                </ListItem>
-                              );
-                            })}
-                          </List>
-                        </PrimaryTooltip>
-                      )}
-                  </LazyLoad>
-                </div>
-              );
-            })}
-          </div>
-          <div
-            id="bottom-of-left-pane"
-            css={css`
-              padding-top: 10px;
-            `}
-          >
-            <Button
-              data-testid="customization-button"
-              variant="outlined"
-              color="primary"
-              css={css`
-                min-width: 60%;
-                border: 1.5px solid ${theme.palette.grey[300]};
-                :hover {
-                  border-color: ${theme.palette.text.primary};
-                }
-                background-color: ${theme.palette.background.paper};
-                box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-                display: flex;
-                flex-direction: column;
-                align-items: flex-start;
-                text-transform: none;
-                padding: 5px 7px;
-              `}
-              onClick={() =>
-                manualTagLanguageSelected
-                  ? promptForManualTagEntry(currentTagPreview)
-                  : setCustomizeLanguageDialogOpen(true)
-              }
-            >
-              {/* Have MUI align the icon */}
-              <Stack
-                alignItems="center"
-                direction="row"
-                gap={0.5}
-                css={css`
-                  color: ${theme.palette.text.primary};
-                `}
-              >
-                {!showUnlistedLanguageOptions && (
-                  <EditIcon
-                    css={css`
-                      font-size: 1rem;
-                    `}
-                  />
-                )}
-                <Typography
-                  css={css`
-                    text-transform: uppercase;
-                    font-size: 0.75rem;
-                    font-weight: bold;
-                  `}
-                >
-                  {showUnlistedLanguageOptions
-                    ? "Create Unlisted Language"
-                    : manualTagLanguageSelected
-                      ? "Edit Language Tag"
-                      : "Customize"}
-                </Typography>
-              </Stack>
-
-              <div
-                css={css`
-                  display: flex;
-                  align-items: center;
-                  width: 100%;
-                  justify-content: space-between;
-                `}
-              >
-                <Typography
-                  variant="body2"
-                  css={css`
-                    text-align: left;
-                    color: ${theme.palette.grey[700]};
-                  `}
-                >
-                  {currentTagPreview}
-                </Typography>
-                {!manualTagLanguageSelected && (
-                  <PrimaryTooltip
-                    title={
-                      showUnlistedLanguageOptions
-                        ? "If you cannot find a language and it does not appear in ethnologue.com, you can instead define the language here."
-                        : "If you found the main language but need to change some of the specifics like Script or Dialect, you can do that here."
-                    }
-                  >
-                    <InfoOutlinedIcon
-                      css={css`
-                        color: ${theme.palette.grey[700]};
-                        margin-left: 10px;
-                      `}
-                    />
-                  </PrimaryTooltip>
-                )}
-              </div>
-            </Button>
-          </div>
-        </div>
-        <div
-          id="right-pane"
-          css={css`
-            width: 421px;
-            flex-shrink: 0;
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            background-color: white;
-            padding: 10px 15px 10px 20px;
+            width: 100%;
+            height: 100%;
           `}
         >
-          <div id="right-panel-component-container">
-            {props.rightPanelComponent}
-          </div>
-          <div id="right-pane-language-chooser-section">
-            {lp.selectedLanguage && (
-              <div id="right-pane-language-details=section">
-                <FormFieldLabel
-                  htmlFor="language-name-bar"
-                  label="Display this language this way"
-                  required={
-                    // If submission is prevented only because a display name is still needed, show the red "required" label
-                    !lp.readyToSubmit &&
-                    // We would be ready to submit if we just added a display name
-                    isReadyToSubmit({
-                      language: lp.selectedLanguage,
-                      script: lp.selectedScript,
-                      customDetails: {
-                        ...lp.customizableLanguageDetails,
-                        displayName: "hypotheticalDisplayName",
-                      },
-                    })
-                  }
-                />
+          <div
+            id="left-pane"
+            css={css`
+              flex-grow: 1;
+              // height: 100%;
+              position: relative;
+              display: flex; // to make the language list overflow scroll work
+              flex-direction: column;
+              padding: 10px 10px 10px 15px;
+              background-color: ${theme.palette.grey[50]};
+            `}
+          >
+            <FormFieldLabel
+              htmlFor="search-bar"
+              label="Search by name, code, or country"
+            />
+            <PrimaryTooltip
+              title={
+                <>
+                  Start typing to find your language.
+                  <br />
+                  <br />
+                  We have a list of almost every known language, where it is
+                  spoken, and how it is written.
+                </>
+              }
+              placement="right"
+              open={showInitialPrompt}
+              onClose={() => setShowInitialPrompt(false)}
+              disableFocusListener
+              disableHoverListener
+              disableTouchListener
+              slots={{
+                transition: Fade,
+              }}
+              slotProps={{
+                transition: { timeout: 200 },
+              }}
+            >
+              {/* Wrapping div stabilizes the tooltip position */}
+              <div>
                 <OutlinedInput
                   type="text"
-                  inputProps={{
-                    spellCheck: false,
-                  }}
+                  inputRef={(el) => (searchInputRef = el)} // for displaying initial search string
                   css={css`
                     background-color: white;
                     margin-bottom: 10px;
-                    font-size: 1.625rem; // 26px
-                    font-weight: 700;
+                    width: 100%;
+                    min-width: 100px;
+                    padding-left: 10px;
+                    padding-right: 10px;
                   `}
-                  id="language-name-bar"
+                  inputProps={{
+                    spellCheck: false,
+                  }}
                   size="small"
+                  startAdornment={
+                    <InputAdornment
+                      position="start"
+                      css={css`
+                        margin-left: 0;
+                        color: ${theme.palette.grey[400]};
+                      `}
+                    >
+                      <Icon component={SearchIcon} />
+                    </InputAdornment>
+                  }
+                  endAdornment={
+                    <IconButton
+                      data-testid="clear-search-X-button"
+                      onClick={clearSearchText}
+                      css={css`
+                        padding-right: 0px;
+                      `}
+                    >
+                      <ClearIcon />
+                    </IconButton>
+                  }
+                  id="search-bar"
+                  data-testid="search-bar"
                   fullWidth
-                  value={lp.customizableLanguageDetails.displayName}
                   onChange={(e) => {
-                    lp.saveLanguageDetails(
-                      {
-                        ...lp.customizableLanguageDetails,
-                        displayName: e.target.value,
-                      },
-                      lp.selectedScript
-                    );
+                    debounce(async () => {
+                      lp.onSearchStringChange(e.target.value);
+                    }, 0)();
                   }}
                 />
-                <Typography
-                  variant="body2"
-                  data-testid="right-panel-langtag-preview"
+              </div>
+            </PrimaryTooltip>
+            <div
+              id="language-card-list"
+              css={css`
+                overflow-y: auto;
+                scrollbar-width: thick;
+                flex-basis: 0;
+                flex-grow: 1;
+              `}
+              ref={languageCardListRef}
+            >
+              {lp.languageData.map((language, index) => {
+                const isSelectedLanguageCard = codeMatches(
+                  language.iso639_3_code,
+                  lp.selectedLanguage?.iso639_3_code
+                );
+                return (
+                  <div
+                    key={index}
+                    // We use this ref to scroll the initially selected language card into view
+                    ref={
+                      isSelectedLanguageCard
+                        ? selectedLanguageCardRef
+                        : undefined
+                    }
+                  >
+                    <LazyLoad
+                      offset={500} // Load a 500px buffer under the visible area so we don't have to get the calculation perfect
+                      height={LANG_CARD_MIN_HEIGHT} // needs to match the min-height we set on the language card
+                      overflow={true}
+                      // Enhance: If we need to speed things up, it would be more efficient to use the iso code as the key
+                      // though that currently would cause lazyload to show gaps (placeholders?) in the list (try searching "eng")
+                      // so we would probably need to use forceCheck on the lazyload
+                      key={index}
+                    >
+                      <LanguageCard
+                        css={css`
+                          min-height: ${LANG_CARD_MIN_HEIGHT};
+                          flex-direction: column;
+                          margin: 5px 10px 5px 0px;
+                        `}
+                        languageCardData={language}
+                        isSelected={isSelectedLanguageCard}
+                        onClick={() => toggleSelectLanguage(language)}
+                        // If languageCardBackgroundColorOverride is not provided, LanguageCard will fall back toa default based on the primary color
+                        backgroundColorWhenSelected={
+                          props.languageCardBackgroundColorOverride
+                        }
+                        backgroundColorWhenNotSelected={
+                          theme.palette.background.paper
+                        }
+                      ></LanguageCard>
+                      {codeMatches(
+                        language.iso639_3_code,
+                        lp.selectedLanguage?.iso639_3_code
+                      ) &&
+                        language.scripts.length > 1 && (
+                          <PrimaryTooltip
+                            title="Select a script"
+                            placement="right"
+                            open={!lp.selectedScript}
+                            css={css`
+                              // hide popper when reference element (the script cards) is scrolled out of view
+                              // https://popper.js.org/docs/v2/modifiers/hide/
+                              &[data-popper-reference-hidden] {
+                                visibility: hidden;
+                                pointer-events: none;
+                              }
+
+                              // Also hide the popper if the customization dialog is open
+                              ${customizeLanguageDialogOpen
+                                ? `
+                              visibility: hidden;
+                              pointer-events: none;
+                            `
+                                : ""}
+                            `}
+                          >
+                            <List
+                              css={css`
+                                display: flex;
+                                flex-direction: row;
+                                justify-content: flex-end;
+                                flex-wrap: wrap;
+                                padding: 0px 0px 20px 30px;
+                              `}
+                            >
+                              {language.scripts.map((script: IScript) => {
+                                return (
+                                  <ListItem
+                                    key={script.code}
+                                    css={css`
+                                      padding: 5px 10px;
+                                      width: fit-content;
+                                    `}
+                                  >
+                                    <ScriptCard
+                                      css={css`
+                                        min-width: 100px;
+                                      `}
+                                      scriptData={script}
+                                      isSelected={codeMatches(
+                                        script.code,
+                                        lp.selectedScript?.code
+                                      )}
+                                      onClick={() => toggleSelectScript(script)}
+                                      // If scriptCardBackgroundColorOverride is not provided, ScriptCard will fall back to a default based on the primary color
+                                      backgroundColorWhenSelected={
+                                        props.scriptCardBackgroundColorOverride
+                                      }
+                                      backgroundColorWhenNotSelected={
+                                        theme.palette.background.paper
+                                      }
+                                    />
+                                  </ListItem>
+                                );
+                              })}
+                            </List>
+                          </PrimaryTooltip>
+                        )}
+                    </LazyLoad>
+                  </div>
+                );
+              })}
+            </div>
+            <div
+              id="bottom-of-left-pane"
+              css={css`
+                padding-top: 10px;
+              `}
+            >
+              <Button
+                data-testid="customization-button"
+                variant="outlined"
+                color="primary"
+                css={css`
+                  min-width: 60%;
+                  border: 1.5px solid ${theme.palette.grey[300]};
+                  :hover {
+                    border-color: ${theme.palette.text.primary};
+                  }
+                  background-color: ${theme.palette.background.paper};
+                  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+                  display: flex;
+                  flex-direction: column;
+                  align-items: flex-start;
+                  text-transform: none;
+                  padding: 5px 7px;
+                `}
+                onClick={() =>
+                  manualTagLanguageSelected
+                    ? promptForManualTagEntry(currentTagPreview)
+                    : setCustomizeLanguageDialogOpen(true)
+                }
+              >
+                {/* Have MUI align the icon */}
+                <Stack
+                  alignItems="center"
+                  direction="row"
+                  gap={0.5}
                   css={css`
-                    color: ${theme.palette.grey[700]};
+                    color: ${theme.palette.text.primary};
                   `}
                 >
-                  {currentTagPreview}
-                </Typography>
-              </div>
-            )}
-            {props.actionButtons}
+                  {!showUnlistedLanguageOptions && (
+                    <EditIcon
+                      css={css`
+                        font-size: 1rem;
+                      `}
+                    />
+                  )}
+                  <Typography
+                    css={css`
+                      text-transform: uppercase;
+                      font-size: 0.75rem;
+                      font-weight: bold;
+                    `}
+                  >
+                    {showUnlistedLanguageOptions
+                      ? "Create Unlisted Language"
+                      : manualTagLanguageSelected
+                        ? "Edit Language Tag"
+                        : "Customize"}
+                  </Typography>
+                </Stack>
+
+                <div
+                  css={css`
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    justify-content: space-between;
+                  `}
+                >
+                  <Typography
+                    variant="body2"
+                    css={css`
+                      text-align: left;
+                      color: ${theme.palette.grey[700]};
+                    `}
+                  >
+                    {currentTagPreview}
+                  </Typography>
+                  {!manualTagLanguageSelected && (
+                    <PrimaryTooltip
+                      title={
+                        showUnlistedLanguageOptions
+                          ? "If you cannot find a language and it does not appear in ethnologue.com, you can instead define the language here."
+                          : "If you found the main language but need to change some of the specifics like Script or Dialect, you can do that here."
+                      }
+                    >
+                      <InfoOutlinedIcon
+                        css={css`
+                          color: ${theme.palette.grey[700]};
+                          margin-left: 10px;
+                        `}
+                      />
+                    </PrimaryTooltip>
+                  )}
+                </div>
+              </Button>
+            </div>
+          </div>
+          <div
+            id="right-pane"
+            css={css`
+              width: 421px;
+              flex-shrink: 0;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              background-color: white;
+              padding: 10px 15px 10px 20px;
+            `}
+          >
+            <div id="right-panel-component-container">
+              {props.rightPanelComponent}
+            </div>
+            <div id="right-pane-language-chooser-section">
+              {lp.selectedLanguage && (
+                <div id="right-pane-language-details=section">
+                  <FormFieldLabel
+                    htmlFor="language-name-bar"
+                    label="Display this language this way"
+                    required={
+                      // If submission is prevented only because a display name is still needed, show the red "required" label
+                      !lp.readyToSubmit &&
+                      // We would be ready to submit if we just added a display name
+                      isReadyToSubmit({
+                        language: lp.selectedLanguage,
+                        script: lp.selectedScript,
+                        customDetails: {
+                          ...lp.customizableLanguageDetails,
+                          displayName: "hypotheticalDisplayName",
+                        },
+                      })
+                    }
+                  />
+                  <OutlinedInput
+                    type="text"
+                    inputProps={{
+                      spellCheck: false,
+                    }}
+                    css={css`
+                      background-color: white;
+                      margin-bottom: 10px;
+                      font-size: 1.625rem; // 26px
+                      font-weight: 700;
+                    `}
+                    id="language-name-bar"
+                    size="small"
+                    fullWidth
+                    value={lp.customizableLanguageDetails.displayName}
+                    onChange={(e) => {
+                      lp.saveLanguageDetails(
+                        {
+                          ...lp.customizableLanguageDetails,
+                          displayName: e.target.value,
+                        },
+                        lp.selectedScript
+                      );
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    data-testid="right-panel-langtag-preview"
+                    css={css`
+                      color: ${theme.palette.grey[700]};
+                    `}
+                  >
+                    {currentTagPreview}
+                  </Typography>
+                </div>
+              )}
+              {props.actionButtons}
+            </div>
           </div>
         </div>
-      </div>
-      <CustomizeLanguageDialog
-        key={lp.selectedLanguage?.iso639_3 + "_" + lp.selectedScript?.code} // This is to force a re-render when the user has changed language or script selection and then reopens dialog
-        open={customizeLanguageDialogOpen}
-        selectedLanguage={lp.selectedLanguage}
-        selectedScript={lp.selectedScript}
-        customizableLanguageDetails={lp.customizableLanguageDetails}
-        saveLanguageDetails={lp.saveLanguageDetails}
-        selectUnlistedLanguage={lp.selectUnlistedLanguage}
-        promptForManualTagEntry={promptForManualTagEntry}
-        searchString={lp.searchString}
-        onClose={() => setCustomizeLanguageDialogOpen(false)}
-      />
+        <CustomizeLanguageDialog
+          key={lp.selectedLanguage?.iso639_3 + "_" + lp.selectedScript?.code} // This is to force a re-render when the user has changed language or script selection and then reopens dialog
+          open={customizeLanguageDialogOpen}
+          selectedLanguage={lp.selectedLanguage}
+          selectedScript={lp.selectedScript}
+          customizableLanguageDetails={lp.customizableLanguageDetails}
+          saveLanguageDetails={lp.saveLanguageDetails}
+          selectUnlistedLanguage={lp.selectUnlistedLanguage}
+          promptForManualTagEntry={promptForManualTagEntry}
+          searchString={lp.searchString}
+          onClose={() => setCustomizeLanguageDialogOpen(false)}
+        />
+      </ScopedCssBaseline>
     </ThemeProvider>
   );
 };

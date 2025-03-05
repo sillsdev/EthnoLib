@@ -1,8 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { defaultSearchResultModifier } from "@ethnolib/find-language";
-import { Slider, Typography } from "@mui/material";
-import "../styles.css";
+import { Slider, ThemeProvider, Typography, useTheme } from "@mui/material";
 import { LanguageChooser } from "../LanguageChooser";
 import React from "react";
 
@@ -17,162 +16,166 @@ export const PageDemo: React.FunctionComponent = () => {
   const [width, setWidth] = React.useState(900);
   const mainSectionHeight = `${height}px`;
   const languageChooserWidth = `${width}px`;
+
+  const theme = useTheme();
   return (
-    <div
-      css={css`
-        width: 100%;
-      `}
-    >
+    <ThemeProvider theme={theme}>
       <div
         css={css`
-          background-color: ${lightColor};
-          padding: 20px;
-          border-bottom: 2px solid ${mediumColor};
-        `}
-      >
-        <Typography
-          variant="h1"
-          css={css`
-            font-size: 2rem;
-            color: ${darkColor};
-          `}
-        >
-          This demonstrates the Language Chooser in a non-dialog context. It
-          should be responsive to size changes.
-        </Typography>
-        <div
-          id="slider-row"
-          css={css`
-            display: flex;
-            gap: 70px;
-          `}
-        >
-          <div
-            id="height-slider-container"
-            css={css`
-              margin-top: 20px;
-            `}
-          >
-            <Typography>Adjust Height:</Typography>
-            <Slider
-              css={css`
-                color: black;
-                width: 250px;
-              `}
-              value={height}
-              max={700}
-              min={300}
-              onChange={(_, value) => setHeight(value as number)}
-            />
-          </div>
-          <div
-            id="width-slider-container"
-            css={css`
-              margin-top: 20px;
-            `}
-          >
-            <Typography>Adjust Width:</Typography>
-            <Slider
-              css={css`
-                color: black;
-                width: 250px;
-              `}
-              value={width}
-              max={1100}
-              min={600}
-              onChange={(_, value) => setWidth(value as number)}
-            />
-          </div>
-        </div>
-      </div>
-      <div
-        css={css`
-          display: flex;
-          flex-direction: column;
-          flex-shrink: 1;
-          height: 100vh;
+          width: 100%;
         `}
       >
         <div
           css={css`
-            display: flex;
-            flex-shrink: 1;
             background-color: ${lightColor};
-          `}
-        >
-          <div
-            id="top-left"
-            css={css`
-              background-color: ${veryLightColor};
-              max-height: ${mainSectionHeight};
-              width: 50px;
-              flex-grow: 0;
-            `}
-          ></div>
-          <div
-            id="lc"
-            css={css`
-              max-height: ${mainSectionHeight};
-              width: ${languageChooserWidth};
-              flex-grow: 0;
-              flex-shrink: 0;
-              background-color: white;
-              color: ${darkColor};
-            `}
-          >
-            <LanguageChooser
-              initialSearchString="uzbek"
-              initialSelectionLanguageTag={"uz-cyrl"}
-              searchResultModifier={defaultSearchResultModifier}
-              onSelectionChange={(
-                _orthography,
-                languageTag: string | undefined
-              ) => {
-                setLanguageTag(languageTag || "");
-              }}
-            />
-          </div>
-          <div
-            css={css`
-              background-color: ${veryLightColor};
-              max-height: ${mainSectionHeight};
-              color: ${darkColor};
-              padding: 20px;
-              width: 500px;
-              flex-grow: 1;
-              flex-shrink: 1;
-              overflow: hidden;
-            `}
-          >
-            <Typography>{loremIpsum}</Typography>
-          </div>
-        </div>
-        <div
-          id="bottom"
-          css={css`
-            background-color: ${lightColor};
-            width: 100%;
-            height: 100%;
-            padding: 30px;
-            display: flex;
-            gap: 40px;
+            padding: 20px;
+            border-bottom: 2px solid ${mediumColor};
           `}
         >
           <Typography
+            variant="h1"
             css={css`
-              font-size: 1.5rem;
-              border: 2px solid ${darkColor};
-              padding: 15px 35px;
-              min-width: 500px;
-              height: fit-content;
-              background-color: ${veryLightColor};
+              font-size: 2rem;
+              color: ${darkColor};
             `}
           >
-            Selected Language Tag: {languageTag}
+            This demonstrates the Language Chooser in a non-dialog context. It
+            should be responsive to size changes.
           </Typography>
+          <div
+            id="slider-row"
+            css={css`
+              display: flex;
+              gap: 70px;
+            `}
+          >
+            <div
+              id="height-slider-container"
+              css={css`
+                margin-top: 20px;
+              `}
+            >
+              <Typography>Adjust Height:</Typography>
+              <Slider
+                css={css`
+                  color: black;
+                  width: 250px;
+                `}
+                value={height}
+                max={700}
+                min={300}
+                onChange={(_, value) => setHeight(value as number)}
+              />
+            </div>
+            <div
+              id="width-slider-container"
+              css={css`
+                margin-top: 20px;
+              `}
+            >
+              <Typography>Adjust Width:</Typography>
+              <Slider
+                css={css`
+                  color: black;
+                  width: 250px;
+                `}
+                value={width}
+                max={1100}
+                min={600}
+                onChange={(_, value) => setWidth(value as number)}
+              />
+            </div>
+          </div>
+        </div>
+        <div
+          css={css`
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 1;
+            height: 100vh;
+          `}
+        >
+          <div
+            css={css`
+              display: flex;
+              flex-shrink: 1;
+              background-color: ${lightColor};
+            `}
+          >
+            <div
+              id="top-left"
+              css={css`
+                background-color: ${veryLightColor};
+                max-height: ${mainSectionHeight};
+                width: 50px;
+                flex-grow: 0;
+              `}
+            ></div>
+            <div
+              id="lc"
+              css={css`
+                max-height: ${mainSectionHeight};
+                width: ${languageChooserWidth};
+                flex-grow: 0;
+                flex-shrink: 0;
+                background-color: white;
+                color: ${darkColor};
+              `}
+            >
+              <LanguageChooser
+                initialSearchString="uzbek"
+                initialSelectionLanguageTag={"uz-cyrl"}
+                searchResultModifier={defaultSearchResultModifier}
+                onSelectionChange={(
+                  _orthography,
+                  languageTag: string | undefined
+                ) => {
+                  setLanguageTag(languageTag || "");
+                }}
+              />
+            </div>
+            <div
+              css={css`
+                background-color: ${veryLightColor};
+                max-height: ${mainSectionHeight};
+                color: ${darkColor};
+                padding: 20px;
+                width: 500px;
+                flex-grow: 1;
+                flex-shrink: 1;
+                overflow: hidden;
+              `}
+            >
+              <Typography>{loremIpsum}</Typography>
+            </div>
+          </div>
+          <div
+            id="bottom"
+            css={css`
+              background-color: ${lightColor};
+              width: 100%;
+              height: 100%;
+              padding: 30px;
+              display: flex;
+              gap: 40px;
+            `}
+          >
+            <Typography
+              css={css`
+                font-size: 1.5rem;
+                border: 2px solid ${darkColor};
+                padding: 15px 35px;
+                min-width: 500px;
+                height: fit-content;
+                background-color: ${veryLightColor};
+              `}
+            >
+              Selected Language Tag: {languageTag}
+            </Typography>
+          </div>
         </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 };
 

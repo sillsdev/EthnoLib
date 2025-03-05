@@ -13,7 +13,6 @@ import {
   IOrthography,
   parseLangtagFromLangChooser,
 } from "@ethnolib/language-chooser-react-hook";
-import "../styles.css";
 import { LanguageChooserDialog } from "./LanguageChooserDialog";
 import React from "react";
 import { DummyRightPanelComponent } from "./DummyRightPanelComponent";
