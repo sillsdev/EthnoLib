@@ -1,3 +1,14 @@
+## 0.0.39 (2025-03-05)
+
+### 🩹 Fixes
+
+- update NX and make it publish dependent packages on changes ([58c6ce3](https://github.com/sillsdev/EthnoLib/commit/58c6ce3))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.17
+- Updated @ethnolib/find-language to 0.0.23
+
 ## 0.0.38 (2025-02-27)
 
 

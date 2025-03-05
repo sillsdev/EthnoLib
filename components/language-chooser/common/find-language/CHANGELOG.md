@@ -1,3 +1,9 @@
+## 0.0.23 (2025-03-05)
+
+### 🩹 Fixes
+
+- update NX and make it publish dependent packages on changes ([58c6ce3](https://github.com/sillsdev/EthnoLib/commit/58c6ce3))
+
 ## 0.0.22 (2025-02-28)
 
 
