@@ -1,3 +1,9 @@
+## 0.0.41 (2025-03-06)
+
+### 🩹 Fixes
+
+- BL-14367 paint overall component before the cards are ready ([659d143](https://github.com/sillsdev/EthnoLib/commit/659d143))
+
 ## 0.0.40 (2025-03-05)
 
 ### 🩹 Fixes
