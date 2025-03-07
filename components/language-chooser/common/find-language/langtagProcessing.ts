@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // This file has lots of anys in order to parse and process langtags.json
 import { iso15924 } from "iso-15924";
-import langTagsJson from "./language-data/langtags.json" assert { type: "json" };
+import langTagsJson from "./language-data/langtags.json" with { type: "json" };
 import fs from "fs";
 import {
   ILanguage,

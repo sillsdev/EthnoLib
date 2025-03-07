@@ -4,6 +4,7 @@ import { OptionCard, OptionCardProps } from "./OptionCard";
 import { ILanguage, rawIsoCode } from "@ethnolib/find-language";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
 import { lighten, useTheme } from "@mui/material";
+import { useLingui } from "@lingui/react/macro";
 
 const COMMA_SEPARATOR = ", ";
 
@@ -11,6 +12,7 @@ export const LanguageCard: React.FunctionComponent<
   { languageCardData: ILanguage } & OptionCardProps
 > = ({ languageCardData, ...origOptionCardProps }) => {
   const theme = useTheme();
+  const { t } = useLingui();
   const optionCardProps = {
     ...origOptionCardProps,
     backgroundColorWhenSelected:
@@ -89,7 +91,9 @@ export const LanguageCard: React.FunctionComponent<
             overflow: hidden;
             color: ${theme.palette.grey[700]};
           `}
-        >{`A language of ${languageCardData.regionNames}`}</PartiallyBoldedTypography>
+        >
+          {t`A language of ${languageCardData.regionNames}`}
+        </PartiallyBoldedTypography>
       )}
       {languageCardData.names.length > 0 && (
         <PartiallyBoldedTypography
