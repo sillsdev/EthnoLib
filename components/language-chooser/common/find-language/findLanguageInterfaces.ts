@@ -31,11 +31,16 @@ export interface ILanguage {
   scripts: IScript[];
   variants?: string; // comma-joined
   alternativeTags: string[];
-  // The macrolanguage for which this language is the representative language.
+  // The ISO 639-3 code of the macrolanguage which includes this individual language, if applicable.
+  parentMacrolanguage?: ILanguage;
+  // The macrolanguage for which this language is the representative language, if applicable.
+  // If present, should match the parentMacrolanguage code.
+  // TODO is this always a 3 letter code though?
   // If this is from a macrolanguage entry which we were unable to map to a representative language, value will be
   // MACROLANGUAGE_SITUATION_UNKNOWN and desired behavior should be handled by search result modifiers.
   // See macrolanguageNotes.md
-  aliasMacrolanguage?: string;
+  aliasMacrolanguageCode?: string;
+  // TODO change to isRepresentativeForMacrolanguage
   languageType: LanguageType;
   // This field should only be used for a language that was manually entered, i.e. the full langtag is not in langtags.json
   manuallyEnteredTag?: string;

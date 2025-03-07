@@ -151,6 +151,98 @@ describe("searchForLanguage", () => {
   });
 });
 
+describe("Macrolanguage handling", () => {
+  //macrolanguages
+  it("searching for macrolanguage name should yield all child languages and the macrolanguage code should not be included", () => {
+    searchDoesFindLanguage("Delaware", "umu");
+    searchDoesFindLanguage("Delaware", "unm");
+    searchDoesNotFindLanguage("Delaware", "del");
+  });
+
+  it("searching for macrolanguage code should yield all child languages", () => {
+    searchDoesFindLanguage("del", "umu");
+    searchDoesFindLanguage("del", "unm");
+  });
+
+  it("should include representative languages listed under the macrolanguage code on langtags.json", () => {
+    const results = searchForLanguage("knn"); // Konkani. knn is the representative language for macrolanguage kok
+    const result = results.find(
+      (result) => result.item.iso639_3_code === "knn"
+    );
+    expect(result).toBeDefined();
+    expect(result?.item.languageSubtag).toBe("kok");
+  });
+
+  // Make sure that the unusual language entries that don't behave as expected are still preserved in some form
+  it("should include results for unusual language situations", () => {
+    function expectToFindResultByExonym(exonym: string, region: string) {
+      const result = searchForLanguage(exonym).find(
+        (result) =>
+          stripDemarcation(result.item.exonym) === exonym &&
+          result.item.regionNames.includes(region)
+      );
+      expect(result).toBeDefined();
+    }
+    expectToFindResultByExonym("Akan", "Ghana");
+    expectToFindResultByExonym("Bontok", "Philippines");
+    expectToFindResultByExonym("Norwegian", "Norway");
+    expectToFindResultByExonym("Sanskrit", "India");
+    expectToFindResultByExonym("Serbo-Croatian", "Serbia");
+    expectToFindResultByExonym("Zapotec", "Mexico");
+  });
+
+  // Searching for a macrolanguage name or code should find all its individual languages
+  it("should find all individual languages when searching for macrolanguage name or code", () => {
+    function searchFindsAllLanguages(
+      query: string,
+      expectedLanguageCodes: string[]
+    ) {
+      const results = searchForLanguage(query);
+      for (const langCode of expectedLanguageCodes) {
+        expect(
+          results.some((result) =>
+            codeMatches(result.item.iso639_3_code, langCode)
+          )
+        ).toBe(true);
+      }
+    }
+    const luyiaLanguages = [
+      "bxk",
+      "ida",
+      "lkb",
+      "lks",
+      "lri",
+      "lrm",
+      "lsm",
+      "lto",
+      "lts",
+      "lwg",
+      "nle",
+      "nyd",
+      "rag",
+    ];
+    searchFindsAllLanguages("Luyia", luyiaLanguages);
+    searchFindsAllLanguages("luy", luyiaLanguages);
+
+    const malayLanguages = ["bjn", "bvu", "dub", "hji", "jak", "liw", "urk"]; // just an arbitrary sampling
+    searchFindsAllLanguages("Malay", malayLanguages);
+    searchFindsAllLanguages("msa", malayLanguages);
+  });
+
+  // Should not find results with ISO649_3 code being well-behaved macrolanguage codes
+  it("should not find macrolanguage codes when searching for macrolanguage name", () => {
+    searchDoesNotFindLanguage("Delaware", "del");
+    searchDoesNotFindLanguage("del", "del");
+    searchDoesNotFindLanguage("Chinese", "zho");
+    searchDoesNotFindLanguage("zho", "zho");
+    searchDoesNotFindLanguage("Arabic", "ara");
+    searchDoesNotFindLanguage("ara", "ara");
+    searchDoesNotFindLanguage("lah", "lah");
+    searchDoesNotFindLanguage("cre", "cre");
+    searchDoesNotFindLanguage("mlg", "mlg");
+  });
+});
+
 function searchDoesFindLanguage(query: string, expectedLanguageCode: string) {
   const results = searchForLanguage(query);
   expect(results.length).toBeGreaterThan(0);
