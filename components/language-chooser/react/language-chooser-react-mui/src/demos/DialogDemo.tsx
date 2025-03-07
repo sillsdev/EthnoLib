@@ -7,6 +7,9 @@ import {
   createTheme,
   ThemeProvider,
   Typography,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
   defaultDisplayName,
@@ -52,6 +55,7 @@ export const DialogDemo: React.FunctionComponent<{
   const [languageTag, setLanguageTag] = React.useState(
     initialLanguageTag || ""
   );
+  const [uiLanguage, setUiLanguage] = React.useState("en");
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -90,6 +94,10 @@ export const DialogDemo: React.FunctionComponent<{
         <div>
           <Typography variant="h3" component="div">
             Language Chooser Demo
+          </Typography>
+          <Typography variant="h6" component="div">
+            UI:{" "}
+            <LanguageSelector locale={uiLanguage} onChange={setUiLanguage} />
           </Typography>
           <br></br>
           <div
@@ -139,10 +147,29 @@ export const DialogDemo: React.FunctionComponent<{
               demoRightPanelComponent ? <DummyRightPanelComponent /> : undefined
             }
             {...languageChooserDialogProps}
+            uiLanguage={uiLanguage}
           />
         </div>
       </div>
     </ThemeProvider>
+  );
+};
+
+const LanguageSelector: React.FC<{
+  locale: string;
+  onChange: (value: string) => void;
+}> = ({ locale, onChange }) => {
+  return (
+    <FormControl>
+      <Select
+        value={locale}
+        onChange={(e) => onChange(e.target.value as string)}
+        size="small"
+      >
+        <MenuItem value="en">English</MenuItem>
+        <MenuItem value="fr">Français</MenuItem>
+      </Select>
+    </FormControl>
   );
 };
 

@@ -1,4 +1,4 @@
-import equivalentTags from "./language-data/equivalentTags.json" assert { type: "json" };
+import equivalentTags from "./language-data/equivalentTags.json" with { type: "json" };
 
 // Keys are lower cased
 const shortPreferredTagLookup = new Map<string, string>();

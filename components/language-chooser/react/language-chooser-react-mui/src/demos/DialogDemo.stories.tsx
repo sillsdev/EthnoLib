@@ -3,6 +3,14 @@ import DialogDemo from "./DialogDemo";
 
 const meta: Meta<typeof DialogDemo> = {
   component: DialogDemo,
+  parameters: {
+    docs: {
+      description: {
+        component:
+          "The main demo component that shows a language chooser in a dialog. UI language can be switched using the Storybook toolbar's language selector.",
+      },
+    },
+  },
 };
 
 export default meta;
@@ -10,6 +18,14 @@ type Story = StoryObj<typeof DialogDemo>;
 
 export const Primary: Story = {
   args: {},
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Basic dialog demo. You can change the UI language using the globe icon in the Storybook toolbar.",
+      },
+    },
+  },
 };
 
 export const ReopenWithLanguageInformation: Story = {
