@@ -8,7 +8,7 @@ import { IRegion, IScript, LanguageType } from "@ethnolib/find-language";
 
 describe("isReadyToSubmit", () => {
   // Test fixture for IScript
-  const latinScript = { code: "Latn", scriptName: "Latin" } as IScript;
+  const latinScript = { code: "Latn", name: "Latin" } as IScript;
 
   // Test fixture for IRegion
   const testRegion = { name: "Test Region", code: "TST" } as IRegion;

@@ -29,7 +29,7 @@ export function getRegionBySubtag(code: string): IRegion | undefined {
 export function getAllScripts(): IScript[] {
   return iso15924.map((script) => {
     return {
-      scriptName: script.name,
+      name: script.name,
       code: script.code,
     } as IScript;
   });
@@ -52,7 +52,7 @@ export function getScriptForLanguage(
   );
   if (scriptInfo) {
     return {
-      scriptName: scriptInfo.name,
+      name: scriptInfo.name,
       code: scriptInfo.code,
     } as IScript;
   }

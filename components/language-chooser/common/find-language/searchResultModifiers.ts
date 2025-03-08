@@ -42,7 +42,7 @@ const DEFAULT_EXCLUDED_SCRIPT_CODES = new Set([
   "Zsym",
 ]);
 
-const latinScriptData = { code: "Latn", scriptName: "Latin" } as IScript;
+const latinScriptData = { code: "Latn", name: "Latin" } as IScript;
 
 // Replace the English result with a simpler version that only has "English" and the code on it
 function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
@@ -131,12 +131,12 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
       scripts: [
         {
           code: "Hans",
-          scriptName: "Chinese (Simplified)",
+          name: "Chinese (Simplified)",
           languageNameInScript: "中文",
         } as IScript,
         {
           code: "Hant",
-          scriptName: "Chinese (Traditional)",
+          name: "Chinese (Traditional)",
           languageNameInScript: "中文",
         } as IScript,
         latinScriptData, // zh-Latn doesn't have a localnames/localname in langtags.json

@@ -48,7 +48,7 @@ function getAllRegionOptions() {
 function getAllScriptOptions() {
   return getAllScripts().map((script: IScript) => {
     return {
-      label: script.scriptName,
+      label: script.name,
       id: script.code,
     };
   });
@@ -192,7 +192,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             <Autocomplete
               id="customize-script-field"
               value={{
-                label: dialogSelectedScript?.scriptName || "",
+                label: dialogSelectedScript?.name || "",
                 id: dialogSelectedScript?.code || "",
               }}
               onChange={(
@@ -203,7 +203,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                   newValue
                     ? ({
                         code: newValue.id,
-                        scriptName: newValue.label,
+                        name: newValue.label,
                       } as IScript)
                     : undefined
                 );

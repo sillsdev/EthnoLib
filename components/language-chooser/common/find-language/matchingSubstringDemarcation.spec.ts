@@ -26,7 +26,7 @@ describe("Adding match demarcation", () => {
           scripts: [
             {
               code: "Latn",
-              scriptName: "Latin",
+              name: "Latin",
               languageNameInScript: "oʻzbek tili",
             },
           ],
@@ -82,7 +82,7 @@ describe("Adding match demarcation", () => {
           scripts: [
             {
               code: "Latn",
-              scriptName: "Latin",
+              name: "Latin",
               languageNameInScript: "oʻzbek tili",
             },
           ],

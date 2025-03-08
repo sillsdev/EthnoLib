@@ -13,11 +13,11 @@ import { createTestLanguageEntry } from "./testUtils";
 import { searchForLanguage } from "./searchForLanguage";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
 
-const latinScript = { code: "Latn", scriptName: "Latin" } as IScript;
-const brailleScript = { code: "Brai", scriptName: "Braille" } as IScript;
+const latinScript = { code: "Latn", name: "Latin" } as IScript;
+const brailleScript = { code: "Brai", name: "Braille" } as IScript;
 const specialScript = {
   code: "specialCode",
-  scriptName: "specialScript",
+  name: "specialScript",
 } as IScript;
 
 describe("filter scripts", () => {

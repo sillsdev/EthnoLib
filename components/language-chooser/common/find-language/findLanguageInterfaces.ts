@@ -5,7 +5,7 @@ export interface IRegion {
 
 export interface IScript {
   code: string;
-  scriptName: string;
+  name: string;
   languageNameInScript?: string;
 }
 

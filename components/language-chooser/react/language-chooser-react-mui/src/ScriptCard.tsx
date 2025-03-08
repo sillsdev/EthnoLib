@@ -19,7 +19,7 @@ export const ScriptCard: React.FunctionComponent<
   return (
     <OptionCard {...optionCardProps}>
       <Typography variant="h2" data-testid={`script-card-${scriptData.code}`}>
-        {scriptData.scriptName}
+        {scriptData.name}
       </Typography>
       <Typography
         variant="subtitle1"

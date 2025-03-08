@@ -119,7 +119,7 @@ export const DialogDemo: React.FunctionComponent<{
                 <br />
                 Language Code: {selectedValue?.language?.languageSubtag}
                 <br />
-                Script: {selectedValue?.script?.scriptName}
+                Script: {selectedValue?.script?.name}
                 <br />
                 Region: {selectedValue?.customDetails?.region?.name}
                 <br />
