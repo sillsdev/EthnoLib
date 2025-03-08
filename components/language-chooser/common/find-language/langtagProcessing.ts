@@ -138,7 +138,7 @@ interface ILanguageInternal {
   languageSubtag: string;
   regionNames: Set<string>; // ISO 3166 codes
   names: Set<string>;
-  scripts: any; // this will be an object where the keys are script codes and the values are IScript objects
+  scripts: { [key: string]: IScript };
   alternativeTags: Set<string>;
 }
 
