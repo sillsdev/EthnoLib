@@ -30,7 +30,7 @@ export function getAllScripts(): IScript[] {
   return iso15924.map((script) => {
     return {
       scriptName: script.name,
-      scriptCode: script.code,
+      code: script.code,
     } as IScript;
   });
 }
@@ -41,7 +41,7 @@ export function getScriptForLanguage(
 ): IScript | undefined {
   // If possible, use the script object from language.scripts because this might have the script-specific autonym
   const script = language.scripts.find(
-    (s) => s.scriptCode.toLowerCase() === scriptCode.toLowerCase()
+    (s) => s.code.toLowerCase() === scriptCode.toLowerCase()
   );
   if (script) {
     return script;
@@ -53,7 +53,7 @@ export function getScriptForLanguage(
   if (scriptInfo) {
     return {
       scriptName: scriptInfo.name,
-      scriptCode: scriptInfo.code,
+      code: scriptInfo.code,
     } as IScript;
   }
   return undefined;

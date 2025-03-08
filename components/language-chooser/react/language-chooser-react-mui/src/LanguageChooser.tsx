@@ -216,7 +216,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   }
 
   function toggleSelectScript(script: IScript) {
-    if (codeMatches(script.scriptCode, lp.selectedScript?.scriptCode)) {
+    if (codeMatches(script.code, lp.selectedScript?.code)) {
       // clicking on the selected script unselects it
       lp.clearScriptSelection();
     } else {
@@ -453,7 +453,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                             {language.scripts.map((script: IScript) => {
                               return (
                                 <ListItem
-                                  key={script.scriptCode}
+                                  key={script.code}
                                   css={css`
                                     padding: 5px 10px;
                                     width: fit-content;
@@ -465,8 +465,8 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                                     `}
                                     scriptData={script}
                                     isSelected={codeMatches(
-                                      script.scriptCode,
-                                      lp.selectedScript?.scriptCode
+                                      script.code,
+                                      lp.selectedScript?.code
                                     )}
                                     onClick={() => toggleSelectScript(script)}
                                     // If scriptCardBackgroundColorOverride is not provided, ScriptCard will fall back to a default based on the primary color
@@ -670,9 +670,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
         </div>
       </div>
       <CustomizeLanguageDialog
-        key={
-          lp.selectedLanguage?.iso639_3 + "_" + lp.selectedScript?.scriptCode
-        } // This is to force a re-render when the user has changed language or script selection and then reopens dialog
+        key={lp.selectedLanguage?.iso639_3 + "_" + lp.selectedScript?.code} // This is to force a re-render when the user has changed language or script selection and then reopens dialog
         open={customizeLanguageDialogOpen}
         selectedLanguage={lp.selectedLanguage}
         selectedScript={lp.selectedScript}

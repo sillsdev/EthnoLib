@@ -189,7 +189,7 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       (entry.localnames?.length || 0) > 0
     ) {
       langs[entry.iso639_3].scripts[entry.script] = {
-        scriptCode: entry.script,
+        code: entry.script,
         scriptName: scriptNames[entry.script],
         languageNameInScript:
           (entry.localnames || [undefined])[0] ||
@@ -212,7 +212,7 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
     const scriptCode = entry.script;
     const scripts = {};
     scripts[scriptCode] = {
-      scriptCode: scriptCode,
+      code: scriptCode,
       scriptName: scriptNames[scriptCode],
       languageNameInScript:
         (entry.localnames || [undefined])[0] || entry.localname,

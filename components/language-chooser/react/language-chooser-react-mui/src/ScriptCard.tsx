@@ -18,10 +18,7 @@ export const ScriptCard: React.FunctionComponent<
   } as OptionCardProps;
   return (
     <OptionCard {...optionCardProps}>
-      <Typography
-        variant="h2"
-        data-testid={`script-card-${scriptData.scriptCode}`}
-      >
+      <Typography variant="h2" data-testid={`script-card-${scriptData.code}`}>
         {scriptData.scriptName}
       </Typography>
       <Typography
@@ -31,7 +28,7 @@ export const ScriptCard: React.FunctionComponent<
           min-height: 1.2em;
         `}
       >
-        {scriptSamples[scriptData.scriptCode.toLowerCase()] || ""}
+        {scriptSamples[scriptData.code.toLowerCase()] || ""}
       </Typography>
     </OptionCard>
   );

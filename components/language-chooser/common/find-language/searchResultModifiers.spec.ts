@@ -13,10 +13,10 @@ import { createTestLanguageEntry } from "./testUtils";
 import { searchForLanguage } from "./searchForLanguage";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
 
-const latinScript = { scriptCode: "Latn", scriptName: "Latin" } as IScript;
-const brailleScript = { scriptCode: "Brai", scriptName: "Braille" } as IScript;
+const latinScript = { code: "Latn", scriptName: "Latin" } as IScript;
+const brailleScript = { code: "Brai", scriptName: "Braille" } as IScript;
 const specialScript = {
-  scriptCode: "specialCode",
+  code: "specialCode",
   scriptName: "specialScript",
 } as IScript;
 
@@ -47,10 +47,7 @@ describe("filter scripts", () => {
       }),
     ];
     expect(
-      filterScripts(
-        (script) => script.scriptCode !== brailleScript.scriptCode,
-        results
-      )
+      filterScripts((script) => script.code !== brailleScript.code, results)
     ).toEqual(expectedFilteredResults);
   });
 });

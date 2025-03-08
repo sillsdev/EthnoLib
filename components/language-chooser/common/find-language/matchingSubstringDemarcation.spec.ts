@@ -25,7 +25,7 @@ describe("Adding match demarcation", () => {
           regionNames: "Uzbekistan, Afghanistan, China",
           scripts: [
             {
-              scriptCode: "Latn",
+              code: "Latn",
               scriptName: "Latin",
               languageNameInScript: "oʻzbek tili",
             },
@@ -81,7 +81,7 @@ describe("Adding match demarcation", () => {
           regionNames: "[Uzb]ekistan, Afghanistan, China",
           scripts: [
             {
-              scriptCode: "Latn",
+              code: "Latn",
               scriptName: "Latin",
               languageNameInScript: "oʻzbek tili",
             },

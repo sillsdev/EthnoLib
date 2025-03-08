@@ -231,7 +231,7 @@ describe("createTagFromOrthography", () => {
           alternativeTags: [],
           languageType: LanguageType.Living,
         },
-        script: { scriptCode: "Latn", scriptName: "Latin" } as IScript,
+        script: { code: "Latn", scriptName: "Latin" } as IScript,
         customDetails: { dialect: "[foo]bar" } as ICustomizableLanguageDetails,
       })
     ).toEqual("en-Latn-x-foobar");

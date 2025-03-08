@@ -42,7 +42,7 @@ const DEFAULT_EXCLUDED_SCRIPT_CODES = new Set([
   "Zsym",
 ]);
 
-const latinScriptData = { scriptCode: "Latn", scriptName: "Latin" } as IScript;
+const latinScriptData = { code: "Latn", scriptName: "Latin" } as IScript;
 
 // Replace the English result with a simpler version that only has "English" and the code on it
 function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
@@ -130,12 +130,12 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
       ),
       scripts: [
         {
-          scriptCode: "Hans",
+          code: "Hans",
           scriptName: "Chinese (Simplified)",
           languageNameInScript: "中文",
         } as IScript,
         {
-          scriptCode: "Hant",
+          code: "Hant",
           scriptName: "Chinese (Traditional)",
           languageNameInScript: "中文",
         } as IScript,
@@ -277,7 +277,7 @@ export function defaultSearchResultModifier(
   );
 
   modifiedResults = filterScripts(
-    (s) => !DEFAULT_EXCLUDED_SCRIPT_CODES.has(s.scriptCode),
+    (s) => !DEFAULT_EXCLUDED_SCRIPT_CODES.has(s.code),
     modifiedResults
   );
 
