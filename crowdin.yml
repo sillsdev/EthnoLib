@@ -1,0 +1,13 @@
+project_id: 393909
+api_token_env: "ETHNOLIB_CROWDIN_TOKEN"
+base_path: "./locales"
+
+preserve_hierarchy: false
+
+files:
+  [
+    {
+      "source": "/en/messages.po",
+      "translation": "/%two_letters_code%/messages.po",
+    },
+  ]

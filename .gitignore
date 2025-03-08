@@ -144,3 +144,5 @@ vitest.config.*.timestamp*
 *.orig
 
 .github/copilot-instructions.md
+
+locales/*/messages.ts

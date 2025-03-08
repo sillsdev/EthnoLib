@@ -12,9 +12,13 @@
   "license": "MIT",
   "scripts": {
     "i18n:extract": "lingui extract",
-    "i18n:compile": "lingui compile"
+    "i18n:compile": "lingui compile",
+    "l10n:upload": "crowdin upload sources",
+    "l10n:download": "crowdin download",
+    "l10n:update-locales": "node scripts/update-locales.js"
   },
   "devDependencies": {
+    "@crowdin/cli": "^4.6.1",
     "@eslint/js": "^9.14.0",
     "@lingui/cli": "^5.2.0",
     "@lingui/swc-plugin": "^5.4.0",

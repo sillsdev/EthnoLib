@@ -5,16 +5,16 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
-"Language: fr\n"
+"Language: ru\n"
 "Project-Id-Version: sil-common-libraries\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2025-03-07 23:10\n"
 "Last-Translator: \n"
-"Language-Team: French\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language-Team: Russian\n"
+"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 "X-Crowdin-Project: sil-common-libraries\n"
 "X-Crowdin-Project-ID: 393909\n"
-"X-Crowdin-Language: fr\n"
+"X-Crowdin-Language: ru\n"
 "X-Crowdin-File: messages.po\n"
 "X-Crowdin-File-ID: 21083\n"
 
@@ -25,7 +25,7 @@ msgstr ""
 
 #: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:187
 msgid "Name"
-msgstr "Nom"
+msgstr "Название"
 
 #: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:360
 msgid "If this user interface is not offering you a code that you know is valid <0>BCP 47 code</0>, you can enter it by hand. Hold down CTRL key while clicking on this tag."
@@ -41,7 +41,7 @@ msgstr ""
 
 #: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:236
 msgid "Country"
-msgstr "Pays"
+msgstr "Страна"
 
 #: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:637
 #: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:177
@@ -62,11 +62,11 @@ msgstr ""
 
 #: components/language-chooser/react/language-chooser-react-mui/src/demos/LanguageChooserDialog.tsx:140
 msgid "Choose Language"
-msgstr "Sélectionnez une langue"
+msgstr "Выбрать язык"
 
 #: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:205
 msgid "Script"
-msgstr "Écriture"
+msgstr "Алфавит"
 
 #: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:677
 msgid "Display this language this way"
@@ -80,7 +80,7 @@ msgstr ""
 #: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:437
 #: components/language-chooser/react/language-chooser-react-mui/src/demos/LanguageChooserDialog.tsx:84
 msgid "Cancel"
-msgstr "Annuler"
+msgstr "Отмена"
 
 #: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:278
 msgid "If this user interface is not offering you a code that you know is valid ISO 639 code, you can enter it here:"
@@ -109,15 +109,15 @@ msgstr ""
 
 #: components/language-chooser/react/language-chooser-react-mui/src/FormFieldLabel.tsx:49
 msgid "required"
-msgstr "requis"
+msgstr "требуется"
 
 #: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:606
 msgid "Customize"
-msgstr "Personnaliser"
+msgstr "Настроить"
 
 #: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:348
 msgid "Advanced"
-msgstr "Avancé"
+msgstr "Расширенные"
 
 #: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:280
 msgid "Variant (dialect)"

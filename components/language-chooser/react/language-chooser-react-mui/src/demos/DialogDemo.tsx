@@ -19,6 +19,7 @@ import {
 import { LanguageChooserDialog } from "./LanguageChooserDialog";
 import React from "react";
 import { DummyRightPanelComponent } from "./DummyRightPanelComponent";
+import availableLocales from "../../../../../../available-locales.json" with { type: "json" };
 
 export const DialogDemo: React.FunctionComponent<{
   initialLanguageTag?: string;
@@ -166,8 +167,11 @@ const LanguageSelector: React.FC<{
         onChange={(e) => onChange(e.target.value as string)}
         size="small"
       >
-        <MenuItem value="en">English</MenuItem>
-        <MenuItem value="fr">Français</MenuItem>
+        {availableLocales.map((code: string) => (
+          <MenuItem key={code} value={code}>
+            {code}
+          </MenuItem>
+        ))}
       </Select>
     </FormControl>
   );

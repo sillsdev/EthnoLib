@@ -1,6 +1,7 @@
+import availableLocales from "./available-locales.json" with { type: "json" };
+
 module.exports = {
-  locales: ["en", "fr"],
-  // locales: ["en", "fr", "es", "zh", "ar"],
+  locales: availableLocales,
   catalogs: [
     {
       path: "<rootDir>/locales/{locale}/messages",
