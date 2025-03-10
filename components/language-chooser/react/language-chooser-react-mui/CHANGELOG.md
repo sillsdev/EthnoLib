@@ -1,3 +1,14 @@
+## 0.0.42 (2025-03-10)
+
+### 🩹 Fixes
+
+- BL-14370 show display name in selected script ([13c5b1a](https://github.com/sillsdev/EthnoLib/commit/13c5b1a))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.0.18
+- Updated @ethnolib/find-language to 0.0.24
+
 ## 0.0.41 (2025-03-06)
 
 ### 🩹 Fixes

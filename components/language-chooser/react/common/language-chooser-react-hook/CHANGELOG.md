@@ -1,3 +1,13 @@
+## 0.0.18 (2025-03-10)
+
+### 🩹 Fixes
+
+- BL-14370 show display name in selected script ([13c5b1a](https://github.com/sillsdev/EthnoLib/commit/13c5b1a))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.0.24
+
 ## 0.0.17 (2025-03-05)
 
 ### 🩹 Fixes
