@@ -6,6 +6,7 @@ export interface IRegion {
 export interface IScript {
   code: string;
   name: string;
+  languageNameInScript?: string;
 }
 
 export enum LanguageType {

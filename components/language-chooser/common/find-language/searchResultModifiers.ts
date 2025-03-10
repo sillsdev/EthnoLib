@@ -54,7 +54,9 @@ function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
       languageSubtag: result.languageSubtag,
       regionNames: "",
       names: [],
-      scripts: [latinScriptData],
+      scripts: [
+        { ...latinScriptData, languageNameInScript: "English" } as IScript,
+      ],
       variants: "",
       alternativeTags: [],
       languageType: LanguageType.Living,
@@ -67,13 +69,15 @@ function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
 function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
   function getSimplifiedFrenchResult(result: ILanguage) {
     return {
-      autonym: result.autonym, // this will be "Français", but we want to keep demarcation in case user typed "Francais"
+      autonym: result.autonym, // this will be "français", but we want to keep demarcation in case user typed "Francais"
       exonym: result.exonym, // "French"
       iso639_3_code: result.iso639_3_code,
       languageSubtag: result.languageSubtag,
       regionNames: "",
       names: [],
-      scripts: [latinScriptData],
+      scripts: [
+        { ...latinScriptData, languageNameInScript: "français" } as IScript,
+      ],
       variants: "",
       alternativeTags: [],
       languageType: LanguageType.Living,
@@ -105,7 +109,9 @@ function simplifySpanishResult(results: ILanguage[]): ILanguage[] {
           (name) => name !== demarcatedCastellano && name !== demarcatedEspanol
         ),
       ],
-      scripts: [latinScriptData],
+      scripts: [
+        { ...latinScriptData, languageNameInScript: "español" } as IScript,
+      ],
     } as ILanguage;
   }
   return substituteInModifiedEntry("spa", getSimplifiedSpanishResult, results);
@@ -126,12 +132,14 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
         {
           code: "Hans",
           name: "Chinese (Simplified)",
+          languageNameInScript: "中文",
         } as IScript,
         {
           code: "Hant",
           name: "Chinese (Traditional)",
+          languageNameInScript: "中文",
         } as IScript,
-        latinScriptData,
+        latinScriptData, // zh-Latn doesn't have a localnames/localname in langtags.json
       ],
     } as ILanguage;
   }

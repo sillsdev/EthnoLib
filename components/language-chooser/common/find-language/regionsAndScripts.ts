@@ -1,6 +1,6 @@
 import { iso31661 } from "iso-3166";
 import { iso15924 } from "iso-15924";
-import { IRegion, IScript } from "./findLanguageInterfaces";
+import { ILanguage, IRegion, IScript } from "./findLanguageInterfaces";
 
 // ISO-3166-1 is a region code to region name lookup
 export function getAllRegions(): IRegion[] {
@@ -35,9 +35,20 @@ export function getAllScripts(): IScript[] {
   });
 }
 
-export function getScriptBySubtag(code: string): IScript | undefined {
+export function getScriptForLanguage(
+  scriptCode: string,
+  language: ILanguage
+): IScript | undefined {
+  // If possible, use the script object from language.scripts because this might have the script-specific autonym
+  const script = language.scripts.find(
+    (s) => s.code.toLowerCase() === scriptCode.toLowerCase()
+  );
+  if (script) {
+    return script;
+  }
+
   const scriptInfo = iso15924.find(
-    (s) => s.code.toLowerCase() === code.toLowerCase()
+    (s) => s.code.toLowerCase() === scriptCode.toLowerCase()
   );
   if (scriptInfo) {
     return {
