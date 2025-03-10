@@ -4,14 +4,19 @@ import {
   languageForManuallyEnteredTag,
   UNLISTED_LANGUAGE,
 } from "./languageTagHandling";
-import { LanguageType } from "@ethnolib/find-language";
+import {
+  ILanguage,
+  IRegion,
+  IScript,
+  LanguageType,
+} from "@ethnolib/find-language";
 
 describe("isReadyToSubmit", () => {
   // Test fixture for IScript
-  const latinScript = { code: "Latn", name: "Latin" };
+  const latinScript = { code: "Latn", name: "Latin" } as IScript;
 
   // Test fixture for IRegion
-  const testRegion = { name: "Test Region", code: "TST" };
+  const testRegion = { name: "Test Region", code: "TST" } as IRegion;
 
   const regularLanguage = {
     autonym: "foo",
@@ -23,7 +28,7 @@ describe("isReadyToSubmit", () => {
     scripts: [latinScript],
     alternativeTags: [],
     languageType: LanguageType.Living,
-  };
+  } as ILanguage;
 
   const scriptlessLanguage = {
     autonym: "Test",
@@ -35,18 +40,29 @@ describe("isReadyToSubmit", () => {
     scripts: [],
     alternativeTags: [],
     languageType: LanguageType.Living,
-  };
+  } as ILanguage;
 
   it("returns false if no language is selected", () => {
     expect(isReadyToSubmit({})).toBe(false);
   });
 
-  it("returns false if no display name is provided", () => {
+  it("returns false if empty or whitespace custom display name is given", () => {
     expect(
       isReadyToSubmit({
         language: regularLanguage,
         script: regularLanguage.scripts[0],
-        customDetails: {},
+        customDetails: {
+          customDisplayName: "",
+        },
+      })
+    ).toBe(false);
+    expect(
+      isReadyToSubmit({
+        language: regularLanguage,
+        script: regularLanguage.scripts[0],
+        customDetails: {
+          customDisplayName: " ",
+        },
       })
     ).toBe(false);
   });
@@ -55,7 +71,7 @@ describe("isReadyToSubmit", () => {
     expect(
       isReadyToSubmit({
         language: regularLanguage,
-        customDetails: { displayName: "English" },
+        customDetails: { customDisplayName: "English" },
       })
     ).toBe(false);
   });
@@ -65,7 +81,7 @@ describe("isReadyToSubmit", () => {
       isReadyToSubmit({
         language: regularLanguage,
         script: regularLanguage.scripts[0],
-        customDetails: { displayName: "English" },
+        customDetails: { customDisplayName: "English" },
       })
     ).toBe(true);
   });
@@ -74,7 +90,7 @@ describe("isReadyToSubmit", () => {
     expect(
       isReadyToSubmit({
         language: scriptlessLanguage,
-        customDetails: { displayName: "Test Language" },
+        customDetails: { customDisplayName: "Test Language" },
       })
     ).toBe(true);
   });
@@ -85,7 +101,7 @@ describe("isReadyToSubmit", () => {
         isReadyToSubmit({
           language: UNLISTED_LANGUAGE,
           customDetails: {
-            displayName: "Test",
+            customDisplayName: "Test",
             dialect: "test",
           },
         })
@@ -105,9 +121,24 @@ describe("isReadyToSubmit", () => {
         isReadyToSubmit({
           language: UNLISTED_LANGUAGE,
           customDetails: {
-            displayName: "Test",
+            customDisplayName: "Test",
             region: testRegion,
           },
+        })
+      ).toBe(false);
+    });
+
+    it("returns false for unlisted or manually entered tag with no display name", () => {
+      expect(
+        isReadyToSubmit({
+          language: languageForManuallyEnteredTag("zzz-Foo"),
+          customDetails: {},
+        })
+      ).toBe(false);
+      expect(
+        isReadyToSubmit({
+          language: UNLISTED_LANGUAGE,
+          customDetails: {},
         })
       ).toBe(false);
     });
@@ -117,7 +148,7 @@ describe("isReadyToSubmit", () => {
         isReadyToSubmit({
           language: UNLISTED_LANGUAGE,
           customDetails: {
-            displayName: "Test",
+            customDisplayName: "Test",
             region: testRegion,
             dialect: "Test Dialect",
           },
@@ -133,7 +164,7 @@ describe("isReadyToSubmit", () => {
       expect(
         isReadyToSubmit({
           language: { ...manualLanguage, manuallyEnteredTag: "invalid-tag!" },
-          customDetails: { displayName: "Test" },
+          customDetails: { customDisplayName: "Test" },
         })
       ).toBe(false);
     });
@@ -142,7 +173,7 @@ describe("isReadyToSubmit", () => {
       expect(
         isReadyToSubmit({
           language: manualLanguage,
-          customDetails: { displayName: "Test" },
+          customDetails: { customDisplayName: "Test" },
         })
       ).toBe(true);
     });

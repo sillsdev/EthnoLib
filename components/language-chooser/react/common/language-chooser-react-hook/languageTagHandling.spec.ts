@@ -8,10 +8,12 @@ import {
   isManuallyEnteredTagLanguage,
   UNLISTED_LANGUAGE,
   isUnlistedLanguage,
+  ICustomizableLanguageDetails,
 } from "./languageTagHandling";
 import {
   getRegionBySubtag,
   ILanguage,
+  IScript,
   LanguageType,
 } from "@ethnolib/find-language";
 import { FuseResult } from "fuse.js";
@@ -226,9 +228,9 @@ describe("createTagFromOrthography", () => {
           names: [],
           alternativeTags: [],
           languageType: LanguageType.Living,
-        },
-        script: { code: "Latn", name: "Latin" },
-        customDetails: { dialect: "[foo]bar" },
+        } as ILanguage,
+        script: { code: "Latn", name: "Latin" } as IScript,
+        customDetails: { dialect: "[foo]bar" } as ICustomizableLanguageDetails,
       })
     ).toEqual("en-Latn-x-foobar");
   });

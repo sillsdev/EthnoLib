@@ -7,7 +7,7 @@ import {
   stripDemarcation,
 } from "./matchingSubstringDemarcation";
 import { FuseResult } from "fuse.js";
-import { ILanguage } from "./findLanguageInterfaces";
+import { ILanguage, LanguageType } from "./findLanguageInterfaces";
 import { cloneDeep } from "lodash";
 
 describe("Adding match demarcation", () => {
@@ -27,10 +27,12 @@ describe("Adding match demarcation", () => {
             {
               code: "Latn",
               name: "Latin",
+              languageNameInScript: "oʻzbek tili",
             },
           ],
           names: ["Ouzbek", "O’zbek", "Usbaki", "Usbeki", "Northern Uzbek"],
           alternativeTags: ["uz-Latn"],
+          languageType: LanguageType.Living,
         },
         refIndex: 6844,
         matches: [
@@ -82,10 +84,12 @@ describe("Adding match demarcation", () => {
             {
               code: "Latn",
               name: "Latin",
+              languageNameInScript: "oʻzbek tili",
             },
           ],
           names: ["O[uzb]ek", "O’zbek", "Usbaki", "Usbeki", "Northern [Uzb]ek"],
           alternativeTags: ["uz-Latn"],
+          languageType: LanguageType.Living,
         },
         refIndex: 6844,
       },
@@ -175,6 +179,7 @@ describe("deep strip demarcation from different types of data", () => {
       scripts: [],
       names: ["O[uzb]ek", "O’zbek", "Usbeki", "[Uzb]ek, Northern", "oʻzbek"],
       alternativeTags: [],
+      languageType: LanguageType.Living,
     } as ILanguage;
 
     interface TestOrthographyInterface {
@@ -196,9 +201,11 @@ describe("deep strip demarcation from different types of data", () => {
         scripts: [],
         names: ["Ouzbek", "O’zbek", "Usbeki", "Uzbek, Northern", "oʻzbek"],
         alternativeTags: [],
-      },
+        languageType: LanguageType.Living,
+      } as ILanguage,
     });
   });
+
   it("should not modify the original results", () => {
     const uzbekLanguage = {
       autonym: "ўзбек тили",
@@ -209,6 +216,7 @@ describe("deep strip demarcation from different types of data", () => {
       scripts: [],
       names: ["O[uzb]ek", "O’zbek", "Usbeki", "[Uzb]ek, Northern", "oʻzbek"],
       alternativeTags: [],
+      languageType: LanguageType.Living,
     } as ILanguage;
     const originalResults = cloneDeep(uzbekLanguage);
     deepStripDemarcation(originalResults);

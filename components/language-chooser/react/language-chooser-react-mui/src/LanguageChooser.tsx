@@ -21,12 +21,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import {
-  codeMatches,
-  ILanguage,
-  IScript,
-  deepStripDemarcation,
-} from "@ethnolib/find-language";
+import { codeMatches, ILanguage, IScript } from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import { ScriptCard } from "./ScriptCard";
 import {
@@ -38,6 +33,7 @@ import {
   isManuallyEnteredTagLanguage,
   isValidBcp47Tag,
   isReadyToSubmit,
+  defaultDisplayName,
 } from "@ethnolib/language-chooser-react-hook";
 import { debounce } from "lodash";
 import { useEffect, useRef, useState } from "react";
@@ -115,7 +111,10 @@ export interface ILanguageChooserProps {
 export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   props
 ) => {
-  const lp: ILanguageChooser = useLanguageChooser(props.searchResultModifier);
+  const lp: ILanguageChooser = useLanguageChooser(
+    props.onSelectionChange,
+    props.searchResultModifier
+  );
 
   // If we need to show language cards on initial load, we paint the language chooser first and then show skeleton until the cards are ready
   const [isWaitingForResults, setIsWaitingForResults] = useState(false);
@@ -185,34 +184,11 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
     ]
   );
 
-  const [previousStateWasValidSelection, setPreviousStateWasValidSelection] =
-    useState(false);
-
-  useEffect(() => {
-    if (props.onSelectionChange) {
-      if (lp.readyToSubmit) {
-        const resultingOrthography = deepStripDemarcation({
-          language: lp.selectedLanguage,
-          script: lp.selectedScript,
-          customDetails: lp.customizableLanguageDetails,
-        }) as IOrthography;
-        props.onSelectionChange(
-          resultingOrthography,
-          createTagFromOrthography(resultingOrthography)
-        );
-        setPreviousStateWasValidSelection(true);
-      } else if (previousStateWasValidSelection) {
-        props.onSelectionChange(undefined, undefined);
-        setPreviousStateWasValidSelection(false);
-      }
-    }
-  }, [lp.selectedLanguage, lp.selectedScript, lp.customizableLanguageDetails]);
-
   // Scroll to top whenever the language list changes
   const languageCardListRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     languageCardListRef.current?.scrollTo(0, 0);
-  }, [lp.languageData]);
+  }, [lp.languageResults]);
 
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTagFromOrthography({
@@ -428,7 +404,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                     `}
                   />
                 ))}
-              {lp.languageData.map((language, index) => {
+              {lp.languageResults.map((language, index) => {
                 const isSelectedLanguageCard = codeMatches(
                   language.iso639_3_code,
                   lp.selectedLanguage?.iso639_3_code
@@ -670,7 +646,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                         script: lp.selectedScript,
                         customDetails: {
                           ...lp.customizableLanguageDetails,
-                          displayName: "hypotheticalDisplayName",
+                          customDisplayName: "hypotheticalDisplayName",
                         },
                       })
                     }
@@ -689,12 +665,20 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                     id="language-name-bar"
                     size="small"
                     fullWidth
-                    value={lp.customizableLanguageDetails.displayName}
+                    value={
+                      lp.customizableLanguageDetails.customDisplayName !==
+                      undefined
+                        ? lp.customizableLanguageDetails.customDisplayName
+                        : defaultDisplayName(
+                            lp.selectedLanguage,
+                            lp.selectedScript
+                          )
+                    }
                     onChange={(e) => {
                       lp.saveLanguageDetails(
                         {
                           ...lp.customizableLanguageDetails,
-                          displayName: e.target.value,
+                          customDisplayName: e.target.value,
                         },
                         lp.selectedScript
                       );
