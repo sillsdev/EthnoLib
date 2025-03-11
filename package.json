@@ -57,5 +57,8 @@
     "@lingui/core": "^5.2.0",
     "@lingui/macro": "^5.2.0",
     "@lingui/react": "^5.2.0"
+  },
+  "volta": {
+    "node": "22.14.0"
   }
 }
