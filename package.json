@@ -15,7 +15,7 @@
     "l10n:compile": "lingui compile",
     "l10n:upload": "crowdin upload sources",
     "l10n:download": "crowdin download",
-    "l10n:update-locales": "node scripts/update-locales.js"
+    "l10n:update-locales": "ts-node scripts/update-locales.ts"
   },
   "devDependencies": {
     "@crowdin/cli": "^4.6.1",
