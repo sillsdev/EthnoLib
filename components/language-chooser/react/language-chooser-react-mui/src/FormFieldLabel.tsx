@@ -6,6 +6,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
+import { Trans } from "@lingui/react/macro";
 
 export const FormFieldLabel: React.FunctionComponent<
   {
@@ -45,7 +46,7 @@ export const FormFieldLabel: React.FunctionComponent<
             font-size: 0.75rem;
           `}
         >
-          required
+          <Trans>required</Trans>
         </span>
       )}
     </InputLabel>
