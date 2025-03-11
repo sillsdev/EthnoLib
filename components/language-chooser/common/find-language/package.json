@@ -24,8 +24,8 @@
     "tsx": "^4.19.2",
     "typescript": "^5.2.2"
   },
-  "// We've tested with 18 and have no reason to believe it won't work with higher versions": "",
+  "// We've tested with 20 and have no reason to believe it won't work with higher versions": "",
   "engines": {
-    "node": ">=18.18"
+    "node": ">=20.0.0"
   }
 }
