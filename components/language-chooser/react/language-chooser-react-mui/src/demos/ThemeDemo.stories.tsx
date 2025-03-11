@@ -8,4 +8,8 @@ const meta: Meta<typeof ThemeDemo> = {
 export default meta;
 type Story = StoryObj<typeof ThemeDemo>;
 
-export const Primary: Story = {};
+export const Primary: Story = {
+  render: (args, context) => (
+    <ThemeDemo {...args} uiLanguage={context.parameters.uiLanguage} />
+  ),
+};

@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-
+import { Trans } from "@lingui/react/macro";
 import {
   AppBar,
   Button,
@@ -14,6 +14,7 @@ import {
 import { ILanguageChooserProps, LanguageChooser } from "../LanguageChooser";
 import { IOrthography } from "@ethnolib/language-chooser-react-hook";
 import React from "react";
+import { I18nProvider } from "../../../common/I18nProvider";
 
 export const LanguageChooserDialog: React.FunctionComponent<
   {
@@ -71,7 +72,7 @@ export const LanguageChooserDialog: React.FunctionComponent<
             onOk(pendingSelection, pendingLanguageTag);
           }}
         >
-          OK
+          <Trans>OK</Trans>
         </Button>
         <Button
           css={css`
@@ -81,72 +82,74 @@ export const LanguageChooserDialog: React.FunctionComponent<
           color="primary"
           onClick={onCancel}
         >
-          Cancel
+          <Trans>Cancel</Trans>
         </Button>
       </div>
     </ThemeProvider>
   );
 
   return (
-    <Dialog
-      open={open}
-      maxWidth={dialogWidth ? "xl" : "md"}
-      fullWidth={true}
-      css={css`
-        .MuiDialog-paper {
-          height: ${dialogHeight ? dialogHeight : "586px"};
-          ${dialogWidth ? `width: ${dialogWidth};` : ""}
-        }
-      `}
-    >
-      <div
-        id="lang-chooser-dialog-content"
+    <I18nProvider locale={languageChooserProps.uiLanguage}>
+      <Dialog
+        open={open}
+        maxWidth={dialogWidth ? "xl" : "md"}
+        fullWidth={true}
         css={css`
-          width: 100%;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          border-radius: 5px;
-          position: relative;
-          margin-left: auto;
-          margin-right: auto;
-          overflow: auto;
+          .MuiDialog-paper {
+            height: ${dialogHeight ? dialogHeight : "586px"};
+            ${dialogWidth ? `width: ${dialogWidth};` : ""}
+          }
         `}
       >
-        <AppBar
-          position="static"
+        <div
+          id="lang-chooser-dialog-content"
           css={css`
-            background-color: white;
-            box-shadow: none;
-            border-bottom: 2px solid ${theme.palette.grey[300]};
-            flex-grow: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            border-radius: 5px;
+            position: relative;
+            margin-left: auto;
+            margin-right: auto;
+            overflow: auto;
           `}
         >
-          <Toolbar
-            disableGutters
-            variant="dense"
+          <AppBar
+            position="static"
             css={css`
-              padding-top: 5px;
-              padding-left: 15px;
+              background-color: white;
+              box-shadow: none;
+              border-bottom: 2px solid ${theme.palette.grey[300]};
+              flex-grow: 0;
             `}
           >
-            <Typography
-              variant="h5"
-              component="div"
+            <Toolbar
+              disableGutters
+              variant="dense"
               css={css`
-                color: black;
+                padding-top: 5px;
+                padding-left: 15px;
               `}
             >
-              Choose Language
-            </Typography>
-          </Toolbar>
-        </AppBar>
-        <LanguageChooser
-          {...languageChooserProps}
-          onSelectionChange={onSelectionChange}
-          actionButtons={dialogActionButtons}
-        />
-      </div>
-    </Dialog>
+              <Typography
+                variant="h5"
+                component="div"
+                css={css`
+                  color: black;
+                `}
+              >
+                <Trans>Choose Language</Trans>
+              </Typography>
+            </Toolbar>
+          </AppBar>
+          <LanguageChooser
+            {...languageChooserProps}
+            onSelectionChange={onSelectionChange}
+            actionButtons={dialogActionButtons}
+          />
+        </div>
+      </Dialog>
+    </I18nProvider>
   );
 };

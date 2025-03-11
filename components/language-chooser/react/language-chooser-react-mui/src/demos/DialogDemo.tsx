@@ -18,6 +18,7 @@ import React from "react";
 import { DummyRightPanelComponent } from "./DummyRightPanelComponent";
 
 export const DialogDemo: React.FunctionComponent<{
+  uiLanguage?: string;
   initialLanguageTag?: string;
   demoRightPanelComponent?: boolean;
   primaryColor?: string;
@@ -28,6 +29,7 @@ export const DialogDemo: React.FunctionComponent<{
   languageCardBackgroundColorOverride?: string;
   scriptCardBackgroundColorOverride?: string;
 }> = ({
+  uiLanguage,
   initialLanguageTag,
   demoRightPanelComponent,
   primaryColor,
@@ -135,6 +137,7 @@ export const DialogDemo: React.FunctionComponent<{
 
           <LanguageChooserDialog
             open={open}
+            uiLanguage={uiLanguage}
             searchResultModifier={defaultSearchResultModifier}
             initialSelectionLanguageTag={languageTag}
             onCancel={onCancel}

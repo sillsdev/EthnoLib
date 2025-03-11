@@ -10,8 +10,19 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
+  "scripts": {
+    "l10n:extract": "lingui extract",
+    "l10n:compile": "lingui compile",
+    "l10n:upload": "crowdin upload sources",
+    "l10n:download": "crowdin download",
+    "l10n:update-locales": "node scripts/update-locales.js"
+  },
   "devDependencies": {
+    "@crowdin/cli": "^4.6.1",
     "@eslint/js": "^9.14.0",
+    "@lingui/cli": "^5.2.0",
+    "@lingui/swc-plugin": "^5.4.0",
+    "@lingui/vite-plugin": "^5.2.0",
     "@nx/devkit": "20.4.6",
     "@nx/eslint": "20.4.6",
     "@nx/eslint-plugin": "20.4.6",
@@ -42,5 +53,9 @@
     "vite-plugin-dts": "^4.2.1",
     "vitest": "^2.1.9"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@lingui/core": "^5.2.0",
+    "@lingui/macro": "^5.2.0",
+    "@lingui/react": "^5.2.0"
+  }
 }
