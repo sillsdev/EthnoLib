@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import * as React from "react";
+import { useLingui, Trans } from "@lingui/react/macro";
 import {
   ICustomizableLanguageDetails,
   isUnlistedLanguage,
@@ -71,6 +72,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   searchString: string;
   onClose: () => void;
 }> = (props) => {
+  const { t } = useLingui();
   const isUnlistedLanguageDialog =
     !props.selectedLanguage || isUnlistedLanguage(props.selectedLanguage);
 
@@ -133,9 +135,11 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
           padding: 0; //using padding on the entire dialog instead, plus gap between sections
         `}
       >
-        {isUnlistedLanguageDialog
-          ? "Unlisted Language Tag"
-          : "Custom Language Tag"}
+        {isUnlistedLanguageDialog ? (
+          <Trans>Unlisted Language Tag</Trans>
+        ) : (
+          <Trans>Custom Language Tag</Trans>
+        )}
       </DialogTitle>
       <DialogContent
         css={css`
@@ -164,15 +168,23 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             `}
           >
             <InfoIcon />
-            {isUnlistedLanguageDialog
-              ? "If you cannot find a language and it does not appear in ethnologue.com, you can instead define the language here."
-              : "If you found the main language but need to change some of the specifics like Script or Dialect, you can do that here."}
+            {isUnlistedLanguageDialog ? (
+              <Trans>
+                If you cannot find a language and it does not appear in
+                ethnologue.com, you can instead define the language here.
+              </Trans>
+            ) : (
+              <Trans>
+                If you found the main language but need to change some of the
+                specifics like Script or Dialect, you can do that here.
+              </Trans>
+            )}
           </Typography>
         </Card>
         {isUnlistedLanguageDialog && (
           <TextInput
             id="unlisted-lang-name-field"
-            label="Name"
+            label={t`Name`}
             value={dialogSelectedDialect}
             onChange={(event) => {
               setDialogSelectedDialect(event.target.value);
@@ -188,7 +200,10 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
           <div id="customize-script-field-wrapper">
             {/* TODO future work: make these fuzzy search */}
 
-            <FormFieldLabel htmlFor="customize-script-field" label="Script" />
+            <FormFieldLabel
+              htmlFor="customize-script-field"
+              label={t`Script`}
+            />
             <Autocomplete
               id="customize-script-field"
               value={{
@@ -218,7 +233,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
         <div id="customize-region-field-wrapper">
           <FormFieldLabel
             htmlFor="customize-region-field"
-            label="Country"
+            label={t`Country`}
             required={isUnlistedLanguageDialog}
           />
           <Autocomplete
@@ -262,7 +277,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             // For now, we are putting whatever the user types in the dialect field after "-x-" in the language tag,
             // e.g. "ood-x-pima"
             id="customize-variant-field"
-            label="Variant (dialect)"
+            label={t`Variant (dialect)`}
             value={dialogSelectedDialect}
             onChange={(event) => {
               setDialogSelectedDialect(event.target.value);
@@ -294,21 +309,23 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               width: fit-content;
             `}
           >
-            BCP 47 Tag:{" "}
-            <span
-              css={css`
-                font-weight: bold;
-              `}
-            >
-              {createTagFromOrthography({
-                language: props.selectedLanguage,
-                script: dialogSelectedScript,
-                customDetails: {
-                  dialect: dialogSelectedDialect,
-                  region: dialogSelectedRegion,
-                } as ICustomizableLanguageDetails,
-              } as IOrthography)}
-            </span>
+            <Trans>
+              BCP 47 Tag:{" "}
+              <span
+                css={css`
+                  font-weight: bold;
+                `}
+              >
+                {createTagFromOrthography({
+                  language: props.selectedLanguage,
+                  script: dialogSelectedScript,
+                  customDetails: {
+                    dialect: dialogSelectedDialect,
+                    region: dialogSelectedRegion,
+                  } as ICustomizableLanguageDetails,
+                } as IOrthography)}
+              </span>
+            </Trans>
             <PrimaryTooltip
               title={
                 <div
@@ -328,7 +345,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                         font-size: inherit;
                       `}
                     >
-                      Advanced
+                      <Trans>Advanced</Trans>
                     </Typography>
                   </Stack>
 
@@ -340,13 +357,15 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                       }
                     `}
                   >
-                    If this user interface is not offering you a code that you
-                    know is valid{" "}
-                    <a href="https://en.wikipedia.org/wiki/IETF_language_tag">
-                      BCP 47 code
-                    </a>
-                    , you can enter it by hand. Hold down CTRL key while
-                    clicking on this tag.
+                    <Trans>
+                      If this user interface is not offering you a code that you
+                      know is valid{" "}
+                      <a href="https://en.wikipedia.org/wiki/IETF_language_tag">
+                        BCP 47 code
+                      </a>
+                      , you can enter it by hand. Hold down CTRL key while
+                      clicking on this tag.
+                    </Trans>
                   </Typography>
                 </div>
               }
@@ -405,7 +424,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             }}
             data-testid="customization-dialog-ok-button"
           >
-            OK
+            <Trans>OK</Trans>
           </Button>
           <Button
             css={css`
@@ -416,7 +435,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             onClick={props.onClose}
             data-testid="customization-dialog-cancel-button"
           >
-            Cancel
+            <Trans>Cancel</Trans>
           </Button>
         </div>
       </DialogActions>

@@ -1,9 +1,10 @@
 /// <reference types='vitest' />
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-swc";
 import dts from "vite-plugin-dts";
 import * as path from "path";
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+import { lingui } from "@lingui/vite-plugin";
 
 export default defineConfig({
   root: __dirname,
@@ -11,7 +12,10 @@ export default defineConfig({
     "../../../../node_modules/.vite/components/language-chooser/react/language-chooser-react-mui",
 
   plugins: [
-    react(),
+    react({
+      plugins: [["@lingui/swc-plugin", {}]], // needed for lingui
+    }),
+    lingui(),
     nxViteTsPaths(),
     dts({
       entryRoot: "src",
