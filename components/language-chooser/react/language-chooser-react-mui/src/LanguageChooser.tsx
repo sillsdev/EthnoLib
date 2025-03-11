@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css, ThemeProvider } from "@emotion/react";
+import { useLingui, Trans } from "@lingui/react/macro";
 
 import {
   ScopedCssBaseline,
@@ -43,6 +44,7 @@ import { FuseResult } from "fuse.js";
 import { FormFieldLabel } from "./FormFieldLabel";
 import { TypographyOptions } from "@mui/material/styles/createTypography";
 import { PrimaryTooltip } from "./PrimaryTooltip";
+import { I18nProvider } from "../../common/I18nProvider";
 
 // so we can put "lighter" in the mui theme palette
 // https://mui.com/material-ui/customization/palette/#typescript-2
@@ -91,6 +93,7 @@ const languageChooserTypography: TypographyOptions = {
 const LANG_CARD_MIN_HEIGHT = "90px"; // The height of typical card - 1 line of alternate names and 1 line of regions
 
 export interface ILanguageChooserProps {
+  uiLanguage?: string; // defaults to English
   searchResultModifier: (
     results: FuseResult<ILanguage>[],
     searchString: string
@@ -108,9 +111,23 @@ export interface ILanguageChooserProps {
   scriptCardBackgroundColorOverride?: string; // If not provided, will use lighten(primaryColor, 0.88)
 }
 
+// We want localization to be handled internal to this library.
+// So any UI component a client may include must be wrapped in an I18nProvider.
+// We need this wrapper or else calling useLingui() will throw an error.
 export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
   props
 ) => {
+  return (
+    <I18nProvider locale={props.uiLanguage}>
+      <LanguageChooserInner {...props} />
+    </I18nProvider>
+  );
+};
+
+export const LanguageChooserInner: React.FunctionComponent<
+  ILanguageChooserProps
+> = (props) => {
+  const { t } = useLingui();
   const lp: ILanguageChooser = useLanguageChooser(
     props.onSelectionChange,
     props.searchResultModifier
@@ -249,14 +266,14 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
     // Probably makes sense to use cancelIfEmpty when there is no default value
   ): void {
     const customTag = window.prompt(
-      "If this user interface is not offering you a code that you know is valid ISO 639 code, you can enter it here:",
+      t`If this user interface is not offering you a code that you know is valid ISO 639 code, you can enter it here:`,
       defaultValue
     );
     if (customTag === null || (cancelIfEmpty && customTag.length === 0)) {
       return;
     }
     if (customTag && !isValidBcp47Tag(customTag)) {
-      alert(`This is not in a valid IETF BCP 47 format: ${customTag}`);
+      alert(t`This is not in a valid IETF BCP 47 format: ${customTag}`);
       return;
     }
     // clear previous search string and selection
@@ -308,16 +325,18 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
           >
             <FormFieldLabel
               htmlFor="search-bar"
-              label="Search by name, code, or country"
+              label={t`Search by name, code, or country`}
             />
             <PrimaryTooltip
               title={
                 <>
-                  Start typing to find your language.
+                  <Trans>Start typing to find your language.</Trans>
                   <br />
                   <br />
-                  We have a list of almost every known language, where it is
-                  spoken, and how it is written.
+                  <Trans>
+                    We have a list of almost every known language, where it is
+                    spoken, and how it is written.
+                  </Trans>
                 </>
               }
               placement="right"
@@ -451,7 +470,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                       ) &&
                         language.scripts.length > 1 && (
                           <PrimaryTooltip
-                            title="Select a script"
+                            title={t`Select a script`}
                             placement="right"
                             open={!lp.selectedScript}
                             css={css`
@@ -465,9 +484,9 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                               // Also hide the popper if the customization dialog is open
                               ${customizeLanguageDialogOpen
                                 ? `
-                              visibility: hidden;
-                              pointer-events: none;
-                            `
+                                  visibility: hidden;
+                                  pointer-events: none;
+                                `
                                 : ""}
                             `}
                           >
@@ -572,10 +591,10 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                     `}
                   >
                     {showUnlistedLanguageOptions
-                      ? "Create Unlisted Language"
+                      ? t`Create Unlisted Language`
                       : manualTagLanguageSelected
-                        ? "Edit Language Tag"
-                        : "Customize"}
+                        ? t`Edit Language Tag`
+                        : t`Customize`}
                   </Typography>
                 </Stack>
 
@@ -599,9 +618,19 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                   {!manualTagLanguageSelected && (
                     <PrimaryTooltip
                       title={
-                        showUnlistedLanguageOptions
-                          ? "If you cannot find a language and it does not appear in ethnologue.com, you can instead define the language here."
-                          : "If you found the main language but need to change some of the specifics like Script or Dialect, you can do that here."
+                        showUnlistedLanguageOptions ? (
+                          <Trans>
+                            If you cannot find a language and it does not appear
+                            in ethnologue.com, you can instead define the
+                            language here.
+                          </Trans>
+                        ) : (
+                          <Trans>
+                            If you found the main language but need to change
+                            some of the specifics like Script or Dialect, you
+                            can do that here.
+                          </Trans>
+                        )
                       }
                     >
                       <InfoOutlinedIcon
@@ -636,7 +665,7 @@ export const LanguageChooser: React.FunctionComponent<ILanguageChooserProps> = (
                 <div id="right-pane-language-details=section">
                   <FormFieldLabel
                     htmlFor="language-name-bar"
-                    label="Display this language this way"
+                    label={t`Display this language this way`}
                     required={
                       // If submission is prevented only because a display name is still needed, show the red "required" label
                       !lp.readyToSubmit &&

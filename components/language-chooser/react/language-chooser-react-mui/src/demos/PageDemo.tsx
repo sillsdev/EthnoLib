@@ -10,7 +10,9 @@ const mediumColor = "#bd746f";
 const lightColor = "#e8caca";
 const veryLightColor = "#f7ebeb";
 
-export const PageDemo: React.FunctionComponent = () => {
+export const PageDemo: React.FunctionComponent<{ uiLanguage?: string }> = ({
+  uiLanguage,
+}) => {
   const [languageTag, setLanguageTag] = React.useState("");
   const [height, setHeight] = React.useState(500);
   const [width, setWidth] = React.useState(900);
@@ -126,6 +128,7 @@ export const PageDemo: React.FunctionComponent = () => {
                 initialSearchString="uzbek"
                 initialSelectionLanguageTag={"uz-cyrl"}
                 searchResultModifier={defaultSearchResultModifier}
+                uiLanguage={uiLanguage}
                 onSelectionChange={(
                   _orthography,
                   languageTag: string | undefined

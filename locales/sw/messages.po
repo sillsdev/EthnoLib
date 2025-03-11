@@ -1,0 +1,130 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2023-10-05 16:59-0500\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: sw\n"
+"Project-Id-Version: sil-common-libraries\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2025-03-07 23:10\n"
+"Last-Translator: \n"
+"Language-Team: Swahili\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Crowdin-Project: sil-common-libraries\n"
+"X-Crowdin-Project-ID: 393909\n"
+"X-Crowdin-Language: sw\n"
+"X-Crowdin-File: messages.po\n"
+"X-Crowdin-File-ID: 21083\n"
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:631
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:172
+msgid "If you cannot find a language and it does not appear in ethnologue.com, you can instead define the language here."
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:187
+msgid "Name"
+msgstr "Jina"
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:360
+msgid "If this user interface is not offering you a code that you know is valid <0>BCP 47 code</0>, you can enter it by hand. Hold down CTRL key while clicking on this tag."
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:605
+msgid "Edit Language Tag"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:482
+msgid "Select a script"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:236
+msgid "Country"
+msgstr "Nchi"
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:637
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:177
+msgid "If you found the main language but need to change some of the specifics like Script or Dialect, you can do that here."
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:345
+msgid "We have a list of almost every known language, where it is spoken, and how it is written."
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:342
+msgid "Start typing to find your language."
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:603
+msgid "Create Unlisted Language"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/demos/LanguageChooserDialog.tsx:140
+msgid "Choose Language"
+msgstr "Chagua lugha"
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:205
+msgid "Script"
+msgstr "Andiko"
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:677
+msgid "Display this language this way"
+msgstr ""
+
+#. placeholder {0}: languageCardData.regionNames
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageCard.tsx:95
+msgid "A language of {0}"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:437
+#: components/language-chooser/react/language-chooser-react-mui/src/demos/LanguageChooserDialog.tsx:84
+msgid "Cancel"
+msgstr "Ghairi"
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:278
+msgid "If this user interface is not offering you a code that you know is valid ISO 639 code, you can enter it here:"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:337
+msgid "Search by name, code, or country"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:141
+msgid "Custom Language Tag"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:139
+msgid "Unlisted Language Tag"
+msgstr ""
+
+#. placeholder {0}: createTagFromOrthography({ language: props.selectedLanguage, script: dialogSelectedScript, customDetails: { dialect: dialogSelectedDialect, region: dialogSelectedRegion, } as ICustomizableLanguageDetails, } as IOrthography)
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:312
+msgid "BCP 47 Tag: <0>{0}</0>"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:285
+msgid "This is not in a valid IETF BCP 47 format: {customTag}"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/FormFieldLabel.tsx:49
+msgid "required"
+msgstr "inahitajika"
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:606
+msgid "Customize"
+msgstr "Geuza kukufaa"
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:348
+msgid "Advanced"
+msgstr "Ya hali ya juu"
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:280
+msgid "Variant (dialect)"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:426
+#: components/language-chooser/react/language-chooser-react-mui/src/demos/LanguageChooserDialog.tsx:74
+msgid "OK"
+msgstr "Sawa"
+

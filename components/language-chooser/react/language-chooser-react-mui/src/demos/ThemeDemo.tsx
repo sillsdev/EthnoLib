@@ -19,7 +19,9 @@ import { defaultSearchResultModifier } from "@ethnolib/find-language";
 
 const PrimaryColorChoices = ["#1d94a4", "#512f6b", "#3b1e04", "#800303"];
 
-export const ThemeDemo: React.FunctionComponent = () => {
+export const ThemeDemo: React.FunctionComponent<{ uiLanguage?: string }> = ({
+  uiLanguage,
+}) => {
   const [primaryColor, setPrimaryColor] = React.useState(
     PrimaryColorChoices[0]
   );
@@ -154,6 +156,7 @@ export const ThemeDemo: React.FunctionComponent = () => {
             initialSelectionLanguageTag={"uz-cyrl"}
             searchResultModifier={defaultSearchResultModifier}
             actionButtons={dialogActionButtons}
+            uiLanguage={uiLanguage}
             {...(colorOverrides && {
               languageCardBackgroundColorOverride: "#d2ebb2",
               scriptCardBackgroundColorOverride: "#ebe9b2",

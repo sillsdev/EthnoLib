@@ -31,6 +31,26 @@ jobs:
       - name: Install playwright browsers for e2e tests
         run: npx playwright install chromium --with-deps
 
+      # Extract new messages, upload to Crowdin, download latest translations
+      - name: Extract messages
+        run: npm run l10n:extract
+
+      - name: Upload source strings to Crowdin
+        run: npm run l10n:upload
+        env:
+          ETHNOLIB_CROWDIN_TOKEN: ${{ secrets.ETHNOLIB_CROWDIN_TOKEN }}
+
+      - name: Download translations from Crowdin
+        run: npm run l10n:download
+        env:
+          ETHNOLIB_CROWDIN_TOKEN: ${{ secrets.ETHNOLIB_CROWDIN_TOKEN }}
+
+      - name: Update locales list
+        run: npm run l10n:update-locales
+
+      - name: Compile messages
+        run: npm run l10n:compile
+
       # We've configured nx to update version numbers in the primary package.json files (rather than in the dist builds to be published)
       # Therefore this step must be done before build so that the new version numbers are copied to dist/package.json
       - name: Update version numbers in the persistent package.json files
