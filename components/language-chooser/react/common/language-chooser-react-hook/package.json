@@ -3,7 +3,7 @@
   "description": "A React hook providing the logic for a language chooser",
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.0.18",
+  "version": "0.1.0",
   "main": "./index.js",
   "types": "./index.d.ts",
   "scripts": {
@@ -14,7 +14,7 @@
     "test": "nx vite:test --config vitest.config.ts"
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.0.24",
+    "@ethnolib/find-language": "0.1.0",
     "fuse.js": "^7.0.0",
     "iso-15924": "^3.2.0",
     "iso-3166": "^4.3.0"

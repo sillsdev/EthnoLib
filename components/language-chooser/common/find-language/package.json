@@ -3,7 +3,7 @@
   "description": "A library for fuzzy-searching for languages and other utils for language choosers",
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.0.24",
+  "version": "0.1.0",
   "main": "./index.js",
   "types": "./index.d.ts",
   "scripts": {

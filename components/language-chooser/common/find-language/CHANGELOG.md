@@ -1,3 +1,14 @@
+## 0.1.0 (2025-03-11)
+
+### 🚀 Features
+
+- Add i18n/l10n with Lingui and Crowdin (BL-14005) ([43a914e](https://github.com/sillsdev/EthnoLib/commit/43a914e))
+
+### 🩹 Fixes
+
+- one more fix for update-locales.ts ([c0e916f](https://github.com/sillsdev/EthnoLib/commit/c0e916f))
+- update-locales script ([92f11d8](https://github.com/sillsdev/EthnoLib/commit/92f11d8))
+
 ## 0.0.24 (2025-03-10)
 
 ### 🩹 Fixes
