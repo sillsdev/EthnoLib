@@ -20,8 +20,8 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v4
         with:
-          # Keep in sync with the version in the package.json files
-          node-version: 18
+          # Keep in sync with the version specified for volta in the root package.json
+          node-version: 22
           registry-url: https://registry.npmjs.org/
 
       - name: Install dependencies
