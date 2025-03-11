@@ -3,8 +3,8 @@
 // See README-l10n.md for more information.
 // (This was mostly created by copilot.)
 
-const fs = require("fs");
-const path = require("path");
+import * as fs from "fs";
+import * as path from "path";
 
 // Path to locales directory and JSON output file
 const localesDir = path.resolve(__dirname, "../locales");
