@@ -7,7 +7,7 @@ import availableLocales from "../../../../../available-locales.json" with { type
 
 const preview: Preview = {
   parameters: {
-    uiLanguage: "en",
+    uiLanguage: undefined,
   },
   decorators: [
     (Story, context) => {
@@ -45,15 +45,20 @@ const preview: Preview = {
 };
 
 const LanguageSelector: React.FC<{
-  locale: string;
-  onChange: (value: string) => void;
+  locale: string | undefined;
+  onChange: (value: string | undefined) => void;
 }> = ({ locale, onChange }) => (
   <FormControl>
     <Select
-      value={locale}
-      onChange={(e) => onChange(e.target.value)}
+      value={locale || "default"}
+      onChange={(e) =>
+        onChange(e.target.value === "default" ? undefined : e.target.value)
+      }
       size="small"
     >
+      <MenuItem key="default" value="default">
+        Default (browser locale)
+      </MenuItem>
       {availableLocales.map((code) => (
         <MenuItem key={code} value={code}>
           {code}
