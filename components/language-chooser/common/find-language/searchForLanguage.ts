@@ -40,13 +40,12 @@ const allFuseSearchKeys = [
   { name: "regionNames", weight: 1 },
 ];
 
+// TODO stop using fuse types, make all ILanguage[]
 // exported for match-highlighting use
 export const fieldsToSearch = allFuseSearchKeys.map((key) => key.name);
 
 // a good alternative search library would be minisearch (https://github.com/lucaong/minisearch) which handles word tokenization
-// and so we wouldn't need all this hacky space padding business. But if we switched to minisearch, I'm not sure how we would do
-// highlighting of fuzzy match portions, e.g. higlighting "[japane]se" if the user searched "jpane"
-// and what we have is working for now
+// and so we wouldn't need all this hacky space padding business.
 
 export async function asyncSearchForLanguage(
   queryString: string,
