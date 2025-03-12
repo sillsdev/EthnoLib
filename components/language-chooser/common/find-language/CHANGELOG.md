@@ -1,3 +1,9 @@
+## 0.1.1 (2025-03-12)
+
+### 🩹 Fixes
+
+- Allow for region-specific locales in l10n (BL-14005) ([53b6c34](https://github.com/sillsdev/EthnoLib/commit/53b6c34))
+
 ## 0.1.0 (2025-03-11)
 
 ### 🚀 Features
