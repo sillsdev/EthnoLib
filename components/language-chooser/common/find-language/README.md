@@ -17,7 +17,28 @@ This project was initially developed for use in [BloomDesktop](https://github.co
 
 ### Searching for languages
 
-Use `searchForLanguage` to search for languages by name (including autonyms, exonyms, or alternative names), associated regions, or ISO 639 tags matching the search string argument. It returns a `FuseResult<ILanguage>[]`, which we recommend passing into a search result modifier. See details in Search Result Modification section.
+Search for languages by name (including autonyms, exonyms, or alternative names), associated regions, or ISO 639 tags matching the search string argument.
+
+There are two alternative functions for getting, ultimately, the same set of languages matching a given search string. `asyncGetAllLanguageResults` gets them all at once, while `asyncSearchForLanguage` lets you get the most relevant results faster. Both are async.
+
+`asyncGetAllLanguageResults` MUST be awaited to obtain the results. It returns all matching results (including fuzzy-matched results), sorted with best matches first, in the form of a `FuseResult<ILanguage>[]`
+
+`asyncSearchForLanguage` MAY be awaited, but it's only necessary if you want to know when all searching is complete. In order to get results as fast as possible and not hold up the event loop, `asyncSearchForLanguage` finds results in batches and passes them back before going on to progressively broader searches. In addition to a `searchString`, it takes a `appendResults: (results: FuseResult<ILanguage>[], forSearchString: string) => boolean` argument which it will call on each batch of new results it progressively finds. `asyncSearchForLanguage` will yield control back to the event loop between each of the queries it internally makes, before calling `appendResults`. `appendResults` should be a function that returns true iff the current search should continue given that `forSearchString` is the `searchString` that `asyncSearchForLanguage` was originally called with. In `language-chooser-react-hook` we use this to abort a search
+if the search string has changed. Batches are sorted in order of match closeness and are disjoint from one another; `asyncSearchForLanguage` will never pass the same language result to `appendResults` more than once.
+
+We recommend passing the results from either function into a search result modifier. See details in Search Result Modification section.
+
+### Match Order
+
+If you search for "foo", the order of results should be in the following order:
+
+1. Complete matches (e.g. "Foo")
+2. Other whole word Matches (e.g. "Foo Bar", "Bar Foo", or "Bar Foo Baz")
+3. Other prefix matches (e.g. "Foobar" or "Baz Foobar")
+4. Other substring matches (e.g. "Barfoo" or "Barfoobaz")
+5. Fuzzy matches (e.g. "Fxoo", "Foxbar", or "Barfoxbaz")
+
+Within each of these categories, matches are weighted by which field they match; e.g. all else being equal, a language with an autonym exactly matching the search string will come before a language with a region exactly matching the search string. See `searchForLanguage.ts` for exact weightings. Results that have more matching strings (e.g. both an autonym and an alternative name matching the string) are also given relatively higher weight.
 
 ### Search Result Modification
 
@@ -31,10 +52,6 @@ This package includes various methods for adjusting search results to handle spe
 - Filters out Braille and script codes that do not refer to specific relevant scripts from script options
 
 The `searchResultModifiers.ts` file includes various helper methods that can be used to create modifiers suitable for different use cases.
-
-### Macrolanguages
-
-For details of macrolanguage handling, see [macrolanguageNotes.md](macrolanguageNotes.md).
 
 ### Example
 
@@ -119,6 +136,10 @@ Original English result, `unmodifiedSearchResults[0]` (truncated to save space):
   }
 
 ```
+
+## Macrolanguages
+
+For details of macrolanguage handling, see [macrolanguageNotes.md](macrolanguageNotes.md).
 
 ## Development
 
