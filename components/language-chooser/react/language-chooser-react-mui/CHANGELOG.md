@@ -1,3 +1,14 @@
+## 0.1.2 (2025-03-12)
+
+### 🩹 Fixes
+
+- Default to browser language (BL-14005) ([6e61a32](https://github.com/sillsdev/EthnoLib/commit/6e61a32))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.2
+- Updated @ethnolib/find-language to 0.1.2
+
 ## 0.1.1 (2025-03-12)
 
 ### 🩹 Fixes

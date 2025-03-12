@@ -1,3 +1,9 @@
+## 0.1.2 (2025-03-12)
+
+### 🩹 Fixes
+
+- Default to browser language (BL-14005) ([6e61a32](https://github.com/sillsdev/EthnoLib/commit/6e61a32))
+
 ## 0.1.1 (2025-03-12)
 
 ### 🩹 Fixes
