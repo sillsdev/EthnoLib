@@ -10,7 +10,7 @@ import {
 } from "./searchResultModifiers";
 import { ILanguage, IScript } from "./findLanguageInterfaces";
 import { createTestLanguageEntry } from "./testUtils";
-import { searchForLanguage } from "./searchForLanguage";
+import { asyncGetAllLanguageResults } from "./searchForLanguage";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
 
 const latinScript = { code: "Latn", name: "Latin" } as IScript;
@@ -172,12 +172,12 @@ describe("reordering entries to prioritize desired language when keywords are se
     expect(rawIsoCode(reorderedResults[0])).toEqual("tpi");
   });
 
-  describe("Chinese should be handled reasonably", () => {
+  describe("Chinese should be handled reasonably", async () => {
     let chineseResults: ILanguage[];
-    beforeAll(() => {
+    beforeAll(async () => {
       const chineseSearchString = "chinese";
       chineseResults = defaultSearchResultModifier(
-        searchForLanguage(chineseSearchString),
+        await asyncGetAllLanguageResults(chineseSearchString),
         chineseSearchString
       );
     });
@@ -197,10 +197,10 @@ describe("reordering entries to prioritize desired language when keywords are se
   });
 
   describe("Spanish name listings should be handled as desired", () => {
-    it("finds spanish", () => {
+    it("finds spanish", async () => {
       const spanishSearchString = "spanish";
       const spanishResult = defaultSearchResultModifier(
-        searchForLanguage(spanishSearchString),
+        await asyncGetAllLanguageResults(spanishSearchString),
         spanishSearchString
       )[0];
       expect(rawIsoCode(spanishResult)).toEqual("spa");

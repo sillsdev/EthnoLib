@@ -205,7 +205,7 @@ export const LanguageChooserInner: React.FunctionComponent<
   const languageCardListRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     languageCardListRef.current?.scrollTo(0, 0);
-  }, [lp.languageResults]);
+  }, [lp.searchString]);
 
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTagFromOrthography({
@@ -412,17 +412,6 @@ export const LanguageChooserInner: React.FunctionComponent<
               `}
               ref={languageCardListRef}
             >
-              {isWaitingForResults &&
-                Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton
-                    key={i}
-                    variant="rounded"
-                    height={LANG_CARD_MIN_HEIGHT}
-                    css={css`
-                      margin: 5px 0px;
-                    `}
-                  />
-                ))}
               {lp.languageResults.map((language, index) => {
                 const isSelectedLanguageCard = codeMatches(
                   language.iso639_3_code,
@@ -536,6 +525,17 @@ export const LanguageChooserInner: React.FunctionComponent<
                   </div>
                 );
               })}
+              {isWaitingForResults &&
+                Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton
+                    key={i}
+                    variant="rounded"
+                    height={LANG_CARD_MIN_HEIGHT}
+                    css={css`
+                      margin: 5px 0px;
+                    `}
+                  />
+                ))}
             </div>
             <div
               id="bottom-of-left-pane"
