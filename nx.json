@@ -63,7 +63,8 @@
       "@ethnolib/language-chooser-react-mui",
       "@ethnolib/language-chooser-react-hook",
       "@ethnolib/language-chooser-controller",
-      "@ethnolib/find-language"
+      "@ethnolib/find-language",
+      "@ethnolib/svelteapp"
     ]
   }
 }

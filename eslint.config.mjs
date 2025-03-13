@@ -11,7 +11,12 @@ import eslintPluginReactHooks from "eslint-plugin-react-hooks";
 
 export default [
   {
-    ignores: ["**/node_modules/**/*", "**/dist/**"],
+    ignores: [
+      "**/node_modules/**/*",
+      "**/dist/**",
+      "**/vite.config.*.timestamp*",
+      "**/vitest.config.*.timestamp*",
+    ],
   },
   eslint.configs.recommended,
   eslintConfigPrettier, // disables eslint rules that could conflict with prettier
@@ -56,7 +61,7 @@ export default [
         "@typescript-eslint/ban-types": "off", // Record<string, never> is not intuitive for us compared to {}
         "@typescript-eslint/no-inferrable-types": "off", // not worth worrying about (not even convinced it's a problem at all)
       },
-    }
+    },
   ),
 
   // React configs to be applied to react files only
