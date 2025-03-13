@@ -1,3 +1,9 @@
+## 0.1.3 (2025-03-13)
+
+### 🩹 Fixes
+
+- BL-14425 fix demos to reopen with selection preserved ([974d87a](https://github.com/sillsdev/EthnoLib/commit/974d87a))
+
 ## 0.1.2 (2025-03-12)
 
 ### 🩹 Fixes
