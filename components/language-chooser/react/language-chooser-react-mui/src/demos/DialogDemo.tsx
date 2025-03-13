@@ -139,7 +139,11 @@ export const DialogDemo: React.FunctionComponent<{
             open={open}
             uiLanguage={uiLanguage}
             searchResultModifier={defaultSearchResultModifier}
+            initialSearchString={selectedValue?.language?.languageSubtag}
             initialSelectionLanguageTag={languageTag}
+            initialCustomDisplayName={
+              selectedValue?.customDetails?.customDisplayName
+            }
             onCancel={onCancel}
             onOk={onOk}
             rightPanelComponent={
