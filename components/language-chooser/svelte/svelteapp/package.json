@@ -1,0 +1,27 @@
+{
+  "name": "@ethnolib/svelteapp",
+  "version": "0.0.1",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "scripts": {
+    "typecheck": "tsc",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "prebuild": "npm run typecheck",
+    "build": "nx vite:build",
+    "lint": "eslint .",
+    "test": "nx vite:test --config vitest.config.ts"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "~2.4.3",
+    "@tsconfig/svelte": "^4.0.1",
+    "eslint-plugin-svelte3": "^4.0.0",
+    "svelte": "^3.59.1",
+    "svelte-check": "^2.10.2",
+    "svelte-preprocess": "^5.0.3"
+  },
+  "// We've tested with 18 and have no reason to believe it won't work with higher versions": "",
+  "engines": {
+    "node": ">=18.18"
+  },
+  "nx": {}
+}
