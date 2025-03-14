@@ -92,6 +92,7 @@ export const LanguageChooserDialog: React.FunctionComponent<
     <I18nProvider locale={languageChooserProps.uiLanguage}>
       <Dialog
         open={open}
+        onClose={onCancel}
         maxWidth={dialogWidth ? "xl" : "md"}
         fullWidth={true}
         css={css`
