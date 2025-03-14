@@ -1,12 +1,12 @@
 import {
   ILanguage,
   IScript,
-  searchForLanguage,
+  asyncSearchForLanguage,
   stripResultMetadata,
   stripDemarcation,
   deepStripDemarcation,
 } from "@ethnolib/find-language";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FuseResult } from "fuse.js";
 import {
   isValidBcp47Tag,
@@ -21,6 +21,7 @@ import {
 } from "./languageTagHandling";
 
 export interface ILanguageChooser {
+  searchInProgress: boolean;
   languageResults: ILanguage[];
   selectedLanguage: ILanguage | undefined;
   selectedScript: IScript | undefined;
@@ -55,7 +56,8 @@ export const useLanguageChooser = (
     searchString: string
   ) => ILanguage[]
 ) => {
-  const [searchString, setSearchString] = useState("");
+  const [searchInProgress, setSearchInProgress] = useState(false);
+  const searchStringRef = useRef(""); // we use useRef to help with asynchronously access the up-to-date value from the search function
   const [selectedLanguage, setSelectedLanguage] = useState<
     ILanguage | undefined
   >();
@@ -80,12 +82,39 @@ export const useLanguageChooser = (
     customDetails: customizableLanguageDetails,
   });
 
-  const languageResults = useMemo(() => {
-    if (!searchString || searchString.length < 2) {
-      return [];
+  const [languageResults, setLanguageResults] = useState<ILanguage[]>([]);
+
+  // For faster results, the search function returns better results first but then continues searching for more results
+  // and appends them to the result list, in several rounds.
+  // Return true if we should continue searching for more results, and false if we should abort because the search string has changed
+  function appendResults(
+    additionalSearchResults: FuseResult<ILanguage>[],
+    forSearchString: string
+  ) {
+    if (forSearchString !== searchStringRef.current) {
+      // Search string has changed, stop looking for results for this search string
+      return false;
     }
-    return getModifiedSearchResults(searchString, searchResultModifier);
-  }, [searchString]);
+    const modifier = searchResultModifier || stripResultMetadata;
+    //append the new results to the existing results
+    setLanguageResults((r) =>
+      r.concat(modifier(additionalSearchResults, forSearchString))
+    );
+    return true; // Keep looking for more results
+  }
+
+  useEffect(() => {
+    const searchString = searchStringRef.current;
+    setLanguageResults([]);
+    if (!searchString || searchString.length < 2) {
+      return;
+    }
+    setSearchInProgress(true);
+    (async () => {
+      await asyncSearchForLanguage(searchString, appendResults);
+      setSearchInProgress(false);
+    })();
+  }, [searchStringRef.current]);
 
   // For reopening to a specific selection. We should then also set the search string
   // such that the selected language is visible.
@@ -149,22 +178,6 @@ export const useLanguageChooser = (
     setSelectedScript(script);
   }
 
-  function getModifiedSearchResults(
-    searchString: string,
-    searchResultModifier?: (
-      results: FuseResult<ILanguage>[],
-      searchString: string
-    ) => ILanguage[]
-  ) {
-    const searchResults = searchForLanguage(searchString);
-    if (searchResultModifier) {
-      return searchResultModifier(searchResults, searchString);
-    } else {
-      // fuse leaves some metadata in the results which search result modifiers might use
-      return stripResultMetadata(searchResults);
-    }
-  }
-
   function selectLanguage(language: ILanguage) {
     setSelectedLanguage(language);
     setSelectedScript(
@@ -196,7 +209,7 @@ export const useLanguageChooser = (
   }
 
   function onSearchStringChange(searchString: string) {
-    setSearchString(searchString);
+    searchStringRef.current = searchString;
     setSelectedLanguage(undefined);
     setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
@@ -226,11 +239,12 @@ export const useLanguageChooser = (
   }, [selectedLanguage, selectedScript, customizableLanguageDetails]);
 
   return {
+    searchInProgress,
     languageResults,
     selectedLanguage,
     selectedScript,
     customizableLanguageDetails,
-    searchString,
+    searchString: searchStringRef.current,
     onSearchStringChange,
     selectLanguage,
     selectUnlistedLanguage,

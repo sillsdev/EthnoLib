@@ -133,17 +133,10 @@ export const LanguageChooserInner: React.FunctionComponent<
     props.searchResultModifier
   );
 
-  // If we need to show language cards on initial load, we paint the language chooser first and then show skeleton until the cards are ready
-  const [isWaitingForResults, setIsWaitingForResults] = useState(false);
-
   useEffect(() => {
     if (searchInputRef) {
       searchInputRef.value = props.initialSearchString || "";
       searchInputRef.focus();
-    }
-    if (props.initialSearchString) {
-      // Show the skeleton while waiting for search results
-      setIsWaitingForResults(true);
     }
     setTimeout(() => {
       // This can take a bit, so push it to the end of the event queue so that we paint the rest of the component first
@@ -152,7 +145,6 @@ export const LanguageChooserInner: React.FunctionComponent<
         props.initialSelectionLanguageTag,
         props.initialCustomDisplayName
       );
-      setIsWaitingForResults(false);
     }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // We only want this to run once
@@ -205,7 +197,7 @@ export const LanguageChooserInner: React.FunctionComponent<
   const languageCardListRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     languageCardListRef.current?.scrollTo(0, 0);
-  }, [lp.languageResults]);
+  }, [lp.searchString]);
 
   // Used for both the tag preview on the right panel and the Customize/Create Unlisted Language button
   const currentTagPreview = createTagFromOrthography({
@@ -412,17 +404,6 @@ export const LanguageChooserInner: React.FunctionComponent<
               `}
               ref={languageCardListRef}
             >
-              {isWaitingForResults &&
-                Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton
-                    key={i}
-                    variant="rounded"
-                    height={LANG_CARD_MIN_HEIGHT}
-                    css={css`
-                      margin: 5px 0px;
-                    `}
-                  />
-                ))}
               {lp.languageResults.map((language, index) => {
                 const isSelectedLanguageCard = codeMatches(
                   language.iso639_3_code,
@@ -536,6 +517,17 @@ export const LanguageChooserInner: React.FunctionComponent<
                   </div>
                 );
               })}
+              {lp.searchInProgress &&
+                Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton
+                    key={i}
+                    variant="rounded"
+                    height={LANG_CARD_MIN_HEIGHT}
+                    css={css`
+                      margin: 5px 0px;
+                    `}
+                  />
+                ))}
             </div>
             <div
               id="bottom-of-left-pane"

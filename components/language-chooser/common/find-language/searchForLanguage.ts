@@ -1,6 +1,8 @@
 import Fuse, { FuseResult } from "fuse.js";
-import languages from "./language-data/languageData.json";
+import rawLanguages from "./language-data/languageData.json";
 import { ILanguage } from "./findLanguageInterfaces";
+
+const languages = rawLanguages as ILanguage[];
 
 function spacePad(target: string | undefined) {
   return target ? " " + target + " " : target;
@@ -15,6 +17,12 @@ const spacePaddedLanguages = languages.map((language) => ({
   languageSubtag: spacePad(language.languageSubtag),
 }));
 
+const languagesByIsoCode = {
+  ...Object.fromEntries(
+    languages.map((language: ILanguage) => [language.iso639_3_code, language])
+  ),
+};
+
 const exactMatchPrioritizableFuseSearchKeys = [
   { name: "autonym", weight: 100 },
   { name: "exonym", weight: 100 },
@@ -22,8 +30,8 @@ const exactMatchPrioritizableFuseSearchKeys = [
   { name: "names", weight: 8 },
 
   // These are currently not displayed on the card, but we still want corresponding results to come up if people search for them
-  { name: "iso639_3_code", weight: 70 },
-  { name: "alternativeTags", weight: 70 },
+  { name: "iso639_3_code", weight: 70 }, // e.g. eng
+  { name: "alternativeTags", weight: 70 }, // e.g. en-Latn, en-US, en-US-Latn
 ];
 // We will bring results that exactly whole-word match or prefix-match to the top of the list
 // but don't want to do this for region names
@@ -40,9 +48,34 @@ export const fieldsToSearch = allFuseSearchKeys.map((key) => key.name);
 // highlighting of fuzzy match portions, e.g. higlighting "[japane]se" if the user searched "jpane"
 // and what we have is working for now
 
-export function searchForLanguage(
-  queryString: string
-): FuseResult<ILanguage>[] {
+export async function asyncSearchForLanguage(
+  queryString: string,
+  appendResults: (
+    results: FuseResult<ILanguage>[],
+    forSearchString: string
+  ) => boolean
+): Promise<void> {
+  let alreadyFoundIsoCodes = new Set<string>();
+  let continueSearching = true;
+
+  async function newResultsFound(
+    newResults: FuseResult<ILanguage>[]
+  ): Promise<boolean> {
+    const filteredResults = newResults.filter(
+      (result) => !alreadyFoundIsoCodes.has(result.item.iso639_3_code)
+    );
+    alreadyFoundIsoCodes = new Set([
+      ...alreadyFoundIsoCodes,
+      ...filteredResults.map((result) => result.item.iso639_3_code),
+    ]);
+
+    const yieldToEventLoop = () =>
+      new Promise((resolve) => setTimeout(resolve, 0));
+    await yieldToEventLoop();
+
+    return appendResults(filteredResults, queryString);
+  }
+
   const baseFuseOptions = {
     isCaseSensitive: false,
     includeMatches: true,
@@ -53,49 +86,84 @@ export function searchForLanguage(
     ignoreFieldNorm: true,
     findAllMatches: false,
   };
+  /* Complete matches: e.g "Foo" for search string "foo" */
+  const completeMatchFuse = new Fuse(languages as ILanguage[], {
+    ...baseFuseOptions,
+    useExtendedSearch: true,
+    keys: exactMatchPrioritizableFuseSearchKeys,
+  });
 
-  const exactMatchFuse = new Fuse(spacePaddedLanguages as ILanguage[], {
+  const spacePaddedFuse = new Fuse(spacePaddedLanguages as ILanguage[], {
     ...baseFuseOptions,
     threshold: 0, //exact matches only
     keys: exactMatchPrioritizableFuseSearchKeys,
   });
 
+  const completeMatchResults = completeMatchFuse.search(`="${queryString}"`);
+  continueSearching = await newResultsFound(completeMatchResults);
+  if (!continueSearching) return;
+
+  /* Whole word matches: e.g "Foo Bar" or "Bar Foo" for search string "foo" */
   // We have padded with spaces, so e.g. if queryString is "cree", then " cree " is an exact match for " plains cree " but not " creek "
-  const wholeWordMatchResults = exactMatchFuse.search(" " + queryString + " ");
+  const spacePaddedWholeWordMatchResults = spacePaddedFuse.search(
+    " " + queryString + " "
+  );
 
+  // Get the versions without space padding
+  const wholeWordMatchResults = spacePaddedWholeWordMatchResults.map((r) => {
+    return {
+      ...r,
+      item: languagesByIsoCode[r.item.iso639_3_code],
+    };
+  });
+  continueSearching = await newResultsFound(wholeWordMatchResults);
+  if (!continueSearching) return;
+
+  /* Prefix matches: e.g "Foobar" or "Baz Foobar" for search string "foo" */
   // e.g. if querystring is "otl", then " otl" is a prefix match for " San Felipe Otlaltepec Popoloca " but not "botlikh"
-  const prefixMatchResults = exactMatchFuse.search(" " + queryString);
+  const spacePaddedPrefixMatchResults = spacePaddedFuse.search(
+    " " + queryString
+  );
 
+  // Get the versions without space padding
+  const prefixMatchResults = spacePaddedPrefixMatchResults.map((r) => {
+    return {
+      ...r,
+      item: languagesByIsoCode[r.item.iso639_3_code],
+    };
+  });
+  continueSearching = await newResultsFound(prefixMatchResults);
+  if (!continueSearching) return;
+
+  /* Substring matches: e.g. "Barfoobaz" for search string "foo" */
+  const substringMatchFuse = new Fuse(languages as ILanguage[], {
+    ...baseFuseOptions,
+    threshold: 0,
+    keys: exactMatchPrioritizableFuseSearchKeys,
+  });
+  const substringMatchResults = substringMatchFuse.search(queryString);
+  continueSearching = await newResultsFound(substringMatchResults);
+  if (!continueSearching) return;
+
+  /* Fuzzy matches: e.g. "Fxoo" or "Barfxobaz" for search string "foo" */
   const fuzzyMatchFuse = new Fuse(languages as ILanguage[], {
     ...baseFuseOptions,
     threshold: 0.3,
   });
   const fuzzyMatchResults = fuzzyMatchFuse.search(queryString);
+  continueSearching = await newResultsFound(fuzzyMatchResults);
+  if (!continueSearching) return;
+}
 
-  // Use the results from the fuzzy match search, since the others will have incorrect match indices due to the space padding.
-  // But order the results in order of whole word matches, then prefix matches, then the rest with no duplicates
-  const resultsByIso639_3Code = new Map<string, FuseResult<ILanguage>>();
-  for (const result of fuzzyMatchResults) {
-    resultsByIso639_3Code.set(result.item.iso639_3_code, result);
-  }
-  const orderedResults = [];
-  for (const resultList of [
-    wholeWordMatchResults,
-    prefixMatchResults,
-    fuzzyMatchResults,
-  ]) {
-    for (const r of resultList) {
-      const isoCode = r.item.iso639_3_code;
-      const correctResult = resultsByIso639_3Code.get(isoCode);
-      if (correctResult) {
-        // this language was not already added as part of a previous subset
-        // (wholeWordMatchResults should be a subset of prefixMatchResults which should be a subset of fuzzyMatchResults)
-        orderedResults.push(correctResult);
-        resultsByIso639_3Code.delete(isoCode);
-      }
-    }
-  }
-  return orderedResults;
+export async function getAllLanguageResults(
+  searchString: string
+): Promise<FuseResult<ILanguage>[]> {
+  const results: FuseResult<ILanguage>[] = [];
+  await asyncSearchForLanguage(searchString, (newResults) => {
+    results.push(...newResults);
+    return true;
+  });
+  return results;
 }
 
 // get language (not macrolanguage) with exact match on subtag
