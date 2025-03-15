@@ -44,6 +44,22 @@ const DEFAULT_EXCLUDED_SCRIPT_CODES = new Set([
 
 const latinScriptData = { code: "Latn", name: "Latin" } as IScript;
 
+function replaceIsoCode(
+  origIsoCode: string,
+  newIsoCode: string,
+  results: ILanguage[]
+): ILanguage[] {
+  return results.map((result) => {
+    if (codeMatches(result.iso639_3_code, origIsoCode)) {
+      return {
+        ...result,
+        iso639_3_code: newIsoCode,
+      };
+    }
+    return result;
+  });
+}
+
 // Replace the English result with a simpler version that only has "English" and the code on it
 function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
   function getSimplifiedEnglishResult(result: ILanguage) {
@@ -139,7 +155,7 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
           name: "Chinese (Traditional)",
           languageNameInScript: "中文",
         } as IScript,
-        latinScriptData, // zh-Latn doesn't have a localnames/localname in langtags.json
+        { ...latinScriptData, languageNameInScript: "Chinese" } as IScript,
       ],
     } as ILanguage;
   }
@@ -261,6 +277,12 @@ export function defaultSearchResultModifier(
   // For nor, I think we should treat is as a indiv language with two scripts, Bokmål and Nynorsk - ? https://www.ethnologue.com/language/nor/
   // For san: according to langtags.txt, san = cls = vsn. Both cls and vsn are individual ISO639-3 languages. Not sure which to use.
   // Look into aka and hbs further
+
+  // To get the sanskrit macrolanguage code out for now, I am replacing it with cls (classical sanskrit).
+  // From a quick wikipedia it looks more likely the user would be writing in cls than vsn (vedic sanskrit).
+  // In Bloomlibrary.org as of February 2025 there is only 1 Sanskrit book. In the future, if we need to distinguish
+  // between classical and vedic sanskrit we can split this into 2 entries, but for now I think that would cause more confusion than it would be worth.
+  // modifiedResults = replaceIsoCode("san", "cls", modifiedResults);
 
   // Filters out mis (Uncoded languages), mul (Multiple languages), zxx (no linguistic content), und (Undetermined)
   modifiedResults = modifiedResults.filter(

@@ -20,8 +20,6 @@ export enum LanguageType {
   Custom = "Custom", // For special situation/user-entered languages that are not in langtags
 }
 
-export const MACROLANGUAGE_SITUATION_UNKNOWN = "unknown";
-
 export interface ILanguage {
   autonym?: string;
   exonym: string;
@@ -32,11 +30,12 @@ export interface ILanguage {
   scripts: IScript[];
   variants?: string; // comma-joined
   alternativeTags: string[];
-  // The macrolanguage for which this language is the representative language.
-  // If this is from a macrolanguage entry which we were unable to map to a representative language, value will be
-  // MACROLANGUAGE_SITUATION_UNKNOWN and desired behavior should be handled by search result modifiers.
-  // See macrolanguageNotes.md
-  aliasMacrolanguage?: string;
+  isMacrolanguage?: boolean; // undefined is false. TODO put false in and make required?
+  // The macrolanguage which includes this individual language, if applicable.
+  parentMacrolanguage?: ILanguage;
+  // This is an individual language which the parent macrolanguage code is sometimes used to represent. See macrolanguageNotes.md
+  // If isMacrolanguage and isRepresentativeForMacrolanguage are both true, this language is an anomalous case which probably needs special handling
+  isRepresentativeForMacrolanguage?: boolean;
   languageType: LanguageType;
   // This field should only be used for a language that was manually entered, i.e. the full langtag is not in langtags.json
   manuallyEnteredTag?: string;

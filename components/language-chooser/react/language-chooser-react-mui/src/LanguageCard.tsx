@@ -3,7 +3,8 @@ import { css } from "@emotion/react";
 import { OptionCard, OptionCardProps } from "./OptionCard";
 import { ILanguage, rawIsoCode } from "@ethnolib/find-language";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
-import { lighten, useTheme } from "@mui/material";
+import WarningIcon from "@mui/icons-material/Warning";
+import { lighten, Stack, Typography, useTheme } from "@mui/material";
 import { useLingui } from "@lingui/react/macro";
 
 const COMMA_SEPARATOR = ", ";
@@ -92,8 +93,31 @@ export const LanguageCard: React.FunctionComponent<
             color: ${theme.palette.grey[700]};
           `}
         >
-          {t`A language of ${languageCardData.regionNames}`}
+          {languageCardData.isMacrolanguage
+            ? t`A macrolanguage of ${languageCardData.regionNames}` // TODO show this even if no regions?
+            : t`A language of ${languageCardData.regionNames}`}
         </PartiallyBoldedTypography>
+      )}
+      {languageCardData.isMacrolanguage && (
+        // TODO this may need a gutterbottom
+        <Stack
+          alignItems="center"
+          direction="row"
+          gap={0.5}
+          css={css`
+            color: ${theme.palette.grey[700]};
+          `}
+        >
+          <WarningIcon
+            css={css`
+              font-size: inherit;
+              color: inherit;
+            `}
+          />
+          <Typography variant="subtitle1">
+            {t`It is usually better to pick a specific language instead of a macrolanguage.`}
+          </Typography>
+        </Stack>
       )}
       {languageCardData.names.length > 0 && (
         <PartiallyBoldedTypography
