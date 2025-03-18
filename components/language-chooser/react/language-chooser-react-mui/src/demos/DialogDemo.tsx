@@ -1,6 +1,10 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { defaultSearchResultModifier } from "@ethnolib/find-language";
+import {
+  IOrthography,
+  parseLangtagFromLangChooser,
+  defaultSearchResultModifier,
+} from "@ethnolib/find-language";
 import {
   Button,
   Card,
@@ -8,11 +12,7 @@ import {
   ThemeProvider,
   Typography,
 } from "@mui/material";
-import {
-  defaultDisplayName,
-  IOrthography,
-  parseLangtagFromLangChooser,
-} from "@ethnolib/language-chooser-react-hook";
+import { defaultDisplayName } from "@ethnolib/language-chooser-react-hook";
 import { LanguageChooserDialog } from "./LanguageChooserDialog";
 import React from "react";
 import { DummyRightPanelComponent } from "./DummyRightPanelComponent";

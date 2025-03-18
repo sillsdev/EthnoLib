@@ -37,10 +37,10 @@ export function getAllScripts(): IScript[] {
 
 export function getScriptForLanguage(
   scriptCode: string,
-  language: ILanguage
+  language?: ILanguage
 ): IScript | undefined {
   // If possible, use the script object from language.scripts because this might have the script-specific autonym
-  const script = language.scripts.find(
+  const script = language?.scripts.find(
     (s) => s.code.toLowerCase() === scriptCode.toLowerCase()
   );
   if (script) {
