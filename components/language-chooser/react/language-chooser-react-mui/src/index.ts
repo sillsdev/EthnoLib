@@ -1,15 +1,17 @@
 export * from "./LanguageChooser";
 
-export { defaultSearchResultModifier } from "@ethnolib/find-language";
-export type { ILanguage, IScript, IRegion } from "@ethnolib/find-language";
 export {
+  defaultSearchResultModifier,
   isUnlistedLanguage,
   createTagFromOrthography,
   parseLangtagFromLangChooser,
   defaultDisplayName,
   defaultRegionForLangTag,
-} from "@ethnolib/language-chooser-react-hook";
+} from "@ethnolib/find-language";
 export type {
+  ILanguage,
+  IScript,
+  IRegion,
   IOrthography,
   ICustomizableLanguageDetails,
-} from "@ethnolib/language-chooser-react-hook";
+} from "@ethnolib/find-language";

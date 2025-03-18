@@ -1,11 +1,12 @@
-import { ILanguage, IScript } from "./findLanguageInterfaces";
+import { ILanguage, IScript, LanguageType } from "./findLanguageInterfaces";
 
 interface ILanguageTestEntry {
   autonym?: string;
   exonym?: string;
   iso639_3_code?: string;
   languageSubtag?: string;
-  regionNames?: string;
+  regionNamesForDisplay?: string;
+  regionNamesForSearch?: string[];
   names?: string[];
   scripts?: IScript[];
   variants?: string;
@@ -20,11 +21,13 @@ export function createTestLanguageEntry(
     exonym: "",
     iso639_3_code: "",
     languageSubtag: "",
-    regionNames: "",
+    regionNamesForDisplay: "",
+    regionNamesForSearch: [],
     names: [],
     scripts: [],
     variants: "",
     alternativeTags: [],
+    languageType: LanguageType.Living,
     ...languageSpecifications,
   } as ILanguage;
 }
