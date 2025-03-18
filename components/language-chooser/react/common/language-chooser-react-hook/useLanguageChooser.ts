@@ -2,15 +2,15 @@ import {
   ILanguage,
   IScript,
   asyncSearchForLanguage,
+  ICustomizableLanguageDetails,
+  searchForLanguage,
   stripResultMetadata,
-  stripDemarcation,
   deepStripDemarcation,
 } from "@ethnolib/find-language";
 import { useEffect, useRef, useState } from "react";
 import { FuseResult } from "fuse.js";
 import {
   isValidBcp47Tag,
-  ICustomizableLanguageDetails,
   isManuallyEnteredTagLanguage,
   isUnlistedLanguage,
   languageForManuallyEnteredTag,
@@ -18,7 +18,10 @@ import {
   UNLISTED_LANGUAGE,
   IOrthography,
   createTagFromOrthography,
-} from "./languageTagHandling";
+  defaultDisplayName,
+} from "@ethnolib/find-language";
+import { useEffect, useMemo, useState } from "react";
+import { FuseResult } from "fuse.js";
 
 export interface ILanguageChooser {
   languageResults: ILanguage[];
@@ -252,20 +255,6 @@ export const useLanguageChooser = (
     resetTo,
   } as ILanguageChooser;
 };
-
-export function defaultDisplayName(language?: ILanguage, script?: IScript) {
-  if (
-    !language ||
-    isUnlistedLanguage(language) ||
-    isManuallyEnteredTagLanguage(language)
-  ) {
-    return undefined;
-  }
-
-  return stripDemarcation(
-    script?.languageNameInScript || language.autonym || language.exonym
-  );
-}
 
 function hasValidDisplayName(selection: IOrthography) {
   if (!selection.language) {
