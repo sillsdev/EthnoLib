@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 
 import { ILanguageChooserProps, LanguageChooser } from "../LanguageChooser";
-import { IOrthography } from "@ethnolib/language-chooser-react-hook";
+import { IOrthography } from "@ethnolib/find-language";
 import React from "react";
 import { I18nProvider } from "../../../common/I18nProvider";
 

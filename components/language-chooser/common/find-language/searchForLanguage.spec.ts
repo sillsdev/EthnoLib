@@ -3,7 +3,7 @@ import { ILanguage } from "./findLanguageInterfaces";
 import { describe, expect, it } from "vitest";
 import { expectTypeOf } from "vitest";
 import { FuseResult } from "fuse.js";
-import { codeMatches } from "./searchResultModifiers";
+import { codeMatches } from "./languageTagUtils";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
 
 describe("searchForLanguage", () => {
@@ -148,6 +148,122 @@ describe("searchForLanguage", () => {
   });
   it("should leave autonym as undefined if no localnames or localname", () => {
     expect(searchForLanguage("Aranadan")[0].item.autonym).toBeUndefined();
+  });
+});
+
+describe("Macrolanguage handling", () => {
+  it("searching for macrolanguage name should find the macrolanguage", () => {
+    searchDoesFindLanguage("Delaware", "del");
+    searchDoesFindLanguage("Chinese", "zho");
+    searchDoesFindLanguage("Arabic", "ara");
+  });
+
+  it("searching for macrolanguage code (2 or 3 letter) should find the macrolanguage", () => {
+    searchDoesFindLanguage("del", "del");
+    searchDoesFindLanguage("zho", "zho");
+    searchDoesFindLanguage("zh", "zho");
+    searchDoesFindLanguage("ara", "ara");
+    searchDoesFindLanguage("ar", "ara");
+    searchDoesFindLanguage("aym", "aym");
+    searchDoesFindLanguage("ay", "aym");
+  });
+
+  it("Should find both macro and indiv language with shared name when searching for that name", () => {
+    searchDoesFindLanguage("Chinese", "zho");
+    searchDoesFindLanguage("Chinese", "cmn");
+    searchDoesFindLanguage("Uzbek", "uzb");
+    searchDoesFindLanguage("Uzbek", "uzn");
+    searchDoesFindLanguage("Haida", "hai");
+    searchDoesFindLanguage("Haida", "hdn");
+  });
+
+  it("should not include macrolanguages in searches by region, unique individual language name, individual language code, or alternative names", () => {
+    searchDoesFindLanguage("Canada", "ojg"); // Eastern Ojibwa, individual language
+    searchDoesNotFindLanguage("Canada", "oji"); // Ojibwa macrolanguage
+
+    searchDoesFindLanguage("ўзбек тили", "uzn"); // Uzbek, individual language
+    searchDoesNotFindLanguage("ўзбек тили", "uzb"); // Uzbek macrolanguage
+    searchDoesFindLanguage("اوزبیک", "uzn"); // Uzbek, individual language
+    searchDoesNotFindLanguage("اوزبیک", "uzb"); // Uzbek macrolanguage
+    searchDoesFindLanguage("Uzbekistan", "uzn"); // Uzbek, individual language
+    searchDoesNotFindLanguage("Uzbekistan", "uzb"); // Uzbek macrolanguage
+  });
+
+  // Make sure that the unusual language entries that don't behave as expected are still preserved in some form
+  it("should include results for unusual language situations", () => {
+    function expectToFindResultByExonym(exonym: string, region: string) {
+      const result = searchForLanguage(exonym).find(
+        (result) =>
+          stripDemarcation(result.item.exonym) === exonym &&
+          result.item.regionNamesForDisplay.includes(region)
+      );
+      expect(result).toBeDefined();
+    }
+    expectToFindResultByExonym("Akan", "Ghana");
+    expectToFindResultByExonym("Bontok", "Philippines");
+    expectToFindResultByExonym("Norwegian", "Norway");
+    expectToFindResultByExonym("Sanskrit", "India");
+    expectToFindResultByExonym("Serbo-Croatian", "Serbia");
+    expectToFindResultByExonym("Zapotec", "Mexico");
+  });
+
+  // Searching for a macrolanguage name or code should find all its individual languages
+  it("should find all individual languages when searching for macrolanguage name or code", () => {
+    function searchFindsAllLanguages(
+      query: string,
+      expectedLanguageCodes: string[]
+    ) {
+      const results = searchForLanguage(query);
+      for (const langCode of expectedLanguageCodes) {
+        expect(
+          results.some((result) =>
+            codeMatches(result.item.iso639_3_code, langCode)
+          ),
+          `search for ${query} should find ${langCode}`
+        ).toBe(true);
+      }
+    }
+    const luyiaLanguages = [
+      "bxk",
+      "ida",
+      "lkb",
+      "lks",
+      "lri",
+      "lrm",
+      "lsm",
+      "lto",
+      "lts",
+      "lwg",
+      "nle",
+      "nyd",
+      "rag",
+    ];
+    searchFindsAllLanguages("Luyia", luyiaLanguages);
+    searchFindsAllLanguages("luy", luyiaLanguages);
+
+    const malayLanguages = ["bjn", "bvu", "dup", "hji", "jak", "liw", "urk"]; // just an arbitrary sampling
+    searchFindsAllLanguages("Malay", malayLanguages);
+    searchFindsAllLanguages("msa", malayLanguages);
+  });
+
+  it("macrolanguage results should list default region only and default script only", () => {
+    const arabicResults = searchForLanguage("Arabic");
+    const macroArabicResult = arabicResults.find((result) =>
+      codeMatches(result.item.iso639_3_code, "ara")
+    );
+    expect(macroArabicResult).toBeDefined();
+    expect(macroArabicResult?.item.regionNamesForDisplay).toBe("Egypt");
+    expect(macroArabicResult?.item.scripts.length).toBe(1);
+    expect(macroArabicResult?.item.scripts[0].code).toBe("Arab");
+
+    const marwariResults = searchForLanguage("Marwari");
+    const macroMarwariResult = marwariResults.find((result) =>
+      codeMatches(result.item.iso639_3_code, "mwr")
+    );
+    expect(macroMarwariResult).toBeDefined();
+    expect(macroMarwariResult?.item.regionNamesForDisplay).toBe("India");
+    expect(macroMarwariResult?.item.scripts.length).toBe(1);
+    expect(macroMarwariResult?.item.scripts[0].code).toBe("Deva");
   });
 });
 
