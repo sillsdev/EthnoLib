@@ -63,7 +63,8 @@ In default modification, much of the language info is stripped from the English 
     "exonym": "[Engl]i[sh]",
     "iso639_3_code": "[eng]",
     "languageSubtag": "[en]",
-    "regionNames": "",
+    "regionNamesForDisplay": "",
+    "regionNamesForSearch": [],
     "names": [],
     "scripts": [
       {
@@ -84,7 +85,8 @@ Original English result, `unmodifiedSearchResults[0]` (truncated to save space):
     "exonym": "English",
     "iso639_3_code": "eng",
     "languageSubtag": "en",
-    "regionNames": "United States, World, Europe, United Arab Emirates, Antigua and Barbuda, ...",
+    "regionNamesForDisplay": "United States, World, Europe, United Arab Emirates, Antigua and Barbuda, ...",
+    "regionNamesForSearch": ...
     "scripts": [
       {
         "code": "Latn",

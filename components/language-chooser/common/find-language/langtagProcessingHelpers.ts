@@ -157,7 +157,7 @@ for (const line of macrolangMappingFile.split("\n")) {
 // but the tags field (in some but not all entries) contains equivalent tags that use the individual language codes.
 // We want to save the individual language codes, so gather as many macrolangauge to representative individual language
 // mappings as we can. As of 2/2025, this covers all macrolanguage codes in langtags.json except for
-// bnc, nor, san, hbs, and zap which should all be handled by search result modifiers.
+// bnc, nor, san, hbs, man, and zap which should all be handled by search result modifiers.
 // See macrolanguageNotes.md for more explanation.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -222,8 +222,8 @@ for (const {
       isMacrolanguage: true,
       iso639_3_code: iso639_3Code,
       languageSubtag: iso639_1Code || iso639_3Code, // from langtags.txt it looks like the ISO 639-1 code is generally used when a macrolanguage has one
-      exonym: name.replace(" (macrolanguage)", ""), // we are already denoting elsewhere that this is a macrolanguage
-      regionNamesForDisplay: region?.name || "",
+      exonym: uncomma(stripMacrolanguageParenthetical(name)), // we are already denoting elsewhere that this is a macrolanguage
+      regionNamesForDisplay: uncomma(region?.name || ""),
       regionNamesForSearch: [], // We don't want these to come up in region searches
       names: [], // We delete the autonym and exonym from the names list to avoid repetitions
       scripts: script ? [script] : [],
@@ -325,6 +325,22 @@ export function uncommaAll(strs: Set<string>) {
   const newSet = new Set<string>();
   strs.forEach((item: string) => {
     newSet.add(uncomma(item) as string);
+  });
+  return newSet;
+}
+
+// Sometimes the language names in langtags.json and the macrolanguage mappings
+// come in the form "Swahili (macrolanguage)". We have our own logic for creating
+// individual language options and macrolanguage options, and will mark macrolanguages
+// as such ourselves
+export function stripMacrolanguageParenthetical(languageName: string) {
+  return languageName?.replace(" (macrolanguage)", "");
+}
+
+export function stripMacrolanguageParentheticalFromAll(names: Set<string>) {
+  const newSet = new Set<string>();
+  names.forEach((name) => {
+    newSet.add(stripMacrolanguageParenthetical(name));
   });
   return newSet;
 }
