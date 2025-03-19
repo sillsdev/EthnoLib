@@ -80,7 +80,8 @@ In default modification, much of the language info is stripped from the English 
     "exonym": "[Engl]i[sh]",
     "iso639_3_code": "[eng]",
     "languageSubtag": "[en]",
-    "regionNames": "",
+    "regionNamesForDisplay": "",
+    "regionNamesForSearch": [],
     "names": [],
     "scripts": [
       {
@@ -101,7 +102,8 @@ Original English result, `unmodifiedSearchResults[0]` (truncated to save space):
     "exonym": "English",
     "iso639_3_code": "eng",
     "languageSubtag": "en",
-    "regionNames": "United States, World, Europe, United Arab Emirates, Antigua and Barbuda, ...",
+    "regionNamesForDisplay": "United States, World, Europe, United Arab Emirates, Antigua and Barbuda, ...",
+    "regionNamesForSearch": ...
     "scripts": [
       {
         "code": "Latn",
@@ -176,3 +178,25 @@ find-language searches languages included in the ISO-639-3 standard; every resul
 The [createTag](./languageTagUtils.ts) function in this package will return the shortest (and thus preferred) tag for a given language/script/region/dialect combination. For example, given language code "emm" (Mamulique), script code "Latn" (Latin) and region code "MX" (Mexico), `createTag` will return "emm" because it is the preferred equivalent tag for emm-Latn-MX.
 
 [langtags.txt](https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#langtagstxt) lists equivalent language tags. langtagProcessing.ts reformats it into [equivalentTags.json](language-data/equivalentTags.json) which we use for mapping language tags to their shortest and maximal equivalents.
+
+## Data sources
+
+We get our data from the [langtags repository](https://github.com/silnrsi/langtags/tree/master) and [ISO 639-3](https://iso639-3.sil.org/). All live in the [language-data](./language-data/) folder. In the future, we plan to automate the update of these data files, but currently it is done manually.
+
+- langtags.json
+  - source: https://ldml.api.sil.org/langtags.json
+  - documentation: https://github.com/silnrsi/langtags/blob/master/doc/langtags.md
+- langtags.txt
+  - source: https://ldml.api.sil.org/langtags.txt
+  - documentation: https://github.com/silnrsi/langtags/blob/master/doc/langtags.md
+- iso-639-3.tab
+  - source: https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab
+  - documentation: https://iso639-3.sil.org/code_tables/download_tables
+- iso-639-3-macrolanguages.tab
+  - source: https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3-macrolanguages.tab
+  - documentation: https://iso639-3.sil.org/code_tables/download_tables
+
+Currently also in the folder, data files compiled by our language data processing (see section above):
+
+- languageData.json
+- equivalentTags.json
