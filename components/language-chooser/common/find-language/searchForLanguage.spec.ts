@@ -267,6 +267,23 @@ describe("Macrolanguage handling", () => {
   });
 });
 
+it("Does not have (macrolanguage) parentheticals in names", () => {
+  function expectNoMacrolanguageParentheticals(searchString: string) {
+    const results = searchForLanguage(searchString);
+    expect(
+      results.some(
+        (result) =>
+          result.item.names.join().includes("macrolanguage") ||
+          result.item.autonym?.includes("(macrolanguage)") ||
+          result.item.exonym.includes("macrolanguage)")
+      ),
+      `results for ${searchString} should not include "(macrolanguage)"`
+    ).toBe(false);
+  }
+  expectNoMacrolanguageParentheticals("Swahili");
+  expectNoMacrolanguageParentheticals("doi");
+});
+
 function searchDoesFindLanguage(query: string, expectedLanguageCode: string) {
   const results = searchForLanguage(query);
   expect(results.length).toBeGreaterThan(0);
