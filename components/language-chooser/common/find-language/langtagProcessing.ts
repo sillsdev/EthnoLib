@@ -12,6 +12,8 @@ import {
   macrolangsToRepresentativeLangs,
   COMMA_SEPARATOR,
   ILangtagsJsonEntryInternal,
+  stripMacrolanguageParenthetical,
+  stripMacrolanguageParentheticalFromAll,
 } from "./langtagProcessingHelpers";
 
 import fs from "fs";
@@ -149,15 +151,17 @@ function parseLangtagsJson() {
       ].filter((regionName) => !!regionName);
       const regionNamesForDisplay = regionNamesForSearch.join(COMMA_SEPARATOR);
       return {
-        autonym: uncomma(langData.autonym),
-        exonym: uncomma(langData.exonym),
+        autonym: uncomma(stripMacrolanguageParenthetical(langData.autonym)),
+        exonym: uncomma(stripMacrolanguageParenthetical(langData.exonym)),
         iso639_3_code: langData.iso639_3_code,
         languageSubtag: langData.languageSubtag,
         // For all these normal individual languages, we display and search key the same region list
         regionNamesForSearch,
         regionNamesForDisplay,
         scripts: Object.values(langData.scripts),
-        names: [...uncommaAll(langData.names)].filter((name) => !!name),
+        names: [
+          ...uncommaAll(stripMacrolanguageParentheticalFromAll(langData.names)),
+        ].filter((name) => !!name),
         alternativeTags: [...langData.alternativeTags],
         parentMacrolanguage: langData.parentMacrolanguage,
         isMacrolanguage: langData.isMacrolanguage,
