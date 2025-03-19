@@ -3,12 +3,6 @@ import { css } from "@emotion/react";
 import * as React from "react";
 import { useLingui, Trans } from "@lingui/react/macro";
 import {
-  ICustomizableLanguageDetails,
-  isUnlistedLanguage,
-  createTagFromOrthography,
-  IOrthography,
-} from "@ethnolib/language-chooser-react-hook";
-import {
   Autocomplete,
   DialogActions,
   DialogContent,
@@ -31,6 +25,10 @@ import {
   ILanguage,
   IRegion,
   IScript,
+  ICustomizableLanguageDetails,
+  isUnlistedLanguage,
+  createTagFromOrthography,
+  IOrthography,
 } from "@ethnolib/find-language";
 import { FormFieldLabel } from "./FormFieldLabel";
 import { PrimaryTooltip } from "./PrimaryTooltip";

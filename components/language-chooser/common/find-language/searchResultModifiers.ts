@@ -5,6 +5,7 @@ import {
   stripDemarcation,
 } from "./matchingSubstringDemarcation";
 import { DEFAULT_EXCLUDED_HISTORIC_LANGUAGE_CODES } from "./defaultExcludedHistoricLanguages";
+import { codeMatches } from "./languageTagUtils";
 
 export function stripResultMetadata(
   results: FuseResult<ILanguage>[]
@@ -44,6 +45,22 @@ const DEFAULT_EXCLUDED_SCRIPT_CODES = new Set([
 
 const latinScriptData = { code: "Latn", name: "Latin" } as IScript;
 
+function replaceIsoCode(
+  origIsoCode: string,
+  newIsoCode: string,
+  results: ILanguage[]
+): ILanguage[] {
+  return results.map((result) => {
+    if (codeMatches(result.iso639_3_code, origIsoCode)) {
+      return {
+        ...result,
+        iso639_3_code: newIsoCode,
+      };
+    }
+    return result;
+  });
+}
+
 // Replace the English result with a simpler version that only has "English" and the code on it
 function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
   function getSimplifiedEnglishResult(result: ILanguage) {
@@ -52,7 +69,8 @@ function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
       exonym: result.exonym, // "English",
       iso639_3_code: result.iso639_3_code,
       languageSubtag: result.languageSubtag,
-      regionNames: "",
+      regionNamesForDisplay: "",
+      regionNamesForSearch: [],
       names: [],
       scripts: [
         { ...latinScriptData, languageNameInScript: "English" } as IScript,
@@ -73,7 +91,8 @@ function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
       exonym: result.exonym, // "French"
       iso639_3_code: result.iso639_3_code,
       languageSubtag: result.languageSubtag,
-      regionNames: "",
+      regionNamesForDisplay: "",
+      regionNamesForSearch: [],
       names: [],
       scripts: [
         { ...latinScriptData, languageNameInScript: "français" } as IScript,
@@ -122,7 +141,8 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
     return {
       ...result,
       autonym: "中文",
-      regionNames: "", // clear the long and confusing list of region names
+      regionNamesForDisplay: "", // clear the long and confusing list of region names
+      regionNamesForSearch: [],
       names: result.names.filter(
         (name) => name !== "中文" && name !== "繁體中文"
         // 繁體中文 is traditional script chinese, and since there is no equivalent in the names list for simplified script chinese,
@@ -139,7 +159,7 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
           name: "Chinese (Traditional)",
           languageNameInScript: "中文",
         } as IScript,
-        latinScriptData, // zh-Latn doesn't have a localnames/localname in langtags.json
+        { ...latinScriptData, languageNameInScript: "Chinese" } as IScript,
       ],
     } as ILanguage;
   }
@@ -148,20 +168,6 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
 
 export function rawIsoCode(result: ILanguage) {
   return stripDemarcation(result.iso639_3_code);
-}
-
-// Compare codes, ignoring any demarcation or casing
-// undefined does not match undefined
-export function codeMatches(
-  code1: string | undefined,
-  code2: string | undefined
-): boolean {
-  return (
-    !!code1 &&
-    !!code2 &&
-    stripDemarcation(code1)?.toUpperCase() ===
-      stripDemarcation(code2)?.toUpperCase()
-  );
 }
 
 // Replace the result which has targetCode with getModifiedEntry called on that result
@@ -261,6 +267,12 @@ export function defaultSearchResultModifier(
   // For nor, I think we should treat is as a indiv language with two scripts, Bokmål and Nynorsk - ? https://www.ethnologue.com/language/nor/
   // For san: according to langtags.txt, san = cls = vsn. Both cls and vsn are individual ISO639-3 languages. Not sure which to use.
   // Look into aka and hbs further
+
+  // To get the sanskrit macrolanguage code out for now, I am replacing it with cls (classical sanskrit).
+  // From a quick wikipedia it looks more likely the user would be writing in cls than vsn (vedic sanskrit).
+  // In Bloomlibrary.org as of February 2025 there is only 1 Sanskrit book. In the future, if we need to distinguish
+  // between classical and vedic sanskrit we can split this into 2 entries, but for now I think that would cause more confusion than it would be worth.
+  // modifiedResults = replaceIsoCode("san", "cls", modifiedResults);
 
   // Filters out mis (Uncoded languages), mul (Multiple languages), zxx (no linguistic content), und (Undetermined)
   modifiedResults = modifiedResults.filter(

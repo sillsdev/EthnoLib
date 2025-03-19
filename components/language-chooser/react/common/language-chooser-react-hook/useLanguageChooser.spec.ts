@@ -3,8 +3,6 @@ import { isReadyToSubmit } from "./useLanguageChooser";
 import {
   languageForManuallyEnteredTag,
   UNLISTED_LANGUAGE,
-} from "./languageTagHandling";
-import {
   ILanguage,
   IRegion,
   IScript,
@@ -23,7 +21,8 @@ describe("isReadyToSubmit", () => {
     exonym: "bar",
     iso639_3_code: "baz",
     languageSubtag: "foo",
-    regionNames: "Foobar, Barbaz",
+    regionNamesForDisplay: "Foobar, Barbaz",
+    regionNamesForSearch: ["Foobar", "Barbaz"],
     names: ["foo", "bar", "baz"],
     scripts: [latinScript],
     alternativeTags: [],
@@ -35,7 +34,8 @@ describe("isReadyToSubmit", () => {
     exonym: "Test Language",
     iso639_3_code: "tst",
     languageSubtag: "tst",
-    regionNames: "Test Region",
+    regionNamesForDisplay: "Test Region",
+    regionNamesForSearch: ["Test Region"],
     names: ["Test"],
     scripts: [],
     alternativeTags: [],
@@ -95,7 +95,7 @@ describe("isReadyToSubmit", () => {
     ).toBe(true);
   });
 
-  describe("unlisted language", () => {
+  describe("isReadyToSubmit: unlisted languages", () => {
     it("returns false for unlisted language with region missing", () => {
       expect(
         isReadyToSubmit({
@@ -157,7 +157,7 @@ describe("isReadyToSubmit", () => {
     });
   });
 
-  describe("manually entered tag", () => {
+  describe("isReadyToSubmit: manually entered tag", () => {
     const manualLanguage = languageForManuallyEnteredTag("zzz-Foo");
 
     it("returns false for invalid BCP 47 tag", () => {

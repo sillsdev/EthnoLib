@@ -1,6 +1,16 @@
 export * from "./useLanguageChooser";
-export * from "./languageTagHandling";
+export {
+  defaultSearchResultModifier,
+  isUnlistedLanguage,
+  createTagFromOrthography,
+  parseLangtagFromLangChooser,
+  defaultDisplayName,
+  defaultRegionForLangTag,
+} from "@ethnolib/find-language";
 export type {
+  ILanguage,
+  IScript,
+  IRegion,
   IOrthography,
   ICustomizableLanguageDetails,
-} from "./languageTagHandling";
+} from "@ethnolib/find-language";

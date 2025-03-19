@@ -22,17 +22,21 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { codeMatches, ILanguage, IScript } from "@ethnolib/find-language";
+import {
+  codeMatches,
+  ILanguage,
+  IScript,
+  IOrthography,
+  isUnlistedLanguage,
+  createTagFromOrthography,
+  isManuallyEnteredTagLanguage,
+  isValidBcp47Tag,
+} from "@ethnolib/find-language";
 import { LanguageCard } from "./LanguageCard";
 import { ScriptCard } from "./ScriptCard";
 import {
   useLanguageChooser,
-  isUnlistedLanguage,
-  IOrthography,
   ILanguageChooser,
-  createTagFromOrthography,
-  isManuallyEnteredTagLanguage,
-  isValidBcp47Tag,
   isReadyToSubmit,
   defaultDisplayName,
 } from "@ethnolib/language-chooser-react-hook";

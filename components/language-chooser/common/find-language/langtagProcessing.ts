@@ -1,173 +1,28 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// This file has lots of anys in order to parse and process langtags.json
-import { iso15924 } from "iso-15924";
-import langTagsJson from "./language-data/langtags.json" with { type: "json" };
-import fs from "fs";
+import { IScript, ILanguage } from "./findLanguageInterfaces";
 import {
-  ILanguage,
-  IScript,
-  MACROLANGUAGE_SITUATION_UNKNOWN,
-} from "./findLanguageInterfaces";
+  getAllPossibleNames,
+  isMacrolanguage,
+  languageType,
+  uncomma,
+  uncommaAll,
+  scriptNames,
+  macrolanguagesByCode,
+  indivlangsToMacrolangs,
+  ILanguageInternal,
+  macrolangsToRepresentativeLangs,
+  COMMA_SEPARATOR,
+  ILangtagsJsonEntryInternal,
+} from "./langtagProcessingHelpers";
 
-const COMMA_SEPARATOR = ", ";
-
-const scriptNames = iso15924.reduce(
-  (acc, entry) => ({ ...acc, [entry.code]: entry.name }),
-  {}
-) as any;
-
-const isoCodesDetails = {};
-const iso639_1To639_3 = {};
-const iso639_3Codes = new Set();
-const mappableIso639_1Codes = new Set();
-// downloaded from https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab
-/*
-         Scope   char(1) NOT NULL,  -- I(ndividual), M(acrolanguage), S(pecial)
-         Type    char(1) NOT NULL,  -- A(ncient), C(onstructed),  
-                                    -- E(xtinct), H(istorical), L(iving), S(pecial)
-*/
-const isoCodesDetailsFile = fs.readFileSync(
-  "language-data/iso-639-3.tab",
-  "utf8"
-);
-for (const line of isoCodesDetailsFile.split("\n")) {
-  if (line.length === 0) {
-    continue;
-  }
-  const parts = line.split("\t");
-  const iso639_3Code = parts[0];
-  iso639_3Codes.add(iso639_3Code);
-  const iso639_1Code = parts[3];
-  if (iso639_1Code) {
-    mappableIso639_1Codes.add(iso639_1Code);
-    iso639_1To639_3[iso639_1Code] = iso639_3Code;
-  }
-
-  const scope = parts[4];
-  const typeLetter = parts[5];
-  let languageType;
-  switch (typeLetter) {
-    case "A":
-      languageType = "Ancient";
-      break;
-    case "C":
-      languageType = "Constructed";
-      break;
-    case "E":
-      languageType = "Extinct";
-      break;
-    case "H":
-      languageType = "Historical";
-      break;
-    case "L":
-      languageType = "Living";
-      break;
-    case "S":
-      languageType = "Special";
-      break;
-    default:
-      languageType = "Unknown";
-  }
-  isoCodesDetails[iso639_3Code] = {
-    isMacrolanguage: scope === "M",
-    languageType,
-  };
-}
-
-function isMacrolanguage(iso639_3: string) {
-  return isoCodesDetails[iso639_3]?.isMacrolanguage || false;
-}
-
-// From the Langtags repo:
-// "For many macro languages, there is a representative language for that macrolanguage. In many cases the macro language code is more popular than the representative langauge code. Thus, for example, in the CLDR, the macro language code is used instead of the representative language code. For this reason, langtags.json unifies the representative language tags into the macro language tag set rather than having a separate tag set for them, and gives the tag for the tag set in terms of the macro language rather than the representative language."
-// So in langtags.json, for representative languages, the iso639_3 field is often the macrolangauge code,
-// but the tags field (in some but not all entries) contains equivalent tags that use the individual language codes.
-// We want to save the individual language codes, so gather as many macrolangauge to representative individual language
-// mappings as we can. As of 2/2025, this covers all macrolanguage codes in langtags.json except for
-// bnc, nor, san, hbs, and zap which should all be handled by search result modifiers.
-// See macrolanguageNotes.md for more explanation.
-const macrolangsToRepresentativeLangs = {};
-const langTags = langTagsJson as any[];
-for (const entry of langTags) {
-  if (isMacrolanguage(entry.iso639_3)) {
-    const newIndivCode = findIndivIsoCode(entry);
-    if (!newIndivCode) continue;
-    if (
-      macrolangsToRepresentativeLangs[entry.iso639_3] &&
-      macrolangsToRepresentativeLangs[entry.iso639_3] !== newIndivCode
-    ) {
-      console.log(
-        "conflicting representative lang for macrolang",
-        entry.iso639_3,
-        newIndivCode,
-        macrolangsToRepresentativeLangs[entry.iso639_3]
-      );
-    }
-    macrolangsToRepresentativeLangs[entry.iso639_3] = newIndivCode;
-  }
-}
-
-function languageType(iso639_3: string) {
-  return isoCodesDetails[iso639_3]?.languageType || "Unknown";
-}
-
-// turn "Uzbek, Northern" into "Northern Uzbek"
-function uncomma(str: string | undefined) {
-  if (!str) {
-    return str;
-  }
-  const parts = str.split(COMMA_SEPARATOR);
-  if (parts.length === 1) {
-    return str;
-  }
-  return parts[1] + " " + parts[0];
-}
-
-function uncommaAll(strs: Set<string>) {
-  const newSet = new Set<string>();
-  strs.forEach((item: string) => {
-    newSet.add(uncomma(item) as string);
-  });
-  return newSet;
-}
-
-interface ILanguageInternal {
-  autonym: string;
-  exonym: string;
-  iso639_3_code: string;
-  languageSubtag: string;
-  regionNames: Set<string>; // ISO 3166 codes
-  names: Set<string>;
-  scripts: { [key: string]: IScript };
-  alternativeTags: Set<string>;
-}
-
-function findPotentialIso639_3Code(languageTag: string): string | undefined {
-  const parts = languageTag.split("-");
-  const code = parts[0];
-  if (code.length === 3) {
-    return code;
-  } else if (code.length === 2) {
-    return iso639_1To639_3[code];
-  }
-  return undefined;
-}
-
-function getAllPossibleNames(entry: any) {
-  return new Set([
-    ...(entry.names || []),
-    entry.localname,
-    entry.name,
-    ...(entry.localnames || []),
-    ...(entry.iana || []),
-    ...(entry.latnnames || []),
-    entry.macrolang, // A macrolanguage that contains this language. Include so this language will come up when people search the macrolanguage name
-  ]);
-}
+import fs from "fs";
+import langTagsJson from "./language-data/langtags.json" with { type: "json" };
 
 // We want to have one entry for every ISO 639-3 code, whereas langtags.json sometimes has multiple entries per code
 // Combine entry into the entry with matching ISO 630-3 code in langs if there is one, otherwise create a new entry
-function addOrCombineLangtagsEntry(entry: any, langs: any) {
+function addOrCombineLangtagsEntry(
+  entry: ILangtagsJsonEntryInternal,
+  langs: { [key: string]: ILanguageInternal }
+) {
   if (!entry.iso639_3) {
     // langTags.json has metadata items in the same list mixed in with the data entries
     return;
@@ -193,7 +48,7 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
         name: scriptNames[entry.script],
         languageNameInScript:
           (entry.localnames || [undefined])[0] ||
-          langs[entry.iso639_3].scripts[entry.script]?.autonym ||
+          langs[entry.iso639_3].scripts[entry.script]?.languageNameInScript ||
           entry.localname,
       } as IScript;
     }
@@ -206,17 +61,21 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       entry.full,
       ...(entry.tags ?? []),
     ]);
-    langs[entry.iso639_3].aliasMacrolanguage =
-      langs[entry.iso639_3].aliasMacrolanguage || entry.aliasMacrolanguage;
+
+    langs[entry.iso639_3].isRepresentativeForMacrolanguage =
+      langs[entry.iso639_3].isRepresentativeForMacrolanguage ||
+      entry.isRepresentativeForMacrolanguage;
   } else {
     const scriptCode = entry.script;
     const scripts = {};
-    scripts[scriptCode] = {
-      code: scriptCode,
-      name: scriptNames[scriptCode],
-      languageNameInScript:
-        (entry.localnames || [undefined])[0] || entry.localname,
-    } as IScript;
+    if (scriptCode) {
+      scripts[scriptCode] = {
+        code: scriptCode,
+        name: scriptNames[scriptCode],
+        languageNameInScript:
+          (entry.localnames || [undefined])[0] || entry.localname,
+      } as IScript;
+    }
     // create a new entry for this language code
     langs[entry.iso639_3] = {
       autonym: entry.localnames ? entry.localnames[0] : entry.localname,
@@ -226,59 +85,51 @@ function addOrCombineLangtagsEntry(entry: any, langs: any) {
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
       scripts,
-      aliasMacrolanguage: entry.aliasMacrolanguage,
+      parentMacrolanguage:
+        macrolanguagesByCode[indivlangsToMacrolangs[entry.iso639_3]],
+      isRepresentativeForMacrolanguage: entry.isRepresentativeForMacrolanguage,
+      isMacrolanguage: isMacrolanguage(entry.iso639_3),
       alternativeTags: new Set([entry.full, ...(entry.tags || [])]),
       languageType: languageType(entry.iso639_3),
     } as ILanguageInternal;
   }
 }
 
-function findIndivIsoCode(macrolangEntry: any) {
-  const macrolangCode = macrolangEntry.iso639_3;
-  const alreadyFoundChildCodes = new Set();
-  for (const tag of macrolangEntry.tags || []) {
-    const childCode = findPotentialIso639_3Code(tag);
-    if (childCode && childCode !== macrolangCode) {
-      alreadyFoundChildCodes.add(childCode);
-    }
-  }
-
-  // one of the childcodes could have been a 2 letter equivalent yielding the same macrolang code
-  alreadyFoundChildCodes.delete(macrolangCode);
-
-  if (alreadyFoundChildCodes.size === 1) {
-    return [...alreadyFoundChildCodes][0];
-  }
-  return undefined;
-}
-
 function parseLangtagsJson() {
-  // We want to have one entry for every ISO 630-3 code, whereas langtags.json sometimes has multiple entries per code
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const langTags = langTagsJson as any[];
-  const consolidatedLangTags = {};
+  const consolidatedLangTags: { [key: string]: ILanguageInternal } = {};
   for (const entry of langTags) {
+    const languageSubtag = entry.tag.split("-")[0];
     // If listed with a macrolanguage code, this is a "representative language", we need to identify it by its equivalent
     // individual language code. See macrolanguageNotes.md
-    if (isMacrolanguage(entry.iso639_3)) {
-      const indivIsoCode = macrolangsToRepresentativeLangs[entry.iso639_3];
+    if (isMacrolanguage(entry.iso639_3) || isMacrolanguage(languageSubtag)) {
+      const indivIsoCode = isMacrolanguage(entry.iso639_3)
+        ? macrolangsToRepresentativeLangs[entry.iso639_3]
+        : entry.iso639_3;
       if (indivIsoCode) {
         addOrCombineLangtagsEntry(
           {
             ...entry,
             iso639_3: indivIsoCode,
-            aliasMacrolanguage: entry.iso639_3,
-          },
+            tag: indivIsoCode,
+            isRepresentativeForMacrolanguage: true,
+          } as ILangtagsJsonEntryInternal,
           consolidatedLangTags
         );
       } else {
         // This is a data anomaly but we do have 5 as of Feb 2025: bnc, nor, san, hbs, zap
         // See macrolanguageNotes.md. These cases should be specially handled.
-        console.log("No indivIsoCode found for macrolang", entry.iso639_3);
+        console.log(
+          "No indivIsoCode found for macrolang",
+          entry.iso639_3,
+          entry.tag
+        );
         addOrCombineLangtagsEntry(
           {
             ...entry,
-            aliasMacrolanguage: MACROLANGUAGE_SITUATION_UNKNOWN,
-          },
+            isRepresentativeForMacrolanguage: true,
+          } as ILangtagsJsonEntryInternal,
           consolidatedLangTags
         );
       }
@@ -288,44 +139,66 @@ function parseLangtagsJson() {
   }
 
   // Tweak some of the data into the format we want
-  const reformattedLangs = Object.values(consolidatedLangTags).map(
-    (langData: any) => {
+  const reformattedLangs: ILanguage[] = Object.values(consolidatedLangTags).map(
+    (langData: ILanguageInternal) => {
       // Don't repeat the autonym and exonym in the names list
       langData.names.delete(langData.autonym);
       langData.names.delete(langData.exonym);
+      const regionNamesForSearch = [
+        ...(uncommaAll(langData.regionNames) as Set<string>),
+      ].filter((regionName) => !!regionName);
+      const regionNamesForDisplay = regionNamesForSearch.join(COMMA_SEPARATOR);
       return {
         autonym: uncomma(langData.autonym),
         exonym: uncomma(langData.exonym),
         iso639_3_code: langData.iso639_3_code,
         languageSubtag: langData.languageSubtag,
-        regionNames: [...(uncommaAll(langData.regionNames) as Set<string>)]
-          .filter((regionName) => !!regionName)
-          .join(COMMA_SEPARATOR),
+        // For all these normal individual languages, we display and search key the same region list
+        regionNamesForSearch,
+        regionNamesForDisplay,
         scripts: Object.values(langData.scripts),
         names: [...uncommaAll(langData.names)].filter((name) => !!name),
         alternativeTags: [...langData.alternativeTags],
-        aliasMacrolanguage: langData.aliasMacrolanguage,
+        parentMacrolanguage: langData.parentMacrolanguage,
+        isMacrolanguage: langData.isMacrolanguage,
+        isRepresentativeForMacrolanguage:
+          langData.isRepresentativeForMacrolanguage,
         languageType: langData.languageType,
       } as ILanguage;
     }
   );
+
+  // Add macrolanguages to the list
+  for (const macrolang of Object.values(macrolanguagesByCode)) {
+    // check if consolidatedLangTags already has this macrolanguage
+    if (consolidatedLangTags[macrolang.iso639_3_code]) {
+      // This is one of the special cases and has already been added as if an individual language
+      continue;
+    } else {
+      //add the macrolanguage to the list
+      reformattedLangs.push(macrolang);
+    }
+  }
 
   //   write langs to a json file
   const data = JSON.stringify(reformattedLangs);
   fs.writeFileSync("language-data/languageData.json", data);
 }
 
+/* From https://github.com/silnrsi/langtags/blob/master/doc/langtags.md 
+Langtags.txt contains a sequence of equivalence sets. Each set consists of a 
+list of language tags separated by =. The first tag on the line is the canonical
+tag and the last tag on the line is the maximal tag. In addition, a tag is 
+prefixed with * if there is an entry in the SLDR for that particular tag. */
 function parseLangTagsTxt() {
-  /*
-  From https://github.com/silnrsi/langtags/blob/master/doc/langtags.md 
-  Langtags.txt contains a sequence of equivalence sets. Each set consists of a 
-  list of language tags separated by =. The first tag on the line is the canonical
-   tag and the last tag on the line is the maximal tag. In addition, a tag is 
-   prefixed with * if there is an entry in the SLDR for that particular tag. */
   const langTagsTxtRaw = fs.readFileSync("language-data/langtags.txt", "utf8");
   const langTagsTxt = langTagsTxtRaw.replaceAll("*", "");
   const lines = langTagsTxt.split("\n");
-  const tagLookups: any[] = [];
+  const tagLookups: {
+    shortest: string;
+    maximal: string;
+    allTags: string[];
+  }[] = [];
   for (const line of lines) {
     if (line.length === 0) {
       continue;
