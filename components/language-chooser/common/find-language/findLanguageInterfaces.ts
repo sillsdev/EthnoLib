@@ -25,7 +25,7 @@ export interface ILanguage {
   exonym: string;
   iso639_3_code: string; // ISO 639-3 code
   languageSubtag: string; // BCP-47 canonical code
-  regionNamesForDisplay: string;
+  regionNamesForDisplay: string; // For macrolanguages, we display a region but don't want the macrolanguage to come up in searches for that region
   regionNamesForSearch: string[];
   names: string[];
   scripts: IScript[];
