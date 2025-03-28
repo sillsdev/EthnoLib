@@ -39,6 +39,7 @@ const allFuseSearchKeys = [
   ...exactMatchPrioritizableFuseSearchKeys,
   { name: "regionNamesForSearch", weight: 1 },
   // If this language is a member of a macrolanguage, we want it to come up if the user searches for that macrolanguage (though this macrolanguage info is not visible on the card)
+  // If this language is a member of a macrolanguage, we want it to come up if the user searches for that macrolanguage
   {
     name: "macrolanguageISO639-3Code",
     getFn: (l: ILanguage) => l.parentMacrolanguage?.iso639_3_code || "",
