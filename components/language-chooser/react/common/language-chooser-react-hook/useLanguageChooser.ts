@@ -3,7 +3,6 @@ import {
   IScript,
   asyncSearchForLanguage,
   ICustomizableLanguageDetails,
-  searchForLanguage,
   stripResultMetadata,
   deepStripDemarcation,
 } from "@ethnolib/find-language";
@@ -20,8 +19,6 @@ import {
   createTagFromOrthography,
   defaultDisplayName,
 } from "@ethnolib/find-language";
-import { useEffect, useMemo, useState } from "react";
-import { FuseResult } from "fuse.js";
 
 export interface ILanguageChooser {
   languageResults: ILanguage[];

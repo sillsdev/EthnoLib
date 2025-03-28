@@ -37,17 +37,17 @@ export interface ILangtagsJsonEntryInternal {
   name: string;
   names: string[];
   nophonvars: boolean;
-  obsolete: boolean; // TODO future work: look into whether we should use this
+  obsolete: boolean; // currently not used // REVIEW: should it be?
   region: string;
   regions: string[];
   regionname: string;
   rod: string;
   script: string;
   sldr: string;
-  supress: boolean; // TODO future work: look into whether we should use this
+  supress: boolean; // currently not used // REVIEW: should it be?
   tag: string;
   tags: string[];
-  unwritten: boolean; // TODO future work: look into whether we should use this
+  unwritten: boolean; // currently not used // REVIEW: should it be?
   variants: string[];
   windows: string;
 
