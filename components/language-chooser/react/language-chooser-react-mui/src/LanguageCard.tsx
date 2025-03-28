@@ -4,8 +4,9 @@ import { OptionCard, OptionCardProps } from "./OptionCard";
 import { ILanguage, rawIsoCode } from "@ethnolib/find-language";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
 import WarningIcon from "@mui/icons-material/Warning";
-import { lighten, Stack, Typography, useTheme } from "@mui/material";
+import { lighten, Typography, useTheme } from "@mui/material";
 import { useLingui } from "@lingui/react/macro";
+import { IconAndText } from "./IconAndText";
 
 const COMMA_SEPARATOR = ", ";
 
@@ -20,6 +21,7 @@ export const LanguageCard: React.FunctionComponent<
       origOptionCardProps.backgroundColorWhenSelected ??
       lighten(theme.palette.primary.main, 0.7), // If color not provided, fall back to 70% of primary color
   } as OptionCardProps;
+  const regionNames = languageCardData.regionNamesForDisplay;
   return (
     <OptionCard {...optionCardProps}>
       <div
@@ -76,12 +78,7 @@ export const LanguageCard: React.FunctionComponent<
           {languageCardData.languageSubtag}
         </PartiallyBoldedTypography>
       </div>
-      {/* For debugging. */}
-      {/* <PartiallyBoldedTypography variant="subtitle1">
-        {`ISO 639-3 code: ${languageCardData.iso639_3_code}`}
-      </PartiallyBoldedTypography> */}
-      {(languageCardData.regionNamesForDisplay?.length > 0 ||
-        languageCardData.isMacrolanguage) && (
+      {(regionNames?.length > 0 || languageCardData.isMacrolanguage) && (
         <PartiallyBoldedTypography
           variant="subtitle1"
           gutterBottom
@@ -95,32 +92,32 @@ export const LanguageCard: React.FunctionComponent<
           `}
         >
           {languageCardData.isMacrolanguage
-            ? languageCardData.regionNamesForDisplay?.length > 0
-              ? t`A macrolanguage of ${languageCardData.regionNamesForDisplay}`
+            ? regionNames?.length > 0
+              ? t`A macrolanguage of ${regionNames}`
               : "A macrolanguage"
-            : t`A language of ${languageCardData.regionNamesForDisplay}`}
+            : t`A language of ${regionNames}`}
         </PartiallyBoldedTypography>
       )}
       {languageCardData.isMacrolanguage && (
-        // TODO this may need a gutterbottom
-        <Stack
-          alignItems="center"
-          direction="row"
-          gap={0.5}
+        <IconAndText
           css={css`
             color: ${theme.palette.grey[700]};
+            ${languageCardData.names.length > 0 && "margin-bottom: 0.35em;"}
           `}
-        >
-          <WarningIcon
-            css={css`
-              font-size: inherit;
-              color: inherit;
-            `}
-          />
-          <Typography variant="subtitle1">
-            {t`It is usually better to pick a specific language instead of a macrolanguage.`}
-          </Typography>
-        </Stack>
+          icon={
+            <WarningIcon
+              css={css`
+                font-size: inherit;
+                color: inherit;
+              `}
+            />
+          }
+          text={
+            <Typography variant="subtitle1">
+              {t`It is usually better to pick a specific language instead of a macrolanguage.`}
+            </Typography>
+          }
+        />
       )}
       {languageCardData.names.length > 0 && (
         <PartiallyBoldedTypography
