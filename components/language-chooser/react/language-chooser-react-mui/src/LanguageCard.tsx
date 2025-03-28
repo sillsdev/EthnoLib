@@ -4,8 +4,9 @@ import { OptionCard, OptionCardProps } from "./OptionCard";
 import { ILanguage, rawIsoCode } from "@ethnolib/find-language";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
 import WarningIcon from "@mui/icons-material/Warning";
-import { lighten, Stack, Typography, useTheme } from "@mui/material";
+import { lighten, Typography, useTheme } from "@mui/material";
 import { useLingui } from "@lingui/react/macro";
+import { TypographyWithStartIcon } from "./TypographyWithStartIcon";
 
 const COMMA_SEPARATOR = ", ";
 
@@ -102,25 +103,25 @@ export const LanguageCard: React.FunctionComponent<
         </PartiallyBoldedTypography>
       )}
       {languageCardData.isMacrolanguage && (
-        // TODO this may need a gutterbottom
-        <Stack
-          alignItems="center"
-          direction="row"
-          gap={0.5}
+        <TypographyWithStartIcon
           css={css`
             color: ${theme.palette.grey[700]};
+            ${languageCardData.names.length > 0 && "margin-bottom: 0.35em;"}
           `}
-        >
-          <WarningIcon
-            css={css`
-              font-size: inherit;
-              color: inherit;
-            `}
-          />
-          <Typography variant="subtitle1">
-            {t`It is usually better to pick a specific language instead of a macrolanguage.`}
-          </Typography>
-        </Stack>
+          icon={
+            <WarningIcon
+              css={css`
+                font-size: inherit;
+                color: inherit;
+              `}
+            />
+          }
+          textElement={
+            <Typography variant="subtitle1">
+              {t`It is usually better to pick a specific language instead of a macrolanguage.`}
+            </Typography>
+          }
+        />
       )}
       {languageCardData.names.length > 0 && (
         <PartiallyBoldedTypography
