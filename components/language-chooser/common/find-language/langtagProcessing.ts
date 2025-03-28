@@ -207,7 +207,7 @@ function parseLangTagsTxt() {
     if (line.length === 0) {
       continue;
     }
-    const tags = line.split(" = ");
+    const tags = line.split(" = ").map((tag) => tag.trim());
     tagLookups.push({
       shortest: tags[0],
       maximal: tags[tags.length - 1],

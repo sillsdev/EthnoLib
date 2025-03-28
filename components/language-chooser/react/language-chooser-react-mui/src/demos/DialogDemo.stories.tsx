@@ -62,6 +62,15 @@ export const SearchByISO639Code: Story = {
   ),
 };
 
+export const MacrolanguageBehavior: Story = {
+  args: {
+    initialSearchString: "Luyia",
+  },
+  render: (args, context) => (
+    <DialogDemo {...args} uiLanguage={context.parameters.uiLanguage} />
+  ),
+};
+
 export const AdditionalRightPanelComponent: Story = {
   args: {
     demoRightPanelComponent: true,

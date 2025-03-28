@@ -98,6 +98,7 @@ export const UNLISTED_LANGUAGE = {
   regionNamesForSearch: [],
   scripts: [],
   alternativeTags: [],
+  isMacrolanguage: false,
   languageType: LanguageType.Custom,
   names: [],
 } as ILanguage;
@@ -120,6 +121,7 @@ export function languageForManuallyEnteredTag(
     regionNamesForSearch: [],
     scripts: [],
     alternativeTags: [],
+    isMacrolanguage: false,
     names: [],
     languageType: LanguageType.Custom,
     manuallyEnteredTag,

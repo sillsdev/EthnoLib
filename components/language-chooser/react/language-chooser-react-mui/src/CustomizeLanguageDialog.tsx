@@ -13,7 +13,6 @@ import {
   Typography,
   Card,
   useTheme,
-  Stack,
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -32,6 +31,7 @@ import {
 } from "@ethnolib/find-language";
 import { FormFieldLabel } from "./FormFieldLabel";
 import { PrimaryTooltip } from "./PrimaryTooltip";
+import { IconAndText } from "./IconAndText";
 
 // ISO-3166-1 is a region code to region name lookup
 function getAllRegionOptions() {
@@ -332,20 +332,24 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                   `}
                 >
                   {/* Have MUI align the icon */}
-                  <Stack alignItems="center" direction="row" gap={0.5}>
-                    <WarningIcon
-                      css={css`
-                        font-size: inherit;
-                      `}
-                    />
-                    <Typography
-                      css={css`
-                        font-size: inherit;
-                      `}
-                    >
-                      <Trans>Advanced</Trans>
-                    </Typography>
-                  </Stack>
+                  <IconAndText
+                    icon={
+                      <WarningIcon
+                        css={css`
+                          font-size: inherit;
+                        `}
+                      />
+                    }
+                    text={
+                      <Typography
+                        css={css`
+                          font-size: inherit;
+                        `}
+                      >
+                        <Trans>Advanced</Trans>
+                      </Typography>
+                    }
+                  />
 
                   <Typography
                     css={css`
