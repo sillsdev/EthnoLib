@@ -60,6 +60,26 @@ test.describe("Search", () => {
     await expect(card).toBeVisible();
   });
 
+  test("macrolanguage cards", async () => {
+    await search(page, "kau");
+    const kauCard = page.getByTestId(languageCardTestId("kau"));
+    await kauCard.scrollIntoViewIfNeeded();
+    await expect(kauCard).toBeVisible();
+    await expect(kauCard).toContainText("Kanuri");
+    await expect(kauCard.locator("..")).toContainText(
+      "A macrolanguage of Nigeria"
+    );
+
+    await search(page, "rajasthani");
+    const rajCard = page.getByTestId(languageCardTestId("raj"));
+    await rajCard.scrollIntoViewIfNeeded();
+    await expect(rajCard).toBeVisible();
+    await expect(rajCard).toContainText("Rajasthani");
+    await expect(rajCard.locator("..")).toContainText(
+      "A macrolanguage of India"
+    );
+  });
+
   test("X button clears search and results", async () => {
     await search(page, "tok pisin");
     // At least one result is visible

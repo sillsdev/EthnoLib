@@ -9,6 +9,23 @@ import { FuseResult } from "fuse.js";
 import { codeMatches } from "./languageTagUtils";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
 
+async function asyncExpectToComeBefore(
+  results: FuseResult<ILanguage>[],
+  expectedLanguageCode1: string,
+  expectedLanguageCode2: string
+) {
+  const index1 = results.findIndex((result) =>
+    codeMatches(result.item.iso639_3_code, expectedLanguageCode1)
+  );
+  const index2 = results.findIndex((result) =>
+    codeMatches(result.item.iso639_3_code, expectedLanguageCode2)
+  );
+  expect(
+    index1,
+    `expected ${expectedLanguageCode1} (at index ${index1}) to come before ${expectedLanguageCode2} (at index ${index2})`
+  ).toBeLessThan(index2);
+}
+
 describe("asyncGetAllLanguageResults", () => {
   it("should return a list of languages", async () => {
     const result = await asyncGetAllLanguageResults("en");
@@ -68,15 +85,19 @@ describe("asyncGetAllLanguageResults", () => {
   it("should rank better matches before worse matches", async () => {
     // "Ese" comes before "Mese"
     const eseQuery = "ese";
-    expect(
-      await asyncIndexOfLanguageInSearchResults(eseQuery, "mcq")
-    ).toBeLessThan(await asyncIndexOfLanguageInSearchResults(eseQuery, "mci"));
+    await asyncExpectToComeBefore(
+      await asyncGetAllLanguageResults(eseQuery),
+      "mcq",
+      "mci"
+    );
 
     // "chorasmian" comes before "ch'orti'"
     const choQuery = "cho";
-    expect(
-      await asyncIndexOfLanguageInSearchResults(choQuery, "xco")
-    ).toBeLessThan(await asyncIndexOfLanguageInSearchResults(choQuery, "caa"));
+    await asyncExpectToComeBefore(
+      await asyncGetAllLanguageResults(choQuery),
+      "xco",
+      "caa"
+    );
   });
   it("should find matches regardless of case", async () => {
     await asyncSearchDoesFindLanguage("japanese", "jpn");
@@ -93,10 +114,6 @@ describe("asyncGetAllLanguageResults", () => {
   it("prioritizes whole word matches, then prefix matches", async () => {
     // searching "cree", all "cree" results should come before the "creek" result
     const creeQuery = "cree";
-    const indexOfCreek = await asyncIndexOfLanguageInSearchResults(
-      creeQuery,
-      "mus"
-    );
     const creeLangCodes = [
       "cre",
       "crg",
@@ -108,41 +125,28 @@ describe("asyncGetAllLanguageResults", () => {
       "ojs",
     ];
     for (const creeLangCode of creeLangCodes) {
-      expect(
-        await asyncIndexOfLanguageInSearchResults(creeQuery, creeLangCode)
-      ).toBeLessThan(indexOfCreek);
+      await asyncExpectToComeBefore(
+        await asyncGetAllLanguageResults(creeQuery),
+        creeLangCode,
+        "mus" // creek
+      );
     }
-
-    // searching "aka", all "aka" languages should come before the "akan" language
-    const akaQuery = "aka";
-    const akaResults = await asyncGetAllLanguageResults(akaQuery);
-    const indexOfAkan = akaResults.findIndex(
-      // We are using the exonym because the iso code may change if we adjust macrolanguage handling behavior.
-      // See macrolanguageNotes.md
-      (result) => stripDemarcation(result.item.exonym) === "Akan"
-    );
-    const akaLangCodes = ["soh", "ahk", "axk", "hru", "wum"];
-    for (const akaLangCode of akaLangCodes) {
-      expect(
-        await asyncIndexOfLanguageInSearchResults(akaQuery, akaLangCode)
-      ).toBeLessThan(indexOfAkan);
-    }
-    // "aka koro" should also come before "akan" since "aka" stands as a whole word
-    expect(
-      await asyncIndexOfLanguageInSearchResults(akaQuery, "jkr")
-    ).toBeLessThan(indexOfAkan);
 
     //searching "oka", "Wejeñememaja oka" should come before "Okanisi Tongo" (djk)
     const okaQuery = "oka";
-    expect(
-      await asyncIndexOfLanguageInSearchResults(okaQuery, "tnc")
-    ).toBeLessThan(await asyncIndexOfLanguageInSearchResults(okaQuery, "djk"));
+    await asyncExpectToComeBefore(
+      await asyncGetAllLanguageResults(okaQuery),
+      "tnc",
+      "djk"
+    );
 
     //searching "otl", "San Felipe Otlaltepec Popoloca" (pow) should come before "botlikh" (bph)
     const otlQuery = "otl";
-    expect(
-      await asyncIndexOfLanguageInSearchResults(otlQuery, "pow")
-    ).toBeLessThan(await asyncIndexOfLanguageInSearchResults(otlQuery, "bph"));
+    await asyncExpectToComeBefore(
+      await asyncGetAllLanguageResults(otlQuery),
+      "pow",
+      "bph"
+    );
   }, 10000);
 
   it("should prefer localnames[0] for autonym", async () => {
@@ -157,20 +161,20 @@ describe("asyncGetAllLanguageResults", () => {
     const results = await asyncGetAllLanguageResults("Aranadan");
     expect(results[0].item.autonym).toBeUndefined();
   });
-});
 
-it("should not have any duplicate results", async () => {
-  function checkForDuplicates(results: FuseResult<ILanguage>[]): void {
-    const seen = new Set<string>();
-    for (const result of results) {
-      const key = stripDemarcation(result.item.iso639_3_code) || "";
-      expect(seen.has(key), `Duplicate result found: ${key}`).toBe(false);
-      seen.add(key);
+  it("should not have any duplicate results", async () => {
+    function checkForDuplicates(results: FuseResult<ILanguage>[]): void {
+      const seen = new Set<string>();
+      for (const result of results) {
+        const key = stripDemarcation(result.item.iso639_3_code) || "";
+        expect(seen.has(key), `Duplicate result found: ${key}`).toBe(false);
+        seen.add(key);
+      }
     }
-  }
-  checkForDuplicates(await asyncGetAllLanguageResults("english"));
-  checkForDuplicates(await asyncGetAllLanguageResults("cree"));
-  checkForDuplicates(await asyncGetAllLanguageResults("mese"));
+    checkForDuplicates(await asyncGetAllLanguageResults("english"));
+    checkForDuplicates(await asyncGetAllLanguageResults("cree"));
+    checkForDuplicates(await asyncGetAllLanguageResults("mese"));
+  });
 });
 
 describe("Macrolanguage handling", () => {
@@ -212,6 +216,8 @@ describe("Macrolanguage handling", () => {
   });
 
   // Make sure that the unusual language entries that don't behave as expected are still preserved in some form
+  // Langtags.json has anomalies/unique situations for "bnc", "aka", "nor", "hbs", "san", "zap" such that are usual code can't map them to individual languages
+  // How we handle these cases may change, but make sure some result is always available for these
   it("should include results for unusual language situations", async () => {
     async function asyncExpectToFindResultByExonym(
       exonym: string,
@@ -225,12 +231,12 @@ describe("Macrolanguage handling", () => {
       );
       expect(result).toBeDefined();
     }
-    await asyncExpectToFindResultByExonym("Akan", "Ghana");
-    await asyncExpectToFindResultByExonym("Bontok", "Philippines");
-    await asyncExpectToFindResultByExonym("Norwegian", "Norway");
-    await asyncExpectToFindResultByExonym("Sanskrit", "India");
-    await asyncExpectToFindResultByExonym("Serbo-Croatian", "Serbia");
-    await asyncExpectToFindResultByExonym("Zapotec", "Mexico");
+    await asyncExpectToFindResultByExonym("Akan", "Ghana"); // aka
+    await asyncExpectToFindResultByExonym("Bontok", "Philippines"); // bnc
+    await asyncExpectToFindResultByExonym("Norwegian", "Norway"); // nor
+    await asyncExpectToFindResultByExonym("Sanskrit", "India"); // san
+    await asyncExpectToFindResultByExonym("Serbo-Croatian", "Serbia"); // hbs
+    await asyncExpectToFindResultByExonym("Zapotec", "Mexico"); // zap
   });
 
   // Searching for a macrolanguage name or code should find all its individual languages
@@ -291,24 +297,26 @@ describe("Macrolanguage handling", () => {
     expect(macroMarwariResult?.item.scripts.length).toBe(1);
     expect(macroMarwariResult?.item.scripts[0].code).toBe("Deva");
   });
-});
 
-it("Does not have (macrolanguage) parentheticals in names", () => {
-  function expectNoMacrolanguageParentheticals(searchString: string) {
-    const results = searchForLanguage(searchString);
-    expect(
-      results.some(
-        (result) =>
-          result.item.names.join().includes("macrolanguage") ||
-          result.item.autonym?.includes("(macrolanguage)") ||
-          result.item.exonym.includes("macrolanguage)")
-      ),
-      `results for ${searchString} should not include "(macrolanguage)"`
-    ).toBe(false);
-  }
-  expectNoMacrolanguageParentheticals("Swahili");
-  expectNoMacrolanguageParentheticals("doi");
-});
+  it("Does not have (macrolanguage) parentheticals in names", async () => {
+    async function asyncExpectNoMacrolanguageParentheticals(
+      searchString: string
+    ) {
+      const results = await asyncGetAllLanguageResults(searchString);
+      expect(
+        results.some(
+          (result) =>
+            result.item.names.join().includes("macrolanguage") ||
+            result.item.autonym?.includes("(macrolanguage)") ||
+            result.item.exonym.includes("macrolanguage)")
+        ),
+        `results for ${searchString} should not include "(macrolanguage)"`
+      ).toBe(false);
+    }
+    await asyncExpectNoMacrolanguageParentheticals("Swahili");
+    await asyncExpectNoMacrolanguageParentheticals("doi");
+  });
+}, 10000);
 
 async function asyncSearchDoesFindLanguage(
   query: string,
@@ -334,17 +342,6 @@ async function asyncSearchDoesNotFindLanguage(
     ),
     `Expected search for ${query} to not find ${expectedLanguageCode}`
   ).toBe(false);
-}
-
-async function asyncIndexOfLanguageInSearchResults(
-  query: string,
-  expectedLanguageCode: string
-) {
-  const results = await asyncGetAllLanguageResults(query);
-  const index = results.findIndex((result) =>
-    codeMatches(result.item.iso639_3_code, expectedLanguageCode)
-  );
-  return index;
 }
 
 describe("getLanguageBySubtag", () => {

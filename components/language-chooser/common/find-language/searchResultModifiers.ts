@@ -77,6 +77,7 @@ function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
       ],
       variants: "",
       alternativeTags: [],
+      isMacrolanguage: false,
       languageType: LanguageType.Living,
     } as ILanguage;
   }
@@ -99,6 +100,7 @@ function simplifyFrenchResult(results: ILanguage[]): ILanguage[] {
       ],
       variants: "",
       alternativeTags: [],
+      isMacrolanguage: false,
       languageType: LanguageType.Living,
     } as ILanguage;
   }
@@ -267,12 +269,6 @@ export function defaultSearchResultModifier(
   // For nor, I think we should treat is as a indiv language with two scripts, Bokmål and Nynorsk - ? https://www.ethnologue.com/language/nor/
   // For san: according to langtags.txt, san = cls = vsn. Both cls and vsn are individual ISO639-3 languages. Not sure which to use.
   // Look into aka and hbs further
-
-  // To get the sanskrit macrolanguage code out for now, I am replacing it with cls (classical sanskrit).
-  // From a quick wikipedia it looks more likely the user would be writing in cls than vsn (vedic sanskrit).
-  // In Bloomlibrary.org as of February 2025 there is only 1 Sanskrit book. In the future, if we need to distinguish
-  // between classical and vedic sanskrit we can split this into 2 entries, but for now I think that would cause more confusion than it would be worth.
-  // modifiedResults = replaceIsoCode("san", "cls", modifiedResults);
 
   // Filters out mis (Uncoded languages), mul (Multiple languages), zxx (no linguistic content), und (Undetermined)
   modifiedResults = modifiedResults.filter(

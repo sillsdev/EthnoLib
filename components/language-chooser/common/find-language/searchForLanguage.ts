@@ -29,7 +29,16 @@ const exactMatchPrioritizableFuseSearchKeys = [
   { name: "languageSubtag", weight: 80 },
   { name: "names", weight: 8 },
 
-  // If this language is a member of a macrolanguage, we want it to come up if the user searches for that macrolanguage
+  // All fields below are currently not displayed on the card, but we still want corresponding results to come up if people search for them
+  { name: "iso639_3_code", weight: 70 },
+  { name: "alternativeTags", weight: 70 },
+];
+// We will bring results that exactly whole-word match or prefix-match to the top of the list
+// but don't want to do this for region names or invisible macrolanguage info
+const allFuseSearchKeys = [
+  ...exactMatchPrioritizableFuseSearchKeys,
+  { name: "regionNamesForSearch", weight: 1 },
+  // If this language is a member of a macrolanguage, we want it to come up if the user searches for that macrolanguage (though this macrolanguage info is not visible on the card)
   {
     name: "macrolanguageISO639-3Code",
     getFn: (l: ILanguage) => l.parentMacrolanguage?.iso639_3_code || "",
@@ -45,15 +54,6 @@ const exactMatchPrioritizableFuseSearchKeys = [
     getFn: (l: ILanguage) => l.parentMacrolanguage?.exonym || "",
     weight: 70,
   },
-  // All fields below are currently not displayed on the card, but we still want corresponding results to come up if people search for them
-  { name: "iso639_3_code", weight: 70 },
-  { name: "alternativeTags", weight: 70 },
-];
-// We will bring results that exactly whole-word match or prefix-match to the top of the list
-// but don't want to do this for region names
-const allFuseSearchKeys = [
-  ...exactMatchPrioritizableFuseSearchKeys,
-  { name: "regionNamesForSearch", weight: 1 },
 ];
 
 // exported for match-highlighting use
@@ -117,7 +117,6 @@ export async function asyncSearchForLanguage(
   const completeMatchResults = completeMatchFuse.search(`="${queryString}"`);
   continueSearching = await newResultsFound(completeMatchResults);
   if (!continueSearching) return;
-
   /* Whole word matches: e.g "Foo Bar" or "Bar Foo" for search string "foo" */
   // We have padded with spaces, so e.g. if queryString is "cree", then " cree " is an exact match for " plains cree " but not " creek "
   const spacePaddedWholeWordMatchResults = spacePaddedFuse.search(

@@ -14,7 +14,6 @@ import {
   ListItem,
   OutlinedInput,
   Skeleton,
-  Stack,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -49,6 +48,7 @@ import { FormFieldLabel } from "./FormFieldLabel";
 import { TypographyOptions } from "@mui/material/styles/createTypography";
 import { PrimaryTooltip } from "./PrimaryTooltip";
 import { I18nProvider } from "../../common/I18nProvider";
+import { TypographyWithStartIcon } from "./TypographyWithStartIcon";
 
 // so we can put "lighter" in the mui theme palette
 // https://mui.com/material-ui/customization/palette/#typescript-2
@@ -572,35 +572,37 @@ export const LanguageChooserInner: React.FunctionComponent<
                 }
               >
                 {/* Have MUI align the icon */}
-                <Stack
-                  alignItems="center"
-                  direction="row"
-                  gap={0.5}
+                <TypographyWithStartIcon
                   css={css`
                     color: ${theme.palette.text.primary};
                   `}
-                >
-                  {!showUnlistedLanguageOptions && (
-                    <EditIcon
+                  icon={
+                    !showUnlistedLanguageOptions ? (
+                      <EditIcon
+                        css={css`
+                          font-size: 1rem;
+                        `}
+                      />
+                    ) : (
+                      <></>
+                    )
+                  }
+                  textElement={
+                    <Typography
                       css={css`
-                        font-size: 1rem;
+                        text-transform: uppercase;
+                        font-size: 0.75rem;
+                        font-weight: bold;
                       `}
-                    />
-                  )}
-                  <Typography
-                    css={css`
-                      text-transform: uppercase;
-                      font-size: 0.75rem;
-                      font-weight: bold;
-                    `}
-                  >
-                    {showUnlistedLanguageOptions
-                      ? t`Create Unlisted Language`
-                      : manualTagLanguageSelected
-                        ? t`Edit Language Tag`
-                        : t`Customize`}
-                  </Typography>
-                </Stack>
+                    >
+                      {showUnlistedLanguageOptions
+                        ? t`Create Unlisted Language`
+                        : manualTagLanguageSelected
+                          ? t`Edit Language Tag`
+                          : t`Customize`}
+                    </Typography>
+                  }
+                />
 
                 <div
                   css={css`

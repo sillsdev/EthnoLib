@@ -31,7 +31,7 @@ export interface ILanguage {
   scripts: IScript[];
   variants?: string; // comma-joined
   alternativeTags: string[];
-  isMacrolanguage?: boolean; // undefined is false. TODO put false in and make required?
+  isMacrolanguage: boolean;
   // The macrolanguage which includes this individual language, if applicable.
   // As of March 2025, the parentMacrolanguage lacks scripts and other data, we put just enough info to facilitate searching
   parentMacrolanguage?: ILanguage;
