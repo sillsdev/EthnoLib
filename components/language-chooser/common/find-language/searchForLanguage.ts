@@ -61,16 +61,11 @@ const allFuseSearchKeys = [
 export const fieldsToSearch = allFuseSearchKeys.map((key) => key.name);
 
 // a good alternative search library would be minisearch (https://github.com/lucaong/minisearch) which handles word tokenization
-// and so we wouldn't need all this hacky space padding business. But if we switched to minisearch, I'm not sure how we would do
-// highlighting of fuzzy match portions, e.g. higlighting "[japane]se" if the user searched "jpane"
-// and what we have is working for now
+// and so we wouldn't need all this hacky space padding business.
 
 export async function asyncSearchForLanguage(
   queryString: string,
-  appendResults: (
-    results: FuseResult<ILanguage>[],
-    forSearchString: string
-  ) => boolean
+  appendResults: (results: ILanguage[], forSearchString: string) => boolean
 ): Promise<void> {
   const alreadyFoundIsoCodes = new Set<string>();
   let continueSearching = true;
@@ -78,11 +73,12 @@ export async function asyncSearchForLanguage(
   async function newResultsFound(
     newResults: FuseResult<ILanguage>[]
   ): Promise<boolean> {
-    const filteredResults = newResults.filter(
-      (result) => !alreadyFoundIsoCodes.has(result.item.iso639_3_code)
-    );
+    const filteredResults: ILanguage[] = newResults
+      .map((r) => r.item)
+      .filter((result) => !alreadyFoundIsoCodes.has(result.iso639_3_code));
+
     filteredResults
-      .map((result) => result.item.iso639_3_code)
+      .map((result) => result.iso639_3_code)
       .forEach(alreadyFoundIsoCodes.add, alreadyFoundIsoCodes);
 
     const yieldToEventLoop = () =>
@@ -172,8 +168,8 @@ export async function asyncSearchForLanguage(
 
 export async function asyncGetAllLanguageResults(
   searchString: string
-): Promise<FuseResult<ILanguage>[]> {
-  const results: FuseResult<ILanguage>[] = [];
+): Promise<ILanguage[]> {
+  const results: ILanguage[] = [];
   await asyncSearchForLanguage(searchString, (newResults) => {
     results.push(...newResults);
     return true;
@@ -185,7 +181,7 @@ export async function asyncGetAllLanguageResults(
 export function getLanguageBySubtag(
   code: string,
   searchResultModifier?: (
-    results: FuseResult<ILanguage>[],
+    results: ILanguage[],
     searchString: string
   ) => ILanguage[]
 ): ILanguage | undefined {
@@ -195,6 +191,9 @@ export function getLanguageBySubtag(
   });
   const rawResults = fuse.search(code);
   return searchResultModifier
-    ? searchResultModifier(rawResults, code)[0]
+    ? searchResultModifier(
+        rawResults.map((r) => r.item),
+        code
+      )[0]
     : rawResults[0]?.item;
 }
