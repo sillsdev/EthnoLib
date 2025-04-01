@@ -5,20 +5,19 @@ import {
 import { ILanguage } from "./findLanguageInterfaces";
 import { describe, expect, it } from "vitest";
 import { expectTypeOf } from "vitest";
-import { FuseResult } from "fuse.js";
 import { codeMatches } from "./languageTagUtils";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
 
 async function asyncExpectToComeBefore(
-  results: FuseResult<ILanguage>[],
+  results: ILanguage[],
   expectedLanguageCode1: string,
   expectedLanguageCode2: string
 ) {
   const index1 = results.findIndex((result) =>
-    codeMatches(result.item.iso639_3_code, expectedLanguageCode1)
+    codeMatches(result.iso639_3_code, expectedLanguageCode1)
   );
   const index2 = results.findIndex((result) =>
-    codeMatches(result.item.iso639_3_code, expectedLanguageCode2)
+    codeMatches(result.iso639_3_code, expectedLanguageCode2)
   );
   expect(
     index1,
@@ -29,7 +28,7 @@ async function asyncExpectToComeBefore(
 describe("asyncGetAllLanguageResults", () => {
   it("should return a list of languages", async () => {
     const result = await asyncGetAllLanguageResults("en");
-    expectTypeOf(result).toEqualTypeOf<FuseResult<ILanguage>[]>();
+    expectTypeOf(result).toEqualTypeOf<ILanguage[]>();
     expect(result.length).toBeGreaterThan(0);
   });
 
@@ -151,22 +150,22 @@ describe("asyncGetAllLanguageResults", () => {
 
   it("should prefer localnames[0] for autonym", async () => {
     const azerbaijaniResults = await asyncGetAllLanguageResults("azerbaijani");
-    expect(azerbaijaniResults[0].item.autonym).toBe("Azərbaycan dili");
+    expect(azerbaijaniResults[0].autonym).toBe("Azərbaycan dili");
   });
   it("should fallback to localname for autonym if no localnames", async () => {
     const japaneseResults = await asyncGetAllLanguageResults("japanese");
-    expect(japaneseResults[0].item.autonym).toBe("日本語");
+    expect(japaneseResults[0].autonym).toBe("日本語");
   });
   it("should leave autonym as undefined if no localnames or localname", async () => {
     const results = await asyncGetAllLanguageResults("Aranadan");
-    expect(results[0].item.autonym).toBeUndefined();
+    expect(results[0].autonym).toBeUndefined();
   });
 
   it("should not have any duplicate results", async () => {
-    function checkForDuplicates(results: FuseResult<ILanguage>[]): void {
+    function checkForDuplicates(results: ILanguage[]): void {
       const seen = new Set<string>();
       for (const result of results) {
-        const key = stripDemarcation(result.item.iso639_3_code) || "";
+        const key = stripDemarcation(result.iso639_3_code) || "";
         expect(seen.has(key), `Duplicate result found: ${key}`).toBe(false);
         seen.add(key);
       }
@@ -224,8 +223,8 @@ describe("Macrolanguage handling", () => {
       const results = await asyncGetAllLanguageResults(exonym);
       const result = results.find(
         (result) =>
-          stripDemarcation(result.item.exonym) === exonym &&
-          result.item.regionNamesForDisplay.includes(region)
+          stripDemarcation(result.exonym) === exonym &&
+          result.regionNamesForDisplay.includes(region)
       );
       expect(result).toBeDefined();
     }
@@ -246,9 +245,7 @@ describe("Macrolanguage handling", () => {
       const results = await asyncGetAllLanguageResults(query);
       for (const langCode of expectedLanguageCodes) {
         expect(
-          results.some((result) =>
-            codeMatches(result.item.iso639_3_code, langCode)
-          ),
+          results.some((result) => codeMatches(result.iso639_3_code, langCode)),
           `search for ${query} should find ${langCode}`
         ).toBe(true);
       }
@@ -279,21 +276,21 @@ describe("Macrolanguage handling", () => {
   it("macrolanguage results should list default region only and default script only", async () => {
     const arabicResults = await asyncGetAllLanguageResults("Arabic");
     const macroArabicResult = arabicResults.find((result) =>
-      codeMatches(result.item.iso639_3_code, "ara")
+      codeMatches(result.iso639_3_code, "ara")
     );
     expect(macroArabicResult).toBeDefined();
-    expect(macroArabicResult?.item.regionNamesForDisplay).toBe("Egypt");
-    expect(macroArabicResult?.item.scripts.length).toBe(1);
-    expect(macroArabicResult?.item.scripts[0].code).toBe("Arab");
+    expect(macroArabicResult?.regionNamesForDisplay).toBe("Egypt");
+    expect(macroArabicResult?.scripts.length).toBe(1);
+    expect(macroArabicResult?.scripts[0].code).toBe("Arab");
 
     const marwariResults = await asyncGetAllLanguageResults("Marwari");
     const macroMarwariResult = marwariResults.find((result) =>
-      codeMatches(result.item.iso639_3_code, "mwr")
+      codeMatches(result.iso639_3_code, "mwr")
     );
     expect(macroMarwariResult).toBeDefined();
-    expect(macroMarwariResult?.item.regionNamesForDisplay).toBe("India");
-    expect(macroMarwariResult?.item.scripts.length).toBe(1);
-    expect(macroMarwariResult?.item.scripts[0].code).toBe("Deva");
+    expect(macroMarwariResult?.regionNamesForDisplay).toBe("India");
+    expect(macroMarwariResult?.scripts.length).toBe(1);
+    expect(macroMarwariResult?.scripts[0].code).toBe("Deva");
   });
 
   it("Does not have (macrolanguage) parentheticals in names", async () => {
@@ -304,9 +301,9 @@ describe("Macrolanguage handling", () => {
       expect(
         results.some(
           (result) =>
-            result.item.names.join().includes("macrolanguage") ||
-            result.item.autonym?.includes("(macrolanguage)") ||
-            result.item.exonym.includes("macrolanguage)")
+            result.names.join().includes("macrolanguage") ||
+            result.autonym?.includes("(macrolanguage)") ||
+            result.exonym.includes("macrolanguage)")
         ),
         `results for ${searchString} should not include "(macrolanguage)"`
       ).toBe(false);
@@ -323,7 +320,7 @@ async function asyncSearchDoesFindLanguage(
   const results = await asyncGetAllLanguageResults(query);
   expect(
     results.some((result) =>
-      codeMatches(result.item.iso639_3_code, expectedLanguageCode)
+      codeMatches(result.iso639_3_code, expectedLanguageCode)
     ),
     `Expected search for ${query} to find ${expectedLanguageCode}`
   ).toBe(true);
@@ -336,7 +333,7 @@ async function asyncSearchDoesNotFindLanguage(
   const results = await asyncGetAllLanguageResults(query);
   expect(
     results.some((result) =>
-      codeMatches(result.item.iso639_3_code, expectedLanguageCode)
+      codeMatches(result.iso639_3_code, expectedLanguageCode)
     ),
     `Expected search for ${query} to not find ${expectedLanguageCode}`
   ).toBe(false);
@@ -349,12 +346,9 @@ describe("getLanguageBySubtag", () => {
   });
   it("should use searchResultModifier if provided", () => {
     const foobar = "foobar";
-    const modifier = (
-      results: FuseResult<ILanguage>[],
-      _searchString: string
-    ) =>
+    const modifier = (results: ILanguage[], _searchString: string) =>
       results.map((result) => {
-        return { ...result.item, exonym: foobar };
+        return { ...result, exonym: foobar };
       });
     expect(getLanguageBySubtag("en", modifier)?.exonym).toEqual(foobar);
   });
