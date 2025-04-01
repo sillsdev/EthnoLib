@@ -1,11 +1,11 @@
-import { Typography, TypographyProps } from "@mui/material";
+import { Typography, TypographyProps, useTheme } from "@mui/material";
 import {
   START_OF_MATCH_MARKER,
   END_OF_MATCH_MARKER,
 } from "@ethnolib/find-language";
 import React from "react";
 
-function createNodeList(demarcatedText: string) {
+function createNodeList(demarcatedText: string, boldingColor?: string) {
   const startMarkerSplitSegments = demarcatedText.split(START_OF_MATCH_MARKER);
   const nodes = [];
   // demarcated text: a[b]c[d]e
@@ -20,7 +20,9 @@ function createNodeList(demarcatedText: string) {
       nodes.push(endMarkerSplitSegments[0]);
     } else {
       nodes.push(
-        <span style={{ fontWeight: "bold" }}>{endMarkerSplitSegments[0]}</span>
+        <span style={{ fontWeight: "bold", color: boldingColor }}>
+          {endMarkerSplitSegments[0]}
+        </span>
       );
       nodes.push(endMarkerSplitSegments[1]);
     }
@@ -33,6 +35,8 @@ export const PartiallyBoldedTypography: React.FunctionComponent<
     children: string;
   } & TypographyProps
 > = ({ children, ...typographyProps }) => {
-  const nodes = createNodeList(children || "");
+  const theme = useTheme();
+  const boldingColor = theme.palette.primary.dark;
+  const nodes = createNodeList(children || "", boldingColor);
   return <Typography {...typographyProps}>{...nodes}</Typography>;
 };

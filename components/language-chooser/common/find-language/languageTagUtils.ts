@@ -13,7 +13,6 @@ import {
 } from "./matchingSubstringDemarcation";
 import { getRegionBySubtag, getScriptForLanguage } from "./regionsAndScripts";
 import { getLanguageBySubtag } from "./searchForLanguage";
-import { FuseResult } from "fuse.js";
 
 // Keys are lower cased
 const shortPreferredTagLookup = new Map<string, string>();
@@ -193,7 +192,7 @@ export function splitTag(tag: string): ITagParts {
 export function parseLangtagFromLangChooser(
   languageTag: string, // must be the default language subtag for the language
   searchResultModifier?: (
-    results: FuseResult<ILanguage>[],
+    results: ILanguage[],
     searchString: string
   ) => ILanguage[]
 ): IOrthography | undefined {

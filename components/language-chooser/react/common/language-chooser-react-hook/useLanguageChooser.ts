@@ -3,11 +3,9 @@ import {
   IScript,
   asyncSearchForLanguage,
   ICustomizableLanguageDetails,
-  stripResultMetadata,
   deepStripDemarcation,
 } from "@ethnolib/find-language";
 import { useEffect, useRef, useState } from "react";
-import { FuseResult } from "fuse.js";
 import {
   isValidBcp47Tag,
   isManuallyEnteredTagLanguage,
@@ -51,7 +49,7 @@ export const useLanguageChooser = (
     langtag: string | undefined
   ) => void,
   searchResultModifier?: (
-    results: FuseResult<ILanguage>[],
+    results: ILanguage[],
     searchString: string
   ) => ILanguage[]
 ) => {
@@ -86,14 +84,14 @@ export const useLanguageChooser = (
   // and appends them to the result list, in several rounds.
   // Return true if we should continue searching for more results, and false if we should abort because the search string has changed
   function appendResults(
-    additionalSearchResults: FuseResult<ILanguage>[],
+    additionalSearchResults: ILanguage[],
     forSearchString: string
   ) {
     if (forSearchString !== searchStringRef.current) {
       // Search string has changed, stop looking for results for this search string
       return false;
     }
-    const modifier = searchResultModifier || stripResultMetadata;
+    const modifier = searchResultModifier || ((r) => r);
     //append the new results to the existing results
     setLanguageResults((r) =>
       r.concat(modifier(additionalSearchResults, forSearchString))
