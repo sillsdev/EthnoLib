@@ -12,7 +12,6 @@ import {
   parseLangtagFromLangChooser,
   UNLISTED_LANGUAGE,
 } from "./languageTagUtils";
-import { FuseResult } from "fuse.js";
 import {
   ILanguage,
   LanguageType,
@@ -252,12 +251,9 @@ describe("Tag parsing", () => {
   });
   it("uses searchResultModifier if provided", () => {
     const foobar = "foobar";
-    const modifier = (
-      results: FuseResult<ILanguage>[],
-      _searchString: string
-    ) =>
+    const modifier = (results: ILanguage[], _searchString: string) =>
       results.map((result) => {
-        return { ...result.item, exonym: foobar };
+        return { ...result, exonym: foobar };
       });
     expect(
       parseLangtagFromLangChooser("en", modifier)?.language?.exonym

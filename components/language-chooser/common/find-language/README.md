@@ -44,7 +44,7 @@ Within each of these categories, matches are weighted by which field they match;
 
 This package includes various methods for adjusting search results to handle special cases, such as sign languages and very common languages. Currently, edge cases in the search results are adjusted for Bloom’s use case by the `defaultSearchResultModifier`, which:
 
-- Demarcates portions (substrings) of results which match the search string. For example, if the search string is "nglis" then any instance of "English" would be marked as "E[nglis]h"
+- Demarcates (substrings) of results which match the search string, using square brackets. For example, if the search string is "nglis" then "English" would be marked as "E[nglis]h". Only demarcates once per result, prioritizing whole word matches or start-of-word matches. Only demarcates exact matches, so if the search string is "Englxsh" then nothing of "English" would be demarcated
 - Ensures the English result is the first result when the user starts typing "English"
 - Ensures the French result is the first result when the user starts typing "French", "Francais" or "Français"
 - Simplifies English and French entries by removing region lists and most alternative names
@@ -77,9 +77,9 @@ In default modification, much of the language info is stripped from the English 
 
 ```
   {
-    "exonym": "[Engl]i[sh]",
-    "iso639_3_code": "[eng]",
-    "languageSubtag": "[en]",
+    "exonym": "English",
+    "iso639_3_code": "eng",
+    "languageSubtag": "en",
     "regionNamesForDisplay": "",
     "regionNamesForSearch": [],
     "names": [],

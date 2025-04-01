@@ -8,7 +8,7 @@ function spacePad(target: string | undefined) {
   return target ? " " + target + " " : target;
 }
 
-// If we surround the search targets with spaces, we can detect exact whole-word matches or prefix matches simply by adding spaces around the query string
+// If we surround the search targets with spaces, we can detect exact whole-word matches or start-of-word matches simply by adding spaces around the query string
 const spacePaddedLanguages = languages.map((language) => ({
   ...language,
   autonym: spacePad(language.autonym),
@@ -33,7 +33,7 @@ const exactMatchPrioritizableFuseSearchKeys = [
   { name: "iso639_3_code", weight: 70 },
   { name: "alternativeTags", weight: 70 },
 ];
-// We will bring results that exactly whole-word match or prefix-match to the top of the list
+// We will bring results that exactly whole-word match or start-of-word match to the top of the list
 // but don't want to do this for region names or invisible macrolanguage info
 const allFuseSearchKeys = [
   ...exactMatchPrioritizableFuseSearchKeys,
@@ -60,16 +60,11 @@ const allFuseSearchKeys = [
 export const fieldsToSearch = allFuseSearchKeys.map((key) => key.name);
 
 // a good alternative search library would be minisearch (https://github.com/lucaong/minisearch) which handles word tokenization
-// and so we wouldn't need all this hacky space padding business. But if we switched to minisearch, I'm not sure how we would do
-// highlighting of fuzzy match portions, e.g. higlighting "[japane]se" if the user searched "jpane"
-// and what we have is working for now
+// and so we wouldn't need all this hacky space padding business.
 
 export async function asyncSearchForLanguage(
   queryString: string,
-  appendResults: (
-    results: FuseResult<ILanguage>[],
-    forSearchString: string
-  ) => boolean
+  appendResults: (results: ILanguage[], forSearchString: string) => boolean
 ): Promise<void> {
   const alreadyFoundIsoCodes = new Set<string>();
   let continueSearching = true;
@@ -77,11 +72,12 @@ export async function asyncSearchForLanguage(
   async function newResultsFound(
     newResults: FuseResult<ILanguage>[]
   ): Promise<boolean> {
-    const filteredResults = newResults.filter(
-      (result) => !alreadyFoundIsoCodes.has(result.item.iso639_3_code)
-    );
+    const filteredResults: ILanguage[] = newResults
+      .map((r) => r.item)
+      .filter((result) => !alreadyFoundIsoCodes.has(result.iso639_3_code));
+
     filteredResults
-      .map((result) => result.item.iso639_3_code)
+      .map((result) => result.iso639_3_code)
       .forEach(alreadyFoundIsoCodes.add, alreadyFoundIsoCodes);
 
     const yieldToEventLoop = () =>
@@ -133,20 +129,22 @@ export async function asyncSearchForLanguage(
   continueSearching = await newResultsFound(wholeWordMatchResults);
   if (!continueSearching) return;
 
-  /* Prefix matches: e.g "Foobar" or "Baz Foobar" for search string "foo" */
-  // e.g. if querystring is "otl", then " otl" is a prefix match for " San Felipe Otlaltepec Popoloca " but not "botlikh"
-  const spacePaddedPrefixMatchResults = spacePaddedFuse.search(
+  /* Start-of-word matches: e.g "Foobar" or "Baz Foobar" for search string "foo" */
+  // e.g. if querystring is "otl", then " otl" is a start-of-word match for " San Felipe Otlaltepec Popoloca " but not "botlikh"
+  const spacePaddedStartOfWordMatchResults = spacePaddedFuse.search(
     " " + queryString
   );
 
   // Get the versions without space padding
-  const prefixMatchResults = spacePaddedPrefixMatchResults.map((r) => {
-    return {
-      ...r,
-      item: languagesByIsoCode[r.item.iso639_3_code],
-    };
-  });
-  continueSearching = await newResultsFound(prefixMatchResults);
+  const startOfWordMatchResults = spacePaddedStartOfWordMatchResults.map(
+    (r) => {
+      return {
+        ...r,
+        item: languagesByIsoCode[r.item.iso639_3_code],
+      };
+    }
+  );
+  continueSearching = await newResultsFound(startOfWordMatchResults);
   if (!continueSearching) return;
 
   /* Substring matches: e.g. "Barfoobaz" for search string "foo" */
@@ -171,8 +169,8 @@ export async function asyncSearchForLanguage(
 
 export async function asyncGetAllLanguageResults(
   searchString: string
-): Promise<FuseResult<ILanguage>[]> {
-  const results: FuseResult<ILanguage>[] = [];
+): Promise<ILanguage[]> {
+  const results: ILanguage[] = [];
   await asyncSearchForLanguage(searchString, (newResults) => {
     results.push(...newResults);
     return true;
@@ -184,7 +182,7 @@ export async function asyncGetAllLanguageResults(
 export function getLanguageBySubtag(
   code: string,
   searchResultModifier?: (
-    results: FuseResult<ILanguage>[],
+    results: ILanguage[],
     searchString: string
   ) => ILanguage[]
 ): ILanguage | undefined {
@@ -194,6 +192,9 @@ export function getLanguageBySubtag(
   });
   const rawResults = fuse.search(code);
   return searchResultModifier
-    ? searchResultModifier(rawResults, code)[0]
+    ? searchResultModifier(
+        rawResults.map((r) => r.item),
+        code
+      )[0]
     : rawResults[0]?.item;
 }
