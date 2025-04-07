@@ -1,3 +1,15 @@
+## 0.1.4 (2025-04-07)
+
+### 🩹 Fixes
+
+- BL-14402 fixes ([6bedf67](https://github.com/sillsdev/EthnoLib/commit/6bedf67))
+- BL-14402 macrolanguages get special cards ([1b11816](https://github.com/sillsdev/EthnoLib/commit/1b11816))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.3
+- Updated @ethnolib/find-language to 0.1.3
+
 ## 0.1.3 (2025-03-13)
 
 ### 🩹 Fixes
