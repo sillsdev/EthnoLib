@@ -1,3 +1,14 @@
+## 0.1.5 (2025-04-08)
+
+### 🩹 Fixes
+
+- BL-14423 fix match highlighting ([7c73f82](https://github.com/sillsdev/EthnoLib/commit/7c73f82))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.4
+- Updated @ethnolib/find-language to 0.1.4
+
 ## 0.1.4 (2025-04-07)
 
 ### 🩹 Fixes
