@@ -43,7 +43,6 @@ import { debounce } from "lodash";
 import { useEffect, useRef, useState } from "react";
 import { CustomizeLanguageDialog } from "./CustomizeLanguageDialog";
 import LazyLoad from "react-lazyload";
-import { FuseResult } from "fuse.js";
 import { FormFieldLabel } from "./FormFieldLabel";
 import { TypographyOptions } from "@mui/material/styles/createTypography";
 import { PrimaryTooltip } from "./PrimaryTooltip";
@@ -99,7 +98,7 @@ const LANG_CARD_MIN_HEIGHT = "90px"; // The height of typical card - 1 line of a
 export interface ILanguageChooserProps {
   uiLanguage?: string; // defaults to English
   searchResultModifier: (
-    results: FuseResult<ILanguage>[],
+    results: ILanguage[],
     searchString: string
   ) => ILanguage[];
   initialSearchString?: string;

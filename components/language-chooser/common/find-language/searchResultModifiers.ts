@@ -1,4 +1,3 @@
-import { FuseResult } from "fuse.js";
 import { ILanguage, IScript, LanguageType } from "./findLanguageInterfaces";
 import {
   demarcateResults,
@@ -6,12 +5,6 @@ import {
 } from "./matchingSubstringDemarcation";
 import { DEFAULT_EXCLUDED_HISTORIC_LANGUAGE_CODES } from "./defaultExcludedHistoricLanguages";
 import { codeMatches } from "./languageTagUtils";
-
-export function stripResultMetadata(
-  results: FuseResult<ILanguage>[]
-): ILanguage[] {
-  return results.map((result) => result.item);
-}
 
 export function filterScripts(
   scriptFilter: (value: IScript) => boolean,
@@ -227,12 +220,10 @@ export function prioritizeLangByKeywords(
 // demarcateResults starts by making a deep clone so we aren't modifying the original results
 // Other implementations will probably also want to ensure a deep copy before modifying
 export function defaultSearchResultModifier(
-  results: FuseResult<ILanguage>[],
+  results: ILanguage[],
   searchString: string
 ): ILanguage[] {
-  let modifiedResults: ILanguage[] = stripResultMetadata(
-    demarcateResults(results)
-  );
+  let modifiedResults: ILanguage[] = demarcateResults(results, searchString);
   modifiedResults = prioritizeLangByKeywords(
     ["english"],
     searchString,
