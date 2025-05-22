@@ -15,7 +15,9 @@
     "l10n:compile": "lingui compile",
     "l10n:upload": "crowdin upload sources",
     "l10n:download": "crowdin download",
-    "l10n:update-locales": "ts-node scripts/update-locales.ts"
+    "l10n:update-locales": "ts-node scripts/update-locales.ts",
+    "test": "nx run-many --target test --all --parallel",
+    "testonce": "nx run-many --target test --all --run"
   },
   "devDependencies": {
     "@crowdin/cli": "^4.6.1",
