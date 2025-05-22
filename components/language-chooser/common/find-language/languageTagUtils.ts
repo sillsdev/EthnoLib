@@ -67,8 +67,10 @@ export function createTag({
   if (!languageCode || dialectCode) {
     tag += "-x-";
   }
+  // Subtags have a maximum length of 8 characters, so if dialectCode is longer than that, truncate it
+  // when appending to the tag.  See BL-14806.
   if (dialectCode) {
-    tag += `${dialectCode}`;
+    tag += `${dialectCode.length <= 8 ? dialectCode : dialectCode.slice(0, 8)}`;
   }
   return getShortestSufficientLangtag(tag) || tag;
 }
