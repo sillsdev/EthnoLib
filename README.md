@@ -1,11 +1,10 @@
-> [!warning]
-> This project is currently under development and not ready for public use.
-
 # Ethnolib
 
 Ethnolib is a small collection of browser components for language apps. Each component may be published to its own npm package.
 
 ## Components
+
+![alt text](readme-package-diagram.png)
 
 ### [Find-Language](components/language-chooser/common/find-language/README.md)
 
@@ -19,7 +18,7 @@ A React hook that provides the logic for a language chooser component. It utiliz
 
 A MUI styled language chooser interface, initially developed for use in [BloomDesktop](https://github.com/BloomBooks/BloomDesktop). It uses the `language-chooser-react-hook` component.
 
-![alt text](readme-package-diagram.png)
+![dialog](LanguageChooserDialog.png)
 
 ## Development
 
@@ -41,6 +40,22 @@ or
 ```
 nx dev @ethnolib/language-chooser-react-mui
 ```
+
+## Testing
+
+Vitest is used for writing unit tests.  From the top level folder, all of the unit tests can be run with these commands:
+
+```
+npm run test
+```
+
+or
+
+```
+npm run testonce
+```
+
+The first command runs the tests continually in *watch* mode with minimal output while tests are passing successfully.  The second command runs all the tests just once and quits after printing a summary of test results to the console window.
 
 ### Dependency Versions
 
