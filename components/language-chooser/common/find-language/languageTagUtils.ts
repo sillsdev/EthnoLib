@@ -24,11 +24,25 @@ for (const tagset of equivalentTags) {
   }
 }
 
-// case insensitive. Returns undefined if langtag is not in langtags.txt and so equivalents cannot be looked up
+// case insensitive on input. Tries to find a shorter (or the same) equivalent in the language data
+// loaded from langtags.txt.  If the input tag has a private use variant (starts with -x-), then it
+// removes the private use variant from what is looked up and restores the variant to what is found.
+// Returns undefined if the langtag (without any private use variant) is not in langtags.txt and so
+// equivalents cannot be looked up.
 export function getShortestSufficientLangtag(
   langtag: string
 ): string | undefined {
-  return shortPreferredTagLookup.get(langtag.toLowerCase());
+  const shorter = shortPreferredTagLookup.get(langtag.toLowerCase());
+  if (!shorter && langtag.includes("-x-")) {
+    // try to shorten the langtag before the private use section
+    const parts = langtag.split("-x-");
+    const preferredTag = shortPreferredTagLookup.get(parts[0].toLowerCase());
+    if (preferredTag) {
+      // If we found a preferred tag, return it with the private use section intact
+      return `${preferredTag}-x-${parts.slice(1).join("-x-")}`;
+    }
+  }
+  return shorter;
 }
 
 // case insensitive. Returns undefined if langtag is not in langtags.txt and so equivalents cannot be looked up
