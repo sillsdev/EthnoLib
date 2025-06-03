@@ -12,6 +12,7 @@
     "build": "nx vite:build",
     "typecheck": "tsc",
     "test": "nx vite:test --config vitest.config.ts",
+    "testonce": "nx vite:test --config vitest.config.ts --run",
     "lint": "eslint ."
   },
   "dependencies": {

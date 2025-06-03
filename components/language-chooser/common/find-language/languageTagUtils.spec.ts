@@ -51,26 +51,76 @@ describe("Tag creation", () => {
 describe("get shortest equivalent version of langtag", () => {
   it("should return the shortest tag if it exists", () => {
     expect(getShortestSufficientLangtag("en")).toEqual("en");
+    expect(getShortestSufficientLangtag("frm")).toEqual("frm");
+    expect(getShortestSufficientLangtag("frm-Latn-FR")).toEqual("frm");
+    expect(getShortestSufficientLangtag("frm-FR")).toEqual("frm");
+    expect(getShortestSufficientLangtag("frm-Latn")).toEqual("frm");
+    // test tags with private use variants
+    expect(getShortestSufficientLangtag("ta-x-foobar")).toEqual("ta-x-foobar");
+    expect(getShortestSufficientLangtag("ta-Taml-x-foobar")).toEqual(
+      "ta-x-foobar"
+    );
+    expect(getShortestSufficientLangtag("ta-IN-x-foobar")).toEqual(
+      "ta-x-foobar"
+    );
+    expect(getShortestSufficientLangtag("ta-Taml-IN-x-foobar")).toEqual(
+      "ta-x-foobar"
+    );
+    expect(getShortestSufficientLangtag("ta-Latn-x-foobar")).toEqual(
+      "ta-Latn-x-foobar"
+    );
+    expect(getShortestSufficientLangtag("ta-Latn-IN-x-foobar")).toEqual(
+      "ta-Latn-x-foobar"
+    );
+    expect(getShortestSufficientLangtag("ta-Taml-LK-x-foobar")).toEqual(
+      "ta-LK-x-foobar"
+    );
+    expect(getShortestSufficientLangtag("ta-LK-x-foobar")).toEqual(
+      "ta-LK-x-foobar"
+    );
+    expect(getShortestSufficientLangtag("ta-Arab-IN")).toEqual("ta-Arab");
+    expect(getShortestSufficientLangtag("ta-Arab-IN-x-foobar")).toEqual(
+      "ta-Arab-x-foobar"
+    );
+    // Note that createTag() calls getShortestSufficientLangtag() internally as its last stop.
+    // If getShortestSufficientLangtag() returns undefined, createTag() will return the full tag it created.
     expect(
-      getShortestSufficientLangtag(createTag({ languageCode: "frm" }))
-    ).toEqual("frm");
+      createTag({
+        languageCode: "ta",
+        scriptCode: "Arab",
+        regionCode: "PK",
+        dialectCode: "foobar",
+      })
+    ).toEqual("ta-Arab-PK-x-foobar");
+    // test default scripts and default region codes
+    // Serbian is a good example as it has two scripts that are used by default in different regions.
+    // (It actually has a third script, but that is not used by default in any region.)
+    expect(getShortestSufficientLangtag("sr")).toEqual("sr");
+    expect(getShortestSufficientLangtag("sr-Cyrl")).toEqual("sr");
+    expect(getShortestSufficientLangtag("sr-RS")).toEqual("sr");
+    expect(getShortestSufficientLangtag("sr-Cyrl-RS")).toEqual("sr");
+    expect(getShortestSufficientLangtag("sr-BA")).toEqual("sr-BA");
+    expect(getShortestSufficientLangtag("sr-Cyrl-BA")).toEqual("sr-BA");
+    expect(getShortestSufficientLangtag("sr-Latn-BA")).toEqual("sr-Latn-BA");
+    expect(getShortestSufficientLangtag("sr-Latn")).toEqual("sr-Latn");
+    expect(getShortestSufficientLangtag("sr-Latn-RS")).toEqual("sr-Latn");
+    expect(getShortestSufficientLangtag("sr-ME")).toEqual("sr-ME");
+    expect(getShortestSufficientLangtag("sr-Latn-ME")).toEqual("sr-ME");
+    expect(getShortestSufficientLangtag("sr-Cyrl-ME")).toEqual("sr-Cyrl-ME");
+    expect(getShortestSufficientLangtag("sr-RO")).toEqual("sr-RO");
+    expect(getShortestSufficientLangtag("sr-Latn-RO")).toEqual("sr-RO");
     expect(
-      getShortestSufficientLangtag(
-        createTag({ languageCode: "frm", scriptCode: "Latn", regionCode: "FR" })
-      )
-    ).toEqual("frm");
-    expect(
-      getShortestSufficientLangtag(
-        createTag({ languageCode: "frm", regionCode: "FR" })
-      )
-    ).toEqual("frm");
-    expect(
-      getShortestSufficientLangtag(
-        createTag({ languageCode: "frm", scriptCode: "Latn" })
-      )
-    ).toEqual("frm");
+      createTag({ languageCode: "sr", scriptCode: "Cyrl", regionCode: "RO" })
+    ).toEqual("sr-Cyrl-RO");
+    // torture test for multiple private use subtags
+    expect(getShortestSufficientLangtag("en-x-first-x-second")).toEqual(
+      "en-x-first-x-second"
+    );
+    expect(getShortestSufficientLangtag("en-Latn-US-x-first-x-second")).toEqual(
+      "en-x-first-x-second"
+    );
   });
-  it("should be case insensitive", () => {
+  it("should be case insensitive on input", () => {
     expect(getShortestSufficientLangtag("fRm")).toEqual("frm");
     expect(getShortestSufficientLangtag("FRM-LaTn")).toEqual("frm");
   });
@@ -78,6 +128,8 @@ describe("get shortest equivalent version of langtag", () => {
     expect(getShortestSufficientLangtag("zzz")).toBeUndefined();
     expect(getShortestSufficientLangtag("")).toBeUndefined();
     expect(getShortestSufficientLangtag("frm-Cyrl")).toBeUndefined();
+    expect(getShortestSufficientLangtag("ta-Arab-PK")).toBeUndefined();
+    expect(getShortestSufficientLangtag("sr-Cyrl-RO")).toBeUndefined();
   });
 });
 
@@ -312,11 +364,12 @@ describe("createTagFromOrthography", () => {
           names: [],
           alternativeTags: [],
           languageType: LanguageType.Living,
+          isMacrolanguage: false,
         } as ILanguage,
         script: { code: "Latn", name: "Latin" } as IScript,
         customDetails: { dialect: "[foo]bar" } as ICustomizableLanguageDetails,
       })
-    ).toEqual("en-Latn-x-foobar");
+    ).toEqual("en-x-foobar");
   });
 });
 
