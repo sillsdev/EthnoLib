@@ -26,8 +26,6 @@ This package produces results in the form of `ILanguage` objects, which have 3 p
 
 **If `isMacrolanguage` and `isRepresentativeForMacrolanguage` are both true, this language is an unusual case/anomaly in the data, which probably needs special handling.** As of February 2025 we have 5 such cases: `bnc`, `nor`, `san`, `hbs`, and `zap`.
 
-**Chinese is also a special case. In the default modifier, we make it so there is one result for the Chinese language, with code `zh`, not marked as a macrolanguage. See searchResultModifiers.ts and the README.md.**
-
 ## How we use the [langtags repo](https://github.com/silnrsi/langtags/blob/master/doc/langtags.md) data
 
 The language data we use is primarily based on [langtags.json](https://ldml.api.sil.org/langtags.json), which oftentimes lists the "representative language" data with the macrolanguage tag. From their documentation: ["Langtags.json unifies the representative language tags into the macro language tag set rather than having a separate tag set for them, and gives the tag for the tag set in terms of the macro language rather than the representative language."](https://github.com/silnrsi/langtags/blob/master/doc/langtags.md#macro-languages) **We incorporate all entries in langtags.json into individual languages, not macrolanguages, for our language results.** We are typically able to determine the individual language code from the "tags" field where it is in the list of equivalent tags, and so ensure that each of the language choices we offer the user are unique individual languages.

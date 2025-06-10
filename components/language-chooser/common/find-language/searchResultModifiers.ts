@@ -135,7 +135,6 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
   function getSimplifiedChineseResult(result: ILanguage) {
     return {
       ...result,
-      languageSubtag: "zh", // otherwise would be "cmn". For Chinese in particular we remove the macrolanguage card and have just 1 card, and give it tag zh
       autonym: "中文",
       regionNamesForDisplay: "", // clear the long and confusing list of region names
       regionNamesForSearch: [],
@@ -187,17 +186,16 @@ export function filterOnLanguageCode(
 }
 
 const EXCLUDED_PROBLEMATIC_LANGUAGE_CODES = new Set([
-  "zho", // This would be the macrolanguage card. For Chinese in particular we want only 1 card and will put the zh tag on it.
   "zhx", // I don't understand why this entry is in langtags.json. It is an ISO-639-5 (language collection) code covering the zho macrolanguage, has no Ethnologue entry, only listed script is Nshu
 ]);
 
-// if user starts typing keyword, the language option with ISO 639-3 code langCodeToPrioritize should come up first.
+// if user starts typing keyword, the language option with code langCodeToPrioritize should come up first.
 // Note that this re-orders results but does not add
 // any new results; if the desired language is not already in the fuzzy-match results, no change will be made
 export function prioritizeLangByKeywords(
   keywords: string[],
   searchString: string,
-  lang639_3CodeToPrioritize: string,
+  langCodeToPrioritize: string,
   results: ILanguage[]
 ): ILanguage[] {
   // if any of the keywords (lowercased) start with the searchstring (lowercased), prioritize the desired language
@@ -208,7 +206,7 @@ export function prioritizeLangByKeywords(
     )
   ) {
     const indexOfLang = results.findIndex((result) =>
-      codeMatches(result.iso639_3_code, lang639_3CodeToPrioritize)
+      codeMatches(result.iso639_3_code, langCodeToPrioritize)
     );
     if (indexOfLang !== -1) {
       const lang = results[indexOfLang];
@@ -241,7 +239,7 @@ export function defaultSearchResultModifier(
   modifiedResults = prioritizeLangByKeywords(
     ["chinese"],
     searchString,
-    "cmn", // ISO 639-3 code. We will later modify it so the zh shows up as the language tag
+    "cmn",
     modifiedResults
   );
   modifiedResults = prioritizeLangByKeywords(
