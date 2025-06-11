@@ -1,3 +1,14 @@
+## 0.1.6 (2025-06-11)
+
+### 🩹 Fixes
+
+- Chinese special handling ([cb1270d](https://github.com/sillsdev/EthnoLib/commit/cb1270d))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.5
+- Updated @ethnolib/find-language to 0.1.5
+
 ## 0.1.5 (2025-04-08)
 
 ### 🩹 Fixes
