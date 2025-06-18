@@ -28,6 +28,7 @@ import {
   isUnlistedLanguage,
   createTagFromOrthography,
   IOrthography,
+  isValidBcp47VariantSubtag,
 } from "@ethnolib/find-language";
 import { FormFieldLabel } from "./FormFieldLabel";
 import { PrimaryTooltip } from "./PrimaryTooltip";
@@ -407,6 +408,14 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
             color="primary"
             disabled={!isReadyToSubmit}
             onClick={() => {
+              // Make popup if variant is improperly formatted
+              if (
+                dialogSelectedDialect &&
+                !isValidBcp47VariantSubtag(dialogSelectedDialect)
+              ) {
+                window.alert("Variant is not in a valid BCP 47 format.");
+              }
+
               if (isUnlistedLanguageDialog) {
                 props.selectUnlistedLanguage();
               }
