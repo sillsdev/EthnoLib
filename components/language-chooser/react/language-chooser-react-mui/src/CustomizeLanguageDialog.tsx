@@ -32,6 +32,7 @@ import {
 import { FormFieldLabel } from "./FormFieldLabel";
 import { PrimaryTooltip } from "./PrimaryTooltip";
 import { IconAndText } from "./IconAndText";
+import {fuzzilySearchForScripts} from "@ethnolib/find-language/searchForScript"
 
 // ISO-3166-1 is a region code to region name lookup
 function getAllRegionOptions() {
@@ -221,7 +222,8 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                     : undefined
                 );
               }}
-              options={getAllScriptOptions()}
+              options={getAllScriptOptions()}              
+              filterOptions = {fuzzilySearchForScripts}
               renderInput={(params) => <TextField {...params} />}
               size={"small"}
             />
