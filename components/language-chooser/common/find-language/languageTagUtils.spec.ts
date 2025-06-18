@@ -8,6 +8,7 @@ import {
   isManuallyEnteredTagLanguage,
   isUnlistedLanguage,
   isValidBcp47Tag,
+  isValidBcp47VariantSubtag,
   languageForManuallyEnteredTag,
   parseLangtagFromLangChooser,
   UNLISTED_LANGUAGE,
@@ -413,6 +414,30 @@ describe("isValidBcp47Tag checking is sane", () => {
     expect(
       isValidBcp47Tag("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     ).toBeFalsy();
+  });
+});
+
+describe("isValidBcp47VariantSubtag checking is sane", () => {
+  it("should return true for BCP-47 variant format", () => {
+    expect(isValidBcp47VariantSubtag("navajo")).toBeTruthy();
+    expect(isValidBcp47VariantSubtag("fobar")).toBeTruthy();
+    expect(isValidBcp47VariantSubtag("abcdefgh")).toBeTruthy();
+    expect(isValidBcp47VariantSubtag("1234")).toBeTruthy();
+    expect(isValidBcp47VariantSubtag("12345678")).toBeTruthy();
+    expect(isValidBcp47VariantSubtag("0bcd")).toBeTruthy();
+    expect(isValidBcp47VariantSubtag("m1x3dONE")).toBeTruthy();
+    expect(isValidBcp47VariantSubtag("4lsoMIXt")).toBeTruthy();
+  });
+  it("should return true for strings that start with ai-", () => {
+    expect(isValidBcp47VariantSubtag("ai-")).toBeTruthy();
+    expect(isValidBcp47VariantSubtag("ai-teststring02")).toBeTruthy();
+  });
+  it("should return false for various invalid formats", () => {
+    expect(isValidBcp47VariantSubtag("")).toBeFalsy();
+    expect(isValidBcp47VariantSubtag("a")).toBeFalsy();
+    expect(isValidBcp47VariantSubtag("0bc")).toBeFalsy();
+    expect(isValidBcp47VariantSubtag("0toomanyofchar")).toBeFalsy();
+    expect(isValidBcp47VariantSubtag(" ")).toBeFalsy();
   });
 });
 
