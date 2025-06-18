@@ -159,6 +159,14 @@ export function isValidBcp47Tag(tag: string | undefined): boolean {
   return !!tag && bcp47Regex.test(tag);
 }
 
+export function isValidBcp47Variant(tag: string | undefined): boolean {
+  // from https://stackoverflow.com/questions/7035825/regular-expression-for-a-language-tag-as-defined-by-bcp47
+  const bcp47Regex = /^(?<variant>[A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3})$/;
+  // check for main BCP 47 format, except allow the ai- prefix since
+  // consumers (eg Bloom) may use it in the variant field to denote ai translations
+  return !!tag && (bcp47Regex.test(tag) || tag.startsWith("ai-"));
+}
+
 interface ITagParts {
   languageSubtag: string | undefined;
   scriptSubtag: string | undefined;
