@@ -32,6 +32,7 @@ import {
 import { FormFieldLabel } from "./FormFieldLabel";
 import { PrimaryTooltip } from "./PrimaryTooltip";
 import { IconAndText } from "./IconAndText";
+import {fuzzilySearchForScripts} from "@ethnolib/find-language/searchForScript"
 
 // ISO-3166-1 is a region code to region name lookup
 function getAllRegionOptions() {
@@ -45,12 +46,15 @@ function getAllRegionOptions() {
 
 // ISO-15924 is a script code to script name lookup
 function getAllScriptOptions() {
-  return getAllScripts().map((script: IScript) => {
-    return {
-      label: script.name,
-      id: script.code,
-    };
-  });
+  return getAllScripts().map( iscriptToDisplayableObj );
+}
+
+function iscriptToDisplayableObj(script: IScript){
+  return {label: script.name, id: script.code};
+}
+
+function displayableObjToIscript(obj: {id: string, label: string}){
+  return {code: obj.id, name: obj.label} as IScript
 }
 
 export const CustomizeLanguageDialog: React.FunctionComponent<{
@@ -214,14 +218,16 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
               ) => {
                 setDialogSelectedScript(
                   newValue
-                    ? ({
-                        code: newValue.id,
-                        name: newValue.label,
-                      } as IScript)
+                    ? displayableObjToIscript(newValue)
                     : undefined
                 );
               }}
-              options={getAllScriptOptions()}
+              options={getAllScriptOptions()}              
+              filterOptions = {(options, {inputValue}) => {
+                const iScriptOptions = options.map(displayableObjToIscript)
+                const results = fuzzilySearchForScripts(iScriptOptions, inputValue)
+                return results.map(iscriptToDisplayableObj)
+              }}
               renderInput={(params) => <TextField {...params} />}
               size={"small"}
             />
