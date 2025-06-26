@@ -81,7 +81,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   // Store dialog state. Used to create a tag preview just inside the dialog, before saving anything
   const [dialogSelectedScript, setDialogSelectedScript] = React.useState<
     IScript | undefined
-  >(props.selectedScript);
+  >();
   const [dialogSelectedRegion, setDialogSelectedRegion] = React.useState<
     IRegion | undefined
   >();
