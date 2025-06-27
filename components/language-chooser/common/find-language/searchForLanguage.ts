@@ -186,15 +186,50 @@ export function getLanguageBySubtag(
     searchString: string
   ) => ILanguage[]
 ): ILanguage | undefined {
-  const fuse = new Fuse(languages as ILanguage[], {
-    keys: ["languageSubtag", "iso639_3_code"],
+  /* If the code is used for both a macrolanguage and the representative language (macrolanguageNotes.md),
+  return the representative language by default (BL-14824). */
+  const macrolanguageRepFuse = new Fuse(languages as ILanguage[], {
+    keys: [
+      "parentMacrolanguage.languageSubtag",
+      "parentMacrolanguage.iso639_3_code",
+      "isRepresentativeForMacrolanguage",
+    ],
     threshold: 0, // exact matches only
+    useExtendedSearch: true,
   });
-  const rawResults = fuse.search(code);
+  var rawResults = macrolanguageRepFuse.search({
+    $and: [
+      {
+        $or: [
+          { "parentMacrolanguage.languageSubtag": "=" + code },
+          { "parentMacrolanguage.iso639_3_code": "=" + code },
+        ],
+      },
+      { isRepresentativeForMacrolanguage: "=true" },
+    ],
+  });
+
+  if (rawResults.length > 1)
+    console.error(
+      "Unexpectedly found multiple representative languages for " +
+        code +
+        ": " +
+        rawResults.map((r) => r.item.iso639_3_code).join(", ")
+    );
+
+  /* If search for code didn't find exactly one representative language for a macrolanguage,
+  do normal language search instead */
+  if (rawResults.length !== 1) {
+    const fuse = new Fuse(languages as ILanguage[], {
+      keys: ["languageSubtag", "iso639_3_code"],
+      threshold: 0, // exact matches only
+      useExtendedSearch: true,
+    });
+    rawResults = fuse.search("=" + code); // exact match
+  }
+
+  const result = rawResults[0]?.item;
   return searchResultModifier
-    ? searchResultModifier(
-        rawResults.map((r) => r.item),
-        code
-      )[0]
-    : rawResults[0]?.item;
+    ? searchResultModifier([result], code)[0]
+    : result;
 }
