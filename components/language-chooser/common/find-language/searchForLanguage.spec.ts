@@ -345,6 +345,21 @@ describe("getLanguageBySubtag", () => {
   it("should find languages by valid languageSubtag field", () => {
     expect(getLanguageBySubtag("aaa")?.exonym).toEqual("Ghotuo");
     expect(getLanguageBySubtag("ab")?.exonym).toEqual("Abkhaz");
+    expect(getLanguageBySubtag("uz")?.exonym).toEqual("Uzbek");
+    expect(getLanguageBySubtag("mg")?.iso639_3_code).toEqual("plt");
+    expect(getLanguageBySubtag("zh")?.exonym).toEqual("Chinese");
+    expect(getLanguageBySubtag("za")?.exonym).toEqual("Zhuang");
+    expect(getLanguageBySubtag("ak")?.iso639_3_code).toEqual("twi");
+    expect(getLanguageBySubtag("bnc")?.iso639_3_code).toEqual("lbk");
+    expect(getLanguageBySubtag("no")?.exonym).toEqual("Norwegian");
+    expect(getLanguageBySubtag("sh")?.iso639_3_code).toEqual("hbs");
+    expect(getLanguageBySubtag("sa")?.exonym).toEqual("Sanskrit");
+    expect(getLanguageBySubtag("zap")?.exonym).toEqual("Zapotec");
+    expect(getLanguageBySubtag("ik")?.iso639_3_code).toEqual("esk");
+    expect(getLanguageBySubtag("id")?.exonym).toEqual("Indonesian");
+    expect(getLanguageBySubtag("ja")?.exonym).toEqual("Japanese");
+    expect(getLanguageBySubtag("yi")?.autonym).toEqual("ייִדיש");
+    expect(getLanguageBySubtag("luy")?.iso639_3_code).toEqual("bxk");
   });
   it("should use searchResultModifier if provided", () => {
     const foobar = "foobar";
