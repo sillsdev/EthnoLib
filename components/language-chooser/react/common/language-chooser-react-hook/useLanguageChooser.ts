@@ -197,9 +197,11 @@ export const useLanguageChooser = (
 
   function selectScript(script: IScript) {
     setSelectedScript(script);
+    clearCustomizableLanguageDetails();
   }
   function clearScriptSelection() {
     setSelectedScript(undefined);
+    clearCustomizableLanguageDetails();
   }
 
   function onSearchStringChange(searchString: string) {

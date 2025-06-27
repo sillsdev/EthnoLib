@@ -186,15 +186,44 @@ export function getLanguageBySubtag(
     searchString: string
   ) => ILanguage[]
 ): ILanguage | undefined {
+  const macrolanguageRepFuse = new Fuse(languages as ILanguage[], {
+    keys: [
+      "parentMacrolanguage.languageSubtag",
+      "parentMacrolanguage.iso639_3_code",
+      "isRepresentativeForMacrolanguage",
+    ],
+    threshold: 0, // exact matches only
+    useExtendedSearch: true,
+  });
+  var rawResults = macrolanguageRepFuse.search({
+    $and: [
+      {
+        $or: [
+          { "parentMacrolanguage.languageSubtag": "=" + code },
+          { "parentMacrolanguage.iso639_3_code": "=" + code },
+        ],
+      },
+      { isRepresentativeForMacrolanguage: "=true" },
+    ],
+  });
+
+  if (rawResults.length === 1) {
+    // either have parents - so use searchResultModifier if possible,
+    const result = rawResults[0].item;
+    return searchResultModifier
+      ? searchResultModifier([result], code)[0]
+      : result;
+  }
+
+  // or no parents, so re-search all languages for code
   const fuse = new Fuse(languages as ILanguage[], {
     keys: ["languageSubtag", "iso639_3_code"],
     threshold: 0, // exact matches only
+    useExtendedSearch: true,
   });
-  const rawResults = fuse.search(code);
+  rawResults = fuse.search("=" + code); // exact match
+
   return searchResultModifier
-    ? searchResultModifier(
-        rawResults.map((r) => r.item),
-        code
-      )[0]
+    ? searchResultModifier([rawResults[0]?.item], code)[0]
     : rawResults[0]?.item;
 }
