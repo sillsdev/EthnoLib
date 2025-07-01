@@ -1,3 +1,14 @@
+## 0.1.7 (2025-07-01)
+
+### 🩹 Fixes
+
+- select microlanguage not macrolanguage ([19e7e90](https://github.com/sillsdev/EthnoLib/commit/19e7e90))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.6
+- Updated @ethnolib/find-language to 0.1.6
+
 ## 0.1.6 (2025-06-11)
 
 ### 🩹 Fixes

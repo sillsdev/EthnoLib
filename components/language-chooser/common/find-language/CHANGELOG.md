@@ -1,3 +1,9 @@
+## 0.1.6 (2025-07-01)
+
+### 🩹 Fixes
+
+- select microlanguage not macrolanguage ([19e7e90](https://github.com/sillsdev/EthnoLib/commit/19e7e90))
+
 ## 0.1.5 (2025-06-11)
 
 ### 🩹 Fixes
