@@ -212,6 +212,9 @@ export function parseLangtagFromLangChooser(
     searchString: string
   ) => ILanguage[]
 ): IOrthography | undefined {
+  if (!languageTag) {
+    return undefined;
+  }
   const {
     languageSubtag,
     scriptSubtag,
