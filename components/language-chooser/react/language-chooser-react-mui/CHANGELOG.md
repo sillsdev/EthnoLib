@@ -1,3 +1,9 @@
+## 0.1.10 (2025-07-02)
+
+### 🩹 Fixes
+
+- BL-14824 Make search box start empty ([88e6aaf](https://github.com/sillsdev/EthnoLib/commit/88e6aaf))
+
 ## 0.1.9 (2025-07-02)
 
 ### 🧱 Updated Dependencies
