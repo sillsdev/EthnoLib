@@ -1,3 +1,9 @@
+## 0.1.7 (2025-07-02)
+
+### 🩹 Fixes
+
+- fix error reopening with no language tag ([3caab56](https://github.com/sillsdev/EthnoLib/commit/3caab56))
+
 ## 0.1.6 (2025-07-01)
 
 ### 🩹 Fixes
