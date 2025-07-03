@@ -43,7 +43,7 @@ nx dev @ethnolib/language-chooser-react-mui
 
 ## Testing
 
-Vitest is used for writing unit tests.  From the top level folder, all of the unit tests can be run with these commands:
+Vitest is used for writing unit tests. From the top level folder, all of the unit tests can be run with these commands:
 
 ```
 npm run test
@@ -55,7 +55,7 @@ or
 npm run testonce
 ```
 
-The first command runs the tests continually in *watch* mode with minimal output while tests are passing successfully.  The second command runs all the tests just once and quits after printing a summary of test results to the console window.
+The first command runs the tests continually in _watch_ mode with minimal output while tests are passing successfully. The second command runs all the tests just once and quits after printing a summary of test results to the console window.
 
 ### Dependency Versions
 
@@ -64,3 +64,9 @@ We are currently having all packages manage their own dependencies in their pack
     "react": "^17.0.2",
     "@mui/material": "^5.15.19",
     "@emotion/react": "^11.11.4",
+
+For volta users, we specify the node version in the main package.json, and then all packages should inherit it by adding something like the following to their package.json, with the path relative path to the main package.json. See https://docs.volta.sh/advanced/workspaces
+
+    "volta": {
+        "extends": "../../../../package.json"
+    }

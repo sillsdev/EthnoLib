@@ -26,5 +26,8 @@
     "@vitejs/plugin-react-swc": "^3.8.0",
     "typescript": "^5.2.2",
     "vite-plugin-dts": "^4.2.1"
+  },
+  "volta": {
+    "extends": "../../../../../package.json"
   }
 }
