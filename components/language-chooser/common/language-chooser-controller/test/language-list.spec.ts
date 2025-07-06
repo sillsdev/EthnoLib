@@ -1,29 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { ILanguage, LanguageType } from "@ethnolib/find-language";
+import { ILanguage } from "@ethnolib/find-language";
 import { LanguageListController } from "../src/language-list";
-import {
-  LanguageCardController,
-  LanguageCardObserverFake,
-} from "../src/language-card";
-
-function fakeLanguage(): ILanguage {
-  return {
-    exonym: "",
-    iso639_3_code: "",
-    languageSubtag: "",
-    regionNamesForDisplay: "",
-    regionNamesForSearch: [],
-    names: [],
-    scripts: [],
-    alternativeTags: [],
-    isMacrolanguage: false,
-    languageType: LanguageType.Ancient,
-  };
-}
-
-function fakeLanguages(count: number): ILanguage[] {
-  return Array.from({ length: count }, () => fakeLanguage());
-}
+import { LanguageCardObserverFake } from "../src/language-card";
+import { fakeLanguages } from "./fake-utils";
 
 interface TestParameters {
   languages: ILanguage[];
@@ -48,14 +27,23 @@ class TestObjects {
 describe("selecting a language", () => {
   it("should notify selected card observer", () => {
     const test = new TestObjects({ languages: fakeLanguages(2) });
-    test.listController.languageCards[0].select();
+    test.listController.languageCards[0].toggleSelect();
     expect(test.languageCardObservers[0].isSelected).toBe(true);
   });
 
   it("should deselect other language", () => {
     const test = new TestObjects({ languages: fakeLanguages(2) });
-    test.listController.languageCards[0].select();
-    test.listController.languageCards[1].select();
+    test.listController.languageCards[0].toggleSelect();
+    test.listController.languageCards[1].toggleSelect();
+    expect(test.languageCardObservers[0].isSelected).toBe(false);
+  });
+});
+
+describe("deselecting a langauge", () => {
+  it("should notify deselected card observer", () => {
+    const test = new TestObjects({ languages: fakeLanguages(2) });
+    test.listController.languageCards[0].toggleSelect();
+    test.listController.languageCards[0].toggleSelect();
     expect(test.languageCardObservers[0].isSelected).toBe(false);
   });
 });
