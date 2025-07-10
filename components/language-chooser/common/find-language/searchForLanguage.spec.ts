@@ -1,6 +1,7 @@
 import {
   getLanguageBySubtag,
-  asyncGetAllLanguageResults,
+  asyncSearchForLanguage,
+  searchForLanguage,
 } from "./searchForLanguage";
 import { ILanguage } from "./findLanguageInterfaces";
 import { describe, expect, it } from "vitest";
@@ -8,6 +9,29 @@ import { expectTypeOf } from "vitest";
 import { codeMatches } from "./languageTagUtils";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
 import { defaultSearchResultModifier } from "@ethnolib/find-language";
+
+// wait for all the results from asyncSearchForLanguage so we can check them
+export async function asyncGetAllLanguageResults(
+  searchString: string,
+  additionalFuseOptions?: Record<string, unknown>,
+  languagesToSearch?: Record<string, unknown>[],
+  languageToId?: (language: Record<string, unknown>) => string,
+  keysOverride?: string[]
+): Promise<Record<string, unknown>[]> {
+  const results: Record<string, unknown>[] = [];
+  await asyncSearchForLanguage(
+    searchString,
+    (newResults) => {
+      results.push(...newResults);
+      return true;
+    },
+    additionalFuseOptions,
+    languagesToSearch,
+    languageToId,
+    keysOverride
+  );
+  return results;
+}
 
 async function asyncExpectToComeBefore(
   results: ILanguage[],
@@ -28,8 +52,12 @@ async function asyncExpectToComeBefore(
 
 describe("asyncGetAllLanguageResults", () => {
   it("should return a list of languages", async () => {
-    const result = await asyncGetAllLanguageResults("en");
-    expectTypeOf(result).toEqualTypeOf<ILanguage[]>();
+    const result = (await asyncGetAllLanguageResults("en")) as ILanguage[];
+    expect(result).toBeInstanceOf(Array);
+    expectTypeOf(result[0].iso639_3_code).toEqualTypeOf<string>();
+    expectTypeOf(result[0].exonym).toEqualTypeOf<string>();
+    expectTypeOf(result[0].regionNamesForDisplay).toEqualTypeOf<string>();
+    expectTypeOf(result[0].names).toEqualTypeOf<string[]>();
     expect(result.length).toBeGreaterThan(0);
   });
 
@@ -86,7 +114,7 @@ describe("asyncGetAllLanguageResults", () => {
     // "Ese" comes before "Mese"
     const eseQuery = "ese";
     await asyncExpectToComeBefore(
-      await asyncGetAllLanguageResults(eseQuery),
+      (await asyncGetAllLanguageResults(eseQuery)) as ILanguage[],
       "mcq",
       "mci"
     );
@@ -94,7 +122,7 @@ describe("asyncGetAllLanguageResults", () => {
     // "chorasmian" comes before "ch'orti'"
     const choQuery = "cho";
     await asyncExpectToComeBefore(
-      await asyncGetAllLanguageResults(choQuery),
+      (await asyncGetAllLanguageResults(choQuery)) as ILanguage[],
       "xco",
       "caa"
     );
@@ -126,7 +154,7 @@ describe("asyncGetAllLanguageResults", () => {
     ];
     for (const creeLangCode of creeLangCodes) {
       await asyncExpectToComeBefore(
-        await asyncGetAllLanguageResults(creeQuery),
+        (await asyncGetAllLanguageResults(creeQuery)) as ILanguage[],
         creeLangCode,
         "mus" // creek
       );
@@ -135,7 +163,7 @@ describe("asyncGetAllLanguageResults", () => {
     //searching "oka", "Wejeñememaja oka" should come before "Okanisi Tongo" (djk)
     const okaQuery = "oka";
     await asyncExpectToComeBefore(
-      await asyncGetAllLanguageResults(okaQuery),
+      (await asyncGetAllLanguageResults(okaQuery)) as ILanguage[],
       "tnc",
       "djk"
     );
@@ -143,7 +171,7 @@ describe("asyncGetAllLanguageResults", () => {
     //searching "otl", "San Felipe Otlaltepec Popoloca" (pow) should come before "botlikh" (bph)
     const otlQuery = "otl";
     await asyncExpectToComeBefore(
-      await asyncGetAllLanguageResults(otlQuery),
+      (await asyncGetAllLanguageResults(otlQuery)) as ILanguage[],
       "pow",
       "bph"
     );
@@ -171,9 +199,15 @@ describe("asyncGetAllLanguageResults", () => {
         seen.add(key);
       }
     }
-    checkForDuplicates(await asyncGetAllLanguageResults("english"));
-    checkForDuplicates(await asyncGetAllLanguageResults("cree"));
-    checkForDuplicates(await asyncGetAllLanguageResults("mese"));
+    checkForDuplicates(
+      (await asyncGetAllLanguageResults("english")) as ILanguage[]
+    );
+    checkForDuplicates(
+      (await asyncGetAllLanguageResults("cree")) as ILanguage[]
+    );
+    checkForDuplicates(
+      (await asyncGetAllLanguageResults("mese")) as ILanguage[]
+    );
   });
 });
 
@@ -223,7 +257,7 @@ describe("Macrolanguage handling", () => {
       exonym: string,
       region: string
     ) {
-      const results = await asyncGetAllLanguageResults(exonym);
+      const results = (await asyncGetAllLanguageResults(exonym)) as ILanguage[];
       const result = results.find(
         (result) =>
           stripDemarcation(result.exonym) === exonym &&
@@ -248,7 +282,9 @@ describe("Macrolanguage handling", () => {
       const results = await asyncGetAllLanguageResults(query);
       for (const langCode of expectedLanguageCodes) {
         expect(
-          results.some((result) => codeMatches(result.iso639_3_code, langCode)),
+          results.some((result) =>
+            codeMatches(result.iso639_3_code as string, langCode)
+          ),
           `search for ${query} should find ${langCode}`
         ).toBe(true);
       }
@@ -279,8 +315,8 @@ describe("Macrolanguage handling", () => {
   it("macrolanguage results should list default region only and default script only", async () => {
     const arabicResults = await asyncGetAllLanguageResults("Arabic");
     const macroArabicResult = arabicResults.find((result) =>
-      codeMatches(result.iso639_3_code, "ara")
-    );
+      codeMatches(result.iso639_3_code as string, "ara")
+    ) as ILanguage | undefined;
     expect(macroArabicResult).toBeDefined();
     expect(macroArabicResult?.regionNamesForDisplay).toBe("Egypt");
     expect(macroArabicResult?.scripts.length).toBe(1);
@@ -288,8 +324,8 @@ describe("Macrolanguage handling", () => {
 
     const marwariResults = await asyncGetAllLanguageResults("Marwari");
     const macroMarwariResult = marwariResults.find((result) =>
-      codeMatches(result.iso639_3_code, "mwr")
-    );
+      codeMatches(result.iso639_3_code as string, "mwr")
+    ) as ILanguage | undefined;
     expect(macroMarwariResult).toBeDefined();
     expect(macroMarwariResult?.regionNamesForDisplay).toBe("India");
     expect(macroMarwariResult?.scripts.length).toBe(1);
@@ -300,7 +336,9 @@ describe("Macrolanguage handling", () => {
     async function asyncExpectNoMacrolanguageParentheticals(
       searchString: string
     ) {
-      const results = await asyncGetAllLanguageResults(searchString);
+      const results = (await asyncGetAllLanguageResults(
+        searchString
+      )) as ILanguage[];
       expect(
         results.some(
           (result) =>
@@ -323,7 +361,7 @@ async function asyncSearchDoesFindLanguage(
   const results = await asyncGetAllLanguageResults(query);
   expect(
     results.some((result) =>
-      codeMatches(result.iso639_3_code, expectedLanguageCode)
+      codeMatches(result.iso639_3_code as string, expectedLanguageCode)
     ),
     `Expected search for ${query} to find ${expectedLanguageCode}`
   ).toBe(true);
@@ -336,7 +374,7 @@ async function asyncSearchDoesNotFindLanguage(
   const results = await asyncGetAllLanguageResults(query);
   expect(
     results.some((result) =>
-      codeMatches(result.iso639_3_code, expectedLanguageCode)
+      codeMatches(result.iso639_3_code as string, expectedLanguageCode)
     ),
     `Expected search for ${query} to not find ${expectedLanguageCode}`
   ).toBe(false);
@@ -423,5 +461,72 @@ describe("getLanguageBySubtag", () => {
         return { ...result, exonym: foobar };
       });
     expect(getLanguageBySubtag("en", modifier)?.exonym).toEqual(foobar);
+  });
+});
+
+describe("comparing sync and async search results", () => {
+  it("should return the same results for the same query", async () => {
+    async function checkResultsMatch(query: string) {
+      const syncResults = searchForLanguage(query);
+      const asyncResults = await asyncGetAllLanguageResults(query);
+      expect(syncResults).toEqual(asyncResults);
+    }
+    await checkResultsMatch("japanese");
+    await checkResultsMatch("japanes");
+    await checkResultsMatch("ese");
+    await checkResultsMatch("uzbxk");
+  }, 10000);
+});
+
+describe("other language object types", () => {
+  it("should handle non-ILanguage objects", () => {
+    const langs = [
+      {
+        isoCode: "fra",
+        name: "French",
+        not: "not eng not spa",
+        foo: "baz",
+      },
+      {
+        isoCode: "eng",
+        name: "English",
+        not: "not fra not spa",
+        foo: "bar",
+      },
+      {
+        isoCode: "spa",
+        name: "Spanish",
+        not: "not eng not fra",
+      },
+      {
+        isoCode: "eng2",
+        name: "English2",
+        not: "not fra not spa",
+        foo: "bar2",
+      },
+    ];
+    const syncResults = searchForLanguage(
+      "eng",
+      undefined,
+      langs,
+      (lang) => lang.isoCode as string,
+      ["isoCode", "foo"]
+    );
+    expect(syncResults.length).toBe(2);
+    expect(syncResults[0]).toEqual(langs[1]);
+    expect(syncResults[1]).toEqual(langs[3]);
+
+    const asyncResults = asyncGetAllLanguageResults(
+      "eng",
+      undefined,
+      langs,
+      (lang) => lang.isoCode as string,
+      ["isoCode", "foo"]
+    );
+    return asyncResults.then((results) => {
+      expect(results.length).toBe(2);
+      expect(results[0]).toEqual(langs[1]);
+      expect(results[1]).toEqual(langs[3]);
+    });
   });
 });

@@ -21,6 +21,8 @@ Search for languages by name (including autonyms, exonyms, or alternative names)
 
 There are two alternative functions for getting, ultimately, the same set of languages matching a given search string. `asyncGetAllLanguageResults` gets them all at once, while `asyncSearchForLanguage` lets you get the most relevant results faster. Both are async.
 
+<!-- TODO -->
+
 `asyncGetAllLanguageResults` MUST be awaited to obtain the results. It returns all matching results (including fuzzy-matched results), sorted with best matches first, in the form of a `FuseResult<ILanguage>[]`
 
 `asyncSearchForLanguage` MAY be awaited, but it's only necessary if you want to know when all searching is complete. In order to get results as fast as possible and not hold up the event loop, `asyncSearchForLanguage` finds results in batches and passes them back before going on to progressively broader searches. In addition to a `searchString`, it takes a `appendResults: (results: FuseResult<ILanguage>[], forSearchString: string) => boolean` argument which it will call on each batch of new results it progressively finds. `asyncSearchForLanguage` will yield control back to the event loop between each of the queries it internally makes, before calling `appendResults`. `appendResults` should be a function that returns true iff the current search should continue given that `forSearchString` is the `searchString` that `asyncSearchForLanguage` was originally called with. In `language-chooser-react-hook` we use this to abort a search
