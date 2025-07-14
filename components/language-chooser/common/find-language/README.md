@@ -1,6 +1,3 @@
-> [!warning]
-> This project is currently under development and not ready for public use.
-
 # Find-Language
 
 This component contains the logic for fuzzy-searching languages, designed for use by frontend language choosers. The language database is based on [langtags.json](https://github.com/silnrsi/langtags) and also references [langtags.txt](https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#langtagstxt). We use [fuse.js](https://fusejs.io/) for fuzzy-searching.
@@ -15,18 +12,43 @@ This project was initially developed for use in [BloomDesktop](https://github.co
 
 `npm i @ethnolib/find-language`
 
-### Searching for languages
+### Searching for languages using our database
 
 Search for languages by name (including autonyms, exonyms, or alternative names), associated regions, or ISO 639 tags matching the search string argument.
 
-There are two alternative functions for getting, ultimately, the same set of languages matching a given search string. `asyncGetAllLanguageResults` gets them all at once, while `asyncSearchForLanguage` lets you get the most relevant results faster. Both are async.
+There are two alternative functions for getting, ultimately, the same set of languages matching a given search string. `searchForLanguage` gets synchronously them all at once, while `asyncSearchForLanguage` lets you get the most relevant results faster.
 
-`asyncGetAllLanguageResults` MUST be awaited to obtain the results. It returns all matching results (including fuzzy-matched results), sorted with best matches first, in the form of a `FuseResult<ILanguage>[]`
-
-`asyncSearchForLanguage` MAY be awaited, but it's only necessary if you want to know when all searching is complete. In order to get results as fast as possible and not hold up the event loop, `asyncSearchForLanguage` finds results in batches and passes them back before going on to progressively broader searches. In addition to a `searchString`, it takes a `appendResults: (results: FuseResult<ILanguage>[], forSearchString: string) => boolean` argument which it will call on each batch of new results it progressively finds. `asyncSearchForLanguage` will yield control back to the event loop between each of the queries it internally makes, before calling `appendResults`. `appendResults` should be a function that returns true iff the current search should continue given that `forSearchString` is the `searchString` that `asyncSearchForLanguage` was originally called with. In `language-chooser-react-hook` we use this to abort a search
-if the search string has changed. Batches are sorted in order of match closeness and are disjoint from one another; `asyncSearchForLanguage` will never pass the same language result to `appendResults` more than once.
+In order to get results as fast as possible and not hold up the event loop, `asyncSearchForLanguage` finds results in batches (best results first) and passes them back before going on to progressively broader searches. In addition to a `searchString`, it takes a `appendResults: (results: FuseResult<ILanguage>[], forSearchString: string) => boolean` argument which it will call on each batch of new results it progressively finds. `asyncSearchForLanguage` will yield control back to the event loop between each of the queries it internally makes, before calling `appendResults`. Batches are sorted in order of match closeness and are disjoint from one another; `asyncSearchForLanguage` will never pass the same language result to `appendResults` more than once.
 
 We recommend passing the results from either function into a search result modifier. See details in Search Result Modification section.
+
+### Searching for languages using other data
+
+If you need to search through a custom language database or want more control over the search behavior, you can create your own `LanguageSearcher` instance from the `LanguageSearcher` class.
+
+#### Constructor Parameters
+
+```typescript
+new LanguageSearcher(
+  languageData: any[],
+  languageToId: (language: any) => string,
+  exactMatchFuseSearchKeys: any[],
+  fuzzyMatchFuseSearchKeys: any[],
+  additionalFuseOptions: any = {},
+  customLanguageSpacePadder?: (language: any) => any
+)
+```
+
+**Parameters:**
+
+- `languageData: any[]` - Array of language objects to search through. These can be any objects with searchable string fields.
+- `languageToId: (language: any) => string` - Function to extract a unique identifier from language objects for deduplication. Must return a unique string for each language.
+- `exactMatchFuseSearchKeys: any[]` - For exact matching (complete, whole word, start-of-word matches). Each object should have `name` (field name) and `weight` (search priority) properties.
+  - Can be a list of the names of the properties to include in the search, e.g. `["iso_code", "name"]` for languageData containing objects in the format like `{iso_code: "eng", name: "English", id: 23, other_info: {}}`
+  - Fuse also supports more advanced options for keys to specify nested searches, weighted searches, etc. See https://www.fusejs.io/examples.html#nested-search.
+- `fuzzyMatchFuseSearchKeys: any[]` - For fuzzy searching. Should include all exact match keys plus additional fields for broader matching. See `exactMatchFuseSearchKeys` explanation above for format details.
+- `additionalFuseOptions: any` - Optional fuse.js options. You can safely specify: `isCaseSensitive`, `ignoreDiacritics`, `includeScore`, `includeMatches`, `keys`, `threshold`, and `getFn`. See https://www.fusejs.io/api/options.html. **Other options should be used with care.**
+- `customLanguageSpacePadder?: (language: any) => any` - Optional function to add spaces around the potential keywords of language objects, for detection of whole-word matches. If not provided, will default to adding spaces before and after the string fields fields from `exactMatchFuseSearchKeys`.
 
 ### Match Order
 

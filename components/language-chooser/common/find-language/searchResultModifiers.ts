@@ -3,7 +3,7 @@ import {
   demarcateResults,
   stripDemarcation,
 } from "./matchingSubstringDemarcation";
-import { DEFAULT_EXCLUDED_HISTORIC_LANGUAGE_CODES } from "./defaultExcludedHistoricLanguages";
+import { getDefaultExcludedHistoricLanguageCodes } from "./defaultExcludedHistoricLanguages";
 import { codeMatches } from "./languageTagUtils";
 
 export function filterScripts(
@@ -273,7 +273,7 @@ export function defaultSearchResultModifier(
     modifiedResults
   );
   modifiedResults = filterOnLanguageCode(
-    (code) => !DEFAULT_EXCLUDED_HISTORIC_LANGUAGE_CODES.has(code),
+    (code) => !getDefaultExcludedHistoricLanguageCodes().has(code),
     modifiedResults
   );
 

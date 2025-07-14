@@ -1,13 +1,29 @@
 import {
   getLanguageBySubtag,
-  asyncGetAllLanguageResults,
-} from "./searchForLanguage";
+  asyncSearchForLanguage,
+  searchForLanguage,
+} from "./languageSearch";
 import { ILanguage } from "./findLanguageInterfaces";
 import { describe, expect, it } from "vitest";
 import { expectTypeOf } from "vitest";
 import { codeMatches } from "./languageTagUtils";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
-import { defaultSearchResultModifier } from "@ethnolib/find-language";
+import {
+  defaultSearchResultModifier,
+  LanguageSearcher,
+} from "@ethnolib/find-language";
+
+// wait for all the results from asyncSearchForLanguage so we can check them
+export async function asyncGetAllLanguageResults(
+  queryString: string
+): Promise<ILanguage[]> {
+  const results: ILanguage[] = [];
+  await asyncSearchForLanguage(queryString, (newResults) => {
+    results.push(...newResults);
+    return true;
+  });
+  return results;
+}
 
 async function asyncExpectToComeBefore(
   results: ILanguage[],
@@ -29,7 +45,11 @@ async function asyncExpectToComeBefore(
 describe("asyncGetAllLanguageResults", () => {
   it("should return a list of languages", async () => {
     const result = await asyncGetAllLanguageResults("en");
-    expectTypeOf(result).toEqualTypeOf<ILanguage[]>();
+    expect(result).toBeInstanceOf(Array);
+    expectTypeOf(result[0].iso639_3_code).toEqualTypeOf<string>();
+    expectTypeOf(result[0].exonym).toEqualTypeOf<string>();
+    expectTypeOf(result[0].regionNamesForDisplay).toEqualTypeOf<string>();
+    expectTypeOf(result[0].names).toEqualTypeOf<string[]>();
     expect(result.length).toBeGreaterThan(0);
   });
 
@@ -423,5 +443,73 @@ describe("getLanguageBySubtag", () => {
         return { ...result, exonym: foobar };
       });
     expect(getLanguageBySubtag("en", modifier)?.exonym).toEqual(foobar);
+  });
+});
+
+describe("comparing sync and async search results", () => {
+  it("should return the same results for the same query", async () => {
+    async function checkResultsMatch(query: string) {
+      const syncResults = searchForLanguage(query);
+      const asyncResults = await asyncGetAllLanguageResults(query);
+      expect(syncResults).toEqual(asyncResults);
+    }
+    await checkResultsMatch("japanese");
+    await checkResultsMatch("japanes");
+    await checkResultsMatch("ese");
+    await checkResultsMatch("uzbxk");
+  }, 10000);
+});
+
+describe("other language object types", async () => {
+  it("should handle non-ILanguage objects", async () => {
+    const langs = [
+      {
+        isoCode: "fra",
+        name: "French",
+        not: "not eng not spa",
+        foo: "baz",
+        1: 3,
+      },
+      "junk in here",
+      undefined,
+      {
+        isoCode: "eng",
+        name: "English",
+        not: "not fra not spa",
+        foo: "bar",
+        id: "first_eng_result",
+      },
+      {
+        isoCode: "spa",
+        name: "Spanish",
+        not: "not eng not fra",
+      },
+      {
+        isoCode: "eng2",
+        name: "English2",
+        not: "not fra not spa",
+        foo: "bar2",
+        id: "second_eng_result",
+      },
+    ];
+    const languageSearcher = new LanguageSearcher(
+      langs,
+      (language) => language.isoCode,
+      ["isoCode", "foo"],
+      ["isoCode", "foo"]
+    );
+
+    const syncResults = languageSearcher.searchDataForLanguage("eng");
+    expect(syncResults.length).toBe(2);
+    expect(syncResults[0].id).toEqual("first_eng_result");
+    expect(syncResults[1].id).toEqual("second_eng_result");
+    const allAsyncResults: any[] = [];
+    await languageSearcher.asyncSearchDataForLanguage("eng", (results) => {
+      allAsyncResults.push(...results);
+      return true;
+    });
+    expect(allAsyncResults.length).toBe(2);
+    expect(allAsyncResults[0].id).toEqual("first_eng_result");
+    expect(allAsyncResults[1].id).toEqual("second_eng_result");
   });
 });
