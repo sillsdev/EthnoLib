@@ -1,4 +1,4 @@
-import { IScript, ILanguage } from "./findLanguageInterfaces";
+import { IScript, ILanguage } from "../findLanguageInterfaces";
 import {
   getAllPossibleNames,
   isMacrolanguage,
@@ -17,7 +17,7 @@ import {
 } from "./langtagProcessingHelpers";
 
 import fs from "fs";
-import langTagsJson from "./language-data/langtags.json" with { type: "json" };
+import langTagsJson from "../language-data/langtags.json" with { type: "json" };
 
 // We want to have one entry for every ISO 639-3 code, whereas langtags.json sometimes has multiple entries per code
 // Combine entry into the entry with matching ISO 630-3 code in langs if there is one, otherwise create a new entry

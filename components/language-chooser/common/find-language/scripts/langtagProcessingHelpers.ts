@@ -1,13 +1,13 @@
 import { iso15924 } from "iso-15924";
-import langTagsJson from "./language-data/langtags.json" with { type: "json" };
+import langTagsJson from "../language-data/langtags.json" with { type: "json" };
 import fs from "fs";
-import { ILanguage, IScript, LanguageType } from "./findLanguageInterfaces";
+import { ILanguage, IScript, LanguageType } from "../findLanguageInterfaces";
 import {
   defaultRegionForLangTag,
   getMaximalLangtag,
   splitTag,
-} from "./languageTagUtils";
-import { getScriptForLanguage } from "./regionsAndScripts";
+} from "../languageTagUtils";
+import { getScriptForLanguage } from "../regionsAndScripts";
 
 export const COMMA_SEPARATOR = ", ";
 

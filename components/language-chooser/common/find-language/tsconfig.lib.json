@@ -8,7 +8,7 @@
     ]
   },
   "exclude": [
-    "langtagProcessing.ts",
+    "scripts/**/*",
     "**/*.spec.ts",
     "**/*.test.ts",
     "**/*.spec.tsx",
