@@ -1,3 +1,9 @@
+## 0.1.8 (2025-07-15)
+
+### 🩹 Fixes
+
+- BL-14706 add synchronous and other database search options ([5a0c921](https://github.com/sillsdev/EthnoLib/commit/5a0c921))
+
 ## 0.1.7 (2025-07-02)
 
 ### 🩹 Fixes
