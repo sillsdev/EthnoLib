@@ -9,9 +9,9 @@ import {
   isUnlistedLanguage,
   isValidBcp47Tag,
   languageForManuallyEnteredTag,
-  parseLangtagFromLangChooser,
   UNLISTED_LANGUAGE,
 } from "./languageTagUtils";
+import { parseLangtagFromLangChooser } from "./searchForLanguage";
 import {
   ILanguage,
   LanguageType,

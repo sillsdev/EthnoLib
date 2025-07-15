@@ -10,7 +10,7 @@ import {
 import { codeMatches } from "./languageTagUtils";
 import { ILanguage, IScript } from "./findLanguageInterfaces";
 import { createTestLanguageEntry } from "./testUtils";
-import { asyncGetAllLanguageResults } from "./searchForLanguage";
+import { asyncGetAllLanguageResults } from "./languageSearch.spec.ts";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
 
 const latinScript = { code: "Latn", name: "Latin" } as IScript;
@@ -177,7 +177,7 @@ describe("reordering entries to prioritize desired language when keywords are se
     beforeAll(async () => {
       const chineseSearchString = "chinese";
       chineseResults = defaultSearchResultModifier(
-        await asyncGetAllLanguageResults(chineseSearchString),
+        (await asyncGetAllLanguageResults(chineseSearchString)) as ILanguage[],
         chineseSearchString
       );
     });
@@ -200,7 +200,7 @@ describe("reordering entries to prioritize desired language when keywords are se
     it("finds spanish", async () => {
       const spanishSearchString = "spanish";
       const spanishResult = defaultSearchResultModifier(
-        await asyncGetAllLanguageResults(spanishSearchString),
+        (await asyncGetAllLanguageResults(spanishSearchString)) as ILanguage[],
         spanishSearchString
       )[0];
       expect(rawIsoCode(spanishResult)).toEqual("spa");

@@ -6,8 +6,9 @@
   "version": "0.1.7",
   "main": "./index.js",
   "types": "./index.d.ts",
+  "sideEffects": false,
   "scripts": {
-    "langtag-processing": "tsx ./langtagProcessing.ts",
+    "langtag-processing": "tsx ./scripts/langtagProcessing.ts",
     "prebuild": "npm run langtag-processing",
     "build": "nx vite:build",
     "typecheck": "tsc",
