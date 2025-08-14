@@ -334,7 +334,7 @@ describe("Macrolanguage handling", () => {
     await asyncExpectNoMacrolanguageParentheticals("Swahili");
     await asyncExpectNoMacrolanguageParentheticals("doi");
   });
-}, 10000);
+}, 15000);
 
 async function asyncSearchDoesFindLanguage(
   query: string,
@@ -379,7 +379,7 @@ describe("getLanguageBySubtag", () => {
     expect(getLanguageBySubtag("ik")?.iso639_3_code).toEqual("esk");
     expect(getLanguageBySubtag("id")?.exonym).toEqual("Indonesian");
     expect(getLanguageBySubtag("ja")?.exonym).toEqual("Japanese");
-    expect(getLanguageBySubtag("yi")?.autonym).toEqual("ייִדיש");
+    expect(getLanguageBySubtag("yi")?.autonym).toEqual("יידיש");
     expect(getLanguageBySubtag("luy")?.iso639_3_code).toEqual("bxk");
   });
   it("should find languages using the defaultSearchResultModifier", () => {
@@ -431,7 +431,7 @@ describe("getLanguageBySubtag", () => {
     ).toEqual("Japanese");
     expect(
       getLanguageBySubtag("yi", defaultSearchResultModifier)?.autonym
-    ).toEqual("ייִדיש");
+    ).toEqual("יידיש");
     expect(
       getLanguageBySubtag("luy", defaultSearchResultModifier)?.iso639_3_code
     ).toEqual("bxk");

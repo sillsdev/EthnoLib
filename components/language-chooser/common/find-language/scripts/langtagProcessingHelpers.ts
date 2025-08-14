@@ -157,7 +157,7 @@ for (const line of macrolangMappingFile.split("\n")) {
 // but the tags field (in some but not all entries) contains equivalent tags that use the individual language codes.
 // We want to save the individual language codes, so gather as many macrolangauge to representative individual language
 // mappings as we can. As of 2/2025, this covers all macrolanguage codes in langtags.json except for
-// bnc, nor, san, hbs, man, and zap which should all be handled by search result modifiers.
+// bnc, nor, san, hbs, and zap which should all be handled by search result modifiers. (a fix for `man` was incorporated 8/2025)
 // See macrolanguageNotes.md for more explanation.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
