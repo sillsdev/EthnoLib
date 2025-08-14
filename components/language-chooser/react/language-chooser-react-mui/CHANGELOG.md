@@ -1,3 +1,14 @@
+## 0.1.12 (2025-08-14)
+
+### 🩹 Fixes
+
+- BL-15114 update source data, fixing broken langtag ([64cd076](https://github.com/sillsdev/EthnoLib/commit/64cd076))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.10
+- Updated @ethnolib/find-language to 0.1.9
+
 ## 0.1.11 (2025-07-15)
 
 ### 🧱 Updated Dependencies

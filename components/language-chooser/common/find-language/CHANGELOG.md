@@ -1,3 +1,9 @@
+## 0.1.9 (2025-08-14)
+
+### 🩹 Fixes
+
+- BL-15114 update source data, fixing broken langtag ([64cd076](https://github.com/sillsdev/EthnoLib/commit/64cd076))
+
 ## 0.1.8 (2025-07-15)
 
 ### 🩹 Fixes
