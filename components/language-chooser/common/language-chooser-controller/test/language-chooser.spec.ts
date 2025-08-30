@@ -78,6 +78,17 @@ describe("script list", () => {
 });
 
 describe("tag preview", () => {
+  it("should initially be qaa-x-", () => {
+    const test = new TestHeper();
+    expect(test.viewModel.tagPreview.value).toBe("qaa-x-");
+  });
+
+  it("on search, should be based on search", () => {
+    const test = new TestHeper();
+    test.viewModel.searchString.requestUpdate("e");
+    expect(test.viewModel.tagPreview.value).toBe("qaa-x-e");
+  });
+
   it("should be based on selected language", () => {
     const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
 
@@ -93,6 +104,16 @@ describe("tag preview", () => {
     test.viewModel.listedScripts.value[1].isSelected.requestUpdate(true);
 
     expect(test.viewModel.tagPreview.value).toBe("uz-AF");
+  });
+
+  it("after language selection cleared, should be based on search", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.searchString.value = "en";
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(false);
+
+    expect(test.viewModel.tagPreview.value).toBe("qaa-x-en");
   });
 });
 
@@ -123,6 +144,14 @@ describe("display name", () => {
 describe("search", () => {
   it("should populate language list", async () => {
     const test = new TestHeper();
+    await test.viewModel.search("en");
+    expect(test.viewModel.listedLanguages.value[0].language.iso639_3_code).toBe(
+      "eng"
+    );
+  });
+
+  it("should replace previously listed lanaguages", async () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
     await test.viewModel.search("en");
     expect(test.viewModel.listedLanguages.value[0].language.iso639_3_code).toBe(
       "eng"
