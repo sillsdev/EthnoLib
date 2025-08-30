@@ -35,8 +35,9 @@ export class LanguageChooserViewModel extends ViewModel {
   readonly tagPreview: Field<string>;
   readonly displayName: Field<string>;
 
-  #selectedLanguage: ILanguage | undefined;
-  #selectedScript: IScript | undefined;
+  readonly selectedLanguage = new Field<ILanguage | undefined>(undefined);
+  readonly selectedScript = new Field<IScript | undefined>(undefined);
+
   #currentSearchId = 0;
 
   private onSearchStringUpdated(query: string) {
@@ -68,13 +69,15 @@ export class LanguageChooserViewModel extends ViewModel {
   private onLanguageSelected(index: number) {
     const languages = this.listedLanguages.value;
     selectItem(index, languages);
-    this.#selectedLanguage = languages[index].language;
+    this.selectedLanguage.value = languages[index].language;
     this.setScriptList(languages[index].language.scripts);
     this.updateTagPreview();
     this.updateDisplayName();
   }
 
-  private onLanguageDeselected(index: number) {
+  private onLanguageDeselected() {
+    this.selectedLanguage.value = undefined;
+    this.selectedScript.value = undefined;
     this.tagPreview.value = "qaa-x-" + this.searchString.value;
   }
 
@@ -82,28 +85,36 @@ export class LanguageChooserViewModel extends ViewModel {
     this.listedScripts.value = scripts.map(
       (script, i) =>
         new ScriptCardViewModel(script, {
-          onSelect: () => this.onScriptSelected(i),
+          onSelect: (isSelected) =>
+            isSelected ? this.onScriptSelected(i) : this.onScriptDeselected(),
         })
     );
   }
 
   private onScriptSelected(index: number) {
     selectItem(index, this.listedScripts.value);
-    this.#selectedScript = this.listedScripts.value[index].script;
+    this.selectedScript.value = this.listedScripts.value[index].script;
     this.updateTagPreview();
     this.updateDisplayName();
   }
 
+  private onScriptDeselected() {
+    this.selectedScript.value = undefined;
+  }
+
   private updateTagPreview() {
     this.tagPreview.value = createTagFromOrthography({
-      language: this.#selectedLanguage,
-      script: this.#selectedScript,
+      language: this.selectedLanguage.value,
+      script: this.selectedScript.value,
     });
   }
 
   private updateDisplayName() {
     this.displayName.value =
-      defaultDisplayName(this.#selectedLanguage, this.#selectedScript) ?? "";
+      defaultDisplayName(
+        this.selectedLanguage.value,
+        this.selectedScript.value
+      ) ?? "";
   }
 
   private languagesToViewModels(languages: ILanguage[]) {
@@ -113,7 +124,7 @@ export class LanguageChooserViewModel extends ViewModel {
           onSelect: (isSelected) =>
             isSelected
               ? this.onLanguageSelected(i)
-              : this.onLanguageDeselected(i),
+              : this.onLanguageDeselected(),
         })
     );
   }
