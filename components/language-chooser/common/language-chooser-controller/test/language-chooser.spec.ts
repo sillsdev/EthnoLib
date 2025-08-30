@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LanguageChooserViewModel } from "../src/view-models/language-chooser";
 import { fakeLanguage } from "./fake-utils";
+import { NorthernUzbekLanguage } from "./sample-data/languages";
 import { ILanguage } from "@ethnolib/find-language";
 
 class TestParams {
@@ -73,5 +74,24 @@ describe("script list", () => {
     test.viewModel.listedScripts[1].isSelected.requestUpdate(true);
 
     expect(test.viewModel.listedScripts[0].isSelected.value).toBe(false);
+  });
+});
+
+describe("tag preview", () => {
+  it("should be based on selected language", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.listedLanguages[0].isSelected.requestUpdate(true);
+
+    expect(test.viewModel.tagPreview.value).toBe("uz");
+  });
+
+  it("should be based on selected language and script", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.listedLanguages[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts[1].isSelected.requestUpdate(true);
+
+    expect(test.viewModel.tagPreview.value).toBe("uz-AF");
   });
 });

@@ -20,5 +20,5 @@ export class LanguageCardViewModel extends ViewModel implements Selectable {
   }
 
   readonly language: ILanguage;
-  isSelected: Field<boolean>;
+  readonly isSelected: Field<boolean>;
 }
