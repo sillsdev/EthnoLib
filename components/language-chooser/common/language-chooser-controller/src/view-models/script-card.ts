@@ -19,6 +19,6 @@ export class ScriptCardViewModel extends ViewModel implements Selectable {
     });
   }
 
-  script: IScript;
-  isSelected: Field<boolean>;
+  readonly script: IScript;
+  readonly isSelected: Field<boolean>;
 }

@@ -1,5 +1,9 @@
-import { ILanguage } from "components/language-chooser/common/find-language";
-import { ViewModel } from "../state-management";
+import {
+  createTagFromOrthography,
+  ILanguage,
+  IScript,
+} from "@ethnolib/find-language";
+import { Field, ViewModel } from "../state-management";
 import { LanguageCardViewModel } from "./language-card";
 import { ScriptCardViewModel } from "./script-card";
 import { selectItem } from "../selectable";
@@ -19,14 +23,26 @@ export class LanguageChooserViewModel extends ViewModel {
             })
         )
       : [];
+
+    this.tagPreview = new Field("");
   }
 
   listedLanguages: LanguageCardViewModel[];
   listedScripts: ScriptCardViewModel[] = [];
+  readonly tagPreview: Field<string>;
+
+  #selectedLanguage: ILanguage | undefined;
+  #selectedScript: IScript | undefined;
 
   private onLanguageSelected(index: number) {
     selectItem(index, this.listedLanguages);
-    this.listedScripts = this.listedLanguages[index].language.scripts.map(
+    this.#selectedLanguage = this.listedLanguages[index].language;
+    this.setScriptList(this.listedLanguages[index].language.scripts);
+    this.updateTagPreview();
+  }
+
+  private setScriptList(scripts: IScript[]) {
+    this.listedScripts = scripts.map(
       (script, i) =>
         new ScriptCardViewModel(script, {
           onSelect: () => this.onScriptSelected(i),
@@ -36,5 +52,14 @@ export class LanguageChooserViewModel extends ViewModel {
 
   private onScriptSelected(index: number) {
     selectItem(index, this.listedScripts);
+    this.#selectedScript = this.listedScripts[index].script;
+    this.updateTagPreview();
+  }
+
+  private updateTagPreview() {
+    this.tagPreview.value = createTagFromOrthography({
+      language: this.#selectedLanguage,
+      script: this.#selectedScript,
+    });
   }
 }
