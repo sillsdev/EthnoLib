@@ -95,3 +95,27 @@ describe("tag preview", () => {
     expect(test.viewModel.tagPreview.value).toBe("uz-AF");
   });
 });
+
+describe("display name", () => {
+  it("should be empty initially", () => {
+    const test = new TestHeper();
+    expect(test.viewModel.displayName.value).toBe("");
+  });
+
+  it("should hold default name on language selection", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.listedLanguages[0].isSelected.requestUpdate(true);
+
+    expect(test.viewModel.displayName.value).toBe("ўзбек тили");
+  });
+
+  it("should hold default name on script selection", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.listedLanguages[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts[0].isSelected.requestUpdate(true);
+
+    expect(test.viewModel.displayName.value).toBe("oʻzbek tili");
+  });
+});

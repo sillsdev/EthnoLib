@@ -1,5 +1,6 @@
 import {
   createTagFromOrthography,
+  defaultDisplayName,
   ILanguage,
   IScript,
 } from "@ethnolib/find-language";
@@ -25,11 +26,13 @@ export class LanguageChooserViewModel extends ViewModel {
       : [];
 
     this.tagPreview = new Field("");
+    this.displayName = new Field("");
   }
 
   listedLanguages: LanguageCardViewModel[];
   listedScripts: ScriptCardViewModel[] = [];
   readonly tagPreview: Field<string>;
+  readonly displayName: Field<string>;
 
   #selectedLanguage: ILanguage | undefined;
   #selectedScript: IScript | undefined;
@@ -39,6 +42,7 @@ export class LanguageChooserViewModel extends ViewModel {
     this.#selectedLanguage = this.listedLanguages[index].language;
     this.setScriptList(this.listedLanguages[index].language.scripts);
     this.updateTagPreview();
+    this.updateDisplayName();
   }
 
   private setScriptList(scripts: IScript[]) {
@@ -54,6 +58,7 @@ export class LanguageChooserViewModel extends ViewModel {
     selectItem(index, this.listedScripts);
     this.#selectedScript = this.listedScripts[index].script;
     this.updateTagPreview();
+    this.updateDisplayName();
   }
 
   private updateTagPreview() {
@@ -61,5 +66,10 @@ export class LanguageChooserViewModel extends ViewModel {
       language: this.#selectedLanguage,
       script: this.#selectedScript,
     });
+  }
+
+  private updateDisplayName() {
+    this.displayName.value =
+      defaultDisplayName(this.#selectedLanguage, this.#selectedScript) ?? "";
   }
 }
