@@ -119,3 +119,13 @@ describe("display name", () => {
     expect(test.viewModel.displayName.value).toBe("oʻzbek tili");
   });
 });
+
+describe("search", () => {
+  it("should populate language list", async () => {
+    const test = new TestHeper();
+    await test.viewModel.search("en");
+    expect(test.viewModel.listedLanguages[0].language.iso639_3_code).toBe(
+      "eng"
+    );
+  });
+});
