@@ -1,4 +1,5 @@
 import {
+  asyncSearchForLanguage,
   createTagFromOrthography,
   defaultDisplayName,
   ILanguage,
@@ -17,25 +18,41 @@ export class LanguageChooserViewModel extends ViewModel {
   constructor({ initialLanguages }: ViewModelArgs = {}) {
     super();
     this.listedLanguages = initialLanguages
-      ? initialLanguages.map(
-          (lang, i) =>
-            new LanguageCardViewModel(lang, {
-              onSelect: () => this.onLanguageSelected(i),
-            })
-        )
+      ? this.languagesToViewModels(initialLanguages)
       : [];
 
+    this.searchString = new Field("", (search) => {
+      this.search(search);
+      return search;
+    });
     this.tagPreview = new Field("");
     this.displayName = new Field("");
   }
 
   listedLanguages: LanguageCardViewModel[];
   listedScripts: ScriptCardViewModel[] = [];
+  readonly searchString: Field<string>;
   readonly tagPreview: Field<string>;
   readonly displayName: Field<string>;
 
   #selectedLanguage: ILanguage | undefined;
   #selectedScript: IScript | undefined;
+  #currentSearchId = 0;
+
+  async search(query: string) {
+    this.#currentSearchId++;
+    await asyncSearchForLanguage(query, (results) =>
+      this.appendLanguages(results, this.#currentSearchId)
+    );
+  }
+
+  private appendLanguages(languages: ILanguage[], searchId: number) {
+    if (searchId !== this.#currentSearchId) {
+      return false;
+    }
+    this.listedLanguages.push(...this.languagesToViewModels(languages));
+    return true;
+  }
 
   private onLanguageSelected(index: number) {
     selectItem(index, this.listedLanguages);
@@ -71,5 +88,14 @@ export class LanguageChooserViewModel extends ViewModel {
   private updateDisplayName() {
     this.displayName.value =
       defaultDisplayName(this.#selectedLanguage, this.#selectedScript) ?? "";
+  }
+
+  private languagesToViewModels(languages: ILanguage[]) {
+    return languages.map(
+      (lang, i) =>
+        new LanguageCardViewModel(lang, {
+          onSelect: () => this.onLanguageSelected(i),
+        })
+    );
   }
 }
