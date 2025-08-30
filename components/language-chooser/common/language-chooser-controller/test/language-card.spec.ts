@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { LanguageCardController } from "../src/language-card";
 import { fakeLanguage } from "./fake-utils";
-import { ScriptCardObserverFake } from "../src/script-card";
+import { LanguageCardViewModel } from "../src/view-models/language-card";
 
 interface TestParams {
   scriptCount?: number;
@@ -9,40 +8,44 @@ interface TestParams {
 
 class TestObjects {
   constructor({ scriptCount }: TestParams = {}) {
-    this.cardController = new LanguageCardController(
+    this.cardController = new LanguageCardViewModel(
       fakeLanguage({ scriptCount })
     );
-    this.scriptControllers = this.cardController.scripts.map((script) => {
-      const observer = new ScriptCardObserverFake();
-      script.observer = observer;
-      return observer;
-    });
   }
 
-  cardController: LanguageCardController;
-  scriptControllers: ScriptCardObserverFake[];
+  cardController: LanguageCardViewModel;
 }
 
 describe("selecting a script", () => {
-  it("marks observer as selected", () => {
+  it("marks script as selected", () => {
     const test = new TestObjects({ scriptCount: 1 });
-    test.cardController.scripts[0].toggleSelect();
-    expect(test.scriptControllers[0].isSelected).toBe(true);
+    const script = test.cardController.scripts[0];
+
+    script.isSelected.requestUpdate(true);
+
+    expect(script.isSelected.value).toBe(true);
   });
 
   it("deselects other scripts", () => {
     const test = new TestObjects({ scriptCount: 2 });
-    test.cardController.scripts[0].toggleSelect();
-    test.cardController.scripts[1].toggleSelect();
-    expect(test.scriptControllers[0].isSelected).toBe(false);
+    const script1 = test.cardController.scripts[0];
+    const script2 = test.cardController.scripts[1];
+
+    script1.isSelected.requestUpdate(true);
+    script2.isSelected.requestUpdate(true);
+
+    expect(script1.isSelected.value).toBe(false);
   });
 });
 
 describe("deselecting a script", () => {
-  it("marks observer as desected", () => {
+  it("marks script as desected", () => {
     const test = new TestObjects({ scriptCount: 1 });
-    test.cardController.scripts[0].toggleSelect();
-    test.cardController.scripts[0].toggleSelect();
-    expect(test.scriptControllers[0].isSelected).toBe(false);
+    const script = test.cardController.scripts[0];
+
+    script.isSelected.requestUpdate(true);
+    script.isSelected.requestUpdate(false);
+
+    expect(script.isSelected.value).toBe(false);
   });
 });
