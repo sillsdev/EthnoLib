@@ -40,10 +40,14 @@ export class LanguageChooserViewModel extends ViewModel {
   #currentSearchId = 0;
 
   async search(query: string) {
-    this.#currentSearchId++;
-    await asyncSearchForLanguage(query, (results) =>
-      this.appendLanguages(results, this.#currentSearchId)
-    );
+    if (query.length > 1) {
+      this.#currentSearchId++;
+      await asyncSearchForLanguage(query, (results) =>
+        this.appendLanguages(results, this.#currentSearchId)
+      );
+    } else {
+      this.listedLanguages.value = [];
+    }
   }
 
   private appendLanguages(languages: ILanguage[], searchId: number) {
