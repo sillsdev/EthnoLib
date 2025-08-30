@@ -1,7 +1,6 @@
 import { ILanguage } from "@ethnolib/find-language";
-import { ScriptCardViewModel } from "./script-card";
 import { Field, ViewModel } from "../state-management";
-import { Selectable, selectItem } from "../selectable";
+import { Selectable } from "../selectable";
 
 interface ControllerArgs {
   onSelect?: () => void;
@@ -10,7 +9,7 @@ interface ControllerArgs {
 export class LanguageCardViewModel extends ViewModel implements Selectable {
   constructor(language: ILanguage, { onSelect }: ControllerArgs = {}) {
     super();
-    this.language = new Field(language);
+    this.language = language;
 
     this.isSelected = new Field(false, (isSelected) => {
       if (isSelected && onSelect) {
@@ -18,18 +17,8 @@ export class LanguageCardViewModel extends ViewModel implements Selectable {
       }
       return isSelected;
     });
-
-    this.scripts = language.scripts.map(
-      (script, i) =>
-        new ScriptCardViewModel(script, {
-          onSelect: () => {
-            selectItem(i, this.scripts);
-          },
-        })
-    );
   }
 
+  readonly language: ILanguage;
   isSelected: Field<boolean>;
-  language: Field<ILanguage>;
-  scripts: ScriptCardViewModel[];
 }
