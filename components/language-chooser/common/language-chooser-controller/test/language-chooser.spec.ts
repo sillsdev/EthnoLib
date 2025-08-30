@@ -26,20 +26,20 @@ class TestHeper {
 describe("language list", () => {
   it("is empty by defalut", () => {
     const test = new TestHeper();
-    expect(test.viewModel.listedLanguages.length).toBe(0);
+    expect(test.viewModel.listedLanguages.value.length).toBe(0);
   });
 
   it("can be initialized", () => {
     const test = new TestHeper({ initialLanguageCount: 3 });
-    expect(test.viewModel.listedLanguages.length).toBe(3);
+    expect(test.viewModel.listedLanguages.value.length).toBe(3);
   });
 });
 
 describe("selecting a language", () => {
   it("deselects other languages", () => {
     const test = new TestHeper({ initialLanguageCount: 3 });
-    const lang1 = test.viewModel.listedLanguages[0];
-    const lang2 = test.viewModel.listedLanguages[1];
+    const lang1 = test.viewModel.listedLanguages.value[0];
+    const lang2 = test.viewModel.listedLanguages.value[1];
 
     lang1.isSelected.requestUpdate(true);
     lang2.isSelected.requestUpdate(true);
@@ -51,7 +51,7 @@ describe("selecting a language", () => {
 describe("script list", () => {
   it("is initially empty", () => {
     const test = new TestHeper();
-    expect(test.viewModel.listedScripts.length).toBe(0);
+    expect(test.viewModel.listedScripts.value.length).toBe(0);
   });
 
   it("is populated when a language with scripts is selected", () => {
@@ -59,9 +59,9 @@ describe("script list", () => {
       initialLanguages: [fakeLanguage({ scriptCount: 3 })],
     });
 
-    test.viewModel.listedLanguages[0].isSelected.requestUpdate(true);
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
 
-    expect(test.viewModel.listedScripts.length).toBe(3);
+    expect(test.viewModel.listedScripts.value.length).toBe(3);
   });
 
   it("allows only one selected item", () => {
@@ -69,11 +69,11 @@ describe("script list", () => {
       initialLanguages: [fakeLanguage({ scriptCount: 3 })],
     });
 
-    test.viewModel.listedLanguages[0].isSelected.requestUpdate(true);
-    test.viewModel.listedScripts[0].isSelected.requestUpdate(true);
-    test.viewModel.listedScripts[1].isSelected.requestUpdate(true);
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[1].isSelected.requestUpdate(true);
 
-    expect(test.viewModel.listedScripts[0].isSelected.value).toBe(false);
+    expect(test.viewModel.listedScripts.value[0].isSelected.value).toBe(false);
   });
 });
 
@@ -81,7 +81,7 @@ describe("tag preview", () => {
   it("should be based on selected language", () => {
     const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
 
-    test.viewModel.listedLanguages[0].isSelected.requestUpdate(true);
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
 
     expect(test.viewModel.tagPreview.value).toBe("uz");
   });
@@ -89,8 +89,8 @@ describe("tag preview", () => {
   it("should be based on selected language and script", () => {
     const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
 
-    test.viewModel.listedLanguages[0].isSelected.requestUpdate(true);
-    test.viewModel.listedScripts[1].isSelected.requestUpdate(true);
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[1].isSelected.requestUpdate(true);
 
     expect(test.viewModel.tagPreview.value).toBe("uz-AF");
   });
@@ -105,7 +105,7 @@ describe("display name", () => {
   it("should hold default name on language selection", () => {
     const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
 
-    test.viewModel.listedLanguages[0].isSelected.requestUpdate(true);
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
 
     expect(test.viewModel.displayName.value).toBe("ўзбек тили");
   });
@@ -113,8 +113,8 @@ describe("display name", () => {
   it("should hold default name on script selection", () => {
     const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
 
-    test.viewModel.listedLanguages[0].isSelected.requestUpdate(true);
-    test.viewModel.listedScripts[0].isSelected.requestUpdate(true);
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[0].isSelected.requestUpdate(true);
 
     expect(test.viewModel.displayName.value).toBe("oʻzbek tili");
   });
@@ -124,7 +124,7 @@ describe("search", () => {
   it("should populate language list", async () => {
     const test = new TestHeper();
     await test.viewModel.search("en");
-    expect(test.viewModel.listedLanguages[0].language.iso639_3_code).toBe(
+    expect(test.viewModel.listedLanguages.value[0].language.iso639_3_code).toBe(
       "eng"
     );
   });

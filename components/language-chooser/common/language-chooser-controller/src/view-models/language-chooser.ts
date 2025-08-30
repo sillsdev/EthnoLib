@@ -17,9 +17,9 @@ interface ViewModelArgs {
 export class LanguageChooserViewModel extends ViewModel {
   constructor({ initialLanguages }: ViewModelArgs = {}) {
     super();
-    this.listedLanguages = initialLanguages
-      ? this.languagesToViewModels(initialLanguages)
-      : [];
+    this.listedLanguages = new Field(
+      initialLanguages ? this.languagesToViewModels(initialLanguages) : []
+    );
 
     this.searchString = new Field("", (search) => {
       this.search(search);
@@ -29,8 +29,8 @@ export class LanguageChooserViewModel extends ViewModel {
     this.displayName = new Field("");
   }
 
-  listedLanguages: LanguageCardViewModel[];
-  listedScripts: ScriptCardViewModel[] = [];
+  readonly listedLanguages: Field<LanguageCardViewModel[]>;
+  readonly listedScripts = new Field<ScriptCardViewModel[]>([]);
   readonly searchString: Field<string>;
   readonly tagPreview: Field<string>;
   readonly displayName: Field<string>;
@@ -50,20 +50,24 @@ export class LanguageChooserViewModel extends ViewModel {
     if (searchId !== this.#currentSearchId) {
       return false;
     }
-    this.listedLanguages.push(...this.languagesToViewModels(languages));
+    this.listedLanguages.value = [
+      ...this.listedLanguages.value,
+      ...this.languagesToViewModels(languages),
+    ];
     return true;
   }
 
   private onLanguageSelected(index: number) {
-    selectItem(index, this.listedLanguages);
-    this.#selectedLanguage = this.listedLanguages[index].language;
-    this.setScriptList(this.listedLanguages[index].language.scripts);
+    const languages = this.listedLanguages.value;
+    selectItem(index, languages);
+    this.#selectedLanguage = languages[index].language;
+    this.setScriptList(languages[index].language.scripts);
     this.updateTagPreview();
     this.updateDisplayName();
   }
 
   private setScriptList(scripts: IScript[]) {
-    this.listedScripts = scripts.map(
+    this.listedScripts.value = scripts.map(
       (script, i) =>
         new ScriptCardViewModel(script, {
           onSelect: () => this.onScriptSelected(i),
@@ -72,8 +76,8 @@ export class LanguageChooserViewModel extends ViewModel {
   }
 
   private onScriptSelected(index: number) {
-    selectItem(index, this.listedScripts);
-    this.#selectedScript = this.listedScripts[index].script;
+    selectItem(index, this.listedScripts.value);
+    this.#selectedScript = this.listedScripts.value[index].script;
     this.updateTagPreview();
     this.updateDisplayName();
   }
