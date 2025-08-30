@@ -128,4 +128,17 @@ describe("search", () => {
       "eng"
     );
   });
+
+  it("should not populate language list if query is one character", async () => {
+    const test = new TestHeper();
+    await test.viewModel.search("e");
+    expect(test.viewModel.listedLanguages.value.length).toBe(0);
+  });
+
+  it("should clear results after search string is cleared", async () => {
+    const test = new TestHeper();
+    await test.viewModel.search("en");
+    await test.viewModel.search("");
+    expect(test.viewModel.listedLanguages.value.length).toBe(0);
+  });
 });
