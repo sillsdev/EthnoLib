@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ILanguage } from "@ethnolib/find-language";
-import { LanguageListController } from "../src/language-list";
-import { LanguageCardObserverFake } from "../src/language-card";
 import { fakeLanguages } from "./fake-utils";
+import { LanguageListViewModel } from "../src/view-models/language-list";
 
 interface TestParameters {
   languages: ILanguage[];
@@ -10,40 +9,42 @@ interface TestParameters {
 
 class TestObjects {
   constructor({ languages }: TestParameters) {
-    this.listController = new LanguageListController(languages);
-    this.languageCardObservers = this.listController.languageCards.map(
-      (card) => {
-        const observer = new LanguageCardObserverFake();
-        card.observer = observer;
-        return observer;
-      }
-    );
+    this.listController = new LanguageListViewModel(languages);
   }
 
-  listController: LanguageListController;
-  languageCardObservers: LanguageCardObserverFake[];
+  listController: LanguageListViewModel;
 }
 
 describe("selecting a language", () => {
-  it("should notify selected card observer", () => {
+  it("marks language as selected", () => {
     const test = new TestObjects({ languages: fakeLanguages(2) });
-    test.listController.languageCards[0].toggleSelect();
-    expect(test.languageCardObservers[0].isSelected).toBe(true);
+    const lang = test.listController.languageCards[0];
+
+    lang.isSelected.requestUpdate(true);
+
+    expect(lang.isSelected.value).toBe(true);
   });
 
   it("should deselect other language", () => {
     const test = new TestObjects({ languages: fakeLanguages(2) });
-    test.listController.languageCards[0].toggleSelect();
-    test.listController.languageCards[1].toggleSelect();
-    expect(test.languageCardObservers[0].isSelected).toBe(false);
+    const lang1 = test.listController.languageCards[0];
+    const lang2 = test.listController.languageCards[1];
+
+    lang1.isSelected.requestUpdate(true);
+    lang2.isSelected.requestUpdate(true);
+
+    expect(lang1.isSelected.value).toBe(false);
   });
 });
 
 describe("deselecting a langauge", () => {
-  it("should notify deselected card observer", () => {
+  it("should mark language deselected", () => {
     const test = new TestObjects({ languages: fakeLanguages(2) });
-    test.listController.languageCards[0].toggleSelect();
-    test.listController.languageCards[0].toggleSelect();
-    expect(test.languageCardObservers[0].isSelected).toBe(false);
+    const lang = test.listController.languageCards[0];
+
+    lang.isSelected.requestUpdate(true);
+    lang.isSelected.requestUpdate(false);
+
+    expect(lang.isSelected.value).toBe(false);
   });
 });
