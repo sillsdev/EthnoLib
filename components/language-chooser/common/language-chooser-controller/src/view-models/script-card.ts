@@ -3,7 +3,7 @@ import { Field, ViewModel } from "../state-management";
 import { Selectable } from "../selectable";
 
 interface ViewModelArgs {
-  onSelect?: () => void;
+  onSelect?: (isSelected: boolean) => void;
 }
 
 export class ScriptCardViewModel extends ViewModel implements Selectable {
@@ -12,8 +12,8 @@ export class ScriptCardViewModel extends ViewModel implements Selectable {
     this.script = script;
 
     this.isSelected = new Field(false, (isSelected) => {
-      if (isSelected && onSelect) {
-        onSelect();
+      if (onSelect) {
+        onSelect(isSelected);
       }
       return isSelected;
     });

@@ -171,3 +171,55 @@ describe("search", () => {
     expect(test.viewModel.listedLanguages.value.length).toBe(0);
   });
 });
+
+describe("selected language", () => {
+  it("should match language selection", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    expect(test.viewModel.selectedLanguage.value).toEqual(
+      NorthernUzbekLanguage
+    );
+  });
+
+  it("should be undefined after language deselected", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(false);
+
+    expect(test.viewModel.selectedLanguage.value).toBeUndefined();
+  });
+});
+
+describe("selected script", () => {
+  it("should match scipt selection", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[0].isSelected.requestUpdate(true);
+
+    expect(test.viewModel.selectedScript.value).toEqual(
+      NorthernUzbekLanguage.scripts[0]
+    );
+  });
+
+  it("should be undefined after script deselected", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[0].isSelected.requestUpdate(false);
+
+    expect(test.viewModel.selectedScript.value).toBeUndefined();
+  });
+
+  it("should be undefined after language deselected", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(false);
+
+    expect(test.viewModel.selectedScript.value).toBeUndefined();
+  });
+});
