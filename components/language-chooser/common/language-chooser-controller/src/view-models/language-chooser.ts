@@ -22,10 +22,10 @@ export class LanguageChooserViewModel extends ViewModel {
     );
 
     this.searchString = new Field("", (search) => {
-      this.search(search);
+      this.onSearchStringUpdated(search);
       return search;
     });
-    this.tagPreview = new Field("");
+    this.tagPreview = new Field("qaa-x-");
     this.displayName = new Field("");
   }
 
@@ -39,14 +39,18 @@ export class LanguageChooserViewModel extends ViewModel {
   #selectedScript: IScript | undefined;
   #currentSearchId = 0;
 
+  private onSearchStringUpdated(query: string) {
+    this.tagPreview.value = "qaa-x-" + query;
+    this.search(query);
+  }
+
   async search(query: string) {
+    this.listedLanguages.value = [];
     if (query.length > 1) {
       this.#currentSearchId++;
       await asyncSearchForLanguage(query, (results) =>
         this.appendLanguages(results, this.#currentSearchId)
       );
-    } else {
-      this.listedLanguages.value = [];
     }
   }
 
@@ -68,6 +72,10 @@ export class LanguageChooserViewModel extends ViewModel {
     this.setScriptList(languages[index].language.scripts);
     this.updateTagPreview();
     this.updateDisplayName();
+  }
+
+  private onLanguageDeselected(index: number) {
+    this.tagPreview.value = "qaa-x-" + this.searchString.value;
   }
 
   private setScriptList(scripts: IScript[]) {
@@ -102,7 +110,10 @@ export class LanguageChooserViewModel extends ViewModel {
     return languages.map(
       (lang, i) =>
         new LanguageCardViewModel(lang, {
-          onSelect: () => this.onLanguageSelected(i),
+          onSelect: (isSelected) =>
+            isSelected
+              ? this.onLanguageSelected(i)
+              : this.onLanguageDeselected(i),
         })
     );
   }
