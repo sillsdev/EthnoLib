@@ -15,7 +15,6 @@ export class ScriptCardViewModel extends ViewModel implements Selectable {
       if (onSelect) {
         onSelect(isSelected);
       }
-      return isSelected;
     });
   }
 

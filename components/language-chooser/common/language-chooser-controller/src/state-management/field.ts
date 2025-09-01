@@ -2,10 +2,13 @@
  * Utility for binding a value to a reactive UI framework
  */
 export class Field<T> {
-  constructor(initialValue: T, onUpdateRequested?: (value: T) => T) {
+  constructor(
+    initialValue: T,
+    onUpdateRequested?: (newValue: T, oldValue: T) => void
+  ) {
     this._initialValue = initialValue;
     this._value = initialValue;
-    this._onUpdateRequested = onUpdateRequested ?? ((value) => value);
+    this._onUpdateRequested = onUpdateRequested;
   }
 
   /**
@@ -13,13 +16,17 @@ export class Field<T> {
    */
   onUpdate: ((newValue: T) => void) | null = null;
 
-  private _onUpdateRequested: (newValue: T) => T;
+  private _onUpdateRequested: ((newValue: T, oldValue: T) => void) | undefined;
 
   /**
    * Send a request from the UI to update the value
    */
   public requestUpdate(value: T) {
-    this.value = this._onUpdateRequested(value);
+    const oldValue = this.value;
+    this.value = value;
+    if (this._onUpdateRequested) {
+      this._onUpdateRequested(value, oldValue);
+    }
   }
 
   private _initialValue: T;
