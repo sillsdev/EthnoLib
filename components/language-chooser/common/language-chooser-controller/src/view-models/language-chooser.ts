@@ -12,7 +12,7 @@ import {
   languageForManuallyEnteredTag,
   UNLISTED_LANGUAGE,
 } from "@ethnolib/find-language";
-import { Field, ViewModel } from "../state-management";
+import { Field, ViewModel } from "@ethnolib/state-management-core";
 import { LanguageCardViewModel } from "./language-card";
 import { ScriptCardViewModel } from "./script-card";
 import { selectItem } from "../selectable";

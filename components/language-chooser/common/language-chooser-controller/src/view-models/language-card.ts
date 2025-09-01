@@ -1,5 +1,5 @@
-import { ILanguage } from "@ethnolib/find-language";
-import { Field, ViewModel } from "../state-management";
+import { ILanguage, LanguageType } from "@ethnolib/find-language";
+import { Field, ViewModel } from "@ethnolib/state-management-core";
 import { Selectable } from "../selectable";
 
 interface ViewModelArgs {
