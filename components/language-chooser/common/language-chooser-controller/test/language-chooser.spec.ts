@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { LanguageChooserViewModel } from "../src/view-models/language-chooser";
 import { fakeLanguage } from "./fake-utils";
+import { ILanguage, UNLISTED_LANGUAGE } from "@ethnolib/find-language";
 import { NorthernUzbekLanguage, WaataLanguage } from "./sample-data/languages";
-import { ILanguage } from "@ethnolib/find-language";
+import { AndorraRegion } from "./sample-data/regions";
 
 class TestParams {
   initialLanguages?: ILanguage[];
@@ -250,5 +251,33 @@ describe("selected script", () => {
     expect(test.viewModel.selectedScript.value).toEqual(
       WaataLanguage.scripts[0]
     );
+  });
+});
+
+describe("creating unlisted language", () => {
+  it("should set selected language to unlisted", () => {
+    const test = new TestHeper();
+    test.viewModel.customizations.requestUpdate({ customDisplayName: "hi" });
+    expect(test.viewModel.selectedLanguage.value).toEqual(UNLISTED_LANGUAGE);
+  });
+
+  it("should update tag preview", () => {
+    const test = new TestHeper();
+    test.viewModel.customizations.requestUpdate({
+      customDisplayName: "hi",
+      region: AndorraRegion,
+      dialect: "hi",
+    });
+    expect(test.viewModel.tagPreview.value).toBe("qaa-AD-x-hi");
+  });
+
+  it("should update display name", () => {
+    const test = new TestHeper();
+    test.viewModel.customizations.requestUpdate({
+      customDisplayName: "hi",
+      region: AndorraRegion,
+      dialect: "hi",
+    });
+    expect(test.viewModel.displayName.value).toBe("hi");
   });
 });
