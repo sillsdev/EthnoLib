@@ -313,3 +313,42 @@ describe("customize selected language", () => {
     );
   });
 });
+
+describe("custom language tag", () => {
+  it("clears search string", () => {
+    const test = new TestHeper();
+    test.viewModel.searchString.requestUpdate("b");
+    test.viewModel.customLanguageTag.requestUpdate("uz-AF");
+    expect(test.viewModel.searchString.value).toBe("");
+  });
+
+  it("clears listed languages", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+    test.viewModel.customLanguageTag.requestUpdate("uz-AF");
+    expect(test.viewModel.listedLanguages.value.length).toBe(0);
+  });
+
+  it("sets tag preview", () => {
+    const test = new TestHeper();
+    test.viewModel.customLanguageTag.requestUpdate("abc");
+    expect(test.viewModel.tagPreview.value).toBe("abc");
+  });
+
+  it("sets iso code for selected language", () => {
+    const test = new TestHeper();
+    test.viewModel.customLanguageTag.requestUpdate("abc");
+    expect(test.viewModel.selectedLanguage.value?.iso639_3_code).toBe(
+      "manuallyEnteredTag"
+    );
+  });
+
+  it("clears selected script", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[0].isSelected.requestUpdate(true);
+    test.viewModel.customLanguageTag.requestUpdate("abc");
+
+    expect(test.viewModel.selectedScript.value).toBeUndefined();
+  });
+});

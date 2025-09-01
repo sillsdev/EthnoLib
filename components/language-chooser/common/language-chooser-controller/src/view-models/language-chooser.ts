@@ -5,6 +5,7 @@ import {
   ICustomizableLanguageDetails,
   ILanguage,
   IScript,
+  languageForManuallyEnteredTag,
   UNLISTED_LANGUAGE,
 } from "@ethnolib/find-language";
 import { Field, ViewModel } from "../state-management";
@@ -38,6 +39,11 @@ export class LanguageChooserViewModel extends ViewModel {
       }
     );
 
+    this.customLanguageTag = new Field("", (tag) => {
+      this.onCustomLanguageTagChanged(tag);
+      return tag;
+    });
+
     this.updateTagPreview();
   }
 
@@ -50,6 +56,7 @@ export class LanguageChooserViewModel extends ViewModel {
   readonly selectedLanguage = new Field<ILanguage | undefined>(undefined);
   readonly selectedScript = new Field<IScript | undefined>(undefined);
   readonly customizations: Field<ICustomizableLanguageDetails | undefined>;
+  readonly customLanguageTag: Field<string>;
 
   #currentSearchId = 0;
 
@@ -163,5 +170,11 @@ export class LanguageChooserViewModel extends ViewModel {
     this.selectedLanguage.value ??= UNLISTED_LANGUAGE;
     this.updateTagPreview();
     this.updateDisplayName();
+  }
+
+  private onCustomLanguageTagChanged(tag: string) {
+    this.searchString.requestUpdate("");
+    this.tagPreview.value = tag;
+    this.selectedLanguage.value = languageForManuallyEnteredTag(tag);
   }
 }
