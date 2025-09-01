@@ -58,6 +58,7 @@
       }
     },
     "projects": [
+      "@ethnolib/state-management-core",
       "@ethnolib/language-chooser-react-mui",
       "@ethnolib/language-chooser-react-hook",
       "@ethnolib/language-chooser-controller",

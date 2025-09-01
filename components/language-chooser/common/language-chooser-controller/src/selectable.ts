@@ -1,4 +1,4 @@
-import { Field } from "./state-management";
+import { Field } from '@ethnolib/state-management-core';
 
 export interface Selectable {
   isSelected: Field<boolean>;

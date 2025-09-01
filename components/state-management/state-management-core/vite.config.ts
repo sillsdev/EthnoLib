@@ -7,7 +7,7 @@ import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 export default defineConfig({
   root: __dirname,
   cacheDir:
-    "../../../../node_modules/.vite/components/language-chooser/common/language-chooser-controller",
+    "../../../node_modules/.vite/components/state-management/state-management-core",
 
   plugins: [
     nxViteTsPaths(),
