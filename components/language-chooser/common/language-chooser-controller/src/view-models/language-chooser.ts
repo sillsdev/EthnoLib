@@ -70,7 +70,15 @@ export class LanguageChooserViewModel extends ViewModel {
     const languages = this.listedLanguages.value;
     selectItem(index, languages);
     this.selectedLanguage.value = languages[index].language;
-    this.setScriptList(languages[index].language.scripts);
+
+    if (languages[index].language.scripts.length === 1) {
+      // Automatically select a language's only script
+      this.setScriptList([]);
+      this.selectedScript.value = languages[index].language.scripts[0];
+    } else {
+      this.setScriptList(languages[index].language.scripts);
+    }
+
     this.updateTagPreview();
     this.updateDisplayName();
   }

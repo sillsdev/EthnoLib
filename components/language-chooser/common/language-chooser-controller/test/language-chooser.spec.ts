@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LanguageChooserViewModel } from "../src/view-models/language-chooser";
 import { fakeLanguage } from "./fake-utils";
-import { NorthernUzbekLanguage } from "./sample-data/languages";
+import { NorthernUzbekLanguage, WaataLanguage } from "./sample-data/languages";
 import { ILanguage } from "@ethnolib/find-language";
 
 class TestParams {
@@ -74,6 +74,25 @@ describe("script list", () => {
     test.viewModel.listedScripts.value[1].isSelected.requestUpdate(true);
 
     expect(test.viewModel.listedScripts.value[0].isSelected.value).toBe(false);
+  });
+
+  it("should be empty if selected language has only one script", () => {
+    const test = new TestHeper({ initialLanguages: [WaataLanguage] });
+
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+
+    expect(test.viewModel.listedScripts.value.length).toBe(0);
+  });
+
+  it("should be cleared if selected language has only one script", () => {
+    const test = new TestHeper({
+      initialLanguages: [NorthernUzbekLanguage, WaataLanguage],
+    });
+
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedLanguages.value[1].isSelected.requestUpdate(true);
+
+    expect(test.viewModel.listedScripts.value.length).toBe(0);
   });
 });
 
@@ -221,5 +240,15 @@ describe("selected script", () => {
     test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(false);
 
     expect(test.viewModel.selectedScript.value).toBeUndefined();
+  });
+
+  it("should automatically be set if selected lanugage has only one script", () => {
+    const test = new TestHeper({ initialLanguages: [WaataLanguage] });
+
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+
+    expect(test.viewModel.selectedScript.value).toEqual(
+      WaataLanguage.scripts[0]
+    );
   });
 });
