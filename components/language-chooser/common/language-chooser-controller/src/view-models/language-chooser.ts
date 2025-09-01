@@ -54,6 +54,8 @@ export class LanguageChooserViewModel extends ViewModel {
   #currentSearchId = 0;
 
   private onSearchStringUpdated(query: string) {
+    this.onLanguageDeselected();
+    this.customizations.value = undefined;
     this.tagPreview.value = "qaa-x-" + query;
     this.search(query);
   }
@@ -92,6 +94,7 @@ export class LanguageChooserViewModel extends ViewModel {
       this.setScriptList(languages[index].language.scripts);
     }
 
+    this.customizations.value = undefined;
     this.updateTagPreview();
     this.updateDisplayName();
   }

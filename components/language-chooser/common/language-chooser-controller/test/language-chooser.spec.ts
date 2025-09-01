@@ -47,6 +47,13 @@ describe("selecting a language", () => {
 
     expect(lang1.isSelected.value).toBe(false);
   });
+
+  it("resets customizations", () => {
+    const test = new TestHeper({ initialLanguageCount: 1 });
+    test.viewModel.customizations.requestUpdate({ customDisplayName: "hi" });
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    expect(test.viewModel.customizations.value).toBe(undefined);
+  });
 });
 
 describe("script list", () => {
@@ -189,6 +196,20 @@ describe("search", () => {
     await test.viewModel.search("en");
     await test.viewModel.search("");
     expect(test.viewModel.listedLanguages.value.length).toBe(0);
+  });
+
+  it("should clear selected language", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.searchString.requestUpdate("x");
+    expect(test.viewModel.selectedLanguage.value).toBeUndefined();
+  });
+
+  it("should clear customizations", () => {
+    const test = new TestHeper();
+    test.viewModel.customizations.requestUpdate({ customDisplayName: "hi" });
+    test.viewModel.searchString.requestUpdate("a");
+    expect(test.viewModel.customizations.value).toBe(undefined);
   });
 });
 
