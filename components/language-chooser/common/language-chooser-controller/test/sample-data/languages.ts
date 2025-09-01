@@ -98,3 +98,31 @@ export const NorthernUzbekLanguage: ILanguage = {
   isRepresentativeForMacrolanguage: true,
   languageType: LanguageType.Living,
 };
+
+export const WaataLanguage: ILanguage = {
+  autonym: "Waata",
+  exonym: "Waata",
+  iso639_3_code: "ssn",
+  languageSubtag: "[ssn]",
+  regionNamesForSearch: ["Kenya"],
+  regionNamesForDisplay: "Kenya",
+  scripts: [
+    {
+      code: "Latn",
+      name: "Latin",
+      languageNameInScript: "Waata",
+    },
+  ],
+  names: [
+    "Ariangulu",
+    "Langulo",
+    "Sanya",
+    "Sanye",
+    "Waat",
+    "Waatah",
+    "Wasanye",
+  ],
+  alternativeTags: ["ssn-Latn-KE", "ssn-KE", "ssn-Latn"],
+  isMacrolanguage: false,
+  languageType: LanguageType.Living,
+};
