@@ -4,7 +4,11 @@ import {
   defaultDisplayName,
   ICustomizableLanguageDetails,
   ILanguage,
+  IOrthography,
   IScript,
+  isManuallyEnteredTagLanguage,
+  isUnlistedLanguage,
+  isValidBcp47Tag,
   languageForManuallyEnteredTag,
   UNLISTED_LANGUAGE,
 } from "@ethnolib/find-language";
@@ -28,7 +32,7 @@ export class LanguageChooserViewModel extends ViewModel {
       this.onSearchStringUpdated(search);
     });
     this.tagPreview = new Field("");
-    this.displayName = new Field("");
+    this.displayName = new Field("", (name) => this.onDisplayNameChanged(name));
 
     this.customizations = new Field<ICustomizableLanguageDetails | undefined>(
       undefined,
@@ -54,6 +58,8 @@ export class LanguageChooserViewModel extends ViewModel {
   readonly selectedScript = new Field<IScript | undefined>(undefined);
   readonly customizations: Field<ICustomizableLanguageDetails | undefined>;
   readonly customLanguageTag: Field<string>;
+
+  readonly isReadyToSubmit = new Field(false);
 
   #currentSearchId = 0;
 
@@ -86,27 +92,27 @@ export class LanguageChooserViewModel extends ViewModel {
   }
 
   private onLanguageSelected(index: number) {
-    const languages = this.listedLanguages.value;
-    selectItem(index, languages);
-    this.selectedLanguage.value = languages[index].language;
-
-    if (languages[index].language.scripts.length === 1) {
-      // Automatically select a language's only script
-      this.setScriptList([]);
-      this.selectedScript.value = languages[index].language.scripts[0];
-    } else {
-      this.setScriptList(languages[index].language.scripts);
-    }
-
+    selectItem(index, this.listedLanguages.value);
+    this.selectedLanguage.value = this.listedLanguages.value[index].language;
+    this.updateScriptList(this.listedLanguages.value[index].language);
     this.customizations.value = undefined;
-    this.updateTagPreview();
-    this.updateDisplayName();
+    this.onOrthographyChanged();
   }
 
   private onLanguageDeselected() {
     this.selectedLanguage.value = undefined;
     this.selectedScript.value = undefined;
-    this.updateTagPreview();
+    this.onOrthographyChanged();
+  }
+
+  private updateScriptList(selectedLanguage: ILanguage) {
+    if (selectedLanguage.scripts.length === 1) {
+      // Automatically select a language's only script
+      this.setScriptList([]);
+      this.selectedScript.value = selectedLanguage.scripts[0];
+    } else {
+      this.setScriptList(selectedLanguage.scripts);
+    }
   }
 
   private setScriptList(scripts: IScript[]) {
@@ -122,12 +128,12 @@ export class LanguageChooserViewModel extends ViewModel {
   private onScriptSelected(index: number) {
     selectItem(index, this.listedScripts.value);
     this.selectedScript.value = this.listedScripts.value[index].script;
-    this.updateTagPreview();
-    this.updateDisplayName();
+    this.onOrthographyChanged();
   }
 
   private onScriptDeselected() {
     this.selectedScript.value = undefined;
+    this.onOrthographyChanged();
   }
 
   private updateTagPreview() {
@@ -150,6 +156,20 @@ export class LanguageChooserViewModel extends ViewModel {
       "";
   }
 
+  private updateIsReadyToSubmit() {
+    this.isReadyToSubmit.value = isReadyToSubmit({
+      language: this.selectedLanguage.value,
+      script: this.selectedScript.value,
+      customDetails: this.customizations.value,
+    });
+  }
+
+  private onDisplayNameChanged(name: string) {
+    this.customizations.value ??= {};
+    this.customizations.value.customDisplayName = name;
+    this.updateIsReadyToSubmit();
+  }
+
   private languagesToViewModels(languages: ILanguage[]) {
     return languages.map(
       (lang, i) =>
@@ -165,13 +185,53 @@ export class LanguageChooserViewModel extends ViewModel {
   private onCustomizationsChanged(custom?: ICustomizableLanguageDetails) {
     this.customizations.value = custom;
     this.selectedLanguage.value ??= UNLISTED_LANGUAGE;
-    this.updateTagPreview();
-    this.updateDisplayName();
+    this.onOrthographyChanged();
   }
 
   private onCustomLanguageTagChanged(tag: string) {
     this.searchString.requestUpdate("");
     this.tagPreview.value = tag;
     this.selectedLanguage.value = languageForManuallyEnteredTag(tag);
+    this.onOrthographyChanged();
   }
+
+  private onOrthographyChanged() {
+    this.updateTagPreview();
+    this.updateDisplayName();
+    this.updateIsReadyToSubmit();
+  }
+}
+
+function hasValidDisplayName(selection: IOrthography) {
+  if (!selection.language) {
+    return false;
+  }
+  // Check that user has not entered an empty string or whitespace only in the custom display name
+  if (
+    typeof selection.customDetails?.customDisplayName === "string" &&
+    !selection.customDetails?.customDisplayName?.trim()
+  ) {
+    return false;
+  }
+  // Check that we have a default display name and/or a custom display name
+  return (
+    !!defaultDisplayName(selection.language, selection.script) ||
+    !!selection.customDetails?.customDisplayName
+  );
+}
+
+export function isReadyToSubmit(selection: IOrthography): boolean {
+  return (
+    !!selection.language &&
+    hasValidDisplayName(selection) &&
+    // either a script is selected or there are no scripts for the selected language
+    (!!selection.script || selection.language?.scripts?.length === 0) &&
+    // if unlisted language, name and country are required
+    (!isUnlistedLanguage(selection.language) ||
+      (!!selection.customDetails?.dialect &&
+        !!selection.customDetails?.region?.name)) &&
+    // if this was a manually entered langtag, check that tag is valid BCP 47
+    (!isManuallyEnteredTagLanguage(selection.language) ||
+      isValidBcp47Tag(selection.language?.manuallyEnteredTag))
+  );
 }
