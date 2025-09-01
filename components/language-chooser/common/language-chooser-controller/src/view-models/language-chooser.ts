@@ -26,7 +26,6 @@ export class LanguageChooserViewModel extends ViewModel {
 
     this.searchString = new Field("", (search) => {
       this.onSearchStringUpdated(search);
-      return search;
     });
     this.tagPreview = new Field("");
     this.displayName = new Field("");
@@ -35,13 +34,11 @@ export class LanguageChooserViewModel extends ViewModel {
       undefined,
       (details) => {
         this.onCustomizationsChanged(details);
-        return details;
       }
     );
 
     this.customLanguageTag = new Field("", (tag) => {
       this.onCustomLanguageTagChanged(tag);
-      return tag;
     });
 
     this.updateTagPreview();
@@ -63,7 +60,7 @@ export class LanguageChooserViewModel extends ViewModel {
   private onSearchStringUpdated(query: string) {
     this.onLanguageDeselected();
     this.customizations.value = undefined;
-    this.updateTagPreview({ searchString: query });
+    this.updateTagPreview();
     this.search(query);
   }
 
@@ -133,13 +130,13 @@ export class LanguageChooserViewModel extends ViewModel {
     this.selectedScript.value = undefined;
   }
 
-  private updateTagPreview(args: { searchString?: string } = {}) {
+  private updateTagPreview() {
     this.tagPreview.value = createTagFromOrthography({
       language: this.selectedLanguage.value,
       script: this.selectedScript.value,
       customDetails: this.selectedLanguage.value
         ? this.customizations.value
-        : { dialect: args.searchString ?? this.searchString.value },
+        : { dialect: this.searchString.value },
     });
   }
 

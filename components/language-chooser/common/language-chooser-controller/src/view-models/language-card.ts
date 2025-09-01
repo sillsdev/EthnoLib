@@ -15,7 +15,6 @@ export class LanguageCardViewModel extends ViewModel implements Selectable {
       if (onSelect) {
         onSelect(isSelected);
       }
-      return isSelected;
     });
   }
 
