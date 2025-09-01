@@ -56,7 +56,7 @@ export class LanguageChooserViewModel extends ViewModel {
   private onSearchStringUpdated(query: string) {
     this.onLanguageDeselected();
     this.customizations.value = undefined;
-    this.tagPreview.value = "qaa-x-" + query;
+    this.updateTagPreview({ searchString: query });
     this.search(query);
   }
 
@@ -126,13 +126,13 @@ export class LanguageChooserViewModel extends ViewModel {
     this.selectedScript.value = undefined;
   }
 
-  private updateTagPreview() {
+  private updateTagPreview(args: { searchString?: string } = {}) {
     this.tagPreview.value = createTagFromOrthography({
       language: this.selectedLanguage.value,
       script: this.selectedScript.value,
       customDetails: this.selectedLanguage.value
         ? this.customizations.value
-        : { dialect: this.searchString.value },
+        : { dialect: args.searchString ?? this.searchString.value },
     });
   }
 
