@@ -352,3 +352,57 @@ describe("custom language tag", () => {
     expect(test.viewModel.selectedScript.value).toBeUndefined();
   });
 });
+
+describe("is ready to submit", () => {
+  it("is true when language with one script is selected", () => {
+    const test = new TestHeper({ initialLanguages: [WaataLanguage] });
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    expect(test.viewModel.isReadyToSubmit.value).toBe(true);
+  });
+
+  it("is true when a language and script script are selected", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[0].isSelected.requestUpdate(true);
+    expect(test.viewModel.isReadyToSubmit.value).toBe(true);
+  });
+
+  it("is false when display name is whitespace", () => {
+    const test = new TestHeper({ initialLanguages: [WaataLanguage] });
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.displayName.requestUpdate("   ");
+    expect(test.viewModel.isReadyToSubmit.value).toBe(false);
+  });
+
+  it("is false when a language is deselected", () => {
+    const test = new TestHeper({ initialLanguages: [WaataLanguage] });
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(false);
+    expect(test.viewModel.isReadyToSubmit.value).toBe(false);
+  });
+
+  it("is false when a script is deselected", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[0].isSelected.requestUpdate(false);
+    expect(test.viewModel.isReadyToSubmit.value).toBe(false);
+  });
+
+  it("is true when an unlisted language has name and country", () => {
+    const test = new TestHeper({ initialLanguages: [WaataLanguage] });
+    test.viewModel.customizations.requestUpdate({
+      customDisplayName: "hi",
+      region: AndorraRegion,
+      dialect: "hi",
+    });
+    expect(test.viewModel.isReadyToSubmit.value).toBe(true);
+  });
+
+  it("is true when custom language tag is valid", () => {
+    const test = new TestHeper();
+    test.viewModel.customLanguageTag.requestUpdate("abc");
+    test.viewModel.displayName.requestUpdate("hello");
+    expect(test.viewModel.isReadyToSubmit.value).toBe(true);
+  });
+});
