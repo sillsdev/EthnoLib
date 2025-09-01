@@ -28,21 +28,21 @@ export class LanguageChooserViewModel extends ViewModel {
       initialLanguages ? this.languagesToViewModels(initialLanguages) : []
     );
 
-    this.searchString = new Field("", (search) => {
-      this.onSearchStringUpdated(search);
+    this.searchString = new Field("", () => {
+      this.onSearchStringUpdated();
     });
     this.tagPreview = new Field("");
-    this.displayName = new Field("", (name) => this.onDisplayNameChanged(name));
+    this.displayName = new Field("", () => this.onDisplayNameChanged());
 
     this.customizations = new Field<ICustomizableLanguageDetails | undefined>(
       undefined,
-      (details) => {
-        this.onCustomizationsChanged(details);
+      () => {
+        this.onCustomizationsChanged();
       }
     );
 
-    this.customLanguageTag = new Field("", (tag) => {
-      this.onCustomLanguageTagChanged(tag);
+    this.customLanguageTag = new Field("", () => {
+      this.onCustomLanguageTagChanged();
     });
 
     this.updateTagPreview();
@@ -63,11 +63,11 @@ export class LanguageChooserViewModel extends ViewModel {
 
   #currentSearchId = 0;
 
-  private onSearchStringUpdated(query: string) {
+  private onSearchStringUpdated() {
     this.onLanguageDeselected();
     this.customizations.value = undefined;
     this.updateTagPreview();
-    this.search(query);
+    this.search(this.searchString.value);
   }
 
   async search(query: string) {
@@ -91,10 +91,22 @@ export class LanguageChooserViewModel extends ViewModel {
     return true;
   }
 
+  private languagesToViewModels(languages: ILanguage[]) {
+    return languages.map(
+      (lang, i) =>
+        new LanguageCardViewModel(lang, {
+          onSelect: (isSelected) =>
+            isSelected
+              ? this.onLanguageSelected(i)
+              : this.onLanguageDeselected(),
+        })
+    );
+  }
+
   private onLanguageSelected(index: number) {
     selectItem(index, this.listedLanguages.value);
     this.selectedLanguage.value = this.listedLanguages.value[index].language;
-    this.updateScriptList(this.listedLanguages.value[index].language);
+    this.updateScriptList(this.selectedLanguage.value);
     this.customizations.value = undefined;
     this.onOrthographyChanged();
   }
@@ -136,6 +148,32 @@ export class LanguageChooserViewModel extends ViewModel {
     this.onOrthographyChanged();
   }
 
+  private onDisplayNameChanged() {
+    this.customizations.value ??= {};
+    this.customizations.value.customDisplayName = this.displayName.value;
+    this.updateIsReadyToSubmit();
+  }
+
+  private onCustomizationsChanged() {
+    this.selectedLanguage.value ??= UNLISTED_LANGUAGE;
+    this.onOrthographyChanged();
+  }
+
+  private onCustomLanguageTagChanged() {
+    this.searchString.requestUpdate("");
+    this.tagPreview.value = this.customLanguageTag.value;
+    this.selectedLanguage.value = languageForManuallyEnteredTag(
+      this.customLanguageTag.value
+    );
+    this.onOrthographyChanged();
+  }
+
+  private onOrthographyChanged() {
+    this.updateTagPreview();
+    this.updateDisplayName();
+    this.updateIsReadyToSubmit();
+  }
+
   private updateTagPreview() {
     this.tagPreview.value = createTagFromOrthography({
       language: this.selectedLanguage.value,
@@ -162,43 +200,6 @@ export class LanguageChooserViewModel extends ViewModel {
       script: this.selectedScript.value,
       customDetails: this.customizations.value,
     });
-  }
-
-  private onDisplayNameChanged(name: string) {
-    this.customizations.value ??= {};
-    this.customizations.value.customDisplayName = name;
-    this.updateIsReadyToSubmit();
-  }
-
-  private languagesToViewModels(languages: ILanguage[]) {
-    return languages.map(
-      (lang, i) =>
-        new LanguageCardViewModel(lang, {
-          onSelect: (isSelected) =>
-            isSelected
-              ? this.onLanguageSelected(i)
-              : this.onLanguageDeselected(),
-        })
-    );
-  }
-
-  private onCustomizationsChanged(custom?: ICustomizableLanguageDetails) {
-    this.customizations.value = custom;
-    this.selectedLanguage.value ??= UNLISTED_LANGUAGE;
-    this.onOrthographyChanged();
-  }
-
-  private onCustomLanguageTagChanged(tag: string) {
-    this.searchString.requestUpdate("");
-    this.tagPreview.value = tag;
-    this.selectedLanguage.value = languageForManuallyEnteredTag(tag);
-    this.onOrthographyChanged();
-  }
-
-  private onOrthographyChanged() {
-    this.updateTagPreview();
-    this.updateDisplayName();
-    this.updateIsReadyToSubmit();
   }
 }
 
