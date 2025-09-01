@@ -160,7 +160,7 @@ export class LanguageChooserViewModel extends ViewModel {
 
   private onCustomizationsChanged(custom?: ICustomizableLanguageDetails) {
     this.customizations.value = custom;
-    this.selectedLanguage.value = UNLISTED_LANGUAGE;
+    this.selectedLanguage.value ??= UNLISTED_LANGUAGE;
     this.updateTagPreview();
     this.updateDisplayName();
   }

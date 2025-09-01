@@ -302,3 +302,14 @@ describe("creating unlisted language", () => {
     expect(test.viewModel.displayName.value).toBe("hi");
   });
 });
+
+describe("customize selected language", () => {
+  it("should not change selected language", () => {
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.customizations.requestUpdate({ customDisplayName: "hi" });
+    expect(test.viewModel.selectedLanguage.value).toEqual(
+      NorthernUzbekLanguage
+    );
+  });
+});
