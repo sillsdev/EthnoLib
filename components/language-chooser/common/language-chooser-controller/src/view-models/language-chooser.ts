@@ -2,8 +2,10 @@ import {
   asyncSearchForLanguage,
   createTagFromOrthography,
   defaultDisplayName,
+  ICustomizableLanguageDetails,
   ILanguage,
   IScript,
+  UNLISTED_LANGUAGE,
 } from "@ethnolib/find-language";
 import { Field, ViewModel } from "../state-management";
 import { LanguageCardViewModel } from "./language-card";
@@ -25,8 +27,18 @@ export class LanguageChooserViewModel extends ViewModel {
       this.onSearchStringUpdated(search);
       return search;
     });
-    this.tagPreview = new Field("qaa-x-");
+    this.tagPreview = new Field("");
     this.displayName = new Field("");
+
+    this.customizations = new Field<ICustomizableLanguageDetails | undefined>(
+      undefined,
+      (details) => {
+        this.onCustomizationsChanged(details);
+        return details;
+      }
+    );
+
+    this.updateTagPreview();
   }
 
   readonly listedLanguages: Field<LanguageCardViewModel[]>;
@@ -37,6 +49,7 @@ export class LanguageChooserViewModel extends ViewModel {
 
   readonly selectedLanguage = new Field<ILanguage | undefined>(undefined);
   readonly selectedScript = new Field<IScript | undefined>(undefined);
+  readonly customizations: Field<ICustomizableLanguageDetails | undefined>;
 
   #currentSearchId = 0;
 
@@ -86,7 +99,7 @@ export class LanguageChooserViewModel extends ViewModel {
   private onLanguageDeselected() {
     this.selectedLanguage.value = undefined;
     this.selectedScript.value = undefined;
-    this.tagPreview.value = "qaa-x-" + this.searchString.value;
+    this.updateTagPreview();
   }
 
   private setScriptList(scripts: IScript[]) {
@@ -114,15 +127,20 @@ export class LanguageChooserViewModel extends ViewModel {
     this.tagPreview.value = createTagFromOrthography({
       language: this.selectedLanguage.value,
       script: this.selectedScript.value,
+      customDetails: this.selectedLanguage.value
+        ? this.customizations.value
+        : { dialect: this.searchString.value },
     });
   }
 
   private updateDisplayName() {
     this.displayName.value =
+      this.customizations.value?.customDisplayName ??
       defaultDisplayName(
         this.selectedLanguage.value,
         this.selectedScript.value
-      ) ?? "";
+      ) ??
+      "";
   }
 
   private languagesToViewModels(languages: ILanguage[]) {
@@ -135,5 +153,12 @@ export class LanguageChooserViewModel extends ViewModel {
               : this.onLanguageDeselected(),
         })
     );
+  }
+
+  private onCustomizationsChanged(custom?: ICustomizableLanguageDetails) {
+    this.customizations.value = custom;
+    this.selectedLanguage.value = UNLISTED_LANGUAGE;
+    this.updateTagPreview();
+    this.updateDisplayName();
   }
 }
