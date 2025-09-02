@@ -1,1 +1,1 @@
-export * from "./src/use-field.svelte";
+export * from "./src/use-view-model";
