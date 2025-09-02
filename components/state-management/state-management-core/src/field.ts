@@ -43,8 +43,4 @@ export class Field<T> {
       this._value = value;
     }
   }
-
-  public reset() {
-    this.value = this._initialValue;
-  }
 }
