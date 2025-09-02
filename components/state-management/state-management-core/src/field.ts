@@ -14,7 +14,7 @@ export class Field<T> {
   /**
    * Callback to update the UI when the field changes
    */
-  onUpdate: ((newValue: T) => void) | null = null;
+  public onUpdate: ((newValue: T) => void) | null = null;
 
   private _onUpdateRequested: ((newValue: T, oldValue: T) => void) | undefined;
 
