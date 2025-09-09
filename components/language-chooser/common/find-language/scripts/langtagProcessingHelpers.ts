@@ -13,6 +13,7 @@ export const COMMA_SEPARATOR = ", ";
 
 export interface ILanguageInternal {
   autonym: string;
+  defaultScriptAutonym?: string;
   exonym: string;
   iso639_3_code: string;
   languageSubtag: string;
@@ -28,7 +29,7 @@ export interface ILanguageInternal {
 
 export interface ILangtagsJsonEntryInternal {
   full: string;
-  iso639_3: string;
+  iso639_3: string; //straight from langtags.json, may be a macrolanguage code. See macrolanguageNotes.md
   iana: string[];
   latnnames: string[];
   localname: string;
@@ -53,6 +54,7 @@ export interface ILangtagsJsonEntryInternal {
 
   // These are not in the langtags.json file but may be added in the processing
   isRepresentativeForMacrolanguage: boolean;
+  indivIsoCode: string; // If iso639_3 is a macrolanguage code, this is the corresponding (representative) individual language code - see macrolanguageNotes.md
 }
 
 interface IIsoCodeDetailsInternal {
@@ -273,7 +275,6 @@ function findIndivIsoCode(
       isoCodesDetails[parts[0]] || isoCodesDetails[iso639_1To639_3[parts[0]]];
     if (!isoCodeDetails) {
       // probably a deprecated code
-      console.log("failed to find iso639_3 code for", tag);
       continue;
     }
     if (
