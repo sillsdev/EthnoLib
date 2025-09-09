@@ -19,53 +19,63 @@ import {
 import fs from "fs";
 import langTagsJson from "../language-data/langtags.json" with { type: "json" };
 
+function bestAutonymFromEntry(entry: any) {
+  return entry.localnames ? entry.localnames[0] : entry.localname;
+}
+
 // We want to have one entry for every ISO 639-3 code, whereas langtags.json sometimes has multiple entries per code
 // Combine entry into the entry with matching ISO 630-3 code in langs if there is one, otherwise create a new entry
 function addOrCombineLangtagsEntry(
   entry: ILangtagsJsonEntryInternal,
   langs: { [key: string]: ILanguageInternal }
 ) {
-  if (!entry.iso639_3) {
+  if (!entry.indivIsoCode) {
+    console.log("Missing indivIsoCode for ", entry.full);
     // langTags.json has metadata items in the same list mixed in with the data entries
     return;
   }
 
-  if (langs[entry.iso639_3]) {
+  if (langs[entry.indivIsoCode]) {
     // We already have an entry with this code, combine with it
 
     // We prioritize autonyms from the "localnames" field (which matches ethnologue if present)
     // over the "localname" field (which is from CLDR and may be specific to a region e.g. "español de México")
     // Some languages may have an entry with "localname" but not "localname" and another entry with "localname" but not "localnames"
-    langs[entry.iso639_3].autonym = entry.localnames
+    langs[entry.indivIsoCode].autonym = entry.localnames
       ? entry.localnames[0]
-      : langs[entry.iso639_3].autonym || entry.localname;
-    langs[entry.iso639_3].regionNames.add(entry.regionname);
+      : langs[entry.indivIsoCode].autonym || entry.localname;
+    if (!entry.tag.includes("-")) {
+      langs[entry.indivIsoCode].defaultScriptAutonym =
+        bestAutonymFromEntry(entry);
+    }
+    langs[entry.indivIsoCode].regionNames.add(entry.regionname);
     if (
       // some languages will have multiple entries with the same script. If so we just want to make sure we take one that has an autonym if possible
-      !langs[entry.iso639_3].scripts[entry.script] ||
+      !langs[entry.indivIsoCode].scripts[entry.script] ||
       (entry.localnames?.length || 0) > 0
     ) {
-      langs[entry.iso639_3].scripts[entry.script] = {
+      langs[entry.indivIsoCode].scripts[entry.script] = {
         code: entry.script,
         name: scriptNames[entry.script],
         languageNameInScript:
           (entry.localnames || [undefined])[0] ||
-          langs[entry.iso639_3].scripts[entry.script]?.languageNameInScript ||
+          langs[entry.indivIsoCode].scripts[entry.script]
+            ?.languageNameInScript ||
           entry.localname,
       } as IScript;
     }
-    langs[entry.iso639_3].names = new Set([
-      ...langs[entry.iso639_3].names,
+    langs[entry.indivIsoCode].names = new Set([
+      ...langs[entry.indivIsoCode].names,
       ...getAllPossibleNames(entry),
     ]);
-    langs[entry.iso639_3].alternativeTags = new Set([
-      ...langs[entry.iso639_3].alternativeTags,
+    langs[entry.indivIsoCode].alternativeTags = new Set([
+      ...langs[entry.indivIsoCode].alternativeTags,
       entry.full,
       ...(entry.tags ?? []),
     ]);
 
-    langs[entry.iso639_3].isRepresentativeForMacrolanguage =
-      langs[entry.iso639_3].isRepresentativeForMacrolanguage ||
+    langs[entry.indivIsoCode].isRepresentativeForMacrolanguage =
+      langs[entry.indivIsoCode].isRepresentativeForMacrolanguage ||
       entry.isRepresentativeForMacrolanguage;
   } else {
     const scriptCode = entry.script;
@@ -79,20 +89,23 @@ function addOrCombineLangtagsEntry(
       } as IScript;
     }
     // create a new entry for this language code
-    langs[entry.iso639_3] = {
-      autonym: entry.localnames ? entry.localnames[0] : entry.localname,
+    langs[entry.indivIsoCode] = {
+      autonym: bestAutonymFromEntry(entry),
+      // if there is no "-" in entry.tag, the language subtag alone is considered equivalent to this entry i.e. this is the default script
+      defaultScriptAutonym: entry.tag.includes("-")
+        ? undefined
+        : bestAutonymFromEntry(entry),
       exonym: entry.name,
-      iso639_3_code: entry.iso639_3 as string,
+      iso639_3_code: entry.indivIsoCode as string,
       languageSubtag: entry.tag.split("-")[0], // might be 2-letter
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
       scripts,
       parentMacrolanguage:
-        macrolanguagesByCode[indivlangsToMacrolangs[entry.iso639_3]],
+        macrolanguagesByCode[indivlangsToMacrolangs[entry.indivIsoCode]],
       isRepresentativeForMacrolanguage: entry.isRepresentativeForMacrolanguage,
-      isMacrolanguage: isMacrolanguage(entry.iso639_3),
       alternativeTags: new Set([entry.full, ...(entry.tags || [])]),
-      languageType: getLanguageType(entry.iso639_3),
+      languageType: getLanguageType(entry.indivIsoCode),
     } as ILanguageInternal;
   }
 }
@@ -102,24 +115,18 @@ function parseLangtagsJson() {
   const langTags = langTagsJson as any[];
   const consolidatedLangTags: { [key: string]: ILanguageInternal } = {};
   for (const entry of langTags) {
+    const augmentedEntry = entry as ILangtagsJsonEntryInternal;
     const languageSubtag = entry.tag.split("-")[0];
+
     // If listed with a macrolanguage code, this is a "representative language", we need to identify it by its equivalent
     // individual language code. See macrolanguageNotes.md
     if (isMacrolanguage(entry.iso639_3) || isMacrolanguage(languageSubtag)) {
-      const indivIsoCode = isMacrolanguage(entry.iso639_3)
+      augmentedEntry["isRepresentativeForMacrolanguage"] = true;
+      augmentedEntry["indivIsoCode"] = isMacrolanguage(entry.iso639_3)
         ? macrolangsToRepresentativeLangs[entry.iso639_3]
         : entry.iso639_3;
-      if (indivIsoCode) {
-        addOrCombineLangtagsEntry(
-          {
-            ...entry,
-            iso639_3: indivIsoCode,
-            tag: indivIsoCode,
-            isRepresentativeForMacrolanguage: true,
-          } as ILangtagsJsonEntryInternal,
-          consolidatedLangTags
-        );
-      } else {
+
+      if (!augmentedEntry["indivIsoCode"]) {
         // This is a data anomaly but we do have 5 as of Feb 2025: bnc, nor, san, hbs, zap
         // See macrolanguageNotes.md. These cases should be specially handled.
         console.log(
@@ -127,32 +134,33 @@ function parseLangtagsJson() {
           entry.iso639_3,
           entry.tag
         );
-        addOrCombineLangtagsEntry(
-          {
-            ...entry,
-            isRepresentativeForMacrolanguage: true,
-          } as ILangtagsJsonEntryInternal,
-          consolidatedLangTags
-        );
       }
-    } else {
-      addOrCombineLangtagsEntry(entry, consolidatedLangTags);
     }
+
+    // in normal cases, indivIsoCode is just the iso639_3 code
+    augmentedEntry["indivIsoCode"] =
+      augmentedEntry["indivIsoCode"] || entry.iso639_3;
+
+    addOrCombineLangtagsEntry(augmentedEntry, consolidatedLangTags);
   }
 
   // Tweak some of the data into the format we want
   const reformattedLangs: ILanguage[] = Object.values(consolidatedLangTags).map(
     (langData: ILanguageInternal) => {
+      const autonym = stripMacrolanguageParenthetical(
+        langData.defaultScriptAutonym || langData.autonym
+      );
+      const exonym = stripMacrolanguageParenthetical(langData.exonym);
       // Don't repeat the autonym and exonym in the names list
-      langData.names.delete(langData.autonym);
-      langData.names.delete(langData.exonym);
+      langData.names.delete(autonym);
+      langData.names.delete(exonym);
       const regionNamesForSearch = [
         ...(uncommaAll(langData.regionNames) as Set<string>),
       ].filter((regionName) => !!regionName);
       const regionNamesForDisplay = regionNamesForSearch.join(COMMA_SEPARATOR);
       return {
-        autonym: uncomma(stripMacrolanguageParenthetical(langData.autonym)),
-        exonym: uncomma(stripMacrolanguageParenthetical(langData.exonym)),
+        autonym: uncomma(autonym),
+        exonym: uncomma(exonym),
         iso639_3_code: langData.iso639_3_code,
         languageSubtag: langData.languageSubtag,
         // For all these normal individual languages, we display and search key the same region list
@@ -164,7 +172,7 @@ function parseLangtagsJson() {
         ].filter((name) => !!name),
         alternativeTags: [...langData.alternativeTags],
         parentMacrolanguage: langData.parentMacrolanguage,
-        isMacrolanguage: langData.isMacrolanguage,
+        isMacrolanguage: false, // we add macrolanguages separately below. See macrolanguageNotes.md
         isRepresentativeForMacrolanguage:
           langData.isRepresentativeForMacrolanguage,
         languageType: langData.languageType,
@@ -207,7 +215,7 @@ function parseLangTagsTxt() {
     if (line.length === 0) {
       continue;
     }
-    const tags = line.split(" = ").map((tag) => tag.trim());
+    const tags = line.split(" = ").map((t) => t.trim());
     tagLookups.push({
       shortest: tags[0],
       maximal: tags[tags.length - 1],
