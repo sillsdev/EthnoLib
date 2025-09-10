@@ -1,3 +1,9 @@
+## 0.1.10 (2025-09-10)
+
+### 🩹 Fixes
+
+- BL-15161 clear display name for custom langtags ([55b556b](https://github.com/sillsdev/EthnoLib/commit/55b556b))
+
 ## 0.1.9 (2025-08-14)
 
 ### 🩹 Fixes
