@@ -20,10 +20,10 @@ function initializeLookupMaps(): void {
   if (shortPreferredTagLookup && maximalTagLookup) {
     return; // Already initialized
   }
-  
+
   shortPreferredTagLookup = new Map<string, string>();
   maximalTagLookup = new Map<string, string>();
-  
+
   for (const tagset of equivalentTags) {
     for (const tag of tagset.allTags) {
       shortPreferredTagLookup.set(tag.toLowerCase(), tagset.shortest);
@@ -263,16 +263,21 @@ export function createTagFromOrthography(orthography: IOrthography): string {
   });
 }
 
-export function defaultDisplayName(language?: ILanguage, script?: IScript) {
+export function defaultDisplayName(
+  language?: ILanguage,
+  script?: IScript
+): string {
   if (
     !language ||
     isUnlistedLanguage(language) ||
     isManuallyEnteredTagLanguage(language)
   ) {
-    return undefined;
+    return "";
   }
 
-  return stripDemarcation(
-    script?.languageNameInScript || language.autonym || language.exonym
+  return (
+    stripDemarcation(
+      script?.languageNameInScript || language.autonym || language.exonym
+    ) ?? ""
   );
 }
