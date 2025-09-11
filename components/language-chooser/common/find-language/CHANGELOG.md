@@ -1,3 +1,9 @@
+## 0.1.11 (2025-09-11)
+
+### 🩹 Fixes
+
+- BL-15209 autonyms should be in the default script ([a1ddb9b](https://github.com/sillsdev/EthnoLib/commit/a1ddb9b))
+
 ## 0.1.10 (2025-09-10)
 
 ### 🩹 Fixes
