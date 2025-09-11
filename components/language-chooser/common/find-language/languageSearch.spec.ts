@@ -169,6 +169,16 @@ describe("asyncGetAllLanguageResults", () => {
     );
   }, 10000);
 
+  it("should prefer any autonym on the default script entry", async () => {
+    const zsmResults = await asyncGetAllLanguageResults("zsm");
+    expect(zsmResults[0].autonym).toBe("Bahasa Malaysia");
+  });
+
+  it("should use a non-default script autonym if no autonym on default script entry", async () => {
+    const cjsResults = await asyncGetAllLanguageResults("cjs");
+    expect(cjsResults[0].autonym).toBe("Тадар тили");
+  });
+
   it("should prefer localnames[0] for autonym", async () => {
     const azerbaijaniResults = await asyncGetAllLanguageResults("azerbaijani");
     expect(azerbaijaniResults[0].autonym).toBe("Azərbaycan dili");
