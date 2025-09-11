@@ -58,9 +58,13 @@
       }
     },
     "projects": [
+      "@ethnolib/state-management-core",
+      "@ethnolib/state-management-svelte",
       "@ethnolib/language-chooser-react-mui",
       "@ethnolib/language-chooser-react-hook",
-      "@ethnolib/find-language"
+      "@ethnolib/language-chooser-controller",
+      "@ethnolib/find-language",
+      "@ethnolib/svelteapp"
     ]
   }
 }
