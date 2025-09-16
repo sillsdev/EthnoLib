@@ -19,6 +19,10 @@ export default defineConfig({
     }),
   ],
 
+  css: {
+    postcss: "./postcss.config.js",
+  },
+
   // Configuration for building your library.
   // See: https://vitejs.dev/guide/build.html#library-mode
   build: {

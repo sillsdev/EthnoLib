@@ -1,14 +1,23 @@
 <script lang="ts">
+  import "./app.css";
+
   let { name }: { name: string } = $props();
 </script>
 
 <main>
   <h1>Welcome {name}!</h1>
-  <p>
-    Visit <a href="https://nx.dev">Nx</a> or
-    <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build
-    Svelte apps.
-  </p>
+  <div class="card w-96 bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title text-primary">Hello DaisyUI!</h2>
+      <p class="text-base-content">
+        If you can see this styled card, Tailwind and DaisyUI are working
+        correctly.
+      </p>
+      <div class="card-actions justify-end">
+        <button class="btn btn-primary">Get Started</button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <style>
