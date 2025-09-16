@@ -1,5 +1,5 @@
 {
-  "name": "@ethnolib/svelteapp",
+  "name": "@ethnolib/language-chooser-svelte",
   "version": "0.0.1",
   "type": "module",
   "main": "./index.js",
