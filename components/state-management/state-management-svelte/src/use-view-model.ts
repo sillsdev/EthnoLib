@@ -1,13 +1,18 @@
-import { getFields, type ViewModel } from "@ethnolib/state-management-core";
+import { Field } from "@ethnolib/state-management-core";
 import { SvelteField } from "./field.svelte";
-import { asUnwrapped, type WithWrapped } from "./wrapped";
+import { asUnwrapped } from "./wrapped";
 
-export function useViewModel<T extends ViewModel>(viewModel: T) {
-  const fields = getFields(viewModel);
-  const svelteFields = {} as WithWrapped<T>;
-  for (const key in fields) {
-    // @ts-expect-error The types work out
-    svelteFields[key] = new SvelteField(fields[key]);
+export function useViewModel<T extends object>(viewModel: T) {
+  const svelteFields = {} as T;
+  for (const key in viewModel) {
+    if (viewModel[key] instanceof Field) {
+      // Since `asUnwrapped()` only uses the field's `value` property,
+      // `svelteFields[key]` can be anything with a `value` property.
+      // @ts-expect-error See above
+      svelteFields[key] = new SvelteField(viewModel[key]);
+    } else {
+      svelteFields[key] = viewModel[key];
+    }
   }
   return asUnwrapped(svelteFields);
 }

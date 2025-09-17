@@ -12,7 +12,7 @@ import {
   languageForManuallyEnteredTag,
   UNLISTED_LANGUAGE,
 } from "@ethnolib/find-language";
-import { Field, ViewModel } from "@ethnolib/state-management-core";
+import { Field } from "@ethnolib/state-management-core";
 import { LanguageCardViewModel } from "./language-card";
 import { ScriptCardViewModel } from "./script-card";
 import { selectItem } from "../selectable";
@@ -21,12 +21,9 @@ interface ViewModelArgs {
   initialLanguages?: ILanguage[];
 }
 
-export class LanguageChooserViewModel extends ViewModel {
+export class LanguageChooserViewModel {
   constructor({ initialLanguages }: ViewModelArgs = {}) {
-    super();
-    this.listedLanguages = new Field(
-      initialLanguages ? this.languagesToViewModels(initialLanguages) : []
-    );
+    this.listedLanguages = new Field<LanguageCardViewModel[]>([]);
 
     this.searchString = new Field("", () => {
       this.onSearchStringUpdated();
@@ -44,6 +41,10 @@ export class LanguageChooserViewModel extends ViewModel {
     this.customLanguageTag = new Field("", () => {
       this.onCustomLanguageTagChanged();
     });
+
+    if (initialLanguages) {
+      this.appendLanguages(initialLanguages);
+    }
 
     this.updateTagPreview();
   }
@@ -74,33 +75,33 @@ export class LanguageChooserViewModel extends ViewModel {
     this.listedLanguages.value = [];
     if (query.length > 1) {
       this.#currentSearchId++;
-      await asyncSearchForLanguage(query, (results) =>
-        this.appendLanguages(results, this.#currentSearchId)
-      );
+      const searchId = this.#currentSearchId;
+      await asyncSearchForLanguage(query, (results) => {
+        if (searchId !== this.#currentSearchId) {
+          return false;
+        }
+        this.appendLanguages(results);
+        return true;
+      });
     }
   }
 
-  private appendLanguages(languages: ILanguage[], searchId: number) {
-    if (searchId !== this.#currentSearchId) {
-      return false;
-    }
-    this.listedLanguages.value = [
-      ...this.listedLanguages.value,
-      ...this.languagesToViewModels(languages),
-    ];
-    return true;
-  }
-
-  private languagesToViewModels(languages: ILanguage[]) {
-    return languages.map(
+  private appendLanguages(languages: ILanguage[]) {
+    const baseIndex = this.listedLanguages.value.length;
+    const newLanguages = languages.map(
       (lang, i) =>
         new LanguageCardViewModel(lang, {
           onSelect: (isSelected) =>
             isSelected
-              ? this.onLanguageSelected(i)
+              ? this.onLanguageSelected(baseIndex + i)
               : this.onLanguageDeselected(),
         })
     );
+
+    this.listedLanguages.value = [
+      ...this.listedLanguages.value,
+      ...newLanguages,
+    ];
   }
 
   private onLanguageSelected(index: number) {

@@ -1,14 +1,13 @@
 import { ILanguage } from "@ethnolib/find-language";
-import { Field, ViewModel } from "@ethnolib/state-management-core";
+import { Field } from "@ethnolib/state-management-core";
 import { Selectable } from "../selectable";
 
 interface ViewModelArgs {
   onSelect?: (isSelected: boolean) => void;
 }
 
-export class LanguageCardViewModel extends ViewModel implements Selectable {
+export class LanguageCardViewModel implements Selectable {
   constructor(language: ILanguage, { onSelect }: ViewModelArgs = {}) {
-    super();
     this.language = language;
 
     this.isSelected = new Field(false, (isSelected) => {

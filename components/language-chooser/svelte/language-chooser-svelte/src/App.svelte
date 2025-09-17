@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import "./app.css";
-  import LanguageChooser from "./LanguageChooser.svelte";
-  import LanguageChooserModal from "./LanguageChooserModal.svelte";
+  import LanguageChooser from "./lib/LanguageChooser.svelte";
+  import LanguageChooserModal from "./lib/LanguageChooserModal.svelte";
 
   let { name }: { name: string } = $props();
 

@@ -6,7 +6,6 @@ export class Field<T> {
     initialValue: T,
     onUpdateRequested?: (newValue: T, oldValue: T) => void
   ) {
-    this._initialValue = initialValue;
     this._value = initialValue;
     this._onUpdateRequested = onUpdateRequested;
   }
@@ -29,7 +28,6 @@ export class Field<T> {
     }
   }
 
-  private _initialValue: T;
   private _value: T;
 
   public get value(): T {

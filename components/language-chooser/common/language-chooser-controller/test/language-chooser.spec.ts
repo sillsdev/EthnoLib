@@ -54,6 +54,15 @@ describe("selecting a language", () => {
     test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
     expect(test.viewModel.customizations.value).toBe(undefined);
   });
+
+  it("marks language selected", async () => {
+    const test = new TestHeper();
+    await test.viewModel.search("arabic");
+
+    const lang = test.viewModel.listedLanguages.value[3];
+    lang.isSelected.requestUpdate(true);
+    expect(lang.isSelected.value).toBe(true);
+  });
 });
 
 describe("script list", () => {
@@ -210,6 +219,15 @@ describe("search", () => {
     test.viewModel.customizations.requestUpdate({ customDisplayName: "hi" });
     test.viewModel.searchString.requestUpdate("a");
     expect(test.viewModel.customizations.value).toBe(undefined);
+  });
+
+  it("should handle frequent changes in search query", async () => {
+    const test = new TestHeper();
+    const search1 = test.viewModel.search("s");
+    const search2 = test.viewModel.search("ss");
+    const search3 = test.viewModel.search("sss"); // This query should return 1 result
+    await Promise.all([search1, search2, search3]);
+    expect(test.viewModel.listedLanguages.value.length).toBe(1);
   });
 });
 
