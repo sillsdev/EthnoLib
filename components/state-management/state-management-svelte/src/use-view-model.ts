@@ -2,6 +2,10 @@ import { Field } from "@ethnolib/state-management-core";
 import { SvelteField } from "./field.svelte";
 import { asUnwrapped } from "./wrapped";
 
+export type SvelteViewModel<T extends object> = ReturnType<
+  typeof useViewModel<T>
+>;
+
 export function useViewModel<T extends object>(viewModel: T) {
   const svelteFields = {} as T;
   for (const key in viewModel) {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import LanguageCard from "./LanguageCard.svelte";
+  import ScriptCard from "./ScriptCard.svelte";
   import SearchIcon from "./SearchIcon.svelte";
   import { LanguageChooserViewModel } from "@ethnolib/language-chooser-controller";
   import { useViewModel } from "@ethnolib/state-management-svelte";
@@ -28,8 +29,22 @@
       </div>
 
       <div class="flex-1 overflow-y-auto min-h-0">
-        {#each viewModel.listedLanguages.slice(0, 100) as item}
-          <LanguageCard viewModel={item} />
+        {#each viewModel.listedLanguages
+          .slice(0, 100)
+          .map(useViewModel) as lang}
+          <LanguageCard viewModel={lang} />
+          {#if lang.isSelected && viewModel.listedScripts.length > 0}
+            <div class="ml-8 mb-4">
+              <div class="py-2">
+                <p class="font-semibold text-sm">Select a script:</p>
+              </div>
+              <div class="grid grid-cols-3 gap-4">
+                {#each viewModel.listedScripts.map(useViewModel) as script}
+                  <ScriptCard viewModel={script} />
+                {/each}
+              </div>
+            </div>
+          {/if}
         {/each}
       </div>
 
@@ -52,18 +67,24 @@
     <div class="flex-1 flex flex-col p-6">
       <div class="flex-1"></div>
       <div class="flex-none">
-        <label>
-          <span class="font-semibold opacity-70"
-            >Display this language this way</span
-          >
-          <input class="input input-xl w-full" />
-        </label>
-        <div class="font-mono opacity-70 p-2">
-          <p>{viewModel.tagPreview}</p>
-        </div>
+        {#if viewModel.selectedLanguage}
+          <label>
+            <span class="font-semibold opacity-70"
+              >Display this language this way</span
+            >
+            <input
+              class="input input-xl w-full"
+              bind:value={viewModel.displayName}
+            />
+          </label>
+          <div class="font-mono opacity-70 p-2">
+            <p>{viewModel.tagPreview}</p>
+          </div>
+        {/if}
         <div class="flex justify-end">
           <button
             class="btn btn-primary uppercase w-24 mx-1"
+            disabled={!viewModel.isReadyToSubmit}
             onclick={onDismiss}>Ok</button
           >
           <button class="btn uppercase w-24 mx-1" onclick={onDismiss}

@@ -2,7 +2,7 @@ import { ILanguage, LanguageType } from "@ethnolib/find-language";
 
 export const NorthernUzbekLanguage: ILanguage = {
   autonym: "ўзбек тили",
-  exonym: "[Uz]bek",
+  exonym: "Uzbek",
   iso639_3_code: "uzn",
   languageSubtag: "uzn",
   regionNamesForSearch: ["Uzbekistan", "Afghanistan", "China"],

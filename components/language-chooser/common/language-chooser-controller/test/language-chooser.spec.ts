@@ -4,6 +4,7 @@ import { fakeLanguage } from "./fake-utils";
 import { ILanguage, UNLISTED_LANGUAGE } from "@ethnolib/find-language";
 import { NorthernUzbekLanguage, WaataLanguage } from "./sample-data/languages";
 import { AndorraRegion } from "./sample-data/regions";
+import { LanguageChooserTranslations } from "../src/view-models/translations";
 
 class TestParams {
   initialLanguages?: ILanguage[];
@@ -62,6 +63,20 @@ describe("selecting a language", () => {
     const lang = test.viewModel.listedLanguages.value[3];
     lang.isSelected.requestUpdate(true);
     expect(lang.isSelected.value).toBe(true);
+  });
+
+  it("deselects previous script", () => {
+    const test = new TestHeper({
+      initialLanguages: [NorthernUzbekLanguage, WaataLanguage],
+    });
+
+    // This language has one script, which should be auto-selected
+    test.viewModel.listedLanguages.value[1].isSelected.requestUpdate(true);
+
+    // This language has multiple scripts. The auto-selected script should be cleared.
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+
+    expect(test.viewModel.selectedScript.value).toBeUndefined();
   });
 });
 
@@ -422,5 +437,23 @@ describe("is ready to submit", () => {
     test.viewModel.customLanguageTag.requestUpdate("abc");
     test.viewModel.displayName.requestUpdate("hello");
     expect(test.viewModel.isReadyToSubmit.value).toBe(true);
+  });
+});
+
+describe("translations", () => {
+  it("changes card description", () => {
+    const translations: LanguageChooserTranslations = {
+      macrolanguageLabel: "Una macro lenguaje",
+      macrolanguageOfRegionLabel: (regions) =>
+        `Una macro lenguaje de ${regions}`,
+      languageOfRegionLabel: (regions) => `Una lengua de ${regions}`,
+    };
+
+    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+    test.viewModel.translations.requestUpdate(translations);
+
+    expect(
+      test.viewModel.listedLanguages.value[0].description?.split(" ")[0]
+    ).toBe("Una");
   });
 });

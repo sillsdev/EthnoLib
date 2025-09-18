@@ -16,6 +16,10 @@ import { Field } from "@ethnolib/state-management-core";
 import { LanguageCardViewModel } from "./language-card";
 import { ScriptCardViewModel } from "./script-card";
 import { selectItem } from "../selectable";
+import {
+  defaultTranslations,
+  LanguageChooserTranslations,
+} from "./translations";
 
 interface ViewModelArgs {
   initialLanguages?: ILanguage[];
@@ -42,6 +46,10 @@ export class LanguageChooserViewModel {
       this.onCustomLanguageTagChanged();
     });
 
+    this.translations = new Field(defaultTranslations, () =>
+      this.onTranslationsChanged()
+    );
+
     if (initialLanguages) {
       this.appendLanguages(initialLanguages);
     }
@@ -61,6 +69,8 @@ export class LanguageChooserViewModel {
   readonly customLanguageTag: Field<string>;
 
   readonly isReadyToSubmit = new Field(false);
+
+  readonly translations: Field<LanguageChooserTranslations>;
 
   #currentSearchId = 0;
 
@@ -95,6 +105,7 @@ export class LanguageChooserViewModel {
             isSelected
               ? this.onLanguageSelected(baseIndex + i)
               : this.onLanguageDeselected(),
+          translations: this.translations.value,
         })
     );
 
@@ -107,6 +118,7 @@ export class LanguageChooserViewModel {
   private onLanguageSelected(index: number) {
     selectItem(index, this.listedLanguages.value);
     this.selectedLanguage.value = this.listedLanguages.value[index].language;
+    this.selectedScript.value = undefined;
     this.updateScriptList(this.selectedLanguage.value);
     this.customizations.value = undefined;
     this.onOrthographyChanged();
@@ -201,6 +213,13 @@ export class LanguageChooserViewModel {
       script: this.selectedScript.value,
       customDetails: this.customizations.value,
     });
+  }
+
+  private onTranslationsChanged() {
+    // Regenerate language list so new translations can be applied
+    const languages = this.listedLanguages.value.map((x) => x.language);
+    this.listedLanguages.value = [];
+    this.appendLanguages(languages);
   }
 }
 

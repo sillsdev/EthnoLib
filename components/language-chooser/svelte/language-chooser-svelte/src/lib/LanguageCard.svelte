@@ -1,15 +1,9 @@
 <script lang="ts">
   import { LanguageCardViewModel } from "@ethnolib/language-chooser-controller";
-  import { useViewModel } from "@ethnolib/state-management-svelte";
+  import { type SvelteViewModel } from "@ethnolib/state-management-svelte";
 
-  const props: { viewModel: LanguageCardViewModel } = $props();
-
-  const viewModel = useViewModel(props.viewModel);
-
-  const body = [
-    "A language of Antigua and Barbuda",
-    "Anguillan Creole English, Something else, lots and lots and lots of other names, and even more names",
-  ];
+  const { viewModel }: { viewModel: SvelteViewModel<LanguageCardViewModel> } =
+    $props();
 </script>
 
 <div
@@ -24,16 +18,19 @@
     onclick={() => (viewModel.isSelected = !viewModel.isSelected)}
   >
     <div class="flex">
-      <div class="text-lg flex-1">{viewModel.language.autonym}</div>
-      <div class="flex-none mr-4">{viewModel.language.exonym}</div>
+      <div class="text-lg flex-1">{viewModel.title}</div>
+      <div class="flex-none mr-4">{viewModel.secondTitle}</div>
       <div class="flex-none font-mono opacity-70">
         {viewModel.language.iso639_3_code}
       </div>
     </div>
     <div>
-      {#each body ?? [] as bodyText}
-        <p class="mt-2 text-sm opacity-80">{bodyText}</p>
-      {/each}
+      {#if viewModel.description}
+        <p class="mt-2 text-sm opacity-80">{viewModel.description}</p>
+      {/if}
+      <p class="mt-2 text-sm opacity-80">
+        {viewModel.language.names.join(", ")}
+      </p>
     </div>
   </button>
 </div>
