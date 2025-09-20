@@ -1,13 +1,31 @@
 <script lang="ts">
+  import {
+    createTagFromOrthography,
+    type IOrthography,
+  } from "@ethnolib/find-language";
   import LanguageCard from "./LanguageCard.svelte";
   import ScriptCard from "./ScriptCard.svelte";
   import SearchIcon from "./SearchIcon.svelte";
   import { LanguageChooserViewModel } from "@ethnolib/language-chooser-controller";
   import { useViewModel } from "@ethnolib/state-management-svelte";
 
-  const { onDismiss }: { onDismiss: () => void } = $props();
+  const {
+    onDismiss,
+    onOk,
+  }: {
+    onDismiss: () => void;
+    onOk: (orthography: IOrthography, languageTag?: string) => void;
+  } = $props();
 
   const viewModel = useViewModel(new LanguageChooserViewModel());
+
+  let orthography: IOrthography = $derived({
+    language: viewModel.selectedLanguage,
+    script: viewModel.selectedScript,
+    customDetails: viewModel.customizations,
+  });
+
+  let languageTag = $derived(createTagFromOrthography(orthography));
 </script>
 
 <div class="h-full flex flex-col">
@@ -85,7 +103,7 @@
           <button
             class="btn btn-primary uppercase w-24 mx-1"
             disabled={!viewModel.isReadyToSubmit}
-            onclick={onDismiss}>Ok</button
+            onclick={() => onOk(orthography, languageTag)}>Ok</button
           >
           <button class="btn uppercase w-24 mx-1" onclick={onDismiss}
             >Cancel</button

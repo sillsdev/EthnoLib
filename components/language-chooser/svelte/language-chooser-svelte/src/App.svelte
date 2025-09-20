@@ -3,10 +3,16 @@
   import "./app.css";
   import LanguageChooser from "./lib/LanguageChooser.svelte";
   import LanguageChooserModal from "./lib/LanguageChooserModal.svelte";
+  import {
+    defaultDisplayName,
+    type IOrthography,
+  } from "@ethnolib/find-language";
 
   let { name }: { name: string } = $props();
 
   let showModal = $state(() => {});
+  let orthography: IOrthography = $state({});
+  let languageTag: string | undefined = $state();
 </script>
 
 <main>
@@ -17,12 +23,16 @@
       <div class="flex-1">
         <div class="card card-border w-96 bg-base-100 shadow-xl mb-8">
           <div class="card-body">
-            <p>Language Display Name:</p>
-            <p>Language Code:</p>
-            <p>Script:</p>
-            <p>Region:</p>
-            <p>Dialect:</p>
-            <p>Language Tag:</p>
+            <p>
+              Language Display Name: {orthography.customDetails
+                ?.customDisplayName ||
+                defaultDisplayName(orthography.language, orthography.script)}
+            </p>
+            <p>Language Code: {orthography.language?.languageSubtag}</p>
+            <p>Script: {orthography.script?.name}</p>
+            <p>Region: {orthography.customDetails?.region?.name}</p>
+            <p>Dialect: {orthography.customDetails?.dialect}</p>
+            <p>Language Tag: {languageTag}</p>
           </div>
         </div>
         <button class="btn btn-primary" onclick={showModal}
@@ -56,5 +66,9 @@
     </div>
   </div>
 
-  <LanguageChooserModal bind:show={showModal} />
+  <LanguageChooserModal
+    bind:show={showModal}
+    bind:orthography
+    bind:languageTag
+  />
 </main>
