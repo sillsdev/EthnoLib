@@ -8,6 +8,7 @@
   import SearchIcon from "./SearchIcon.svelte";
   import { LanguageChooserViewModel } from "@ethnolib/language-chooser-controller";
   import { useViewModel } from "@ethnolib/state-management-svelte";
+  import CustomizationModal from "./CustomizationModal.svelte";
 
   const {
     onDismiss,
@@ -70,8 +71,21 @@
         <div
           class="card card-xs card-border border-base-300 bg-base-100 hover:bg-base-300 shadow-xl w-48 pl-2"
         >
-          <button class="card-body text-left" onclick={() => console.log("hi")}>
-            <p class="card-title uppercase">Customize</p>
+          <button
+            class="card-body text-left"
+            onclick={() => {
+              console.log(viewModel.onCustomizeButtonClicked);
+              console.log(viewModel.displayName);
+              viewModel.onCustomizeButtonClicked();
+            }}
+          >
+            <p class="card-title uppercase">
+              {#if viewModel.selectedLanguage}
+                Customize
+              {:else}
+                Unlisted Language
+              {/if}
+            </p>
             <div class="flex">
               <p class="flex-1 font-mono text-sm opacity-60">
                 {viewModel.tagPreview}
@@ -113,3 +127,5 @@
     </div>
   </div>
 </div>
+
+<CustomizationModal languageChooser={viewModel} />

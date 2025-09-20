@@ -1,4 +1,4 @@
-import { expect, describe, it } from "vitest";
+import { expect, describe, it, vi } from "vitest";
 import { asUnwrapped } from "../src/wrapped";
 import { Field } from "@ethnolib/state-management-core";
 
@@ -57,5 +57,19 @@ describe("asUnwrapped", () => {
     unwrapped.age = 30;
 
     expect(wrappedRecord.age).toBe(30);
+  });
+
+  it("should expose methods", () => {
+    const spy = vi.fn();
+
+    class MyViewModel {
+      public doSomething() {
+        spy();
+      }
+    }
+
+    const unwrapped = asUnwrapped(new MyViewModel());
+    unwrapped.doSomething();
+    expect(spy).toHaveBeenCalled();
   });
 });

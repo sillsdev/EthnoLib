@@ -2,10 +2,11 @@ import {
   asyncSearchForLanguage,
   createTagFromOrthography,
   defaultDisplayName,
-  ICustomizableLanguageDetails,
-  ILanguage,
-  IOrthography,
-  IScript,
+  type ICustomizableLanguageDetails,
+  type ILanguage,
+  type IOrthography,
+  type IRegion,
+  type IScript,
   isManuallyEnteredTagLanguage,
   isUnlistedLanguage,
   isValidBcp47Tag,
@@ -71,6 +72,19 @@ export class LanguageChooserViewModel {
   readonly isReadyToSubmit = new Field(false);
 
   readonly translations: Field<LanguageChooserTranslations>;
+
+  readonly showUnlistedLanguageModal = new Field<
+    ((populateWith: { name?: string; region?: IRegion }) => void) | undefined
+  >(undefined);
+
+  readonly showCustomizeLanguageModal = new Field<
+    | ((populateWith: {
+        script?: IScript;
+        region?: IRegion;
+        dialect?: string;
+      }) => void)
+    | undefined
+  >(undefined);
 
   #currentSearchId = 0;
 
@@ -220,6 +234,54 @@ export class LanguageChooserViewModel {
     const languages = this.listedLanguages.value.map((x) => x.language);
     this.listedLanguages.value = [];
     this.appendLanguages(languages);
+  }
+
+  public onCustomizeButtonClicked() {
+    if (
+      this.selectedLanguage.value &&
+      this.selectedLanguage.value.languageSubtag !== "qaa" &&
+      this.showCustomizeLanguageModal.value
+    ) {
+      this.showCustomizeLanguageModal.value({
+        script: this.selectedScript.value,
+      });
+    } else if (this.showUnlistedLanguageModal.value) {
+      this.showUnlistedLanguageModal.value({
+        name: this.customizations.value?.dialect,
+        region: this.customizations.value?.region,
+      });
+    }
+  }
+
+  public submitUnlistedLanguageModal({
+    name,
+    region,
+  }: {
+    name: string;
+    region: IRegion;
+  }) {
+    this.customizations.requestUpdate({
+      customDisplayName: name,
+      dialect: name,
+      region,
+    });
+  }
+
+  public submitCustomizeLangaugeModal({
+    script,
+    region,
+    dialect,
+  }: {
+    script?: IScript;
+    region?: IRegion;
+    dialect?: string;
+  }) {
+    this.customizations.requestUpdate({
+      region,
+      dialect,
+      customDisplayName: this.customizations.value?.customDisplayName,
+    });
+    this.selectedScript.requestUpdate(script);
   }
 }
 

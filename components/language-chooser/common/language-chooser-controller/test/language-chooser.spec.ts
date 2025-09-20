@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { LanguageChooserViewModel } from "../src/view-models/language-chooser";
 import { fakeLanguage } from "./fake-utils";
-import { ILanguage, UNLISTED_LANGUAGE } from "@ethnolib/find-language";
+import { type ILanguage, UNLISTED_LANGUAGE } from "@ethnolib/find-language";
 import { NorthernUzbekLanguage, WaataLanguage } from "./sample-data/languages";
 import { AndorraRegion } from "./sample-data/regions";
 import { LanguageChooserTranslations } from "../src/view-models/translations";
@@ -455,5 +455,123 @@ describe("translations", () => {
     expect(
       test.viewModel.listedLanguages.value[0].description?.split(" ")[0]
     ).toBe("Una");
+  });
+});
+
+describe("unlisted language modal", () => {
+  it("opens on customize button clicked when no language is selected", () => {
+    const t = new TestHeper();
+    const spy = vi.fn();
+    t.viewModel.showUnlistedLanguageModal.requestUpdate(spy);
+    t.viewModel.onCustomizeButtonClicked();
+    expect(spy).toHaveBeenCalledWith({});
+  });
+
+  it("sets language to unlisted language on submit", () => {
+    const t = new TestHeper();
+    t.viewModel.submitUnlistedLanguageModal({
+      name: "hello",
+      region: AndorraRegion,
+    });
+    expect(t.viewModel.selectedLanguage.value).toEqual(UNLISTED_LANGUAGE);
+  });
+
+  it("sets display name on submit", () => {
+    const t = new TestHeper();
+    t.viewModel.submitUnlistedLanguageModal({
+      name: "hello",
+      region: AndorraRegion,
+    });
+    expect(t.viewModel.displayName.value).toBe("hello");
+  });
+
+  it("sets dialect on submit", () => {
+    const t = new TestHeper();
+    t.viewModel.submitUnlistedLanguageModal({
+      name: "hello",
+      region: AndorraRegion,
+    });
+    expect(t.viewModel.customizations.value?.dialect).toBe("hello");
+  });
+
+  it("sets region on submit", () => {
+    const t = new TestHeper();
+    t.viewModel.submitUnlistedLanguageModal({
+      name: "hello",
+      region: AndorraRegion,
+    });
+    expect(t.viewModel.customizations.value?.region).toEqual(AndorraRegion);
+  });
+
+  it("opens on customize button clicked when unlisted language is selected", () => {
+    const t = new TestHeper();
+    const spy = vi.fn();
+    t.viewModel.showUnlistedLanguageModal.requestUpdate(spy);
+    t.viewModel.submitUnlistedLanguageModal({
+      name: "hello",
+      region: AndorraRegion,
+    });
+    t.viewModel.onCustomizeButtonClicked();
+    expect(spy).toHaveBeenCalledWith({ name: "hello", region: AndorraRegion });
+  });
+});
+
+describe("customize language modal", () => {
+  it("opens customize language modal when a language is selected", () => {
+    const t = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+    const spy = vi.fn();
+    t.viewModel.showCustomizeLanguageModal.requestUpdate(spy);
+
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    t.viewModel.onCustomizeButtonClicked();
+
+    expect(spy).toHaveBeenCalledWith({});
+  });
+
+  it("populates script when a script is selected", () => {
+    const t = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+    const spy = vi.fn();
+    t.viewModel.showCustomizeLanguageModal.requestUpdate(spy);
+
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    const scriptViewModel = t.viewModel.listedScripts.value[0];
+    scriptViewModel.isSelected.requestUpdate(true);
+    t.viewModel.onCustomizeButtonClicked();
+
+    expect(spy).toHaveBeenCalledWith({ script: scriptViewModel.script });
+  });
+
+  it("sets customizations on submit", () => {
+    const t = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    t.viewModel.displayName.requestUpdate("mylang");
+
+    t.viewModel.submitCustomizeLangaugeModal({
+      region: AndorraRegion,
+      dialect: "abc",
+    });
+
+    expect(t.viewModel.customizations.value).toEqual({
+      customDisplayName: "mylang",
+      dialect: "abc",
+      region: AndorraRegion,
+    });
+  });
+
+  it("sets script on submit", () => {
+    const t = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+
+    t.viewModel.submitCustomizeLangaugeModal({
+      script: {
+        code: "abc",
+        name: "ABC Script",
+      },
+    });
+
+    expect(t.viewModel.selectedScript.value).toEqual({
+      code: "abc",
+      name: "ABC Script",
+    });
   });
 });
