@@ -9,8 +9,10 @@
 
   let {
     languageChooser,
+    _languageChooser,
   }: {
     languageChooser: SvelteViewModel<LanguageChooserViewModel>;
+    _languageChooser: LanguageChooserViewModel;
   } = $props();
 
   let isCreatingUnlisted = $state(false);
@@ -36,7 +38,7 @@
   let onOk = $state(() => {});
 
   function submitUnlisted(name: string, region: IRegion) {
-    languageChooser.submitUnlistedLanguageModal({ name, region });
+    _languageChooser.submitUnlistedLanguageModal({ name, region });
     modal.close();
   }
 
@@ -45,7 +47,7 @@
     region?: IRegion,
     dialect?: string
   ) {
-    languageChooser.submitCustomizeLangaugeModal({ script, region, dialect });
+    _languageChooser.submitCustomizeLangaugeModal({ script, region, dialect });
     modal.close();
   }
 </script>

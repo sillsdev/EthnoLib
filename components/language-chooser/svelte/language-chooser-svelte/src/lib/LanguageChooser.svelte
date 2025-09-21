@@ -18,7 +18,10 @@
     onOk: (orthography: IOrthography, languageTag?: string) => void;
   } = $props();
 
-  const viewModel = useViewModel(new LanguageChooserViewModel());
+  // HACK: Accessing the original _viewModel gets around bugs in useViewModel.
+  // useViewModel is broken and needs redesign.
+  const _viewModel = new LanguageChooserViewModel();
+  const viewModel = useViewModel(_viewModel);
 
   let orthography: IOrthography = $derived({
     language: viewModel.selectedLanguage,
@@ -73,11 +76,7 @@
         >
           <button
             class="card-body text-left"
-            onclick={() => {
-              console.log(viewModel.onCustomizeButtonClicked);
-              console.log(viewModel.displayName);
-              viewModel.onCustomizeButtonClicked();
-            }}
+            onclick={() => _viewModel.onCustomizeButtonClicked()}
           >
             <p class="card-title uppercase">
               {#if viewModel.selectedLanguage}
@@ -128,4 +127,4 @@
   </div>
 </div>
 
-<CustomizationModal languageChooser={viewModel} />
+<CustomizationModal languageChooser={viewModel} _languageChooser={_viewModel} />
