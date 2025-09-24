@@ -1,7 +1,7 @@
 import { Field } from "@ethnolib/state-management-core";
-import { Wrapped } from "./wrapped";
+import { SvelteField } from "./transform-view-model";
 
-export class SvelteField<T> implements Wrapped<T> {
+export class SvelteFieldImpl<T> implements SvelteField<T> {
   constructor(field: Field<T>) {
     this._innerField = field;
     this._state = $state(field.value);
