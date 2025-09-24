@@ -6,8 +6,8 @@
   import LanguageCard from "./LanguageCard.svelte";
   import ScriptCard from "./ScriptCard.svelte";
   import SearchIcon from "./SearchIcon.svelte";
-  import { LanguageChooserViewModel } from "@ethnolib/language-chooser-controller";
-  import { useViewModel } from "@ethnolib/state-management-svelte";
+  import { useLanguageChooserViewModel } from "@ethnolib/language-chooser-controller";
+  import { svelteViewModel } from "@ethnolib/state-management-svelte";
   import CustomizationModal from "./CustomizationModal.svelte";
 
   const {
@@ -18,10 +18,7 @@
     onOk: (orthography: IOrthography, languageTag?: string) => void;
   } = $props();
 
-  // HACK: Accessing the original _viewModel gets around bugs in useViewModel.
-  // useViewModel is broken and needs redesign.
-  const _viewModel = new LanguageChooserViewModel();
-  const viewModel = useViewModel(_viewModel);
+  const viewModel = svelteViewModel(useLanguageChooserViewModel());
 
   let orthography: IOrthography = $derived({
     language: viewModel.selectedLanguage,
@@ -53,7 +50,7 @@
       <div class="flex-1 overflow-y-auto min-h-0">
         {#each viewModel.listedLanguages
           .slice(0, 100)
-          .map(useViewModel) as lang}
+          .map(svelteViewModel) as lang}
           <LanguageCard viewModel={lang} />
           {#if lang.isSelected && viewModel.listedScripts.length > 0}
             <div class="ml-8 mb-4">
@@ -61,7 +58,7 @@
                 <p class="font-semibold text-sm">Select a script:</p>
               </div>
               <div class="grid grid-cols-3 gap-4">
-                {#each viewModel.listedScripts.map(useViewModel) as script}
+                {#each viewModel.listedScripts.map(svelteViewModel) as script}
                   <ScriptCard viewModel={script} />
                 {/each}
               </div>
@@ -76,7 +73,7 @@
         >
           <button
             class="card-body text-left"
-            onclick={() => _viewModel.onCustomizeButtonClicked()}
+            onclick={() => viewModel.onCustomizeButtonClicked()}
           >
             <p class="card-title uppercase">
               {#if viewModel.selectedLanguage}
@@ -127,4 +124,4 @@
   </div>
 </div>
 
-<CustomizationModal languageChooser={viewModel} _languageChooser={_viewModel} />
+<CustomizationModal languageChooser={viewModel} />

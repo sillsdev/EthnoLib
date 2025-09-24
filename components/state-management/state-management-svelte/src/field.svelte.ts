@@ -1,8 +1,9 @@
 import { Field } from "@ethnolib/state-management-core";
 import { SvelteField } from "./transform-view-model";
 
-export class SvelteFieldImpl<T> implements SvelteField<T> {
+export class SvelteFieldImpl<T> extends SvelteField<T> {
   constructor(field: Field<T>) {
+    super();
     this._innerField = field;
     this._state = $state(field.value);
     field.onUpdate = (newValue) => (this._state = newValue);

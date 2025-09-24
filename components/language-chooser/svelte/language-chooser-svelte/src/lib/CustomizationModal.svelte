@@ -3,16 +3,14 @@
   import UnlistedLanguageForm from "./UnlistedLanguageForm.svelte";
   import CustomizationForm from "./CustomizationForm.svelte";
   import type { SvelteViewModel } from "@ethnolib/state-management-svelte";
-  import { LanguageChooserViewModel } from "@ethnolib/language-chooser-controller";
+  import type { LanguageChooserViewModel } from "@ethnolib/language-chooser-controller";
 
   let modal: HTMLDialogElement;
 
   let {
     languageChooser,
-    _languageChooser,
   }: {
     languageChooser: SvelteViewModel<LanguageChooserViewModel>;
-    _languageChooser: LanguageChooserViewModel;
   } = $props();
 
   let isCreatingUnlisted = $state(false);
@@ -38,7 +36,7 @@
   let onOk = $state(() => {});
 
   function submitUnlisted(name: string, region: IRegion) {
-    _languageChooser.submitUnlistedLanguageModal({ name, region });
+    languageChooser.submitUnlistedLanguageModal({ name, region });
     modal.close();
   }
 
@@ -47,7 +45,7 @@
     region?: IRegion,
     dialect?: string
   ) {
-    _languageChooser.submitCustomizeLangaugeModal({ script, region, dialect });
+    languageChooser.submitCustomizeLangaugeModal({ script, region, dialect });
     modal.close();
   }
 </script>

@@ -8,8 +8,6 @@
     type IOrthography,
   } from "@ethnolib/find-language";
 
-  let { name }: { name: string } = $props();
-
   let showModal = $state(() => {});
   let orthography: IOrthography = $state({});
   let languageTag: string | undefined = $state();
