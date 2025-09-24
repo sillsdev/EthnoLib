@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { LanguageChooserViewModel } from "../src/view-models/language-chooser";
+import {
+  LanguageChooserViewModel,
+  useLanguageChooserViewModel,
+} from "../src/view-models/language-chooser";
 import { fakeLanguage } from "./fake-utils";
 import { type ILanguage, UNLISTED_LANGUAGE } from "@ethnolib/find-language";
 import { NorthernUzbekLanguage, WaataLanguage } from "./sample-data/languages";
@@ -19,7 +22,7 @@ class TestHeper {
         ? Array.from({ length: initialLanguageCount }, () => fakeLanguage())
         : undefined);
 
-    this.viewModel = new LanguageChooserViewModel({ initialLanguages: langs });
+    this.viewModel = useLanguageChooserViewModel({ initialLanguages: langs });
   }
 
   viewModel: LanguageChooserViewModel;

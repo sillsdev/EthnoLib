@@ -17,67 +17,31 @@ import { Field } from "@ethnolib/state-management-core";
 import { LanguageCardViewModel } from "./language-card";
 import { ScriptCardViewModel } from "./script-card";
 import { selectItem } from "../selectable";
-import {
-  defaultTranslations,
-  LanguageChooserTranslations,
-} from "./translations";
+import { defaultTranslations } from "./translations";
 
-interface ViewModelArgs {
+interface UseLanguageChooserParams {
   initialLanguages?: ILanguage[];
 }
 
-export class LanguageChooserViewModel {
-  constructor({ initialLanguages }: ViewModelArgs = {}) {
-    this.listedLanguages = new Field<LanguageCardViewModel[]>([]);
+export type LanguageChooserViewModel = ReturnType<
+  typeof useLanguageChooserViewModel
+>;
 
-    this.searchString = new Field("", () => {
-      this.onSearchStringUpdated();
-    });
-    this.tagPreview = new Field("");
-    this.displayName = new Field("", () => this.onDisplayNameChanged());
+export function useLanguageChooserViewModel(
+  params: UseLanguageChooserParams = {}
+) {
+  const { initialLanguages } = params;
 
-    this.customizations = new Field<ICustomizableLanguageDetails | undefined>(
-      undefined,
-      () => {
-        this.onCustomizationsChanged();
-      }
-    );
-
-    this.customLanguageTag = new Field("", () => {
-      this.onCustomLanguageTagChanged();
-    });
-
-    this.translations = new Field(defaultTranslations, () =>
-      this.onTranslationsChanged()
-    );
-
-    if (initialLanguages) {
-      this.appendLanguages(initialLanguages);
-    }
-
-    this.updateTagPreview();
-  }
-
-  readonly listedLanguages: Field<LanguageCardViewModel[]>;
-  readonly listedScripts = new Field<ScriptCardViewModel[]>([]);
-  readonly searchString: Field<string>;
-  readonly tagPreview: Field<string>;
-  readonly displayName: Field<string>;
-
-  readonly selectedLanguage = new Field<ILanguage | undefined>(undefined);
-  readonly selectedScript = new Field<IScript | undefined>(undefined);
-  readonly customizations: Field<ICustomizableLanguageDetails | undefined>;
-  readonly customLanguageTag: Field<string>;
-
-  readonly isReadyToSubmit = new Field(false);
-
-  readonly translations: Field<LanguageChooserTranslations>;
-
-  readonly showUnlistedLanguageModal = new Field<
+  const listedLanguages = new Field<LanguageCardViewModel[]>([]);
+  const listedScripts = new Field<ScriptCardViewModel[]>([]);
+  const tagPreview = new Field("");
+  const selectedLanguage = new Field<ILanguage | undefined>(undefined);
+  const selectedScript = new Field<IScript | undefined>(undefined);
+  const isReadyToSubmit = new Field(false);
+  const showUnlistedLanguageModal = new Field<
     ((populateWith: { name?: string; region?: IRegion }) => void) | undefined
   >(undefined);
-
-  readonly showCustomizeLanguageModal = new Field<
+  const showCustomizeLanguageModal = new Field<
     | ((populateWith: {
         script?: IScript;
         region?: IRegion;
@@ -86,188 +50,204 @@ export class LanguageChooserViewModel {
     | undefined
   >(undefined);
 
-  #currentSearchId = 0;
+  const searchString = new Field("", () => {
+    _onSearchStringUpdated();
+  });
 
-  private onSearchStringUpdated() {
-    this.onLanguageDeselected();
-    this.customizations.value = undefined;
-    this.updateTagPreview();
-    this.search(this.searchString.value);
-  }
+  const displayName = new Field("", () => _onDisplayNameChanged());
 
-  async search(query: string) {
-    this.listedLanguages.value = [];
-    if (query.length > 1) {
-      this.#currentSearchId++;
-      const searchId = this.#currentSearchId;
-      await asyncSearchForLanguage(query, (results) => {
-        if (searchId !== this.#currentSearchId) {
-          return false;
-        }
-        this.appendLanguages(results);
-        return true;
-      });
+  const customizations = new Field<ICustomizableLanguageDetails | undefined>(
+    undefined,
+    () => {
+      _onCustomizationsChanged();
     }
+  );
+
+  const customLanguageTag = new Field("", () => {
+    _onCustomLanguageTagChanged();
+  });
+
+  const translations = new Field(defaultTranslations, () =>
+    _onTranslationsChanged()
+  );
+
+  let _currentSearchId = 0;
+
+  function _onSearchStringUpdated() {
+    _onLanguageDeselected();
+    customizations.value = undefined;
+    _updateTagPreview();
+    search(searchString.value);
   }
 
-  private appendLanguages(languages: ILanguage[]) {
-    const baseIndex = this.listedLanguages.value.length;
+  function _appendLanguages(languages: ILanguage[]) {
+    const baseIndex = listedLanguages.value.length;
     const newLanguages = languages.map(
       (lang, i) =>
         new LanguageCardViewModel(lang, {
           onSelect: (isSelected) =>
             isSelected
-              ? this.onLanguageSelected(baseIndex + i)
-              : this.onLanguageDeselected(),
-          translations: this.translations.value,
+              ? _onLanguageSelected(baseIndex + i)
+              : _onLanguageDeselected(),
+          translations: translations.value,
         })
     );
 
-    this.listedLanguages.value = [
-      ...this.listedLanguages.value,
-      ...newLanguages,
-    ];
+    listedLanguages.value = [...listedLanguages.value, ...newLanguages];
   }
 
-  private onLanguageSelected(index: number) {
-    selectItem(index, this.listedLanguages.value);
-    this.selectedLanguage.value = this.listedLanguages.value[index].language;
-    this.selectedScript.value = undefined;
-    this.updateScriptList(this.selectedLanguage.value);
-    this.customizations.value = undefined;
-    this.onOrthographyChanged();
+  function _onLanguageSelected(index: number) {
+    selectItem(index, listedLanguages.value);
+    selectedLanguage.value = listedLanguages.value[index].language;
+    selectedScript.value = undefined;
+    _updateScriptList(selectedLanguage.value);
+    customizations.value = undefined;
+    _onOrthographyChanged();
   }
 
-  private onLanguageDeselected() {
-    this.selectedLanguage.value = undefined;
-    this.selectedScript.value = undefined;
-    this.onOrthographyChanged();
+  function _onLanguageDeselected() {
+    selectedLanguage.value = undefined;
+    selectedScript.value = undefined;
+    _onOrthographyChanged();
   }
 
-  private updateScriptList(selectedLanguage: ILanguage) {
-    if (selectedLanguage.scripts.length === 1) {
+  function _updateScriptList(selectedLang: ILanguage) {
+    if (selectedLang.scripts.length === 1) {
       // Automatically select a language's only script
-      this.setScriptList([]);
-      this.selectedScript.value = selectedLanguage.scripts[0];
+      _setScriptList([]);
+      selectedScript.value = selectedLang.scripts[0];
     } else {
-      this.setScriptList(selectedLanguage.scripts);
+      _setScriptList(selectedLang.scripts);
     }
   }
 
-  private setScriptList(scripts: IScript[]) {
-    this.listedScripts.value = scripts.map(
+  function _setScriptList(scripts: IScript[]) {
+    listedScripts.value = scripts.map(
       (script, i) =>
         new ScriptCardViewModel(script, {
           onSelect: (isSelected) =>
-            isSelected ? this.onScriptSelected(i) : this.onScriptDeselected(),
+            isSelected ? _onScriptSelected(i) : _onScriptDeselected(),
         })
     );
   }
 
-  private onScriptSelected(index: number) {
-    selectItem(index, this.listedScripts.value);
-    this.selectedScript.value = this.listedScripts.value[index].script;
-    this.onOrthographyChanged();
+  function _onScriptSelected(index: number) {
+    selectItem(index, listedScripts.value);
+    selectedScript.value = listedScripts.value[index].script;
+    _onOrthographyChanged();
   }
 
-  private onScriptDeselected() {
-    this.selectedScript.value = undefined;
-    this.onOrthographyChanged();
+  function _onScriptDeselected() {
+    selectedScript.value = undefined;
+    _onOrthographyChanged();
   }
 
-  private onDisplayNameChanged() {
-    this.customizations.value ??= {};
-    this.customizations.value.customDisplayName = this.displayName.value;
-    this.updateIsReadyToSubmit();
+  function _onDisplayNameChanged() {
+    customizations.value ??= {};
+    customizations.value.customDisplayName = displayName.value;
+    _updateIsReadyToSubmit();
   }
 
-  private onCustomizationsChanged() {
-    this.selectedLanguage.value ??= UNLISTED_LANGUAGE;
-    this.onOrthographyChanged();
+  function _onCustomizationsChanged() {
+    selectedLanguage.value ??= UNLISTED_LANGUAGE;
+    _onOrthographyChanged();
   }
 
-  private onCustomLanguageTagChanged() {
-    this.searchString.requestUpdate("");
-    this.tagPreview.value = this.customLanguageTag.value;
-    this.selectedLanguage.value = languageForManuallyEnteredTag(
-      this.customLanguageTag.value
+  function _onCustomLanguageTagChanged() {
+    searchString.requestUpdate("");
+    tagPreview.value = customLanguageTag.value;
+    selectedLanguage.value = languageForManuallyEnteredTag(
+      customLanguageTag.value
     );
-    this.onOrthographyChanged();
+    _onOrthographyChanged();
   }
 
-  private onOrthographyChanged() {
-    this.updateTagPreview();
-    this.updateDisplayName();
-    this.updateIsReadyToSubmit();
+  function _onOrthographyChanged() {
+    _updateTagPreview();
+    _updateDisplayName();
+    _updateIsReadyToSubmit();
   }
 
-  private updateTagPreview() {
-    this.tagPreview.value = createTagFromOrthography({
-      language: this.selectedLanguage.value,
-      script: this.selectedScript.value,
-      customDetails: this.selectedLanguage.value
-        ? this.customizations.value
-        : { dialect: this.searchString.value },
+  function _updateTagPreview() {
+    tagPreview.value = createTagFromOrthography({
+      language: selectedLanguage.value,
+      script: selectedScript.value,
+      customDetails: selectedLanguage.value
+        ? customizations.value
+        : { dialect: searchString.value },
     });
   }
 
-  private updateDisplayName() {
-    this.displayName.value =
-      this.customizations.value?.customDisplayName ??
-      defaultDisplayName(
-        this.selectedLanguage.value,
-        this.selectedScript.value
-      ) ??
+  function _updateDisplayName() {
+    displayName.value =
+      customizations.value?.customDisplayName ??
+      defaultDisplayName(selectedLanguage.value, selectedScript.value) ??
       "";
   }
 
-  private updateIsReadyToSubmit() {
-    this.isReadyToSubmit.value = isReadyToSubmit({
-      language: this.selectedLanguage.value,
-      script: this.selectedScript.value,
-      customDetails: this.customizations.value,
+  function _updateIsReadyToSubmit() {
+    isReadyToSubmit.value = canSubmitOrthography({
+      language: selectedLanguage.value,
+      script: selectedScript.value,
+      customDetails: customizations.value,
     });
   }
 
-  private onTranslationsChanged() {
+  function _onTranslationsChanged() {
     // Regenerate language list so new translations can be applied
-    const languages = this.listedLanguages.value.map((x) => x.language);
-    this.listedLanguages.value = [];
-    this.appendLanguages(languages);
+    const languages = listedLanguages.value.map((x) => x.language);
+    listedLanguages.value = [];
+    _appendLanguages(languages);
   }
 
-  public onCustomizeButtonClicked() {
-    if (
-      this.selectedLanguage.value &&
-      this.selectedLanguage.value.languageSubtag !== "qaa" &&
-      this.showCustomizeLanguageModal.value
-    ) {
-      this.showCustomizeLanguageModal.value({
-        script: this.selectedScript.value,
-      });
-    } else if (this.showUnlistedLanguageModal.value) {
-      this.showUnlistedLanguageModal.value({
-        name: this.customizations.value?.dialect,
-        region: this.customizations.value?.region,
+  // Public methods
+  async function search(query: string) {
+    listedLanguages.value = [];
+    if (query.length > 1) {
+      _currentSearchId++;
+      const searchId = _currentSearchId;
+      await asyncSearchForLanguage(query, (results) => {
+        if (searchId !== _currentSearchId) {
+          return false;
+        }
+        _appendLanguages(results);
+        return true;
       });
     }
   }
 
-  public submitUnlistedLanguageModal({
+  function onCustomizeButtonClicked() {
+    if (
+      selectedLanguage.value &&
+      selectedLanguage.value.languageSubtag !== "qaa" &&
+      showCustomizeLanguageModal.value
+    ) {
+      showCustomizeLanguageModal.value({
+        script: selectedScript.value,
+      });
+    } else if (showUnlistedLanguageModal.value) {
+      showUnlistedLanguageModal.value({
+        name: customizations.value?.dialect,
+        region: customizations.value?.region,
+      });
+    }
+  }
+
+  function submitUnlistedLanguageModal({
     name,
     region,
   }: {
     name: string;
     region: IRegion;
   }) {
-    this.customizations.requestUpdate({
+    customizations.requestUpdate({
       customDisplayName: name,
       dialect: name,
       region,
     });
   }
 
-  public submitCustomizeLangaugeModal({
+  function submitCustomizeLangaugeModal({
     script,
     region,
     dialect,
@@ -276,13 +256,41 @@ export class LanguageChooserViewModel {
     region?: IRegion;
     dialect?: string;
   }) {
-    this.customizations.requestUpdate({
+    customizations.requestUpdate({
       region,
       dialect,
-      customDisplayName: this.customizations.value?.customDisplayName,
+      customDisplayName: customizations.value?.customDisplayName,
     });
-    this.selectedScript.requestUpdate(script);
+    selectedScript.requestUpdate(script);
   }
+
+  if (initialLanguages) {
+    _appendLanguages(initialLanguages);
+  }
+  _updateTagPreview();
+
+  return {
+    // Fields
+    listedLanguages,
+    listedScripts,
+    searchString,
+    tagPreview,
+    displayName,
+    selectedLanguage,
+    selectedScript,
+    customizations,
+    customLanguageTag,
+    isReadyToSubmit,
+    translations,
+    showUnlistedLanguageModal,
+    showCustomizeLanguageModal,
+
+    // Methods
+    search,
+    onCustomizeButtonClicked,
+    submitUnlistedLanguageModal,
+    submitCustomizeLangaugeModal,
+  };
 }
 
 function hasValidDisplayName(selection: IOrthography) {
@@ -303,7 +311,7 @@ function hasValidDisplayName(selection: IOrthography) {
   );
 }
 
-export function isReadyToSubmit(selection: IOrthography): boolean {
+export function canSubmitOrthography(selection: IOrthography): boolean {
   return (
     !!selection.language &&
     hasValidDisplayName(selection) &&
