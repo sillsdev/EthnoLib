@@ -246,7 +246,7 @@ describe("Macrolanguage handling", () => {
   });
 
   // Make sure that the unusual language entries that don't behave as expected are still preserved in some form
-  // Langtags.json has anomalies/unique situations for "bnc", "aka", "nor", "hbs", "san", "zap" such that are usual code can't map them to individual languages
+  // Langtags.json has had anomalies/unique situations for "bnc", "aka", "nor", "hbs", "san", "zap" preventing our usual code from mapping them to individual languages
   // How we handle these cases may change, but make sure some result is always available for these
   it("should include results for unusual language situations", async () => {
     async function asyncExpectToFindResultByExonym(
@@ -380,7 +380,6 @@ describe("getLanguageBySubtag", () => {
     expect(getLanguageBySubtag("mg")?.iso639_3_code).toEqual("plt");
     expect(getLanguageBySubtag("zh")?.exonym).toEqual("Chinese");
     expect(getLanguageBySubtag("za")?.exonym).toEqual("Zhuang");
-    expect(getLanguageBySubtag("ak")?.iso639_3_code).toEqual("twi");
     expect(getLanguageBySubtag("bnc")?.iso639_3_code).toEqual("lbk");
     expect(getLanguageBySubtag("no")?.exonym).toEqual("Norwegian");
     expect(getLanguageBySubtag("sh")?.iso639_3_code).toEqual("hbs");
@@ -412,9 +411,6 @@ describe("getLanguageBySubtag", () => {
     expect(
       getLanguageBySubtag("za", defaultSearchResultModifier)?.exonym
     ).toEqual("Zhuang");
-    expect(
-      getLanguageBySubtag("ak", defaultSearchResultModifier)?.iso639_3_code
-    ).toEqual("twi");
     expect(
       getLanguageBySubtag("bnc", defaultSearchResultModifier)?.iso639_3_code
     ).toEqual("lbk");

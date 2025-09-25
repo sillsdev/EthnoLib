@@ -6,6 +6,8 @@ See also
 
   <!-- - https://issues.bloomlibrary.org/youtrack/issue/BL-12657/Issues-with-macrolanguage-codes-in-the-language-picker -->
 
+- https://writingsystems.info/topics/writingsystems/language-tagging/#macrolanguages
+
 - https://iso639-3.sil.org/about/scope#Macrolanguages
 - https://github.com/silnrsi/langtags/blob/master/doc/langtags.md#macro-languages
 - https://iso639-3.sil.org/code_tables/macrolanguage_mappings/
@@ -33,8 +35,6 @@ This package produces results in the form of `ILanguage` objects, which have 3 p
 The language data we use is primarily based on [langtags.json](https://ldml.api.sil.org/langtags.json), which oftentimes lists the "representative language" data with the macrolanguage tag. From their documentation: ["Langtags.json unifies the representative language tags into the macro language tag set rather than having a separate tag set for them, and gives the tag for the tag set in terms of the macro language rather than the representative language."](https://github.com/silnrsi/langtags/blob/master/doc/langtags.md#macro-languages) **We incorporate all entries in langtags.json into individual languages, not macrolanguages, for our language results.** We are typically able to determine the individual language code from the "tags" field where it is in the list of equivalent tags, and so ensure that each of the language choices we offer the user are unique individual languages.
 
 For example: For the macrolanguage `pus` (Pashto), there are 4 relevant entries in langtags.json (listed below). From the first (ps-Arab-AF), we can detect that `pus`/`ps` is mapped to/equivalent to representative language `pbu` as described above. (`ps` is the ISO 639-1 equivalent of `pus`.) We therefore know the second entry (ps-Arab-PK) is also for language `pbu`. Since this language chooser delineates languages firstly by their ISO 639-3 codes, we combine the first two entries. We mark the result with `aliasMacrolanguage: pus`. The `pbt` and `pst` entries we straightforwardly handle as normal individual languages.
-
-There are a few entries in langtags.json for which we cannot straightforwardly determine the individual language. These we mark with `aliasMacrolanguage: unknown` and keep the iso639-3 code despite it being a macrolanguage code. For the react language chooser, the desired behavior for these situations should be handled in search result modifiers. As of February 2025, these entries are `bnc`, `nor`, `san`, `hbs`, and `zap`. Other unusual situations we are aware of are `aka` and `zhx`, these may also warrant special checking.
 
 ```
     {
@@ -110,3 +110,33 @@ There are a few entries in langtags.json for which we cannot straightforwardly d
 ### Stripping the "(macrolanguage)" Parentheticals
 
 Some entries in langtags.json contain "macrolanguage" in the language name, and yet contain the only data present for the representative language for that macrolanguage. For example, Dogri macrolanguage code is doi and Dogri individual language code is dgo. There are 4 entries with "iso639_3": "doi", all of which have "name": "Dogri (macrolanguage)", and dgo tags in the tags field which lists equivalent tags. The code dgo does not appear anywhere in langtags.json outside of these 4 entries. We are therefore interpreting data from these entries as applying to the individual language, and simply stripping "(macrolanguage)" wherever we find it. When we create macrolanguage search results, we set `isMacrolanguage=true`.
+
+### Anomalies and Special Situations
+
+Last updated September 2025. These should be specially checked and handled as our language data may be weird or inaccurate.
+
+- `aka` - From the ISO 639-3 site, [Akan is a macrolanguage](https://iso639-3.sil.org/code/aka) (ISO639-3: `aka`; ISO639-1: `ak`) containing individual languages Twi (ISO639-3: `twi`; ISO639-1: `tw`) and Fanti (ISO639-3: `fat`). The langtags.json entry lists `ak`, `fat`, and `tw` as equivalent and provides no names other than "Akan". In Ethnologue, [Akan has a page](https://www.ethnologue.com/language/aka/) that lists Twi and Fanti as mutually intelligible dialects, among others.
+
+  Since we don't have enough data from langtags.json to make any individual language entries, we give one result with codes "aka" and "ak" but don't mark it as a macrolanguage. For now this is somewhat consistent with Ethnologue, which treats it as a single language, and there is no point discouraging people from using it in the absence of alternatives.
+
+  See also https://unicode-org.atlassian.net/browse/CLDR-10293 and https://unicode-org.atlassian.net/browse/CLDR-17323; The current langtags.json handling of these languages might not be desired or permanent.
+
+- `hbs` - [Serbo-Croatian is a macrolanguage](https://iso639-3.sil.org/code/hbs) (ISO639-3: `hbs`; ISO639-1: `sh`) containing individual languages Bosnian (ISO639-3: `bos`; ISO639-1: `bs`), Montenegrin(ISO639-3: `cnr`), Croatian(ISO639-3: `hrv`; ISO639-1: `hr`) and Serbian(ISO639-3: `srp`; ISO639-1: `sr`). Contrary to its usual behavior, langtags.json has a separate entry for Serbo-Croatian which that is not mappable to any individual language.
+
+  We straightforwardly give an `hbs` macrolanguage result as well as all the individual language results as per usual.
+
+- `nor` - [Norwegian is a macrolanguage](https://iso639-3.sil.org/code/nor) (ISO639-3: `nor`; ISO639-1: `no`) with child languages Bokmål (`nob`) and Nynorsk (`nno`), but [Ethnologue treats it as a single language](https://www.ethnologue.com/language/nor/) and says "Norwegian has 2 written standards, both of which are assigned codes in the ISO 639-3 standard: Bokmål Norwegian (nob) and Nynorsk Norwegian (nno)."
+
+  Currently we give `nor` as a macrolanguage as well as `nob` and `nno` as individual languages.
+
+- `san` - [Sanskrit is a macrolanguage](https://iso639-3.sil.org/code/san) (ISO639-3: `san`; ISO639-1: `sa`) with child languages child languages Classical Sanskrit (`cls`) and Vedic Sanskrit (`vsn`). It has a single [Ethnologue page](https://www.ethnologue.com/language/san/) which states "Sanskrit has 2 individual historical languages, both of which are assigned codes in the ISO 639-3 standard: Classical Sanskrit (cls) and Vedic Sanskrit (vsn)."
+
+  Since we have no differentiated information on `cls` or `vsn` from langtags.json and there is only 1 Ethnologue page, for now we are giving a single entry for Sanskrit and not marking it as a macrolanguage.
+
+- `zap` - [Zapotec is a macrolanguage](https://iso639-3.sil.org/code/zap) with many child languages. Due to a known error, two of its child languages, Isthmus Zapotec (`zai`) and Las Delicias Zapotec (`zcd`) are currently being conflated in langtags.json, so both of their data shows up in a single zap entry. Langtags.json has an entry for `zap-Latn-MX` which lists `zap`, `zai`, and `zcd` as equivalent. The `zai` [Ethnologue page](https://www.ethnologue.com/language/zai/) has "Dialects - None known. 18% intelligibility of Santa María Petapa [zpe] (most similar). A member of macrolanguage Zapotec [zap]". The `zcd` [Ethnologue page](https://www.ethnologue.com/language/zcd/) has "Dialects - None known. Reportedly most similar to Rincón Zapotec [zar]. A member of macrolanguage Zapotec [zap]". CLDR lists "zai" to "zap" for macrolanguage (but doesn't mention "zcd").
+
+  For now we remove the names which obviously refer to Las Delicias Zapotec or Isthmus Zapotec from the `zap` macrolanguage card; `zai` and `zcd` do not have their own cards. We hope the bug causing the langtags.json error will be resolved soon.
+
+- `zhx` - [This is a ISO 639-5 Collective code](https://iso639-3.sil.org/code/zhx) which has an entry in langtags.json with script with script `nshu`. It does not have an ethnologue page and is the only ISO 639-5 code that we have found in langtags.json.
+
+  We do not include `zhx` in our search results.

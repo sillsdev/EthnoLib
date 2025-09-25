@@ -34,6 +34,7 @@ const DEFAULT_EXCLUDED_SCRIPT_CODES = new Set([
   "Zmth",
   "Zsye",
   "Zsym",
+  "Zzzz",
 ]);
 
 const latinScriptData = { code: "Latn", name: "Latin" } as IScript;
@@ -75,6 +76,27 @@ function simplifyEnglishResult(results: ILanguage[]): ILanguage[] {
     } as ILanguage;
   }
   return substituteInModifiedEntry("eng", getSimplifiedEnglishResult, results);
+}
+
+// The data (i.e. scripts) ends up in `twi` but we only want one entry for Akan, with `aka`. Move the data to the `aka` entry.
+// See find-language/macrolanguageNotes.md for more details.
+function modifyAkaLanguageResult(
+  langCode: string,
+  results: ILanguage[]
+): ILanguage[] {
+  function getImprovedAkaResult(result: ILanguage) {
+    return {
+      ...result,
+      scripts: [
+        { code: "Latn", name: "Latin", languageNameInScript: "Akan" },
+        { code: "Arab", name: "Arabic" },
+        { code: "Brai", name: "Braille" },
+      ],
+      isMacrolanguage: false,
+      parentMacrolanguage: undefined,
+    } as ILanguage;
+  }
+  return substituteInModifiedEntry(langCode, getImprovedAkaResult, results);
 }
 
 // Replace the French result with a simpler version that only has "Francais", "French" and the code on it
@@ -162,6 +184,40 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
   return substituteInModifiedEntry("cmn", getSimplifiedChineseResult, results);
 }
 
+export function makeIntoMacrolanguageEntry(
+  langCode: string,
+  results: ILanguage[]
+): ILanguage[] {
+  return substituteInModifiedEntry(
+    langCode,
+    (result) => ({
+      ...result,
+      isMacrolanguage: true,
+      autonym: "",
+      regionNamesForSearch: [], // We don't want these to come up in region searches
+      names: [],
+      scripts: result.script ? [result.script] : [],
+      alternativeTags: [],
+    }),
+    results
+  );
+}
+
+export function markAsIndividualLanguage(
+  langCode: string,
+  results: ILanguage[]
+): ILanguage[] {
+  return substituteInModifiedEntry(
+    langCode,
+    (result) => ({
+      ...result,
+      isMacrolanguage: false,
+      parentMacrolanguage: undefined,
+    }),
+    results
+  );
+}
+
 export function rawIsoCode(result: ILanguage) {
   return stripDemarcation(result.iso639_3_code);
 }
@@ -188,6 +244,7 @@ export function filterOnLanguageCode(
 
 const EXCLUDED_PROBLEMATIC_LANGUAGE_CODES = new Set([
   "zho", // This would be the macrolanguage card. For Chinese in particular we want only 1 card and will put the zh tag on it.
+  "twi", // Akan. Until we get clarity/more language data, we're showing just 1 language option for Akan, namely `aka`, and not marking it as a macrolanguage. See find-language/macrolanguageNotes.md.
   "zhx", // I don't understand why this entry is in langtags.json. It is an ISO-639-5 (language collection) code covering the zho macrolanguage, has no Ethnologue entry, only listed script is Nshu
 ]);
 
@@ -226,6 +283,10 @@ export function defaultSearchResultModifier(
   searchString: string
 ): ILanguage[] {
   let modifiedResults: ILanguage[] = demarcateResults(results, searchString);
+  modifiedResults = filterOnLanguageCode(
+    (code) => !EXCLUDED_PROBLEMATIC_LANGUAGE_CODES.has(code),
+    modifiedResults
+  );
   modifiedResults = prioritizeLangByKeywords(
     ["english"],
     searchString,
@@ -255,23 +316,17 @@ export function defaultSearchResultModifier(
   modifiedResults = simplifyChineseResult(modifiedResults);
   modifiedResults = simplifySpanishResult(modifiedResults);
 
-  // TODO future work: handle these cases more carefully: "bnc", "aka", "nor", "hbs", "san", "zap"
-  // These are cases where it is not clear in langtags.json or not well defined what individual langs these macrolanguage codes are representing.
-  // Currently, they are left in the results with iso639_3 code still being the macrolanguage code
+  // The following are necessary because rare anomalies in langtags.json prevent us from mapping them in the usual way
   // See find-language/macrolanguageNotes.md
-  // For nor, I think we should treat is as a indiv language with two scripts, Bokmål and Nynorsk - ? https://www.ethnologue.com/language/nor/
-  // For san: according to langtags.txt, san = cls = vsn. Both cls and vsn are individual ISO639-3 languages. Not sure which to use.
-  // Look into aka and hbs further
+  modifiedResults = modifyAkaLanguageResult("aka", modifiedResults);
+  modifiedResults = markAsIndividualLanguage("san", modifiedResults);
+  modifiedResults = makeIntoMacrolanguageEntry("zap", modifiedResults);
 
   // Filters out mis (Uncoded languages), mul (Multiple languages), zxx (no linguistic content), und (Undetermined)
   modifiedResults = modifiedResults.filter(
     (r) => r.languageType !== LanguageType.Special
   );
 
-  modifiedResults = filterOnLanguageCode(
-    (code) => !EXCLUDED_PROBLEMATIC_LANGUAGE_CODES.has(code),
-    modifiedResults
-  );
   modifiedResults = filterOnLanguageCode(
     (code) => !getDefaultExcludedHistoricLanguageCodes().has(code),
     modifiedResults
