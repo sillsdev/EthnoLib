@@ -70,8 +70,7 @@ export function getMaximalLangtag(langtag: string): string | undefined {
   return lookup.get(langtag.toLowerCase());
 }
 
-// This is pretty naive. If you are using the language-chooser-react-hook and there may be a manually entered language
-// tag or bracket demarcation, use createTagFromOrthography in language-chooser-react-hook instead
+// This is pretty naive. Exported for unit testing, but most situations should use createTagFromOrthography instead
 export function createTag({
   languageCode,
   scriptCode,
@@ -101,10 +100,9 @@ export function createTag({
   if (!languageCode || dialectCode) {
     tag += "-x-";
   }
-  // Subtags have a maximum length of 8 characters, so if dialectCode is longer than that, truncate it
-  // when appending to the tag.  See BL-14806.
+  // Dialect code should have already been formatted, i.e. by formatDialectCode
   if (dialectCode) {
-    tag += `${dialectCode.length <= 8 ? dialectCode : dialectCode.slice(0, 8)}`;
+    tag += `${dialectCode}`;
   }
   return getShortestSufficientLangtag(tag) || tag;
 }
@@ -240,6 +238,22 @@ export function defaultRegionForLangTag(
   }
 }
 
+/// Returns a code for use in the Private Use section of a BCP 47 tag,
+/// made up of strings of up to 8 alphanumeric characters, separated by hyphens.
+/// Removes non-alphanumeric characters (other than hyphens) and truncates each section to 8 characters
+/// Enhance: we could further enforce BCP-47 rules, e.g. minimum length of each section
+/// see https://www.rfc-editor.org/rfc/bcp/bcp47.txt
+export function formatDialectCode(dialect?: string): string {
+  if (!dialect) return "";
+  return dialect
+    .split("-")
+    .map((s) => {
+      const alphanumeric = s.replace(/[^a-zA-Z0-9]/g, "");
+      return alphanumeric.slice(0, 8);
+    })
+    .join("-");
+}
+
 export function createTagFromOrthography(orthography: IOrthography): string {
   const strippedOrthography = deepStripDemarcation(orthography);
   if (isManuallyEnteredTagLanguage(strippedOrthography.language)) {
@@ -259,7 +273,7 @@ export function createTagFromOrthography(orthography: IOrthography): string {
     languageCode: strippedOrthography.language?.languageSubtag,
     scriptCode,
     regionCode: strippedOrthography.customDetails?.region?.code,
-    dialectCode: strippedOrthography.customDetails?.dialect,
+    dialectCode: formatDialectCode(strippedOrthography.customDetails?.dialect),
   });
 }
 
