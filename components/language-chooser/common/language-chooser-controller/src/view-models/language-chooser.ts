@@ -212,6 +212,8 @@ export function useLanguageChooserViewModel(
     ) {
       showCustomizeLanguageModal.value({
         script: selectedScript.value,
+        dialect: customizations.value?.dialect,
+        region: customizations.value?.region,
       });
     } else if (showUnlistedLanguageModal.value) {
       showUnlistedLanguageModal.value({

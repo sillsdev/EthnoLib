@@ -2,9 +2,11 @@
   import { getAllRegions, type IRegion } from "@ethnolib/find-language";
 
   let {
+    populate = $bindable(),
     onSubmitClicked = $bindable(),
     submit,
   }: {
+    populate: (fields: { name?: string; region?: IRegion }) => void;
     onSubmitClicked: () => void;
     submit: (name: string, region: IRegion) => void;
   } = $props();
@@ -17,6 +19,12 @@
   let showErrors = $state(false);
   let isNameInvalid = $derived(showErrors && !name);
   let isRegionInvalid = $derived(showErrors && !regionCode);
+
+  populate = (fields) => {
+    name = fields.name ?? "";
+    regionCode = fields.region?.code ?? "";
+    showErrors = false;
+  };
 
   onSubmitClicked = () => {
     showErrors = true;

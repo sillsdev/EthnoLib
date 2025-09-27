@@ -525,6 +525,52 @@ describe("customize language modal", () => {
     expect(spy).toHaveBeenCalledWith({ script: scriptViewModel.script });
   });
 
+  it("populates with dialect when custom dialect was selected", () => {
+    const t = new TestHeper({ initialLanguageCount: 2 });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+
+    t.viewModel.submitCustomizeLangaugeModal({
+      dialect: "hello",
+    });
+
+    const spy = vi.fn();
+    t.viewModel.showCustomizeLanguageModal.requestUpdate(spy);
+    t.viewModel.onCustomizeButtonClicked();
+
+    expect(spy).toHaveBeenCalledWith({ dialect: "hello" });
+  });
+
+  it("populates with region when custom dialect was selected", () => {
+    const t = new TestHeper({ initialLanguageCount: 2 });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+
+    t.viewModel.submitCustomizeLangaugeModal({
+      region: AndorraRegion,
+    });
+
+    const spy = vi.fn();
+    t.viewModel.showCustomizeLanguageModal.requestUpdate(spy);
+    t.viewModel.onCustomizeButtonClicked();
+
+    expect(spy).toHaveBeenCalledWith({ region: AndorraRegion });
+  });
+
+  it("resets when a new language is selected", () => {
+    const t = new TestHeper({ initialLanguageCount: 2 });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+
+    t.viewModel.submitCustomizeLangaugeModal({
+      dialect: "hello",
+    });
+    t.viewModel.listedLanguages.value[1].isSelected.requestUpdate(true);
+
+    const spy = vi.fn();
+    t.viewModel.showCustomizeLanguageModal.requestUpdate(spy);
+    t.viewModel.onCustomizeButtonClicked();
+
+    expect(spy).toHaveBeenCalledWith({});
+  });
+
   it("sets customizations on submit", () => {
     const t = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
     t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);

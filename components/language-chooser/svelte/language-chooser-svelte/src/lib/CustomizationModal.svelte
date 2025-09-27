@@ -15,13 +15,23 @@
 
   let isCreatingUnlisted = $state(false);
 
-  languageChooser.showUnlistedLanguageModal = () => {
+  let populateUnlistedForm = $state(
+    (fields: { name?: string; region?: IRegion }) => {}
+  );
+
+  let populateCustomizeForm = $state(
+    (fields: { script?: IScript; region?: IRegion; dialect?: string }) => {}
+  );
+
+  languageChooser.showUnlistedLanguageModal = (fields) => {
     isCreatingUnlisted = true;
+    populateUnlistedForm(fields);
     modal.showModal();
   };
 
-  languageChooser.showCustomizeLanguageModal = () => {
+  languageChooser.showCustomizeLanguageModal = (fields) => {
     isCreatingUnlisted = false;
+    populateCustomizeForm(fields);
     modal.showModal();
   };
 
@@ -56,11 +66,13 @@
 
     {#if isCreatingUnlisted}
       <UnlistedLanguageForm
+        bind:populate={populateUnlistedForm}
         bind:onSubmitClicked={onOk}
         submit={submitUnlisted}
       />
     {:else}
       <CustomizationForm
+        bind:populate={populateCustomizeForm}
         bind:onSubmitClicked={onOk}
         submit={submitCustomization}
       />

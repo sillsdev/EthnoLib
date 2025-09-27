@@ -7,9 +7,15 @@
   } from "@ethnolib/find-language";
 
   let {
+    populate = $bindable(),
     onSubmitClicked = $bindable(),
     submit,
   }: {
+    populate: (withFields: {
+      script?: IScript;
+      region?: IRegion;
+      dialect?: string;
+    }) => void;
     onSubmitClicked: () => void;
     submit: (script?: IScript, region?: IRegion, name?: string) => void;
   } = $props();
@@ -20,6 +26,12 @@
   let scriptCode: string | undefined = $state();
   let regionCode: string | undefined = $state();
   let name: string | undefined = $state();
+
+  populate = (fields) => {
+    scriptCode = fields.script?.code;
+    regionCode = fields.region?.code;
+    name = fields.dialect;
+  };
 
   onSubmitClicked = () => {
     const region = regions.find((r) => r.code === regionCode);
