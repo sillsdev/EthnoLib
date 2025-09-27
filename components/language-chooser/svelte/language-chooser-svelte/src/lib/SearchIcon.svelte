@@ -1,5 +1,7 @@
 <script lang="ts"></script>
 
+<!-- Copied from example code at https://daisyui.com/components/input/#text-input-with-text-label-inside -->
+
 <svg
   class="h-[1em] opacity-50"
   xmlns="http://www.w3.org/2000/svg"
