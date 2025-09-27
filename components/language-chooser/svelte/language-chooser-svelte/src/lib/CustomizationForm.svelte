@@ -40,6 +40,11 @@
   };
 </script>
 
+<div class="card card-border border-info text-sm mb-4 p-4">
+  If you found the main language but need to change some of the specifics like
+  Script or Dialect, you can do that here.
+</div>
+
 <div class="mb-4">
   <label>
     <span class="font-semibold opacity-70">Script</span>

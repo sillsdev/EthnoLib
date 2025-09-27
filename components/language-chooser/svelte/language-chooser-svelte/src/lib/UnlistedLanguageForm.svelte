@@ -35,6 +35,11 @@
   };
 </script>
 
+<div class="card card-border border-info text-sm mb-4 p-4">
+  If you cannot find a language and it does not appear in ethnologue.com, you
+  can instead define the language here.
+</div>
+
 <div class="mb-4">
   <label>
     <span class="font-semibold opacity-70">Name</span>
