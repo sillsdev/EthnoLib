@@ -10,6 +10,7 @@
   import { useLanguageChooserViewModel } from "@ethnolib/language-chooser-controller";
   import { svelteViewModel } from "@ethnolib/state-management-svelte";
   import CustomizationModal from "./CustomizationModal.svelte";
+  import { tick } from "svelte";
 
   const {
     onDismiss,
@@ -30,6 +31,7 @@
   let languageTag = $derived(createTagFromOrthography(orthography));
 
   let closeModal = $state(() => {});
+  let scrollContainer: HTMLElement;
 
   viewModel.promptForCustomTag = (_default?: string) => {
     const tag = window.prompt(
@@ -43,6 +45,29 @@
       closeModal();
     }
   };
+
+  async function onLanguageSelected(cardElement: HTMLElement) {
+    // Allow scripts to appear or disappear before scrolling
+    await tick();
+    scrollToSelectedCard(cardElement);
+  }
+
+  async function scrollToSelectedCard(cardElement: HTMLElement) {
+    if (!scrollContainer || !cardElement) return;
+
+    // Get the position of the card relative to the scroll container
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const cardRect = cardElement.getBoundingClientRect();
+
+    // Calculate the scroll position needed to bring the card to the top
+    const scrollTop =
+      scrollContainer.scrollTop + (cardRect.top - containerRect.top);
+
+    scrollContainer.scrollTo({
+      top: scrollTop,
+      behavior: "smooth",
+    });
+  }
 </script>
 
 <div class="h-full flex flex-col">
@@ -63,11 +88,11 @@
         </label>
       </div>
 
-      <div class="flex-1 overflow-y-auto min-h-0">
+      <div class="flex-1 overflow-y-auto min-h-0" bind:this={scrollContainer}>
         {#each viewModel.listedLanguages
           .slice(0, 100)
           .map(svelteViewModel) as lang}
-          <LanguageCard viewModel={lang} />
+          <LanguageCard viewModel={lang} onSelect={onLanguageSelected} />
           {#if lang.isSelected && viewModel.listedScripts.length > 0}
             <div class="ml-8 mb-4">
               <div class="py-2">
