@@ -13,10 +13,13 @@
 
   let {
     languageChooser,
+    closeModal = $bindable(),
   }: {
     languageChooser: SvelteViewModel<LanguageChooserViewModel>;
+    closeModal: () => void;
   } = $props();
 
+  closeModal = () => modal.close();
   let isCreatingUnlisted = $state(false);
 
   let populateUnlistedForm = $state(
@@ -62,18 +65,6 @@
     languageChooser.submitCustomizeLangaugeModal({ script, region, dialect });
     modal.close();
   }
-
-  function promptForCustomTag() {
-    const tag = window.prompt(
-      "If this user interface is not offering you a language tag that you know is valid ISO 639 code, you can enter it here:"
-    );
-    if (tag && !isValidBcp47Tag(tag)) {
-      alert(`This is not in a valid IETF BCP 47 format: ${tag}`);
-    } else if (tag) {
-      languageChooser.customLanguageTag = tag;
-      modal.close();
-    }
-  }
 </script>
 
 <dialog bind:this={modal} class="modal">
@@ -96,7 +87,9 @@
 
     <div class="flex mt-8">
       <div class="flex-1">
-        <button class="btn btn-ghost" onclick={promptForCustomTag}
+        <button
+          class="btn btn-ghost"
+          onclick={() => languageChooser.promptForCustomTag()}
           >Enter Custom Tag</button
         >
       </div>

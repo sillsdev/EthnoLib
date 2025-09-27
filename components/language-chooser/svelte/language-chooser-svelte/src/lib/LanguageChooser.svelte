@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     createTagFromOrthography,
+    isValidBcp47Tag,
     type IOrthography,
   } from "@ethnolib/find-language";
   import LanguageCard from "./LanguageCard.svelte";
@@ -27,6 +28,21 @@
   });
 
   let languageTag = $derived(createTagFromOrthography(orthography));
+
+  let closeModal = $state(() => {});
+
+  viewModel.promptForCustomTag = (_default?: string) => {
+    const tag = window.prompt(
+      "If this user interface is not offering you a language tag that you know is valid ISO 639 code, you can enter it here:",
+      _default
+    );
+    if (tag && !isValidBcp47Tag(tag)) {
+      alert(`This is not in a valid IETF BCP 47 format: ${tag}`);
+    } else if (tag) {
+      viewModel.customLanguageTag = tag;
+      closeModal();
+    }
+  };
 </script>
 
 <div class="h-full flex flex-col">
@@ -69,14 +85,16 @@
 
       <div class="flex-none py-2">
         <div
-          class="card card-xs card-border border-base-300 bg-base-100 hover:bg-base-300 shadow-xl w-48 pl-2"
+          class="card card-xs card-border border-base-300 bg-base-100 hover:bg-base-300 shadow-xl w-48 px-2"
         >
           <button
             class="card-body text-left"
             onclick={() => viewModel.onCustomizeButtonClicked()}
           >
             <p class="card-title uppercase">
-              {#if viewModel.selectedLanguage}
+              {#if viewModel.customLanguageTag}
+                Edit Language Tag
+              {:else if viewModel.selectedLanguage}
                 Customize
               {:else}
                 Unlisted Language
@@ -124,4 +142,4 @@
   </div>
 </div>
 
-<CustomizationModal languageChooser={viewModel} />
+<CustomizationModal languageChooser={viewModel} bind:closeModal />

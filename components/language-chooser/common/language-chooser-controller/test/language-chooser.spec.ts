@@ -386,6 +386,13 @@ describe("custom language tag", () => {
 
     expect(test.viewModel.selectedScript.value).toBeUndefined();
   });
+
+  it("is cleared when search string changes", () => {
+    const test = new TestHeper();
+    test.viewModel.customLanguageTag.requestUpdate("abc");
+    test.viewModel.searchString.requestUpdate("x");
+    expect(test.viewModel.customLanguageTag.value).toBe("");
+  });
 });
 
 describe("is ready to submit", () => {
@@ -603,5 +610,16 @@ describe("customize language modal", () => {
       code: "abc",
       name: "ABC Script",
     });
+  });
+});
+
+describe("edit custom tag prompt", () => {
+  it("shows when custom tag exists and customization button is clicked", () => {
+    const t = new TestHeper();
+    const spy = vi.fn();
+    t.viewModel.customLanguageTag.requestUpdate("abc");
+    t.viewModel.promptForCustomTag.requestUpdate(spy);
+    t.viewModel.onCustomizeButtonClicked();
+    expect(spy).toHaveBeenCalledWith("abc");
   });
 });

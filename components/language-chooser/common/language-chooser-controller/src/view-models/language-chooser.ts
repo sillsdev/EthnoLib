@@ -41,16 +41,25 @@ export function useLanguageChooserViewModel(
   const selectedScript = new Field<IScript | undefined>(undefined);
   const isReadyToSubmit = new Field(false);
   const showUnlistedLanguageModal = new Field<
-    ((populateWith: { name?: string; region?: IRegion }) => void) | undefined
-  >(undefined);
+    (populateWith: { name?: string; region?: IRegion }) => void
+  >(
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    () => {}
+  );
   const showCustomizeLanguageModal = new Field<
-    | ((populateWith: {
-        script?: IScript;
-        region?: IRegion;
-        dialect?: string;
-      }) => void)
-    | undefined
-  >(undefined);
+    (populateWith: {
+      script?: IScript;
+      region?: IRegion;
+      dialect?: string;
+    }) => void
+  >(
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    () => {}
+  );
+  const promptForCustomTag = new Field<(populateWith?: string) => void>(
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    () => {}
+  );
 
   const searchString = new Field("", () => {
     _onSearchStringUpdated();
@@ -73,6 +82,7 @@ export function useLanguageChooserViewModel(
 
   function _onSearchStringUpdated() {
     _onLanguageDeselected();
+    customLanguageTag.value = "";
     customizations.value = undefined;
     _updateTagPreview();
     search(searchString.value);
@@ -149,11 +159,13 @@ export function useLanguageChooserViewModel(
   }
 
   function _onCustomLanguageTagChanged() {
-    searchString.requestUpdate("");
-    tagPreview.value = customLanguageTag.value;
+    searchString.value = "";
+    listedLanguages.value = [];
     selectedLanguage.value = languageForManuallyEnteredTag(
       customLanguageTag.value
     );
+    selectedScript.value = undefined;
+    tagPreview.value = customLanguageTag.value;
     _onOrthographyChanged();
   }
 
@@ -205,17 +217,18 @@ export function useLanguageChooserViewModel(
   }
 
   function onCustomizeButtonClicked() {
-    if (
+    if (customLanguageTag.value) {
+      promptForCustomTag.value(customLanguageTag.value);
+    } else if (
       selectedLanguage.value &&
-      selectedLanguage.value.languageSubtag !== "qaa" &&
-      showCustomizeLanguageModal.value
+      selectedLanguage.value.languageSubtag !== "qaa"
     ) {
       showCustomizeLanguageModal.value({
         script: selectedScript.value,
         dialect: customizations.value?.dialect,
         region: customizations.value?.region,
       });
-    } else if (showUnlistedLanguageModal.value) {
+    } else {
       showUnlistedLanguageModal.value({
         name: customizations.value?.dialect,
         region: customizations.value?.region,
@@ -273,6 +286,7 @@ export function useLanguageChooserViewModel(
     isReadyToSubmit,
     showUnlistedLanguageModal,
     showCustomizeLanguageModal,
+    promptForCustomTag,
 
     // Methods
     search,
