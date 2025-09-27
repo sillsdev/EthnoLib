@@ -291,7 +291,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
         )}
         <div
           onClick={(event) => {
-            if (event.ctrlKey || event.shiftKey) {
+            if (event.ctrlKey) {
               props.promptForManualTagEntry(undefined, true);
             }
           }}
