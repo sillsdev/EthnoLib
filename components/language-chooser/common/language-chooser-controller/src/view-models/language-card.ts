@@ -1,46 +1,52 @@
 import { ILanguage } from "@ethnolib/find-language";
 import { Field } from "@ethnolib/state-management-core";
-import { Selectable } from "../selectable";
-import { LanguageChooserTranslations } from "./translations";
 
 interface ViewModelArgs {
   onSelect?: (isSelected: boolean) => void;
-  translations: LanguageChooserTranslations;
 }
 
-export class LanguageCardViewModel implements Selectable {
-  constructor(language: ILanguage, { onSelect, translations }: ViewModelArgs) {
-    this.language = language;
+export type LanguageCardViewModel = ReturnType<
+  typeof useLanguageChardViewModel
+>;
 
-    this.title = language.autonym ?? language.exonym;
-
-    if (language.autonym && language.autonym !== language.exonym) {
-      this.secondTitle = language.exonym;
+export function useLanguageChardViewModel(
+  language: ILanguage,
+  { onSelect }: ViewModelArgs = {}
+) {
+  const isSelected = new Field(false, (isSelected) => {
+    if (onSelect) {
+      onSelect(isSelected);
     }
+  });
 
-    if (language.regionNamesForDisplay || language.isMacrolanguage) {
-      this.description = language.isMacrolanguage
+  const title = language.autonym ?? language.exonym;
+
+  const secondTitle =
+    language.autonym && language.autonym !== language.exonym
+      ? language.exonym
+      : undefined;
+
+  function description(
+    translations: {
+      macrolanguageLabel: string;
+      macrolanguageOfRegionLabel: (regions: string) => string;
+      languageOfRegionLabel: (regions: string) => string;
+    } = {
+      macrolanguageLabel: "A macrolanguage",
+      macrolanguageOfRegionLabel: (regions) => `A macrolanguage of ${regions}`,
+      languageOfRegionLabel: (regions: string) => `A language of ${regions}`,
+    }
+  ) {
+    return language.regionNamesForDisplay || language.isMacrolanguage
+      ? language.isMacrolanguage
         ? language.regionNamesForDisplay
           ? translations.macrolanguageOfRegionLabel(
               language.regionNamesForDisplay
             )
           : translations.macrolanguageLabel
-        : translations.languageOfRegionLabel(language.regionNamesForDisplay);
-    }
-
-    this.isSelected = new Field(false, (isSelected) => {
-      if (onSelect) {
-        onSelect(isSelected);
-      }
-    });
+        : translations.languageOfRegionLabel(language.regionNamesForDisplay)
+      : undefined;
   }
 
-  readonly language: ILanguage;
-
-  // Display data
-  readonly title: string;
-  readonly secondTitle?: string;
-  readonly description?: string;
-
-  readonly isSelected: Field<boolean>;
+  return { language, isSelected, title, secondTitle, description };
 }

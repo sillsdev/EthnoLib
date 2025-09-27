@@ -7,7 +7,6 @@ import { fakeLanguage } from "./fake-utils";
 import { type ILanguage, UNLISTED_LANGUAGE } from "@ethnolib/find-language";
 import { NorthernUzbekLanguage, WaataLanguage } from "./sample-data/languages";
 import { AndorraRegion } from "./sample-data/regions";
-import { LanguageChooserTranslations } from "../src/view-models/translations";
 
 class TestParams {
   initialLanguages?: ILanguage[];
@@ -440,24 +439,6 @@ describe("is ready to submit", () => {
     test.viewModel.customLanguageTag.requestUpdate("abc");
     test.viewModel.displayName.requestUpdate("hello");
     expect(test.viewModel.isReadyToSubmit.value).toBe(true);
-  });
-});
-
-describe("translations", () => {
-  it("changes card description", () => {
-    const translations: LanguageChooserTranslations = {
-      macrolanguageLabel: "Una macro lenguaje",
-      macrolanguageOfRegionLabel: (regions) =>
-        `Una macro lenguaje de ${regions}`,
-      languageOfRegionLabel: (regions) => `Una lengua de ${regions}`,
-    };
-
-    const test = new TestHeper({ initialLanguages: [NorthernUzbekLanguage] });
-    test.viewModel.translations.requestUpdate(translations);
-
-    expect(
-      test.viewModel.listedLanguages.value[0].description?.split(" ")[0]
-    ).toBe("Una");
   });
 });
 

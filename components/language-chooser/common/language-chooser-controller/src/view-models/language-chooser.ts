@@ -14,10 +14,12 @@ import {
   UNLISTED_LANGUAGE,
 } from "@ethnolib/find-language";
 import { Field } from "@ethnolib/state-management-core";
-import { LanguageCardViewModel } from "./language-card";
-import { ScriptCardViewModel } from "./script-card";
+import {
+  LanguageCardViewModel,
+  useLanguageChardViewModel,
+} from "./language-card";
+import { ScriptCardViewModel, useScriptCardViewModel } from "./script-card";
 import { selectItem } from "../selectable";
-import { defaultTranslations } from "./translations";
 
 interface UseLanguageChooserParams {
   initialLanguages?: ILanguage[];
@@ -67,10 +69,6 @@ export function useLanguageChooserViewModel(
     _onCustomLanguageTagChanged();
   });
 
-  const translations = new Field(defaultTranslations, () =>
-    _onTranslationsChanged()
-  );
-
   let _currentSearchId = 0;
 
   function _onSearchStringUpdated() {
@@ -82,15 +80,13 @@ export function useLanguageChooserViewModel(
 
   function _appendLanguages(languages: ILanguage[]) {
     const baseIndex = listedLanguages.value.length;
-    const newLanguages = languages.map(
-      (lang, i) =>
-        new LanguageCardViewModel(lang, {
-          onSelect: (isSelected) =>
-            isSelected
-              ? _onLanguageSelected(baseIndex + i)
-              : _onLanguageDeselected(),
-          translations: translations.value,
-        })
+    const newLanguages = languages.map((lang, i) =>
+      useLanguageChardViewModel(lang, {
+        onSelect: (isSelected) =>
+          isSelected
+            ? _onLanguageSelected(baseIndex + i)
+            : _onLanguageDeselected(),
+      })
     );
 
     listedLanguages.value = [...listedLanguages.value, ...newLanguages];
@@ -122,12 +118,11 @@ export function useLanguageChooserViewModel(
   }
 
   function _setScriptList(scripts: IScript[]) {
-    listedScripts.value = scripts.map(
-      (script, i) =>
-        new ScriptCardViewModel(script, {
-          onSelect: (isSelected) =>
-            isSelected ? _onScriptSelected(i) : _onScriptDeselected(),
-        })
+    listedScripts.value = scripts.map((script, i) =>
+      useScriptCardViewModel(script, {
+        onSelect: (isSelected) =>
+          isSelected ? _onScriptSelected(i) : _onScriptDeselected(),
+      })
     );
   }
 
@@ -191,13 +186,6 @@ export function useLanguageChooserViewModel(
       script: selectedScript.value,
       customDetails: customizations.value,
     });
-  }
-
-  function _onTranslationsChanged() {
-    // Regenerate language list so new translations can be applied
-    const languages = listedLanguages.value.map((x) => x.language);
-    listedLanguages.value = [];
-    _appendLanguages(languages);
   }
 
   // Public methods
@@ -281,7 +269,6 @@ export function useLanguageChooserViewModel(
     customizations,
     customLanguageTag,
     isReadyToSubmit,
-    translations,
     showUnlistedLanguageModal,
     showCustomizeLanguageModal,
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { LanguageCardViewModel } from "@ethnolib/language-chooser-controller";
-  import { type SvelteViewModel } from "@ethnolib/state-management-svelte";
+  import type { LanguageCardViewModel } from "@ethnolib/language-chooser-controller";
+  import type { SvelteViewModel } from "@ethnolib/state-management-svelte";
 
   const { viewModel }: { viewModel: SvelteViewModel<LanguageCardViewModel> } =
     $props();
@@ -25,8 +25,8 @@
       </div>
     </div>
     <div>
-      {#if viewModel.description}
-        <p class="mt-2 text-sm opacity-80">{viewModel.description}</p>
+      {#if viewModel.description()}
+        <p class="mt-2 text-sm opacity-80">{viewModel.description()}</p>
       {/if}
       <p class="mt-2 text-sm opacity-80">
         {viewModel.language.names.join(", ")}

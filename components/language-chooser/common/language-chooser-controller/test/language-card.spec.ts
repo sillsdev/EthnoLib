@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { LanguageCardViewModel } from "../src/view-models/language-card";
+import {
+  LanguageCardViewModel,
+  useLanguageChardViewModel,
+} from "../src/view-models/language-card";
 import { NorthernUzbekLanguage } from "./sample-data/languages";
 import { fakeLanguage } from "./fake-utils";
 import { ILanguage } from "@ethnolib/find-language";
-import { defaultTranslations } from "../src/view-models/translations";
 
 class TestHelper {
   constructor(language: ILanguage) {
-    this.card = new LanguageCardViewModel(language, {
-      translations: defaultTranslations,
-    });
+    this.card = useLanguageChardViewModel(language);
   }
   card: LanguageCardViewModel;
 }
@@ -58,7 +58,7 @@ describe("description", () => {
     lang.isMacrolanguage = true;
     lang.regionNamesForDisplay = "Spain";
     const t = new TestHelper(lang);
-    expect(t.card.description).toBe("A macrolanguage of Spain");
+    expect(t.card.description()).toBe("A macrolanguage of Spain");
   });
 
   it("should designate a macrolanguage without a region", () => {
@@ -66,7 +66,7 @@ describe("description", () => {
     lang.isMacrolanguage = true;
     lang.regionNamesForDisplay = "";
     const t = new TestHelper(lang);
-    expect(t.card.description).toBe("A macrolanguage");
+    expect(t.card.description()).toBe("A macrolanguage");
   });
 
   it("should designate specific language with region", () => {
@@ -74,7 +74,7 @@ describe("description", () => {
     lang.isMacrolanguage = false;
     lang.regionNamesForDisplay = "Spain";
     const t = new TestHelper(lang);
-    expect(t.card.description).toBe("A language of Spain");
+    expect(t.card.description()).toBe("A language of Spain");
   });
 
   it("should be undefined if specific language has no region", () => {
@@ -82,6 +82,6 @@ describe("description", () => {
     lang.isMacrolanguage = false;
     lang.regionNamesForDisplay = "";
     const t = new TestHelper(lang);
-    expect(t.card.description).toBeUndefined();
+    expect(t.card.description()).toBeUndefined();
   });
 });
