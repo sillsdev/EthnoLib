@@ -1,5 +1,9 @@
 <script lang="ts">
-  import type { IRegion, IScript } from "@ethnolib/find-language";
+  import {
+    isValidBcp47Tag,
+    type IRegion,
+    type IScript,
+  } from "@ethnolib/find-language";
   import UnlistedLanguageForm from "./UnlistedLanguageForm.svelte";
   import CustomizationForm from "./CustomizationForm.svelte";
   import type { SvelteViewModel } from "@ethnolib/state-management-svelte";
@@ -58,6 +62,18 @@
     languageChooser.submitCustomizeLangaugeModal({ script, region, dialect });
     modal.close();
   }
+
+  function promptForCustomTag() {
+    const tag = window.prompt(
+      "If this user interface is not offering you a language tag that you know is valid ISO 639 code, you can enter it here:"
+    );
+    if (tag && !isValidBcp47Tag(tag)) {
+      alert(`This is not in a valid IETF BCP 47 format: ${tag}`);
+    } else if (tag) {
+      languageChooser.customLanguageTag = tag;
+      modal.close();
+    }
+  }
 </script>
 
 <dialog bind:this={modal} class="modal">
@@ -78,9 +94,16 @@
       />
     {/if}
 
-    <div class="modal-action">
-      <button class="btn btn-primary w-24" onclick={onOk}>Ok</button>
-      <button class="btn w-24" onclick={onDismiss}>Cancel</button>
+    <div class="flex mt-8">
+      <div class="flex-1">
+        <button class="btn btn-ghost" onclick={promptForCustomTag}
+          >Enter Custom Tag</button
+        >
+      </div>
+      <div>
+        <button class="btn btn-primary w-24 mr-1" onclick={onOk}>Ok</button>
+        <button class="btn w-24" onclick={onDismiss}>Cancel</button>
+      </div>
     </div>
   </div>
 </dialog>
