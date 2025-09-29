@@ -1,5 +1,5 @@
 {
-  "name": "@ethnolib/language-chooser-svelte",
+  "name": "@ethnolib/language-chooser-svelte-daisyui",
   "version": "0.0.1",
   "type": "module",
   "main": "./index.js",
