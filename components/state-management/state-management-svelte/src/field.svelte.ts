@@ -6,7 +6,7 @@ export class SvelteFieldImpl<T> extends SvelteField<T> {
     super();
     this._innerField = field;
     this._state = $state(field.value);
-    field.onUpdate = (newValue) => (this._state = newValue);
+    field.updateUI = (newValue) => (this._state = newValue);
   }
 
   private _innerField: Field<T>;

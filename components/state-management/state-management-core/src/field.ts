@@ -10,15 +10,15 @@ export class Field<T> {
     this._onUpdateRequested = onUpdateRequested;
   }
 
-  /**
-   * Callback to update the UI when the field changes
-   */
-  public onUpdate: ((newValue: T) => void) | null = null;
+  public updateUI: ((newValue: T) => void) | null = null;
 
+  /**
+   * A side effect that should run when the user updates the value
+   */
   private _onUpdateRequested: ((newValue: T, oldValue: T) => void) | undefined;
 
   /**
-   * Send a request from the UI to update the value
+   * Update the value and run the onUpdateRequested side effect
    */
   public requestUpdate(value: T) {
     const oldValue = this.value;
@@ -34,9 +34,12 @@ export class Field<T> {
     return this._value;
   }
 
+  /**
+   * Update the value without side effects
+   */
   public set value(value: T) {
     try {
-      if (this.onUpdate) this.onUpdate(value);
+      if (this.updateUI) this.updateUI(value);
     } finally {
       this._value = value;
     }
