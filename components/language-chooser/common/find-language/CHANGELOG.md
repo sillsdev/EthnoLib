@@ -1,3 +1,9 @@
+## 0.1.12 (2025-09-30)
+
+### 🩹 Fixes
+
+- BL-15204 restrict dialect code format ([cff8fd9](https://github.com/sillsdev/EthnoLib/commit/cff8fd9))
+
 ## 0.1.11 (2025-09-11)
 
 ### 🩹 Fixes
