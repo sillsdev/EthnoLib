@@ -22,9 +22,9 @@
   "devDependencies": {
     "@crowdin/cli": "^4.6.1",
     "@eslint/js": "^9.14.0",
-    "@lingui/cli": "^5.2.0",
+    "@lingui/cli": "^5.4.1",
     "@lingui/swc-plugin": "^5.4.0",
-    "@lingui/vite-plugin": "^5.2.0",
+    "@lingui/vite-plugin": "^5.4.1",
     "@nx/devkit": "20.4.6",
     "@nx/eslint": "20.4.6",
     "@nx/eslint-plugin": "20.4.6",
