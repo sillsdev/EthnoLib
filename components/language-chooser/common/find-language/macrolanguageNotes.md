@@ -117,7 +117,7 @@ Last updated September 2025. These should be specially checked and handled as ou
 
 - `aka` - From the ISO 639-3 site, [Akan is a macrolanguage](https://iso639-3.sil.org/code/aka) (ISO639-3: `aka`; ISO639-1: `ak`) containing individual languages Twi (ISO639-3: `twi`; ISO639-1: `tw`) and Fanti (ISO639-3: `fat`). The langtags.json entry lists `ak`, `fat`, and `tw` as equivalent and provides no names other than "Akan". In Ethnologue, [Akan has a page](https://www.ethnologue.com/language/aka/) that lists Twi and Fanti as mutually intelligible dialects, among others.
 
-  Since we don't have enough data from langtags.json to make any individual language entries, we give one result with codes "aka" and "ak" but don't mark it as a macrolanguage. For now this is somewhat consistent with Ethnologue, which treats it as a single language, and there is no point discouraging people from using it in the absence of alternatives.
+  Since we don't have enough data from langtags.json to make any individual language entries ("Akan" is the only name present for this language; there are no Twi or Fanti entries, as is consistent with Ethnologue), we give only one result, namely Akan, with codes "aka" and "ak" but don't mark it as a macrolanguage. For now this is somewhat consistent with Ethnologue, which treats it as a single language, and there is no point discouraging people from using it in the absence of alternatives.
 
   See also https://unicode-org.atlassian.net/browse/CLDR-10293 and https://unicode-org.atlassian.net/browse/CLDR-17323; The current langtags.json handling of these languages might not be desired or permanent.
 
