@@ -125,7 +125,7 @@ Last updated September 2025. These should be specially checked and handled as ou
 
   We straightforwardly give an `hbs` macrolanguage result as well as all the individual language results as per usual.
 
-- `nor` - [Norwegian is a macrolanguage](https://iso639-3.sil.org/code/nor) (ISO639-3: `nor`; ISO639-1: `no`) with child languages Bokmål (`nob`) and Nynorsk (`nno`), but [Ethnologue treats it as a single language](https://www.ethnologue.com/language/nor/) and says "Norwegian has 2 written standards, both of which are assigned codes in the ISO 639-3 standard: Bokmål Norwegian (nob) and Nynorsk Norwegian (nno)."
+- `nor` - [Norwegian is a macrolanguage](https://iso639-3.sil.org/code/nor) (ISO639-3: `nor`; ISO639-1: `no`) with child languages Bokmål (ISO639-3: `nob`; ISO639-1: `nb`) and Nynorsk (ISO639-3: `nno`; ISO639-1: `nn`), but [Ethnologue treats it as a single language](https://www.ethnologue.com/language/nor/) and says "Norwegian has 2 written standards, both of which are assigned codes in the ISO 639-3 standard: Bokmål Norwegian (nob) and Nynorsk Norwegian (nno)."
 
   Currently we give `nor` as a macrolanguage as well as `nob` and `nno` as individual languages.
 
