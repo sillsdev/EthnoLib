@@ -36,7 +36,6 @@
     "@types/react-dom": "^17",
     "@types/react-lazyload": "^3.2.3",
     "storybook": "^8.2.8",
-    "typescript": "^5.2.2",
     "vite-plugin-dts": "^4.2.1"
   },
   "peerDependencies": {
