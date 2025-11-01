@@ -92,7 +92,11 @@
         {#each viewModel.listedLanguages
           .slice(0, 100)
           .map(svelteViewModel) as lang}
-          <LanguageCard viewModel={lang} onSelect={onLanguageSelected} />
+          <LanguageCard
+            viewModel={lang}
+            searchText={viewModel.searchString}
+            onSelect={onLanguageSelected}
+          />
           {#if lang.isSelected && viewModel.listedScripts.length > 0}
             <div class="ml-8 mb-4">
               <div class="py-2">
