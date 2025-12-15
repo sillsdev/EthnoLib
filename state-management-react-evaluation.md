@@ -23,3 +23,48 @@
 
 ## Recommendation
 - The Field-based approach aligns well with the language chooser’s view-model pattern and should be feasible with a contained refactor. Starting with the search text + results pipeline as a pilot would de-risk the migration before touching the rest of the selection/customization state.
+
+## Is the vanilla (ui-controller) approach the right cross-framework strategy?
+- Yes—keeping the view model in vanilla TS with `Field` objects isolates all side effects and state transitions from any specific UI framework. React and Svelte become thin bindings (`useField` or `svelteViewModel`) while the shared logic remains identical, which is exactly what the ui-controller work set out to achieve.
+- Trade-offs are small: you pay a light adapter layer and must keep side effects in `onUpdateRequested`, but you gain framework portability, easier testing of pure view models, and the ability to ship one logic layer to multiple UI stacks.
+
+## Concrete migration snippet (React)
+Below is a minimal example of migrating a React `useState` + effect flow to `state-management-core` + `useField`:
+
+```ts
+// view-model.ts
+import { Field } from "@ethnolib/state-management-core";
+import { asyncSearchForLanguage } from "@ethnolib/find-language";
+
+export function useLanguageSearchViewModel() {
+  const searchText = new Field("", (text) => {
+    asyncSearchForLanguage(text, (results) => {
+      searchResults.value = results;
+      return true;
+    });
+  });
+
+  const searchResults = new Field([] as ILanguage[]);
+
+  return { searchText, searchResults };
+}
+
+// React component
+import { useField } from "@ethnolib/state-management-react";
+import { useLanguageSearchViewModel } from "./view-model";
+
+export function SearchBox() {
+  const vm = useLanguageSearchViewModel();
+  const [text, setText] = useField(vm.searchText);
+  const [results] = useField(vm.searchResults);
+
+  return (
+    <>
+      <input value={text} onChange={(e) => setText(e.target.value)} />
+      <ul>{results.map((r) => <li key={r.iso639_3_code}>{r.exonym}</li>)}</ul>
+    </>
+  );
+}
+```
+
+In this pattern, UI input calls `setText` which delegates to `Field.requestUpdate`; the view-model side effect runs once in `onUpdateRequested`, and `useField` keeps the React state synchronized without duplicating logic.
