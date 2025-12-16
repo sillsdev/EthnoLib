@@ -1,0 +1,9 @@
+{
+  "name": "@ethnolib/state-management-core",
+  "description": "A cross-framework library for managing reactive state",
+  "author": "SIL Global",
+  "license": "MIT",
+  "version": "0.1.0",
+  "main": "./index.ts",
+  "types": "./index.ts"
+}

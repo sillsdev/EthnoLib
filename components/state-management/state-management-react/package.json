@@ -1,0 +1,9 @@
+{
+  "name": "@ethnolib/state-management-react",
+  "description": "An adapter to use @ethnolib/state-management-core with React",
+  "author": "SIL Global",
+  "license": "MIT",
+  "version": "0.1.0",
+  "main": "./index.ts",
+  "types": "./index.ts"
+}

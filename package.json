@@ -3,7 +3,9 @@
   "workspaces": [
     "components/language-chooser/common/*",
     "components/language-chooser/react/common/*",
-    "components/language-chooser/react/*"
+    "components/language-chooser/react/*",
+    "components/state-management/state-management-core",
+    "components/state-management/state-management-react"
   ],
   "version": "0.0.0",
   "description": "",
