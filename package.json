@@ -53,7 +53,6 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "nx": "20.4.6",
     "prettier": "^3.3.3",
-    "rollup": "^4.24.0",
     "ts-node": "10.9.1",
     "typescript": "5.7.3",
     "typescript-eslint": "8.19.0",

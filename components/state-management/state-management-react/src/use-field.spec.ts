@@ -1,34 +1,46 @@
-import React, { useEffect } from "react";
-import { describe, it, expect, vi } from "vitest";
-import { render, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Field } from "@ethnolib/state-management-core";
-import { useField } from "./use-field";
+
+vi.mock("react", () => {
+  let state: unknown;
+  const useState = (initial: unknown) => {
+    state = initial;
+    const setState = (value: unknown) => {
+      state = value;
+    };
+    return [state, setState] as const;
+  };
+  return { useState, __getState: () => state };
+});
+
+const { __getState } = vi.mocked(await import("react")) as unknown as {
+  __getState: () => unknown;
+};
+
+const { useField } = await import("./use-field");
 
 describe("useField", () => {
-  it("syncs field value and side effects", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("invokes requestUpdate and wires updateUI", () => {
     const calls: Array<{ newValue: number; oldValue: number }> = [];
     const field = new Field<number>(1, (newValue, oldValue) => {
       calls.push({ newValue, oldValue });
     });
 
-    const onValue = vi.fn();
+    const [value, setValue] = useField(field);
 
-    function Test() {
-      const [value, setValue] = useField(field);
-      useEffect(() => onValue(value), [value]);
-      (field as any).__setValue = setValue;
-      return null;
-    }
+    expect(value).toBe(1);
+    expect(__getState()).toBe(1);
 
-    render(React.createElement(Test));
-
-    expect(typeof field.updateUI).toBe("function");
-    expect(onValue).toHaveBeenLastCalledWith(1);
-
-    act(() => {
-      (field as any).__setValue(2);
-    });
+    setValue(2);
     expect(field.value).toBe(2);
     expect(calls).toEqual([{ newValue: 2, oldValue: 1 }]);
+    expect(__getState()).toBe(2);
+
+    field.updateUI?.(5);
+    expect(__getState()).toBe(5);
   });
 });
