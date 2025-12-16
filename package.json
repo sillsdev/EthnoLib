@@ -40,7 +40,6 @@
     "@playwright/test": "^1.36.0",
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
-    "@swc/core-linux-x64-gnu": "^1.5.29",
     "@swc/helpers": "~0.5.11",
     "@types/eslint__js": "^8.42.3",
     "@typescript-eslint/eslint-plugin": "8.19.0",

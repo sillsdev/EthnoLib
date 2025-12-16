@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { renderHook, act } from "@testing-library/react-hooks/server";
+import React, { useEffect } from "react";
+import { describe, it, expect, vi } from "vitest";
+import { render, act } from "@testing-library/react";
 import { Field } from "@ethnolib/state-management-core";
 import { useField } from "./use-field";
 
@@ -10,13 +11,22 @@ describe("useField", () => {
       calls.push({ newValue, oldValue });
     });
 
-    const { result } = renderHook(() => useField(field));
+    const onValue = vi.fn();
+
+    function Test() {
+      const [value, setValue] = useField(field);
+      useEffect(() => onValue(value), [value]);
+      (field as any).__setValue = setValue;
+      return null;
+    }
+
+    render(React.createElement(Test));
 
     expect(typeof field.updateUI).toBe("function");
-    expect(result.current[0]).toBe(1);
+    expect(onValue).toHaveBeenLastCalledWith(1);
 
     act(() => {
-      result.current[1](2);
+      (field as any).__setValue(2);
     });
     expect(field.value).toBe(2);
     expect(calls).toEqual([{ newValue: 2, oldValue: 1 }]);
