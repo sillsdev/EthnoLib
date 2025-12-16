@@ -14,7 +14,9 @@
     "test": "nx vite:test --config vitest.config.ts"
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.1.11",
+    "@ethnolib/find-language": "0.1.12",
+    "@ethnolib/state-management-core": "file:../../../../state-management/state-management-core",
+    "@ethnolib/state-management-react": "file:../../../../state-management/state-management-react",
     "fuse.js": "^7.0.0",
     "iso-15924": "^3.2.0",
     "iso-3166": "^4.3.0"

@@ -5,7 +5,7 @@ import {
   ICustomizableLanguageDetails,
   deepStripDemarcation,
 } from "@ethnolib/find-language";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import {
   isValidBcp47Tag,
   isManuallyEnteredTagLanguage,
@@ -17,6 +17,8 @@ import {
   createTagFromOrthography,
   defaultDisplayName,
 } from "@ethnolib/find-language";
+import { Field } from "@ethnolib/state-management-core";
+import { useField } from "@ethnolib/state-management-react";
 
 export interface ILanguageChooser {
   languageResults: ILanguage[];
@@ -53,76 +55,168 @@ export const useLanguageChooser = (
     searchString: string
   ) => ILanguage[]
 ) => {
-  const [searchString, setSearchString] = useState<string>("");
-  // we use useRef to help with asynchronously accessing the up-to-date value from the search function -
-  // if the user keeps typing we want to cancel the previous searches promptly and the searchString won't have updated yet
-  // But we still need the searchString state to trigger the useEffect
-  const searchStringRef = useRef("");
-  const [selectedLanguage, setSelectedLanguage] = useState<
-    ILanguage | undefined
-  >();
-  const [selectedScript, setSelectedScript] = useState<IScript | undefined>();
+  const viewModelRef = useRef<ReturnType<typeof createLanguageChooserViewModel>>();
 
+  if (!viewModelRef.current) {
+    viewModelRef.current = createLanguageChooserViewModel(
+      onSelectionChange,
+      searchResultModifier
+    );
+  }
+
+  const vm = viewModelRef.current;
+
+  const [searchString, setSearchString] = useField(vm.searchString);
+  const [languageResults] = useField(vm.languageResults);
+  const [selectedLanguage] = useField(vm.selectedLanguage);
+  const [selectedScript] = useField(vm.selectedScript);
+  const [customizableLanguageDetails] = useField(vm.customizableLanguageDetails);
+
+  return {
+    languageResults,
+    selectedLanguage,
+    selectedScript,
+    customizableLanguageDetails,
+    searchString,
+    onSearchStringChange: setSearchString,
+    selectLanguage: vm.selectLanguage,
+    selectUnlistedLanguage: vm.selectUnlistedLanguage,
+    selectManuallyEnteredTagLanguage: vm.selectManuallyEnteredTagLanguage,
+    clearLanguageSelection: vm.clearLanguageSelection,
+    selectScript: vm.selectScript,
+    clearScriptSelection: vm.clearScriptSelection,
+    readyToSubmit: vm.readyToSubmit(),
+    saveLanguageDetails: vm.saveLanguageDetails,
+    resetTo: vm.resetTo,
+  } as ILanguageChooser;
+};
+
+function createLanguageChooserViewModel(
+  onSelectionChange?: (
+    orthography: IOrthography | undefined,
+    langtag: string | undefined
+  ) => void,
+  searchResultModifier?: (
+    results: ILanguage[],
+    searchString: string
+  ) => ILanguage[]
+) {
   const EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS = {
     customDisplayName: undefined,
     region: undefined,
     dialect: undefined,
   } as ICustomizableLanguageDetails;
 
-  const [customizableLanguageDetails, setCustomizableLanguageDetails] =
-    useState<ICustomizableLanguageDetails>(EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS);
+  const languageResults = new Field<ILanguage[]>([]);
+  const selectedLanguage = new Field<ILanguage | undefined>(undefined, () =>
+    checkSelectionChange()
+  );
+  const selectedScript = new Field<IScript | undefined>(undefined, () =>
+    checkSelectionChange()
+  );
+  const customizableLanguageDetails =
+    new Field<ICustomizableLanguageDetails>(
+      EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS,
+      () => checkSelectionChange()
+    );
 
-  function clearCustomizableLanguageDetails() {
-    setCustomizableLanguageDetails(EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS);
-  }
+  let previousStateWasValidSelection = false;
 
-  const readyToSubmit = isReadyToSubmit({
-    language: selectedLanguage,
-    script: selectedScript,
-    customDetails: customizableLanguageDetails,
+  const searchString = new Field<string>("", (newSearchString) => {
+    languageResults.value = [];
+    clearLanguageSelection();
+    if (!newSearchString || newSearchString.length < 2) {
+      return;
+    }
+    (async () => {
+      await asyncSearchForLanguage(newSearchString, appendResults);
+    })();
   });
 
-  const [languageResults, setLanguageResults] = useState<ILanguage[]>([]);
-
-  // For faster results, the search function returns better results first but then continues searching for more results
-  // and appends them to the result list, in several rounds.
-  // Return true if we should continue searching for more results, and false if we should abort because the search string has changed
   function appendResults(
     additionalSearchResults: ILanguage[],
     forSearchString: string
   ) {
-    if (forSearchString !== searchStringRef.current) {
-      // Search string has changed, stop looking for results for this search string
+    if (forSearchString !== searchString.value) {
       return false;
     }
     const modifier = searchResultModifier || ((r) => r);
-    //append the new results to the existing results
-    setLanguageResults((r) =>
-      r.concat(modifier(additionalSearchResults, forSearchString))
+    languageResults.value = languageResults.value.concat(
+      modifier(additionalSearchResults, forSearchString)
     );
-    return true; // Keep looking for more results
+    return true;
   }
 
-  useEffect(() => {
-    setLanguageResults([]);
-    if (!searchString || searchString.length < 2) {
-      return;
-    }
-    (async () => {
-      await asyncSearchForLanguage(searchString, appendResults);
-    })();
-  }, [searchString]);
+  function readyToSubmitInternal() {
+    return isReadyToSubmit({
+      language: selectedLanguage.value,
+      script: selectedScript.value,
+      customDetails: customizableLanguageDetails.value,
+    });
+  }
 
-  // For reopening to a specific selection. We should then also set the search string
-  // such that the selected language is visible.
-  function resetTo(
-    searchString: string,
-    // if present, the language in selectionLanguageTag must be a result of this search string or selection won't display
-    // unless it is a manually entered tag, in which case there is never a search result anyway
-    selectionLanguageTag?: string,
-    initialCustomDisplayName?: string // all info can be captured in language tag except display name
+  function checkSelectionChange() {
+    if (!onSelectionChange) return;
+    if (readyToSubmitInternal()) {
+      const resultingOrthography = deepStripDemarcation({
+        language: selectedLanguage.value,
+        script: selectedScript.value,
+        customDetails: customizableLanguageDetails.value,
+      }) as IOrthography;
+      onSelectionChange(
+        resultingOrthography,
+        createTagFromOrthography(resultingOrthography)
+      );
+      previousStateWasValidSelection = true;
+    } else if (previousStateWasValidSelection) {
+      onSelectionChange(undefined, undefined);
+      previousStateWasValidSelection = false;
+    }
+  }
+
+  function clearLanguageSelection() {
+    selectedLanguage.requestUpdate(undefined);
+    selectedScript.requestUpdate(undefined);
+    customizableLanguageDetails.requestUpdate(
+      EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS
+    );
+  }
+
+  function selectLanguage(language: ILanguage) {
+    selectedLanguage.requestUpdate(language);
+    selectedScript.requestUpdate(
+      language.scripts.length === 1 ? language.scripts[0] : undefined
+    );
+    customizableLanguageDetails.requestUpdate(
+      EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS
+    );
+  }
+
+  function selectScript(script: IScript) {
+    selectedScript.requestUpdate(script);
+    customizableLanguageDetails.requestUpdate(
+      EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS
+    );
+  }
+
+  function saveLanguageDetails(
+    details: ICustomizableLanguageDetails,
+    script: IScript | undefined
   ) {
-    onSearchStringChange(searchString);
+    customizableLanguageDetails.requestUpdate(details);
+
+    if (!script && selectedLanguage.value?.scripts.length === 1) {
+      script = selectedLanguage.value.scripts[0];
+    }
+    selectedScript.requestUpdate(script);
+  }
+
+  function resetTo(
+    newSearchString: string,
+    selectionLanguageTag?: string,
+    initialCustomDisplayName?: string
+  ) {
+    searchString.requestUpdate(newSearchString);
     if (!selectionLanguageTag) return;
 
     let initialSelections = parseLangtagFromLangChooser(
@@ -130,7 +224,6 @@ export const useLanguageChooser = (
       searchResultModifier
     );
     if (selectionLanguageTag && !initialSelections) {
-      // we failed to parse the tag, meaning this is a langtag requiring manual entry
       initialSelections = {
         language: languageForManuallyEnteredTag(selectionLanguageTag || ""),
         script: undefined,
@@ -146,10 +239,9 @@ export const useLanguageChooser = (
       selectScript(initialSelections.script);
     }
 
-    setCustomizableLanguageDetails({
+    customizableLanguageDetails.requestUpdate({
       ...(initialSelections?.customDetails ||
         ({} as ICustomizableLanguageDetails)),
-      // we only save the custom display name if it is different from the default
       customDisplayName:
         initialCustomDisplayName &&
         initialCustomDisplayName !==
@@ -162,28 +254,6 @@ export const useLanguageChooser = (
     });
   }
 
-  function saveLanguageDetails(
-    details: ICustomizableLanguageDetails,
-    script: IScript | undefined
-  ) {
-    setCustomizableLanguageDetails(details);
-
-    // If the provided script is empty but this language only has one script, automatically go back to that implied script
-    if (!script && selectedLanguage?.scripts.length === 1) {
-      script = selectedLanguage.scripts[0];
-    }
-    setSelectedScript(script);
-  }
-
-  function selectLanguage(language: ILanguage) {
-    setSelectedLanguage(language);
-    setSelectedScript(
-      // If there is only one script option for this language, automatically select it
-      language.scripts.length === 1 ? language.scripts[0] : undefined
-    );
-    clearCustomizableLanguageDetails();
-  }
-
   function selectUnlistedLanguage() {
     selectLanguage(UNLISTED_LANGUAGE);
   }
@@ -192,70 +262,31 @@ export const useLanguageChooser = (
     selectLanguage(languageForManuallyEnteredTag(manuallyEnteredTag));
   }
 
-  function clearLanguageSelection() {
-    setSelectedLanguage(undefined);
-    setSelectedScript(undefined);
-    clearCustomizableLanguageDetails();
-  }
-
-  function selectScript(script: IScript) {
-    setSelectedScript(script);
-    clearCustomizableLanguageDetails();
-  }
   function clearScriptSelection() {
-    setSelectedScript(undefined);
-    clearCustomizableLanguageDetails();
+    selectedScript.requestUpdate(undefined);
+    customizableLanguageDetails.requestUpdate(
+      EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS
+    );
   }
-
-  function onSearchStringChange(newSearchString: string) {
-    searchStringRef.current = newSearchString;
-    setSearchString(newSearchString);
-    setSelectedLanguage(undefined);
-    setSelectedScript(undefined);
-    clearCustomizableLanguageDetails();
-  }
-
-  const [previousStateWasValidSelection, setPreviousStateWasValidSelection] =
-    useState(false);
-
-  useEffect(() => {
-    if (onSelectionChange) {
-      if (readyToSubmit) {
-        const resultingOrthography = deepStripDemarcation({
-          language: selectedLanguage,
-          script: selectedScript,
-          customDetails: customizableLanguageDetails,
-        }) as IOrthography;
-        onSelectionChange(
-          resultingOrthography,
-          createTagFromOrthography(resultingOrthography)
-        );
-        setPreviousStateWasValidSelection(true);
-      } else if (previousStateWasValidSelection) {
-        onSelectionChange(undefined, undefined);
-        setPreviousStateWasValidSelection(false);
-      }
-    }
-  }, [selectedLanguage, selectedScript, customizableLanguageDetails]);
 
   return {
+    searchString,
     languageResults,
     selectedLanguage,
     selectedScript,
     customizableLanguageDetails,
-    searchString: searchString,
-    onSearchStringChange,
+    onSearchStringChange: (value: string) => searchString.requestUpdate(value),
     selectLanguage,
     selectUnlistedLanguage,
     selectManuallyEnteredTagLanguage,
     clearLanguageSelection,
     selectScript,
     clearScriptSelection,
-    readyToSubmit,
+    readyToSubmit: readyToSubmitInternal,
     saveLanguageDetails,
     resetTo,
-  } as ILanguageChooser;
-};
+  };
+}
 
 function hasValidDisplayName(selection: IOrthography) {
   if (!selection.language) {
