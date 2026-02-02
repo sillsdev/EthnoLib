@@ -1,3 +1,72 @@
+## 0.1.15 (2025-09-30)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.13
+- Updated @ethnolib/find-language to 0.1.12
+
+## 0.1.14 (2025-09-11)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.12
+- Updated @ethnolib/find-language to 0.1.11
+
+## 0.1.13 (2025-09-10)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.11
+- Updated @ethnolib/find-language to 0.1.10
+
+## 0.1.12 (2025-08-14)
+
+### 🩹 Fixes
+
+- BL-15114 update source data, fixing broken langtag ([64cd076](https://github.com/sillsdev/EthnoLib/commit/64cd076))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.10
+- Updated @ethnolib/find-language to 0.1.9
+
+## 0.1.11 (2025-07-15)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.9
+- Updated @ethnolib/find-language to 0.1.8
+
+## 0.1.10 (2025-07-02)
+
+### 🩹 Fixes
+
+- BL-14824 Make search box start empty ([88e6aaf](https://github.com/sillsdev/EthnoLib/commit/88e6aaf))
+
+## 0.1.9 (2025-07-02)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.8
+- Updated @ethnolib/find-language to 0.1.7
+
+## 0.1.8 (2025-07-01)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.7
+
+## 0.1.7 (2025-07-01)
+
+### 🩹 Fixes
+
+- select microlanguage not macrolanguage ([19e7e90](https://github.com/sillsdev/EthnoLib/commit/19e7e90))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.6
+- Updated @ethnolib/find-language to 0.1.6
+
 ## 0.1.6 (2025-06-11)
 
 ### 🩹 Fixes

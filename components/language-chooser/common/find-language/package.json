@@ -3,11 +3,12 @@
   "description": "A library for fuzzy-searching for languages and other utils for language choosers",
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.1.5",
+  "version": "0.1.12",
   "main": "./index.js",
   "types": "./index.d.ts",
+  "sideEffects": false,
   "scripts": {
-    "langtag-processing": "tsx ./langtagProcessing.ts",
+    "langtag-processing": "tsx ./scripts/langtagProcessing.ts",
     "prebuild": "npm run langtag-processing",
     "build": "nx vite:build",
     "typecheck": "tsc",
@@ -21,9 +22,10 @@
     "iso-3166": "^4.3.0"
   },
   "devDependencies": {
-    "@nx/vite": "^19.1.2",
     "@types/node": "^20.16.11",
-    "tsx": "^4.19.2",
-    "typescript": "^5.2.2"
+    "tsx": "^4.19.2"
+  },
+  "volta": {
+    "extends": "../../../../package.json"
   }
 }

@@ -1,3 +1,45 @@
+## 0.1.12 (2025-09-30)
+
+### 🩹 Fixes
+
+- BL-15204 restrict dialect code format ([cff8fd9](https://github.com/sillsdev/EthnoLib/commit/cff8fd9))
+
+## 0.1.11 (2025-09-11)
+
+### 🩹 Fixes
+
+- BL-15209 autonyms should be in the default script ([a1ddb9b](https://github.com/sillsdev/EthnoLib/commit/a1ddb9b))
+
+## 0.1.10 (2025-09-10)
+
+### 🩹 Fixes
+
+- BL-15161 clear display name for custom langtags ([55b556b](https://github.com/sillsdev/EthnoLib/commit/55b556b))
+
+## 0.1.9 (2025-08-14)
+
+### 🩹 Fixes
+
+- BL-15114 update source data, fixing broken langtag ([64cd076](https://github.com/sillsdev/EthnoLib/commit/64cd076))
+
+## 0.1.8 (2025-07-15)
+
+### 🩹 Fixes
+
+- BL-14706 add synchronous and other database search options ([5a0c921](https://github.com/sillsdev/EthnoLib/commit/5a0c921))
+
+## 0.1.7 (2025-07-02)
+
+### 🩹 Fixes
+
+- fix error reopening with no language tag ([3caab56](https://github.com/sillsdev/EthnoLib/commit/3caab56))
+
+## 0.1.6 (2025-07-01)
+
+### 🩹 Fixes
+
+- select microlanguage not macrolanguage ([19e7e90](https://github.com/sillsdev/EthnoLib/commit/19e7e90))
+
 ## 0.1.5 (2025-06-11)
 
 ### 🩹 Fixes

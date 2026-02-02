@@ -141,7 +141,8 @@ export const LanguageChooserInner: React.FunctionComponent<
 
   useEffect(() => {
     if (searchInputRef) {
-      searchInputRef.value = props.initialSearchString || "";
+      // (BL-14824) On reopening, leave search box blank, but search will still show results
+      searchInputRef.value = "";
       searchInputRef.focus();
     }
     if (props.initialSearchString) {

@@ -53,7 +53,11 @@ export const useLanguageChooser = (
     searchString: string
   ) => ILanguage[]
 ) => {
-  const searchStringRef = useRef(""); // we use useRef to help with asynchronously access the up-to-date value from the search function
+  const [searchString, setSearchString] = useState<string>("");
+  // we use useRef to help with asynchronously accessing the up-to-date value from the search function -
+  // if the user keeps typing we want to cancel the previous searches promptly and the searchString won't have updated yet
+  // But we still need the searchString state to trigger the useEffect
+  const searchStringRef = useRef("");
   const [selectedLanguage, setSelectedLanguage] = useState<
     ILanguage | undefined
   >();
@@ -100,7 +104,6 @@ export const useLanguageChooser = (
   }
 
   useEffect(() => {
-    const searchString = searchStringRef.current;
     setLanguageResults([]);
     if (!searchString || searchString.length < 2) {
       return;
@@ -108,7 +111,7 @@ export const useLanguageChooser = (
     (async () => {
       await asyncSearchForLanguage(searchString, appendResults);
     })();
-  }, [searchStringRef.current]);
+  }, [searchString]);
 
   // For reopening to a specific selection. We should then also set the search string
   // such that the selected language is visible.
@@ -197,13 +200,16 @@ export const useLanguageChooser = (
 
   function selectScript(script: IScript) {
     setSelectedScript(script);
+    clearCustomizableLanguageDetails();
   }
   function clearScriptSelection() {
     setSelectedScript(undefined);
+    clearCustomizableLanguageDetails();
   }
 
-  function onSearchStringChange(searchString: string) {
-    searchStringRef.current = searchString;
+  function onSearchStringChange(newSearchString: string) {
+    searchStringRef.current = newSearchString;
+    setSearchString(newSearchString);
     setSelectedLanguage(undefined);
     setSelectedScript(undefined);
     clearCustomizableLanguageDetails();
@@ -237,7 +243,7 @@ export const useLanguageChooser = (
     selectedLanguage,
     selectedScript,
     customizableLanguageDetails,
-    searchString: searchStringRef.current,
+    searchString: searchString,
     onSearchStringChange,
     selectLanguage,
     selectUnlistedLanguage,

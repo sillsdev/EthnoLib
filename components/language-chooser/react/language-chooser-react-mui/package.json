@@ -3,7 +3,7 @@
   "description": "A language chooser React component using MUI",
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.1.6",
+  "version": "0.1.15",
   "main": "./index.js",
   "types": "./index.d.ts",
   "exports": {
@@ -18,8 +18,8 @@
     "e2e": "playwright test"
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.1.5",
-    "@ethnolib/language-chooser-react-hook": "0.1.5",
+    "@ethnolib/find-language": "0.1.12",
+    "@ethnolib/language-chooser-react-hook": "0.1.13",
     "lodash": "^4.17.21",
     "react-lazyload": "^3.2.1",
     "@mui/icons-material": "^5.15.19"
@@ -36,7 +36,6 @@
     "@types/react-dom": "^17",
     "@types/react-lazyload": "^3.2.3",
     "storybook": "^8.2.8",
-    "typescript": "^5.2.2",
     "vite-plugin-dts": "^4.2.1"
   },
   "peerDependencies": {
@@ -46,5 +45,8 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2"
   },
-  "nx": {}
+  "nx": {},
+  "volta": {
+    "extends": "../../../../package.json"
+  }
 }

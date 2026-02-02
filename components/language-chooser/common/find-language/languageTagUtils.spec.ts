@@ -3,6 +3,7 @@ import {
   createTag,
   createTagFromOrthography,
   defaultRegionForLangTag,
+  formatDialectCode,
   getMaximalLangtag,
   getShortestSufficientLangtag,
   isManuallyEnteredTagLanguage,
@@ -10,9 +11,9 @@ import {
   isValidBcp47Tag,
   isValidBcp47VariantSubtag,
   languageForManuallyEnteredTag,
-  parseLangtagFromLangChooser,
   UNLISTED_LANGUAGE,
 } from "./languageTagUtils";
+import { parseLangtagFromLangChooser } from "./searchForLanguage";
 import {
   ILanguage,
   LanguageType,
@@ -372,6 +373,48 @@ describe("createTagFromOrthography", () => {
       })
     ).toEqual("en-x-foobar");
   });
+  it("should modify dialog name if necessary", () => {
+    expect(
+      createTagFromOrthography({
+        language: {
+          languageSubtag: "en",
+          exonym: "English",
+          scripts: [],
+          iso639_3_code: "eng",
+          regionNamesForDisplay: "",
+          regionNamesForSearch: [],
+          names: [],
+          alternativeTags: [],
+          languageType: LanguageType.Living,
+          isMacrolanguage: false,
+        } as ILanguage,
+        script: { code: "Latn", name: "Latin" } as IScript,
+        customDetails: {
+          dialect: "Special English!",
+        } as ICustomizableLanguageDetails,
+      })
+    ).toEqual("en-x-SpecialE");
+    expect(
+      createTagFromOrthography({
+        language: {
+          languageSubtag: "en",
+          exonym: "English",
+          scripts: [],
+          iso639_3_code: "eng",
+          regionNamesForDisplay: "",
+          regionNamesForSearch: [],
+          names: [],
+          alternativeTags: [],
+          languageType: LanguageType.Living,
+          isMacrolanguage: false,
+        } as ILanguage,
+        script: { code: "Latn", name: "Latin" } as IScript,
+        customDetails: {
+          dialect: "ai-newFancySmartAi",
+        } as ICustomizableLanguageDetails,
+      })
+    ).toEqual("en-x-ai-newFancy");
+  });
 });
 
 describe("isValidBcp47Tag checking is sane", () => {
@@ -382,6 +425,7 @@ describe("isValidBcp47Tag checking is sane", () => {
     expect(isValidBcp47Tag("en-Latn-US-x-foobar")).toBeTruthy();
     expect(isValidBcp47Tag("en-x-foobar")).toBeTruthy();
     expect(isValidBcp47Tag("en-US")).toBeTruthy();
+    expect(isValidBcp47Tag("en-x-ai-google")).toBeTruthy();
   });
 
   it("should return true for macrolang-indiv lang formatted tags, including sign language tags", () => {
@@ -449,5 +493,34 @@ describe("sanity checks for isUnlistedLanguage and isManuallyEnteredTagLanguage"
     expect(
       isManuallyEnteredTagLanguage(languageForManuallyEnteredTag("foo"))
     ).toEqual(true);
+  });
+});
+
+describe("formatting dialect codes", () => {
+  it("should return empty string for undefined or empty input", () => {
+    expect(formatDialectCode("")).toEqual("");
+    expect(formatDialectCode(undefined)).toEqual("");
+  });
+  it("should trim whitespace", () => {
+    expect(formatDialectCode(" foo  bar ")).toEqual("foobar");
+  });
+  it("should remove illegal characters", () => {
+    expect(formatDialectCode("foo!@#$%^&*()bar")).toEqual("foobar");
+  });
+  it("should retain dashes", () => {
+    expect(formatDialectCode("ai-google")).toEqual("ai-google");
+  });
+  it("should truncate sections to 8 characters", () => {
+    expect(
+      formatDialectCode("123456789-123456789-123456789-123456789")
+    ).toEqual("12345678-12345678-12345678-12345678");
+    expect(formatDialectCode("ai-newFancySmartAi")).toEqual("ai-newFancy");
+  });
+  it("various combinations", () => {
+    expect(
+      formatDialectCode(
+        "  1234 5678 9-1234 5678 9-!@#$%^&*()1234 5678 9-foobar"
+      )
+    ).toEqual("12345678-12345678-12345678-foobar");
   });
 });

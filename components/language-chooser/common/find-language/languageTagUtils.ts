@@ -1,6 +1,5 @@
 import equivalentTags from "./language-data/equivalentTags.json" with { type: "json" };
 import {
-  ICustomizableLanguageDetails,
   ILanguage,
   IOrthography,
   IRegion,
@@ -11,17 +10,36 @@ import {
   deepStripDemarcation,
   stripDemarcation,
 } from "./matchingSubstringDemarcation";
-import { getRegionBySubtag, getScriptForLanguage } from "./regionsAndScripts";
-import { getLanguageBySubtag } from "./searchForLanguage";
+import { getRegionBySubtag } from "./regionsAndScripts";
 
-// Keys are lower cased
-const shortPreferredTagLookup = new Map<string, string>();
-const maximalTagLookup = new Map<string, string>();
-for (const tagset of equivalentTags) {
-  for (const tag of tagset.allTags) {
-    shortPreferredTagLookup.set(tag.toLowerCase(), tagset.shortest);
-    maximalTagLookup.set(tag.toLowerCase(), tagset.maximal);
+// Keys are lower cased - lazily initialized to avoid side effects on import
+let shortPreferredTagLookup: Map<string, string> | null = null;
+let maximalTagLookup: Map<string, string> | null = null;
+
+function initializeLookupMaps(): void {
+  if (shortPreferredTagLookup && maximalTagLookup) {
+    return; // Already initialized
   }
+
+  shortPreferredTagLookup = new Map<string, string>();
+  maximalTagLookup = new Map<string, string>();
+
+  for (const tagset of equivalentTags) {
+    for (const tag of tagset.allTags) {
+      shortPreferredTagLookup.set(tag.toLowerCase(), tagset.shortest);
+      maximalTagLookup.set(tag.toLowerCase(), tagset.maximal);
+    }
+  }
+}
+
+function getShortPreferredTagLookup(): Map<string, string> {
+  initializeLookupMaps();
+  return shortPreferredTagLookup!;
+}
+
+function getMaximalTagLookup(): Map<string, string> {
+  initializeLookupMaps();
+  return maximalTagLookup!;
 }
 
 // case insensitive on input. Tries to find a shorter (or the same) equivalent in the language data
@@ -32,11 +50,12 @@ for (const tagset of equivalentTags) {
 export function getShortestSufficientLangtag(
   langtag: string
 ): string | undefined {
-  const shorter = shortPreferredTagLookup.get(langtag.toLowerCase());
+  const lookup = getShortPreferredTagLookup();
+  const shorter = lookup.get(langtag.toLowerCase());
   if (!shorter && langtag.includes("-x-")) {
     // try to shorten the langtag before the private use section
     const parts = langtag.split("-x-");
-    const preferredTag = shortPreferredTagLookup.get(parts[0].toLowerCase());
+    const preferredTag = lookup.get(parts[0].toLowerCase());
     if (preferredTag) {
       // If we found a preferred tag, return it with the private use section intact
       return `${preferredTag}-x-${parts.slice(1).join("-x-")}`;
@@ -47,11 +66,11 @@ export function getShortestSufficientLangtag(
 
 // case insensitive. Returns undefined if langtag is not in langtags.txt and so equivalents cannot be looked up
 export function getMaximalLangtag(langtag: string): string | undefined {
-  return maximalTagLookup.get(langtag.toLowerCase());
+  const lookup = getMaximalTagLookup();
+  return lookup.get(langtag.toLowerCase());
 }
 
-// This is pretty naive. If you are using the language-chooser-react-hook and there may be a manually entered language
-// tag or bracket demarcation, use createTagFromOrthography in language-chooser-react-hook instead
+// This is pretty naive. Exported for unit testing, but most situations should use createTagFromOrthography instead
 export function createTag({
   languageCode,
   scriptCode,
@@ -81,10 +100,9 @@ export function createTag({
   if (!languageCode || dialectCode) {
     tag += "-x-";
   }
-  // Subtags have a maximum length of 8 characters, so if dialectCode is longer than that, truncate it
-  // when appending to the tag.  See BL-14806.
+  // Dialect code should have already been formatted, i.e. by formatDialectCode
   if (dialectCode) {
-    tag += `${dialectCode.length <= 8 ? dialectCode : dialectCode.slice(0, 8)}`;
+    tag += `${dialectCode}`;
   }
   return getShortestSufficientLangtag(tag) || tag;
 }
@@ -204,110 +222,6 @@ export function splitTag(tag: string): ITagParts {
   } as ITagParts;
 }
 
-// This is not a comprehensive language tag parser. It's just built to parse the
-// langtags output by the language chooser and the libPalasso language picker that
-// was in BloomDesktop. The languageTag must be the default language subtag for
-// that language (the first part of the "tag" field of langtags.json), which may
-// be a 2-letter code even if an equivalent ISO 639-3 code exists. This parser is not
-// designed to handle other BCP-47 langtag corner cases, e.g. irregular codes,
-// extension codes, langtags with both macrolanguage code and language code. It will return
-// undefined if it encounters any of these, e.g. in cases where a langtag was manually
-// entered in the language chooser.
-export function parseLangtagFromLangChooser(
-  languageTag: string, // must be the default language subtag for the language
-  searchResultModifier?: (
-    results: ILanguage[],
-    searchString: string
-  ) => ILanguage[]
-): IOrthography | undefined {
-  const {
-    languageSubtag,
-    scriptSubtag,
-    regionSubtag,
-    variantSubtag,
-    privateUseSubtag,
-    otherSubtags,
-  } = splitTag(languageTag);
-
-  // if the langtag has subtags (excluding private use section) that are not the language, script, or region tags,
-  // this must be a tag requiring manual entry
-  if (otherSubtags?.length || variantSubtag) {
-    console.log("langtag parsing found unexpected subtags", otherSubtags);
-    return undefined;
-  }
-
-  let language = undefined;
-  const isUnlistedLanguage = codeMatches(
-    languageSubtag,
-    UNLISTED_LANGUAGE_CODE
-  );
-  if (isUnlistedLanguage) {
-    language = UNLISTED_LANGUAGE;
-  } else {
-    language = getLanguageBySubtag(languageSubtag || "", searchResultModifier);
-  }
-  if (!language) {
-    console.log(
-      "langtag parsing found unexpected language subtag",
-      languageSubtag
-    );
-    return undefined;
-  }
-  const region = getRegionBySubtag(regionSubtag || "");
-
-  // If we received a region code but were unable to map it to a ISO 3166-1 region code, this is a tag requiring manual entry
-  if (regionSubtag && !region) {
-    console.log("langtag parsing found unexpected region tag", regionSubtag);
-    return undefined;
-  }
-
-  const scriptRegex = /^[a-zA-Z]{4}$/;
-  let script: IScript | undefined = undefined;
-
-  // First, check if there is an explicit script subtag
-  if (scriptSubtag) {
-    script = getScriptForLanguage(scriptSubtag, language);
-  }
-  // if we recieved a script subtag but were unable to map it to a ISO 15924 script code, this is a tag requiring manual entry
-  if (scriptSubtag && !script) {
-    console.log("langtag parsing found unexpected script subtag", scriptSubtag);
-    return undefined;
-  }
-
-  // If we have no explicit script specified but this language only has one script, use that script
-  if (!script && language.scripts.length === 1) {
-    script = language.scripts[0];
-  }
-
-  // Otherwise, the script must be implied, look for the equivalent maximal tag, which will have a script subtag explicit.
-  if (!script && !scriptSubtag) {
-    const maximalTag =
-      getMaximalLangtag(languageTag) ||
-      // The user may have entered a dialect and/or region that are not in the langtags database
-      // so if necessary check for the langtag without the dialect and/or region
-      getMaximalLangtag(`${languageSubtag}-${regionSubtag}`) ||
-      getMaximalLangtag(`${languageSubtag}`) ||
-      "";
-    // Look for a script code in the maximal tag:
-    const impliedScriptSubtag = maximalTag
-      .split(/-[xX]-/)[0]
-      .split("-")
-      .find((s) => scriptRegex.test(s));
-    script = getScriptForLanguage(impliedScriptSubtag || "", language);
-  }
-
-  return {
-    language,
-    script,
-    customDetails: {
-      customDisplayName: undefined,
-      region,
-      // TODO future work: improve handling if we get both. Currently, we should not be getting variantSubtags.
-      dialect: privateUseSubtag || variantSubtag,
-    } as ICustomizableLanguageDetails,
-  } as IOrthography;
-}
-
 // This is used by langtagProcessing.ts to clean the data for searching, so we can't use any searching in here
 export function defaultRegionForLangTag(
   languageTag: string
@@ -332,6 +246,22 @@ export function defaultRegionForLangTag(
   }
 }
 
+/// Returns a code for use in the Private Use section of a BCP 47 tag,
+/// made up of strings of up to 8 alphanumeric characters, separated by hyphens.
+/// Removes non-alphanumeric characters (other than hyphens) and truncates each section to 8 characters
+/// Enhance: we could further enforce BCP-47 rules, e.g. minimum length of each section
+/// see https://www.rfc-editor.org/rfc/bcp/bcp47.txt
+export function formatDialectCode(dialect?: string): string {
+  if (!dialect) return "";
+  return dialect
+    .split("-")
+    .map((s) => {
+      const alphanumeric = s.replace(/[^a-zA-Z0-9]/g, "");
+      return alphanumeric.slice(0, 8);
+    })
+    .join("-");
+}
+
 export function createTagFromOrthography(orthography: IOrthography): string {
   const strippedOrthography = deepStripDemarcation(orthography);
   if (isManuallyEnteredTagLanguage(strippedOrthography.language)) {
@@ -351,20 +281,25 @@ export function createTagFromOrthography(orthography: IOrthography): string {
     languageCode: strippedOrthography.language?.languageSubtag,
     scriptCode,
     regionCode: strippedOrthography.customDetails?.region?.code,
-    dialectCode: strippedOrthography.customDetails?.dialect,
+    dialectCode: formatDialectCode(strippedOrthography.customDetails?.dialect),
   });
 }
 
-export function defaultDisplayName(language?: ILanguage, script?: IScript) {
+export function defaultDisplayName(
+  language?: ILanguage,
+  script?: IScript
+): string {
   if (
     !language ||
     isUnlistedLanguage(language) ||
     isManuallyEnteredTagLanguage(language)
   ) {
-    return undefined;
+    return "";
   }
 
-  return stripDemarcation(
-    script?.languageNameInScript || language.autonym || language.exonym
+  return (
+    stripDemarcation(
+      script?.languageNameInScript || language.autonym || language.exonym
+    ) ?? ""
   );
 }

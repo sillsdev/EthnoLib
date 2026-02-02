@@ -1,3 +1,55 @@
+## 0.1.13 (2025-09-30)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.12
+
+## 0.1.12 (2025-09-11)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.11
+
+## 0.1.11 (2025-09-10)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.10
+
+## 0.1.10 (2025-08-14)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.9
+
+## 0.1.9 (2025-07-15)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.8
+
+## 0.1.8 (2025-07-02)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.7
+
+## 0.1.7 (2025-07-01)
+
+### 🩹 Fixes
+
+- fix search not updating ([3086a59](https://github.com/sillsdev/EthnoLib/commit/3086a59))
+
+## 0.1.6 (2025-07-01)
+
+### 🩹 Fixes
+
+- select microlanguage not macrolanguage ([19e7e90](https://github.com/sillsdev/EthnoLib/commit/19e7e90))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.6
+
 ## 0.1.5 (2025-06-11)
 
 ### 🩹 Fixes

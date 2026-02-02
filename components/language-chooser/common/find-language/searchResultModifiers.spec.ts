@@ -10,7 +10,7 @@ import {
 import { codeMatches } from "./languageTagUtils";
 import { ILanguage, IScript } from "./findLanguageInterfaces";
 import { createTestLanguageEntry } from "./testUtils";
-import { asyncGetAllLanguageResults } from "./searchForLanguage";
+import { asyncGetAllLanguageResults } from "./languageSearch.spec.ts";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
 
 const latinScript = { code: "Latn", name: "Latin" } as IScript;
@@ -177,7 +177,7 @@ describe("reordering entries to prioritize desired language when keywords are se
     beforeAll(async () => {
       const chineseSearchString = "chinese";
       chineseResults = defaultSearchResultModifier(
-        await asyncGetAllLanguageResults(chineseSearchString),
+        (await asyncGetAllLanguageResults(chineseSearchString)) as ILanguage[],
         chineseSearchString
       );
     });
@@ -200,7 +200,7 @@ describe("reordering entries to prioritize desired language when keywords are se
     it("finds spanish", async () => {
       const spanishSearchString = "spanish";
       const spanishResult = defaultSearchResultModifier(
-        await asyncGetAllLanguageResults(spanishSearchString),
+        (await asyncGetAllLanguageResults(spanishSearchString)) as ILanguage[],
         spanishSearchString
       )[0];
       expect(rawIsoCode(spanishResult)).toEqual("spa");
@@ -214,6 +214,119 @@ describe("reordering entries to prioritize desired language when keywords are se
       ).toEqual(1);
       // make sure we didn't accidentally prepend an empty name instead of castellano
       expect(spanishResult?.names[0]).toBeTruthy();
+    });
+  });
+
+  // I'm not sure if this is the behavior we want to stick with, but putting it here to document it
+  // and so we notice if we accidentally change it. See macrolanguageNotes.md for more details.
+  describe("Anomalous special case handling", () => {
+    it("should handle Akan as expected", async () => {
+      // one "aka" card, is macrolanguage, has multiple names
+      const akaResults = defaultSearchResultModifier(
+        (await asyncGetAllLanguageResults("Akan")) as ILanguage[],
+        "Akan"
+      );
+      const akaResult = akaResults.find((result) =>
+        codeMatches(result.iso639_3_code, "aka")
+      );
+      expect(akaResult).toBeDefined();
+      // Not marking Akan as a macrolanguage, so we don't show the "better to pick an individual language" warning
+      // when there are no relevant individual language options
+      expect(akaResult?.isMacrolanguage).toBe(false);
+      // language subtag should be "ak"
+      expect(akaResult?.languageSubtag).toBe("ak");
+      // should have more than one script option
+      expect(akaResult?.scripts.length).toBeGreaterThan(1);
+      // Currently we don't have enough info for any of the akan individual languages
+      expect(
+        akaResults.some(
+          (result) =>
+            codeMatches(result.iso639_3_code, "twi") ||
+            codeMatches(result.iso639_3_code, "fat") ||
+            result.languageSubtag === "tw"
+        )
+      ).toBe(false);
+    });
+
+    it("should handle Serbo-Croatian as expected", async () => {
+      // one "hbs" card, is macrolanguage, has multiple names
+      const hbsResults = defaultSearchResultModifier(
+        (await asyncGetAllLanguageResults("Serbo-Croatian")) as ILanguage[],
+        "Serbo-Croatian"
+      );
+      const hbsResult = hbsResults.find((result) =>
+        codeMatches(result.iso639_3_code, "hbs")
+      );
+      expect(hbsResult).toBeDefined();
+      expect(hbsResult?.isMacrolanguage).toBe(true);
+      expect(hbsResult?.names.length).toBe(0);
+      // All of the child languages should be present
+      for (const childCode of ["bos", "cnr", "hrv", "srp"]) {
+        expect(
+          hbsResults.some(
+            (result) =>
+              codeMatches(result.iso639_3_code, childCode) &&
+              !result.isMacrolanguage
+          )
+        ).toBe(true);
+      }
+    });
+
+    it("should handle Norwegian as expected", async () => {
+      // one macrolanguage "nor" card, plus one for Bokmål and one for Nynorsk
+      const norResults = defaultSearchResultModifier(
+        (await asyncGetAllLanguageResults("Norwegian")) as ILanguage[],
+        "Norwegian"
+      );
+      const norResult = norResults.find((result) =>
+        codeMatches(result.iso639_3_code, "nor")
+      );
+      expect(norResult).toBeDefined();
+      expect(norResult?.isMacrolanguage).toBe(true);
+      // Both of the child languages should be present
+      for (const childCode of ["nob", "nno"]) {
+        expect(
+          norResults.some(
+            (result) =>
+              codeMatches(result.iso639_3_code, childCode) &&
+              !result.isMacrolanguage
+          )
+        ).toBe(true);
+      }
+    });
+
+    it("should handle Sanskrit as expected", async () => {
+      // we don't have enough info for the individual languages, so just one "san" card
+      const sanResults = defaultSearchResultModifier(
+        (await asyncGetAllLanguageResults("Sanskrit")) as ILanguage[],
+        "Sanskrit"
+      );
+      const sanResult = sanResults.find((result) =>
+        codeMatches(result.iso639_3_code, "san")
+      );
+      expect(sanResult).toBeDefined();
+      expect(sanResult?.isMacrolanguage).toBe(false);
+      // Make sure it has the list of names
+      expect(sanResult?.names.length).toBeGreaterThan(3);
+    });
+
+    it("should handle Zapotec as expected", async () => {
+      // in addition to all the individual zapotec languages, there should be one macrolanguage zap card,
+      // and its list of names should not contain "Isthmus Zapotec" nor "Las Delicias Zapotec" as that could be confusing
+      const zapResults = defaultSearchResultModifier(
+        (await asyncGetAllLanguageResults("Zapotec")) as ILanguage[],
+        "Zapotec"
+      );
+      const zapResult = zapResults.find((result) =>
+        codeMatches(result.iso639_3_code, "zap")
+      );
+      expect(zapResult).toBeDefined();
+      expect(zapResult?.isMacrolanguage).toBe(true);
+      expect(
+        zapResult?.names.some((n) =>
+          ["Isthmus Zapotec", "Las Delicias Zapotec"].includes(n)
+        )
+      ).toBe(false);
     });
   });
 });
