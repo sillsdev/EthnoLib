@@ -91,8 +91,12 @@ export async function manuallyEnterValidLanguageTag(page, tag) {
   );
   await expect(customizationDialogTagPreview).toBeVisible();
   // clicking the tag preview will trigger a windows.prompt dialog, enter tag into it
-  page.on("dialog", (dialog) => dialog.accept(tag));
+  const dialogHandled = page.waitForEvent("dialog").then((dialog) => {
+    expect(dialog.type()).toBe("prompt");
+    return dialog.accept(tag);
+  });
   await customizationDialogTagPreview.click({ modifiers: ["Control"] });
+  await dialogHandled;
   // Check that the tag was accepted. Not a robust check, but see that it is at least visible somewhere
   await expect(page.getByText(/.*tag.*/)).toBeVisible();
 }

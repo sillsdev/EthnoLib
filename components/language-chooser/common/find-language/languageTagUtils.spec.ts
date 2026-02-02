@@ -33,18 +33,31 @@ describe("Tag creation", () => {
       })
     ).toEqual("eng-Latn-US-x-foobar");
   });
-  expect(createTag({ languageCode: "eng", dialectCode: "foobar" })).toEqual(
-    "eng-x-foobar"
-  );
-  expect(createTag({ languageCode: "eng", regionCode: "IN" })).toEqual(
-    "eng-IN"
-  );
+  it("should create tags with optional dialect and region", () => {
+    expect(createTag({ languageCode: "eng", dialectCode: "foobar" })).toEqual(
+      "eng-x-foobar"
+    );
+    expect(createTag({ languageCode: "eng", regionCode: "IN" })).toEqual(
+      "eng-IN"
+    );
+  });
+
+  it("should normalize dialect codes when building tags", () => {
+    expect(createTag({ languageCode: "eng", dialectCode: "foo bar" })).toEqual(
+      "eng-x-foobar"
+    );
+    expect(createTag({ dialectCode: " foo  bar " })).toEqual("qaa-x-foobar");
+  });
 
   it("should create qaa-x-dialect tag if no language tag is provided", () => {
     expect(createTag({ dialectCode: "foobar" })).toEqual("qaa-x-foobar");
-    // we are currently not adding script to qaa tags, though I'm not sure if we will always want this behavior
+    // we are currently allowing script/region in qaa tags, though I'm not sure if we will always want this behavior
     expect(
-      createTag({ dialectCode: "foobar", scriptCode: "Latn", regionCode: "US" })
+      createTag({
+        dialectCode: "foobar",
+        scriptCode: "Latn",
+        regionCode: "US"
+      })
     ).toEqual("qaa-Latn-US-x-foobar");
   });
 });
@@ -142,7 +155,11 @@ describe("get maximal equivalent version of langtag", () => {
     expect(getMaximalLangtag("kzt-MY")).toEqual("dtp-Latn-MY");
     expect(
       getMaximalLangtag(
-        createTag({ languageCode: "dtp", regionCode: "MY", scriptCode: "Latn" })
+        createTag({
+          languageCode: "dtp",
+          regionCode: "MY",
+          scriptCode: "Latn"
+        })
       )
     ).toEqual("dtp-Latn-MY");
     expect(
@@ -344,7 +361,16 @@ describe("createTagFromOrthography", () => {
       })
     ).toEqual("qaa-x-foobar");
   });
-  it("should return the manually entered tag for the language objected created from a manually entered tag", () => {
+  it("should format unlisted dialect codes when building tags", () => {
+    expect(
+      createTagFromOrthography({
+        customDetails: {
+          dialect: "foo bar",
+        },
+      })
+    ).toEqual("qaa-x-foobar");
+  });
+  it("should return the manually entered tag for the language object created from a manually entered tag", () => {
     const manualTag = "zz-zzz-x-foobar";
     expect(
       createTagFromOrthography({
@@ -491,11 +517,25 @@ describe("formatting dialect codes", () => {
     ).toEqual("12345678-12345678-12345678-12345678");
     expect(formatDialectCode("ai-newFancySmartAi")).toEqual("ai-newFancy");
   });
+  it("should drop empty segments", () => {
+    expect(formatDialectCode("foo--bar")).toEqual("foo-bar");
+    expect(formatDialectCode("-foo-")).toEqual("foo");
+    expect(formatDialectCode("---")).toEqual("");
+  });
   it("various combinations", () => {
     expect(
       formatDialectCode(
         "  1234 5678 9-1234 5678 9-!@#$%^&*()1234 5678 9-foobar"
       )
     ).toEqual("12345678-12345678-12345678-foobar");
+  });
+  it("should match unlisted tag examples", () => {
+    expect(formatDialectCode("foo bar")).toEqual("foobar");
+    expect(
+      formatDialectCode(" 1 23 456 7890-@({}=) é, ñ, hi123there ")
+    ).toEqual("12345678-hi123the");
+    expect(formatDialectCode(" hi-there-12-5 6-12345@{}(* 6789 ")).toEqual(
+      "hi-there-12-56-12345678"
+    );
   });
 });

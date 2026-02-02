@@ -57,6 +57,14 @@ npm run testonce
 
 The first command runs the tests continually in _watch_ mode with minimal output while tests are passing successfully. The second command runs all the tests just once and quits after printing a summary of test results to the console window.
 
+### End-to-end
+
+End-to-end tests can be run with:
+
+```
+npm run e2e
+```
+
 ### Dependency Versions
 
 We are currently having all packages manage their own dependencies in their package level `package.json` files, but keeping them all on the same versions of commonly used packages for compatibility. Current versions:
