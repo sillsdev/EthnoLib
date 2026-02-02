@@ -28,6 +28,7 @@ import {
   isUnlistedLanguage,
   createTagFromOrthography,
   IOrthography,
+  formatDialectCode,
   isValidBcp47VariantSubtag,
 } from "@ethnolib/find-language";
 import { FormFieldLabel } from "./FormFieldLabel";
@@ -93,7 +94,8 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   // name (dialect) and country (region) are required for unlisted language
   const isReadyToSubmit =
     !isUnlistedLanguageDialog ||
-    (dialogSelectedDialect !== "" && !!dialogSelectedRegion);
+    (formatDialectCode(dialogSelectedDialect) !== "" &&
+      !!dialogSelectedRegion);
 
   const theme = useTheme();
 
@@ -427,14 +429,19 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                 props.selectUnlistedLanguage();
               }
 
+              const normalizedDialect = isUnlistedLanguageDialog
+                ? formatDialectCode(dialogSelectedDialect)
+                : dialogSelectedDialect;
               props.saveLanguageDetails(
                 {
                   // For unlisted languages, automatically copy the Name they entered to be the display name
                   customDisplayName: isUnlistedLanguageDialog
-                    ? dialogSelectedDialect
+                    ? dialogSelectedDialect // Keep original for display name
                     : props.customizableLanguageDetails.customDisplayName,
                   region: dialogSelectedRegion,
-                  dialect: dialogSelectedDialect,
+                  dialect: isUnlistedLanguageDialog
+                    ? normalizedDialect
+                    : dialogSelectedDialect
                 } as ICustomizableLanguageDetails,
                 dialogSelectedScript
               );

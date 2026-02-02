@@ -17,7 +17,8 @@
     "l10n:download": "crowdin download",
     "l10n:update-locales": "ts-node scripts/update-locales.ts",
     "test": "nx run-many --target test --all --parallel",
-    "testonce": "nx run-many --target test --all --run"
+    "testonce": "nx run-many --target test --all --run",
+    "e2e": "nx run-many --target e2e --all"
   },
   "devDependencies": {
     "@crowdin/cli": "^4.6.1",

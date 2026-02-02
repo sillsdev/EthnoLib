@@ -82,6 +82,7 @@ export function createTag({
   regionCode?: string;
   dialectCode?: string;
 }): string {
+  const normalizedDialectCode = formatDialectCode(dialectCode);
   let tag = "";
   if (languageCode) {
     tag += languageCode;
@@ -97,12 +98,12 @@ export function createTag({
   }
   // TODO future work: If we ever make the language chooser aware of registered variants, some should not be preceded by the "-x-"
   // For example, compare aai-x-suboro and be-tarask in langtags.txt and langtags.json
-  if (!languageCode || dialectCode) {
+  if (!languageCode || normalizedDialectCode) {
     tag += "-x-";
   }
-  // Dialect code should have already been formatted, i.e. by formatDialectCode
-  if (dialectCode) {
-    tag += `${dialectCode}`;
+  // Dialect code is normalized to BCP-47 private use constraints
+  if (normalizedDialectCode) {
+    tag += `${normalizedDialectCode}`;
   }
   return getShortestSufficientLangtag(tag) || tag;
 }
@@ -259,6 +260,7 @@ export function formatDialectCode(dialect?: string): string {
       const alphanumeric = s.replace(/[^a-zA-Z0-9]/g, "");
       return alphanumeric.slice(0, 8);
     })
+    .filter((s) => s.length > 0)
     .join("-");
 }
 

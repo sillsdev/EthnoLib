@@ -107,6 +107,21 @@ test.describe("Customization button and dialog", () => {
     await expect(customizationButton.getByTestId("EditIcon")).not.toBeVisible();
   });
 
+  test("unlisted tag preview removes spaces and invalid characters", async () => {
+    await search(page, " hi-there-12-5 6-12345@{}(* 6789 ");
+    const customizationButton = await customizationButtonLocator(page);
+    await expect(customizationButton).toContainText(
+      "qaa-x-hi-there-12-56-12345678"
+    );
+    await clickCustomizationButton(page);
+    const customizationDialogTagPreview = await page.getByTestId(
+      "customization-dialog-tag-preview"
+    );
+    await expect(customizationDialogTagPreview).toContainText(
+      "qaa-x-hi-there-12-56-12345678"
+    );
+  });
+
   test("if language selected, button should say 'Customize'", async () => {
     await selectChechenCard(page);
     const customizationButton = await customizationButtonLocator(page);
@@ -127,13 +142,15 @@ test.describe("Customization button and dialog", () => {
       "customization-dialog-tag-preview"
     );
     await expect(customizationDialogTagPreview).toBeVisible();
-    await customizationDialogTagPreview.click({ modifiers: ["Control"] });
-    await page.on("dialog", (dialog) => {
+    const dialogHandled = page.waitForEvent("dialog").then(async (dialog) => {
       expect(dialog.type()).toBe("prompt");
       expect(dialog.message()).toMatch(
         /.*If this user interface is not offering you a code that you know is valid ISO 639 code, you can enter it here.*/
       );
+      await dialog.dismiss();
     });
+    await customizationDialogTagPreview.click({ modifiers: ["Control"] });
+    await dialogHandled;
   });
 
   test("dialog starts closed; open and cancel dialog", async () => {
@@ -318,6 +335,9 @@ test.describe("Customization button and dialog", () => {
     await enterName(customizationDialog, "");
     expect(okButton).toBeDisabled();
 
+    // invalid name should keep ok button disabled
+    await enterName(customizationDialog, "!!!");
+    expect(okButton).toBeDisabled();
     // fill in name and country, ok button enabled
     await enterName(customizationDialog, "foo");
     expect(okButton).not.toBeDisabled();
@@ -368,8 +388,11 @@ test.describe("Manually entered language tag behavior", () => {
     const chechenTag = "ce";
     await expect(customizationDialogTagPreview).toContainText(chechenTag);
     // clicking the tag preview will trigger a windows.prompt dialog, enter an invalid tag
-    page.on("dialog", (dialog) => dialog.accept("invalid-tag!"));
+    const dialogHandled = page
+      .waitForEvent("dialog")
+      .then((dialog) => dialog.accept("invalid-tag!"));
     await customizationDialogTagPreview.click({ modifiers: ["Control"] });
+    await dialogHandled;
     // Dialog should still be up with chechen tag
     await expect(customizationDialogTagPreview).toContainText(chechenTag);
   });

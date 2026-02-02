@@ -16,6 +16,7 @@ import {
   IOrthography,
   createTagFromOrthography,
   defaultDisplayName,
+  formatDialectCode,
 } from "@ethnolib/find-language";
 
 export interface ILanguageChooser {
@@ -276,6 +277,7 @@ function hasValidDisplayName(selection: IOrthography) {
 }
 
 export function isReadyToSubmit(selection: IOrthography): boolean {
+  const normalizedDialect = formatDialectCode(selection.customDetails?.dialect);
   return (
     !!selection.language &&
     hasValidDisplayName(selection) &&
@@ -283,8 +285,7 @@ export function isReadyToSubmit(selection: IOrthography): boolean {
     (!!selection.script || selection.language?.scripts?.length === 0) &&
     // if unlisted language, name and country are required
     (!isUnlistedLanguage(selection.language) ||
-      (!!selection.customDetails?.dialect &&
-        !!selection.customDetails?.region?.name)) &&
+      (!!normalizedDialect && !!selection.customDetails?.region?.name)) &&
     // if this was a manually entered langtag, check that tag is valid BCP 47
     (!isManuallyEnteredTagLanguage(selection.language) ||
       isValidBcp47Tag(selection.language?.manuallyEnteredTag))
