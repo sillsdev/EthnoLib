@@ -9,7 +9,9 @@ jobs:
   build-test-release:
     runs-on: windows-latest
     permissions:
-      write-all
+      contents: write
+      pages: write
+      id-token: write
 
       # Many steps are duplicated in buildAndTest.yml. Changes made here may need to be made in both
     steps:
@@ -73,7 +75,7 @@ jobs:
 
       - name: Publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
         run: npx nx release --yes
 
       - name: Push the release commit (with version number update and changelog)
