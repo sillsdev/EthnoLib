@@ -1,3 +1,9 @@
+## 0.1.13 (2026-02-04)
+
+### 🩹 Fixes
+
+- Use trusted publishing ([2788a1c](https://github.com/sillsdev/EthnoLib/commit/2788a1c))
+
 ## 0.1.12 (2025-09-30)
 
 ### 🩹 Fixes
