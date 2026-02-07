@@ -5,16 +5,23 @@
     text,
     matchWith,
     highlight,
-  }: { text: string | undefined; matchWith: string; highlight: boolean } =
-    $props();
+    truncate = false,
+  }: {
+    text: string | undefined;
+    matchWith: string;
+    highlight: boolean;
+    truncate?: boolean;
+  } = $props();
 
   const segments = $derived(highlightMatches(matchWith, text ?? ""));
 </script>
 
-{#each segments as segment}
-  {#if highlight && segment.isHighlighted}
-    <span class="text-primary font-semibold">{segment.text}</span>
-  {:else}
-    {segment.text}
-  {/if}
-{/each}
+<span class:line-clamp-2={truncate}>
+  {#each segments as segment}
+    {#if highlight && segment.isHighlighted}
+      <span class="text-primary font-semibold">{segment.text}</span>
+    {:else}
+      {segment.text}
+    {/if}
+  {/each}
+</span>

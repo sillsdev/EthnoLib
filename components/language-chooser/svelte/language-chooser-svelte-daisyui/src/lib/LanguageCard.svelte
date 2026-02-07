@@ -64,6 +64,7 @@
             text={viewModel.description()}
             matchWith={searchText}
             highlight={!viewModel.isSelected}
+            truncate
           />
         </p>
       {/if}
@@ -72,6 +73,7 @@
           text={viewModel.language.names.join(", ")}
           matchWith={searchText}
           highlight={!viewModel.isSelected}
+          truncate
         />
       </p>
     </div>
