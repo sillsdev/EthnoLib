@@ -13,6 +13,10 @@
     "testonce": "nx vite:test --config vitest.config.ts --run",
     "lint": "eslint ."
   },
+  "dependencies": {
+    "@ethnolib/find-language": "0.1.11",
+    "@ethnolib/state-management-core": "0.1.0"
+  },
   "devDependencies": {
     "@nx/vite": "^19.1.2",
     "@types/node": "^20.16.11",

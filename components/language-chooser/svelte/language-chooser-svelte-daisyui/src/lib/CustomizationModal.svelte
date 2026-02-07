@@ -62,7 +62,7 @@
     region?: IRegion,
     dialect?: string
   ) {
-    languageChooser.submitCustomizeLangaugeModal({ script, region, dialect });
+    languageChooser.submitCustomizeLanguageModal({ script, region, dialect });
     modal.close();
   }
 </script>

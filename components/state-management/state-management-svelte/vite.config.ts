@@ -28,7 +28,7 @@ export default defineConfig({
     },
     lib: {
       entry: "./index.ts",
-      name: "@ethnolib/find-language",
+      name: "@ethnolib/state-management-svelte",
       fileName: "index",
       formats: ["es", "cjs"],
     },

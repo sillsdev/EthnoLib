@@ -16,7 +16,7 @@ import {
 import { Field } from "@ethnolib/state-management-core";
 import {
   LanguageCardViewModel,
-  useLanguageChardViewModel,
+  useLanguageCardViewModel,
 } from "./language-card";
 import { ScriptCardViewModel, useScriptCardViewModel } from "./script-card";
 import { selectItem } from "../selectable";
@@ -91,7 +91,7 @@ export function useLanguageChooserViewModel(
   function _appendLanguages(languages: ILanguage[]) {
     const baseIndex = listedLanguages.value.length;
     const newLanguages = languages.map((lang, i) =>
-      useLanguageChardViewModel(lang, {
+      useLanguageCardViewModel(lang, {
         onSelect: (isSelected) =>
           isSelected
             ? _onLanguageSelected(baseIndex + i)
@@ -250,7 +250,7 @@ export function useLanguageChooserViewModel(
     });
   }
 
-  function submitCustomizeLangaugeModal({
+  function submitCustomizeLanguageModal({
     script,
     region,
     dialect,
@@ -292,7 +292,7 @@ export function useLanguageChooserViewModel(
     search,
     onCustomizeButtonClicked,
     submitUnlistedLanguageModal,
-    submitCustomizeLangaugeModal,
+    submitCustomizeLanguageModal,
   };
 }
 

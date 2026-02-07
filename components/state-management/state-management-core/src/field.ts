@@ -38,10 +38,7 @@ export class Field<T> {
    * Update the value without side effects
    */
   public set value(value: T) {
-    try {
-      if (this.updateUI) this.updateUI(value);
-    } finally {
-      this._value = value;
-    }
+    this._value = value;
+    if (this.updateUI) this.updateUI(value);
   }
 }

@@ -28,7 +28,7 @@ export default defineConfig({
     },
     lib: {
       entry: "./index.ts",
-      name: "@ethnolib/find-language",
+      name: "@ethnolib/language-chooser-controller",
       fileName: "index",
       formats: ["es", "cjs"],
     },

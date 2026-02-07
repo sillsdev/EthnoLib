@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   LanguageCardViewModel,
-  useLanguageChardViewModel,
+  useLanguageCardViewModel,
 } from "../src/view-models/language-card";
 import { NorthernUzbekLanguage } from "./sample-data/languages";
 import { fakeLanguage } from "./fake-utils";
@@ -9,7 +9,7 @@ import { ILanguage } from "@ethnolib/find-language";
 
 class TestHelper {
   constructor(language: ILanguage) {
-    this.card = useLanguageChardViewModel(language);
+    this.card = useLanguageCardViewModel(language);
   }
   card: LanguageCardViewModel;
 }

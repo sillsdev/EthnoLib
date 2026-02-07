@@ -253,7 +253,7 @@ test.describe("Customization button and dialog", () => {
     await expect(variantFieldLocator(customizationDialog2)).toHaveValue("");
   });
 
-  test("Selecting another langauge should clear customizations", async () => {
+  test("Selecting another language should clear customizations", async () => {
     // Open customize dialog and enter a script, region, and variant name
     await selectChechenCard(page);
     await clickCustomizationButton(page);

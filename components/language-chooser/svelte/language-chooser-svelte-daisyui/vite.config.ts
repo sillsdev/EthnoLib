@@ -34,7 +34,7 @@ export default defineConfig({
     },
     lib: {
       entry: "./index.ts",
-      name: "@ethnolib/find-language",
+      name: "@ethnolib/language-chooser-svelte-daisyui",
       fileName: "index",
       formats: ["es", "cjs"],
     },

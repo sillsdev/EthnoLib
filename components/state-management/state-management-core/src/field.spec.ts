@@ -32,12 +32,12 @@ describe("Field", () => {
     expect(onUpdateRequested).toHaveBeenCalledWith("b", "a");
   });
 
-  it("calls updateUI before setting value", () => {
+  it("calls updateUI after setting value", () => {
     const events: string[] = [];
     const field = new Field("start");
     field.updateUI = (v) => events.push(`updateUI:${v},value:${field.value}`);
     field.value = "end";
-    expect(events).toEqual(["updateUI:end,value:start"]);
+    expect(events).toEqual(["updateUI:end,value:end"]);
     expect(field.value).toBe("end");
   });
 });

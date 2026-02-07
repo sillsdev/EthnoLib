@@ -68,7 +68,6 @@
         </p>
       {/if}
       <p class="mt-2 text-sm opacity-80">
-        {viewModel.language.names.join(", ")}
         <TextWithMatches
           text={viewModel.language.names.join(", ")}
           matchWith={searchText}

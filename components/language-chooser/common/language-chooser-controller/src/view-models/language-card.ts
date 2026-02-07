@@ -5,11 +5,9 @@ interface ViewModelArgs {
   onSelect?: (isSelected: boolean) => void;
 }
 
-export type LanguageCardViewModel = ReturnType<
-  typeof useLanguageChardViewModel
->;
+export type LanguageCardViewModel = ReturnType<typeof useLanguageCardViewModel>;
 
-export function useLanguageChardViewModel(
+export function useLanguageCardViewModel(
   language: ILanguage,
   { onSelect }: ViewModelArgs = {}
 ) {

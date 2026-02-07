@@ -154,10 +154,10 @@ for (const line of macrolangMappingFile.split("\n")) {
 }
 
 // From the Langtags repo:
-// "For many macro languages, there is a representative language for that macrolanguage. In many cases the macro language code is more popular than the representative langauge code. Thus, for example, in the CLDR, the macro language code is used instead of the representative language code. For this reason, langtags.json unifies the representative language tags into the macro language tag set rather than having a separate tag set for them, and gives the tag for the tag set in terms of the macro language rather than the representative language."
-// So in langtags.json, for representative languages, the iso639_3 field is often the macrolangauge code,
+// "For many macro languages, there is a representative language for that macrolanguage. In many cases the macro language code is more popular than the representative language code. Thus, for example, in the CLDR, the macro language code is used instead of the representative language code. For this reason, langtags.json unifies the representative language tags into the macro language tag set rather than having a separate tag set for them, and gives the tag for the tag set in terms of the macro language rather than the representative language."
+// So in langtags.json, for representative languages, the iso639_3 field is often the macrolanguage code,
 // but the tags field (in some but not all entries) contains equivalent tags that use the individual language codes.
-// We want to save the individual language codes, so gather as many macrolangauge to representative individual language
+// We want to save the individual language codes, so gather as many macrolanguage to representative individual language
 // mappings as we can. As of 2/2025, this covers all macrolanguage codes in langtags.json except for
 // bnc, nor, san, hbs, and zap which should all be handled by search result modifiers. (a fix for `man` was incorporated 8/2025)
 // See macrolanguageNotes.md for more explanation.
