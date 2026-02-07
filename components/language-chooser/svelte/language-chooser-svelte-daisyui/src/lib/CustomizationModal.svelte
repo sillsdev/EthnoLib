@@ -30,17 +30,19 @@
     (fields: { script?: IScript; region?: IRegion; dialect?: string }) => {}
   );
 
-  languageChooser.showUnlistedLanguageModal = (fields) => {
-    isCreatingUnlisted = true;
-    populateUnlistedForm(fields);
-    modal.showModal();
-  };
+  $effect(() => {
+    languageChooser.showUnlistedLanguageModal = (fields) => {
+      isCreatingUnlisted = true;
+      populateUnlistedForm(fields);
+      modal.showModal();
+    };
 
-  languageChooser.showCustomizeLanguageModal = (fields) => {
-    isCreatingUnlisted = false;
-    populateCustomizeForm(fields);
-    modal.showModal();
-  };
+    languageChooser.showCustomizeLanguageModal = (fields) => {
+      isCreatingUnlisted = false;
+      populateCustomizeForm(fields);
+      modal.showModal();
+    };
+  });
 
   let title = $derived(
     isCreatingUnlisted ? "Unlisted Language Tag" : "Custom Language Tag"
