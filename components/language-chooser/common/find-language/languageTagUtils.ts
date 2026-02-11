@@ -15,19 +15,28 @@ import { getRegionBySubtag } from "./regionsAndScripts";
 // Keys are lower cased - lazily initialized to avoid side effects on import
 let shortPreferredTagLookup: Map<string, string> | null = null;
 let maximalTagLookup: Map<string, string> | null = null;
+let tagsetLookup: Map<
+  string,
+  { shortest: string; maximal: string; allTags: string[] }
+> | null = null;
 
 function initializeLookupMaps(): void {
-  if (shortPreferredTagLookup && maximalTagLookup) {
+  if (shortPreferredTagLookup && maximalTagLookup && tagsetLookup) {
     return; // Already initialized
   }
 
   shortPreferredTagLookup = new Map<string, string>();
   maximalTagLookup = new Map<string, string>();
+  tagsetLookup = new Map<
+    string,
+    { shortest: string; maximal: string; allTags: string[] }
+  >();
 
   for (const tagset of equivalentTags) {
     for (const tag of tagset.allTags) {
       shortPreferredTagLookup.set(tag.toLowerCase(), tagset.shortest);
       maximalTagLookup.set(tag.toLowerCase(), tagset.maximal);
+      tagsetLookup.set(tag.toLowerCase(), tagset);
     }
   }
 }
@@ -40,6 +49,14 @@ function getShortPreferredTagLookup(): Map<string, string> {
 function getMaximalTagLookup(): Map<string, string> {
   initializeLookupMaps();
   return maximalTagLookup!;
+}
+
+function getTagsetLookup(): Map<
+  string,
+  { shortest: string; maximal: string; allTags: string[] }
+> {
+  initializeLookupMaps();
+  return tagsetLookup!;
 }
 
 // case insensitive on input. Tries to find a shorter (or the same) equivalent in the language data
@@ -64,14 +81,35 @@ export function getShortestSufficientLangtag(
   return shorter;
 }
 
-// case insensitive. Returns undefined if langtag is not in langtags.txt and so equivalents cannot be looked up
-export function getMaximalLangtag(langtag: string): string | undefined {
-  const lookup = getMaximalTagLookup();
-  return lookup.get(langtag.toLowerCase());
+// Like getShortestSufficientLangtag, but avoids changing the primary language subtag.
+// This matters for macrolanguage-equivalent tags (e.g. uzn ≈ uz) where we want to preserve
+// the specific language the user selected.
+function getShortestSufficientLangtagPreservingLanguageSubtag(
+  langtag: string,
+  desiredLanguageSubtag: string
+): string | undefined {
+  const desired = desiredLanguageSubtag.toLowerCase();
+  const [baseTag, ...privateUseParts] = langtag.split(/-[xX]-/);
+  const privateUseSuffix = privateUseParts.length
+    ? `-x-${privateUseParts.join("-x-")}`
+    : "";
+
+  const tagset = getTagsetLookup().get(baseTag.toLowerCase());
+  if (!tagset) {
+    return undefined;
+  }
+
+  // Prefer the shortest equivalent that keeps the same primary language subtag.
+  // Use string length as a cheap proxy for "shortest".
+  const candidates = tagset.allTags
+    .filter((t) => splitTag(t).languageSubtag?.toLowerCase() === desired)
+    .sort((a, b) => a.length - b.length);
+
+  const best = candidates[0];
+  return best ? `${best}${privateUseSuffix}` : undefined;
 }
 
-// This is pretty naive. Exported for unit testing, but most situations should use createTagFromOrthography instead
-export function createTag({
+function createTagUnshortened({
   languageCode,
   scriptCode,
   regionCode,
@@ -105,6 +143,33 @@ export function createTag({
   if (normalizedDialectCode) {
     tag += `${normalizedDialectCode}`;
   }
+  return tag;
+}
+
+// case insensitive. Returns undefined if langtag is not in langtags.txt and so equivalents cannot be looked up
+export function getMaximalLangtag(langtag: string): string | undefined {
+  const lookup = getMaximalTagLookup();
+  return lookup.get(langtag.toLowerCase());
+}
+
+// This is pretty naive. Exported for unit testing, but most situations should use createTagFromOrthography instead
+export function createTag({
+  languageCode,
+  scriptCode,
+  regionCode,
+  dialectCode,
+}: {
+  languageCode?: string;
+  scriptCode?: string;
+  regionCode?: string;
+  dialectCode?: string;
+}): string {
+  const tag = createTagUnshortened({
+    languageCode,
+    scriptCode,
+    regionCode,
+    dialectCode,
+  });
   return getShortestSufficientLangtag(tag) || tag;
 }
 
@@ -271,12 +336,33 @@ export function createTagFromOrthography(orthography: IOrthography): string {
     )
       ? undefined
       : strippedOrthography.script?.code;
-  return createTag({
-    languageCode: strippedOrthography.language?.languageSubtag,
+  // return createTag({
+  //   languageCode: strippedOrthography.language?.languageSubtag,
+  //   scriptCode,
+  //   regionCode: strippedOrthography.customDetails?.region?.code,
+  //   dialectCode: formatDialectCode(strippedOrthography.customDetails?.dialect),
+  // });
+
+  const languageCode = strippedOrthography.language?.languageSubtag;
+  const unshortened = createTagUnshortened({
+    languageCode,
     scriptCode,
     regionCode: strippedOrthography.customDetails?.region?.code,
     dialectCode: formatDialectCode(strippedOrthography.customDetails?.dialect),
   });
+
+  // Important: do not shorten in a way that changes the primary language subtag.
+  // (For example, uzn is canonically equivalent to uz in langtags.txt.)
+  return (
+    (languageCode
+      ? getShortestSufficientLangtagPreservingLanguageSubtag(
+          unshortened,
+          languageCode
+        )
+      : undefined) ||
+    getShortestSufficientLangtag(unshortened) ||
+    unshortened
+  );
 }
 
 export function defaultDisplayName(

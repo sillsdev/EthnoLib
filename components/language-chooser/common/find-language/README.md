@@ -198,6 +198,8 @@ find-language searches languages included in the ISO-639-3 standard; every resul
 
 The [createTag](./languageTagUtils.ts) function in this package will return the shortest (and thus preferred) tag for a given language/script/region/dialect combination. For example, given language code "emm" (Mamulique), script code "Latn" (Latin) and region code "MX" (Mexico), `createTag` will return "emm" because it is the preferred equivalent tag for emm-Latn-MX.
 
+Note: the language chooser UI typically uses `createTagFromOrthography(...)` when reporting a user selection. Unlike `createTag`, it will not shorten in a way that changes the primary language subtag (e.g. it will avoid collapsing an individual language like `uzn` to an equivalent macrolanguage tag like `uz`). This preserves the specific language the user picked.
+
 [langtags.txt](https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#langtagstxt) lists equivalent language tags. langtagProcessing.ts reformats it into [equivalentTags.json](language-data/equivalentTags.json) which we use for mapping language tags to their shortest and maximal equivalents.
 
 ## Data sources

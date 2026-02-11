@@ -398,6 +398,70 @@ describe("createTagFromOrthography", () => {
       })
     ).toEqual("en-x-foobar");
   });
+  it("should not shorten to an equivalent macrolanguage language subtag", () => {
+    // Uzbek, Northern (uzn) is canonically equivalent to Uzbek (uz) in langtags.txt.
+    // When a user has selected uzn, we must preserve that language subtag.
+    expect(
+      createTagFromOrthography({
+        language: {
+          languageSubtag: "uzn",
+          exonym: "Uzbek",
+          scripts: [],
+          iso639_3_code: "uzn",
+          regionNamesForDisplay: "",
+          regionNamesForSearch: [],
+          names: [],
+          alternativeTags: [],
+          languageType: LanguageType.Living,
+          isMacrolanguage: false,
+        } as ILanguage,
+      })
+    ).toEqual("uzn");
+  });
+  it("selecting swh with Latin should produce swh, not sw", () => {
+    expect(
+      createTagFromOrthography({
+        language: {
+          languageSubtag: "swh",
+          exonym: "Swahili",
+          scripts: [
+            { code: "Latn", name: "Latin" } as IScript,
+            { code: "Arab", name: "Arabic" } as IScript,
+          ],
+          iso639_3_code: "swh",
+          regionNamesForDisplay: "",
+          regionNamesForSearch: [],
+          names: [],
+          alternativeTags: [],
+          languageType: LanguageType.Living,
+          isMacrolanguage: false,
+        } as ILanguage,
+        script: { code: "Latn", name: "Latin" } as IScript,
+      })
+    ).toEqual("swh");
+  });
+  it("selecting swh with Arabic should produce swh-Arab", () => {
+    expect(
+      createTagFromOrthography({
+        language: {
+          languageSubtag: "swh",
+          exonym: "Swahili",
+          scripts: [
+            { code: "Latn", name: "Latin" } as IScript,
+            { code: "Arab", name: "Arabic" } as IScript,
+          ],
+          iso639_3_code: "swh",
+          regionNamesForDisplay: "",
+          regionNamesForSearch: [],
+          names: [],
+          alternativeTags: [],
+          languageType: LanguageType.Living,
+          isMacrolanguage: false,
+        } as ILanguage,
+        script: { code: "Arab", name: "Arabic" } as IScript,
+      })
+    ).toEqual("swh-Arab");
+  });
   it("should modify dialog name if necessary", () => {
     expect(
       createTagFromOrthography({

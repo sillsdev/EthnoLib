@@ -6,6 +6,7 @@ import {
   findChechenCyrlCard,
   findChechenCard,
   scriptCardTestId,
+  search,
 } from "./e2eHelpers";
 
 let page: Page; // All the tests in this file use the same page object to save time; we only load the language chooser once.
@@ -53,5 +54,13 @@ test.describe("Selection toggle script card behavior", () => {
     // Add to search string
     await page.locator("#search-bar").fill("uzbek ");
     await expect(cyrlCard).not.toBeVisible();
+  });
+
+  test("Selecting uzn preserves tag preview (does not shorten to uz)", async () => {
+    await search(page, "uzn");
+    await clickLanguageCard(page, "uzn");
+    await expect(page.getByTestId("right-panel-langtag-preview")).toHaveText(
+      "uzn",
+    );
   });
 });

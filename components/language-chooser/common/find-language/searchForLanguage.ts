@@ -149,13 +149,18 @@ export function getLanguageBySubtag(
 
 // This is not a comprehensive language tag parser. It's just built to parse the
 // langtags output by the language chooser and the libPalasso language picker that
-// was in BloomDesktop. The languageTag must be the default language subtag for
-// that language (the first part of the "tag" field of langtags.json), which may
-// be a 2-letter code even if an equivalent ISO 639-3 code exists. This parser is not
-// designed to handle other BCP-47 langtag corner cases, e.g. irregular codes,
-// extension codes, langtags with both macrolanguage code and language code. It will return
-// undefined if it encounters any of these, e.g. in cases where a langtag was manually
-// entered in the language chooser.
+// was in BloomDesktop.
+//
+// Notes on language subtags:
+// - Many languages have both ISO 639-1 and ISO 639-3 codes (e.g. en/eng). Either may appear.
+// - Some individual languages are canonically equivalent (in langtags.txt) to a macrolanguage code
+//   (e.g. uzn ≈ uz). The language chooser preserves the specific selected language subtag in its
+//   output tags (so selecting uzn yields a tag starting with uzn, not uz).
+//
+// This parser is not designed to handle BCP-47 corner cases, e.g. irregular codes,
+// extension codes, or tags with both macrolanguage code and language code. It will return
+// undefined if it encounters these, e.g. in cases where a langtag was manually entered in
+// the language chooser.
 
 export function parseLangtagFromLangChooser(
   languageTag: string, // must be the default language subtag for the language
