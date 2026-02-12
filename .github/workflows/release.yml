@@ -74,9 +74,18 @@ jobs:
           git config user.email "no-reply@ethnolib-build.com"
 
       - name: Publish
+        env:
+          NPM_CONFIG_PROVENANCE: true
         shell: bash
         run: |
           set -euo pipefail
+
+          # Ensure we use npm Trusted Publisher (OIDC) rather than a static token.
+          # If NODE_AUTH_TOKEN (or NPM_TOKEN) is set, npm may attempt token auth instead.
+          if [[ -n "${NODE_AUTH_TOKEN:-}" ]]; then echo "NODE_AUTH_TOKEN is set (will unset)."; else echo "NODE_AUTH_TOKEN is not set."; fi
+          if [[ -n "${NPM_TOKEN:-}" ]]; then echo "NPM_TOKEN is set (will unset)."; else echo "NPM_TOKEN is not set."; fi
+          unset NODE_AUTH_TOKEN || true
+          unset NPM_TOKEN || true
           npx nx release --yes 2>&1 | tee nx-release.log
 
           # Nx was failing without propagating a failing exit code.
