@@ -74,9 +74,17 @@ jobs:
           git config user.email "no-reply@ethnolib-build.com"
 
       - name: Publish
-        env:
-          NPM_CONFIG_PROVENANCE: true
-        run: npx nx release --yes
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx nx release --yes 2>&1 | tee nx-release.log
+
+          # Nx was failing without propagating a failing exit code.
+          # Fail the step (and therefore the job) if the output indicates publish failed.
+          if grep -Eqi "npm publish error:|Failed tasks:|nx-release-publish.*failed" nx-release.log; then
+            echo "Detected publish failure in nx output."
+            exit 1
+          fi
 
       - name: Push the release commit (with version number update and changelog)
         run: git push

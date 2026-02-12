@@ -6,6 +6,9 @@
     "url": "git+https://github.com/sillsdev/EthnoLib.git",
     "directory": "components/language-chooser/react/language-chooser-react-mui"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "author": "SIL Global",
   "license": "MIT",
   "version": "0.1.17",

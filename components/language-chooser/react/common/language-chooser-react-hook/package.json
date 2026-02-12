@@ -6,6 +6,9 @@
     "url": "git+https://github.com/sillsdev/EthnoLib.git",
     "directory": "components/language-chooser/react/common/language-chooser-react-hook"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "author": "SIL Global",
   "license": "MIT",
   "version": "0.1.15",
