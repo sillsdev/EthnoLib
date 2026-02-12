@@ -80,12 +80,24 @@ jobs:
         run: |
           set -euo pipefail
 
+          echo "Node: $(node --version)"
+          echo "npm: $(npm --version)"
+
           # Ensure we use npm Trusted Publisher (OIDC) rather than a static token.
           # If NODE_AUTH_TOKEN (or NPM_TOKEN) is set, npm may attempt token auth instead.
           if [[ -n "${NODE_AUTH_TOKEN:-}" ]]; then echo "NODE_AUTH_TOKEN is set (will unset)."; else echo "NODE_AUTH_TOKEN is not set."; fi
           if [[ -n "${NPM_TOKEN:-}" ]]; then echo "NPM_TOKEN is set (will unset)."; else echo "NPM_TOKEN is not set."; fi
           unset NODE_AUTH_TOKEN || true
           unset NPM_TOKEN || true
+
+          # With npm Trusted Publishers (OIDC), avoid relying on a NODE_AUTH_TOKEN placeholder
+          # that actions/setup-node can write into ~/.npmrc when registry-url is configured.
+          npm config set registry "https://registry.npmjs.org/"
+          npm config delete //registry.npmjs.org/:_authToken || true
+
+          echo "npm registry: $(npm config get registry)"
+          echo "npm userconfig: $(npm config get userconfig)"
+
           npx nx release --yes 2>&1 | tee nx-release.log
 
           # Nx was failing without propagating a failing exit code.
