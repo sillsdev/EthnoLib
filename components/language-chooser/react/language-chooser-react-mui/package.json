@@ -1,6 +1,11 @@
 {
   "name": "@ethnolib/language-chooser-react-mui",
   "description": "A language chooser React component using MUI",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillsdev/EthnoLib.git",
+    "directory": "components/language-chooser/react/language-chooser-react-mui"
+  },
   "author": "SIL Global",
   "license": "MIT",
   "version": "0.1.16",

@@ -1,6 +1,11 @@
 {
   "name": "@ethnolib/find-language",
   "description": "A library for fuzzy-searching for languages and other utils for language choosers",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillsdev/EthnoLib.git",
+    "directory": "components/language-chooser/common/find-language"
+  },
   "author": "SIL Global",
   "license": "MIT",
   "version": "0.1.13",
