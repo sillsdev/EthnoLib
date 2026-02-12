@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@^11.5.1
+
       - name: Install playwright browsers for e2e tests
         run: npx playwright install chromium --with-deps
 
@@ -94,9 +97,13 @@ jobs:
           # that actions/setup-node can write into ~/.npmrc when registry-url is configured.
           npm config set registry "https://registry.npmjs.org/"
           npm config delete //registry.npmjs.org/:_authToken || true
+          npm config set provenance true
 
           echo "npm registry: $(npm config get registry)"
           echo "npm userconfig: $(npm config get userconfig)"
+          echo "npm provenance: $(npm config get provenance)"
+          if [[ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]]; then echo "ACTIONS_ID_TOKEN_REQUEST_URL is set."; else echo "ACTIONS_ID_TOKEN_REQUEST_URL is NOT set."; fi
+          if [[ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN is set."; else echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN is NOT set."; fi
 
           npx nx release --yes 2>&1 | tee nx-release.log
 
