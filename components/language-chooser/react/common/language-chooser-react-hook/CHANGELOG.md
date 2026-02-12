@@ -1,3 +1,13 @@
+## 0.1.15 (2026-02-12)
+
+### 🩹 Fixes
+
+- trusted publishing ([b5e0dcf](https://github.com/sillsdev/EthnoLib/commit/b5e0dcf))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.14
+
 ## 0.1.14 (2026-02-04)
 
 ### 🩹 Fixes
