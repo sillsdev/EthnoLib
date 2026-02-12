@@ -11,7 +11,7 @@
   },
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "main": "./index.js",
   "types": "./index.d.ts",
   "sideEffects": false,
