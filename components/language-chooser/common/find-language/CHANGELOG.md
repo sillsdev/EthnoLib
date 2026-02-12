@@ -1,3 +1,9 @@
+## 0.1.16 (2026-02-12)
+
+### 🩹 Fixes
+
+- clean up release.yml ([a958ec4](https://github.com/sillsdev/EthnoLib/commit/a958ec4))
+
 ## 0.1.15 (2026-02-12)
 
 ### 🩹 Fixes

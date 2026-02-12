@@ -1,3 +1,14 @@
+## 0.1.19 (2026-02-12)
+
+### 🩹 Fixes
+
+- clean up release.yml ([a958ec4](https://github.com/sillsdev/EthnoLib/commit/a958ec4))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.17
+- Updated @ethnolib/find-language to 0.1.16
+
 ## 0.1.18 (2026-02-12)
 
 ### 🩹 Fixes

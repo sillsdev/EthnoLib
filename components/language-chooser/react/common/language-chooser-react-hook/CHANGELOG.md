@@ -1,3 +1,13 @@
+## 0.1.17 (2026-02-12)
+
+### 🩹 Fixes
+
+- clean up release.yml ([a958ec4](https://github.com/sillsdev/EthnoLib/commit/a958ec4))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.16
+
 ## 0.1.16 (2026-02-12)
 
 ### 🩹 Fixes
