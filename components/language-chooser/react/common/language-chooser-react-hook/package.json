@@ -11,7 +11,7 @@
   },
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "main": "./index.js",
   "types": "./index.d.ts",
   "scripts": {
@@ -22,7 +22,7 @@
     "test": "nx vite:test --config vitest.config.ts"
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.1.16",
+    "@ethnolib/find-language": "0.1.17",
     "fuse.js": "^7.0.0",
     "iso-15924": "^3.2.0",
     "iso-3166": "^4.3.0"

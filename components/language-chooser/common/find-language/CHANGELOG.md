@@ -1,3 +1,9 @@
+## 0.1.17 (2026-02-13)
+
+### 🩹 Fixes
+
+- BL-14889 use indiv langtags for rep languages in tag creation ([38baaa0](https://github.com/sillsdev/EthnoLib/commit/38baaa0))
+
 ## 0.1.16 (2026-02-12)
 
 ### 🩹 Fixes

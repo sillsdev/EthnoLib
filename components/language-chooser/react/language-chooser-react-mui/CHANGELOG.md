@@ -1,3 +1,14 @@
+## 0.1.20 (2026-02-13)
+
+### 🩹 Fixes
+
+- BL-14889 use indiv langtags for rep languages in tag creation ([38baaa0](https://github.com/sillsdev/EthnoLib/commit/38baaa0))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.18
+- Updated @ethnolib/find-language to 0.1.17
+
 ## 0.1.19 (2026-02-12)
 
 ### 🩹 Fixes
