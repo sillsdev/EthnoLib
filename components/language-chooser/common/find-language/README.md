@@ -194,11 +194,15 @@ If you modify [langtagProcessing.ts](./langtagProcessing.ts), run `npm run find-
 
 find-language searches languages included in the ISO-639-3 standard; every result returned will have a unique ISO-639-3 code. The entries listed in our source database, langtags.json, are combinations of languages, scripts, regions, and/or variants. [langtagProcessing.ts](./langtagProcessing.ts) consolidates these entries by their ISO-639-3 code and saves the result to [languageData.json](language-data/languageData.json) for searching. For example, langtags.json has separate entries for Abhaz with Cyrillic script, Abhaz with Georgian script, and Abhaz with Latin script. langtagProcessing.ts will combine these into a single entry which lists all three possible scripts and has the superset of the names, regions, etc. of the three entries from langtags.json. This way the search results will contain at most one entry for the language Abhaz.
 
+[langtags.txt](https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#langtagstxt) lists equivalent language tags, and langtagProcessing.ts reformats it into [equivalentTags.json](language-data/equivalentTags.json) which we use for mapping language tags to their shortest and maximal equivalents.
+
+**Note: In this package we use individual language tags instead of the macrolanguage tags for individual languages, even if it is common/"canonical" to use a macrolangauge tag for that individual language. See [macrolanguageNotes.md](macrolanguageNotes.md) for details. So in [languageData.json](language-data/languageData.json), the the `languageSubtag` field will always be a specifically individual language code for individual languages.** (There are a few exceptional cases, see [macrolanguageNotes.md](macrolanguageNotes.md).) **However, equivalentTags.json generally contains tags in their "canonical" form.** Use utilities in [languageTagUtils.ts](./languageTagUtils.ts) to convert between "canonical" and specifically individual language tags.
+
 #### Language tag shortening
 
-The [createTag](./languageTagUtils.ts) function in this package will return the shortest (and thus preferred) tag for a given language/script/region/dialect combination. For example, given language code "emm" (Mamulique), script code "Latn" (Latin) and region code "MX" (Mexico), `createTag` will return "emm" because it is the preferred equivalent tag for emm-Latn-MX.
+The [createTagFromOrthography](./languageTagUtils.ts) function in this package will return the shortest (and thus preferred) tag for a given language/script/region/dialect combination. For example, given language code "emm" (Mamulique), script code "Latn" (Latin) and region code "MX" (Mexico), `createTag` will return "emm" because it is the preferred equivalent tag for emm-Latn-MX.
 
-[langtags.txt](https://github.com/silnrsi/langtags/blob/master/doc/tagging.md#langtagstxt) lists equivalent language tags. langtagProcessing.ts reformats it into [equivalentTags.json](language-data/equivalentTags.json) which we use for mapping language tags to their shortest and maximal equivalents.
+For languages that are representative for a macrolanguage, however, we use the individual language's ISO 639-3 code as the language subtag even if the macrolanguage code is considered the preferred equivalent tag for this language. See [macrolanguageNotes.md](macrolanguageNotes.md) for further explanation.
 
 ## Data sources
 

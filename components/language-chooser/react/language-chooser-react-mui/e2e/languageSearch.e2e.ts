@@ -80,6 +80,29 @@ test.describe("Search", () => {
     );
   });
 
+  // see macrolanguageNotes.md
+  test("Akan special case", async () => {
+    await search(page, "akan");
+    const akanCard = page.getByTestId(languageCardTestId("aka"));
+    await akanCard.scrollIntoViewIfNeeded();
+    await expect(akanCard).toBeVisible();
+    await expect(akanCard).toContainText("Akan");
+    // language tag should be "ak", not "twi"
+    await expect(akanCard).not.toContainText("twi");
+  });
+
+  // see macrolanguageNotes.md
+  test("Sanskrit special case", async () => {
+    await search(page, "sanskrit");
+    const sanCard = page.getByTestId(languageCardTestId("san"));
+    await sanCard.scrollIntoViewIfNeeded();
+    await expect(sanCard).toBeVisible();
+    await expect(sanCard).toContainText("Sanskrit");
+    // language tag should be "sa", not "cls" or "vsn"
+    await expect(sanCard).not.toContainText("cls");
+    await expect(sanCard).not.toContainText("vsn");
+  });
+
   test("X button clears search and results", async () => {
     await search(page, "tok pisin");
     // At least one result is visible
