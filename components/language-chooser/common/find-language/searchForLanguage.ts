@@ -149,8 +149,8 @@ export function getLanguageBySubtag(
 
 // This is not a comprehensive language tag parser. It's just built to parse the
 // langtags output by the language chooser and the libPalasso language picker that
-// was in BloomDesktop. The languageTag must be the default language subtag for
-// that language (the first part of the "tag" field of langtags.json), which may
+// was in BloomDesktop. The languageTag must be either the ISO 639-3 code or the
+// preferred/canonical language subtag for that language (the first part of the "tag" field of langtags.json), which may
 // be a 2-letter code even if an equivalent ISO 639-3 code exists. This parser is not
 // designed to handle other BCP-47 langtag corner cases, e.g. irregular codes,
 // extension codes, langtags with both macrolanguage code and language code. It will return
@@ -223,14 +223,15 @@ export function parseLangtagFromLangChooser(
     script = language.scripts[0];
   }
 
-  // Otherwise, the script must be implied, look for the equivalent maximal tag, which will have a script subtag explicit.
   if (!script && !scriptSubtag) {
+    // The script must be implied; look for the equivalent maximal tag, which will have a script subtag explicit.
+
     const maximalTag =
-      getMaximalLangtag(languageTag) ||
+      getMaximalLangtag(languageTag, language) ||
       // The user may have entered a dialect and/or region that are not in the langtags database
       // so if necessary check for the langtag without the dialect and/or region
-      getMaximalLangtag(`${languageSubtag}-${regionSubtag}`) ||
-      getMaximalLangtag(`${languageSubtag}`) ||
+      getMaximalLangtag(`${languageSubtag}-${regionSubtag}`, language) ||
+      getMaximalLangtag(`${languageSubtag}`, language) ||
       "";
     // Look for a script code in the maximal tag:
     const impliedScriptSubtag = maximalTag
