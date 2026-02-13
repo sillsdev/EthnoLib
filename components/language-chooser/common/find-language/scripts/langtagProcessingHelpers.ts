@@ -246,7 +246,9 @@ export function isMacrolanguage(iso639_3: string) {
   return isoCodesDetails[iso639_3]?.isMacrolanguage || false;
 }
 
-export function defaultScriptForLanguage(
+// `langtag` must be a canonical BCP-47 tag. Beware of representative languages where our language chooser packages will
+//  generally use the individual language code but the canonical tag may use a macrolanguage code. See macrolanguages.md
+function defaultScriptForLanguage(
   languageTag: string,
   language?: ILanguage
 ): IScript | undefined {
@@ -255,8 +257,8 @@ export function defaultScriptForLanguage(
   // If there is no explicit script tag, get the maximal tag which will have the most likely script in it
   if (!scriptSubtag) {
     const maximalTag =
-      getMaximalLangtag(languageTag) ||
-      getMaximalLangtag(`${languageSubtag}`) ||
+      getMaximalLangtag(languageTag, language) ||
+      getMaximalLangtag(`${languageSubtag}`, language) ||
       "";
     scriptSubtag = splitTag(maximalTag).scriptSubtag;
   }

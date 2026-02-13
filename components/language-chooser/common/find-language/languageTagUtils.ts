@@ -31,6 +31,34 @@ function initializeLookupMaps(): void {
     }
   }
 }
+// For representative languages, the canonical BCP-47 tag may use a macrolanguage code for the language subtag, but in
+//  this language chooser we want to use an individual language code instead. (See macrolanguages.md).
+export function ensureLangSubtagIsIndivForReps(
+  langTag: string,
+  language: ILanguage | undefined
+): string {
+  if (language?.isRepresentativeForMacrolanguage) {
+    const remainingSubtags = langTag.split("-").slice(1).join("-");
+    return remainingSubtags
+      ? `${language.languageSubtag}-${remainingSubtags}`
+      : language.languageSubtag;
+  }
+  return langTag;
+}
+
+export function ensureLangSubtagIsCanonicalForReps(
+  langTag: string,
+  language: ILanguage
+): string {
+  const canonicalLanguageSubtag = language.isRepresentativeForMacrolanguage
+    ? language.alternativeTags?.[0]?.split("-")[0] || language.languageSubtag
+    : language.languageSubtag;
+
+  const remainingSubtags = langTag.split("-").slice(1).join("-");
+  return remainingSubtags
+    ? `${canonicalLanguageSubtag}-${remainingSubtags}`
+    : canonicalLanguageSubtag || langTag;
+}
 
 function getShortPreferredTagLookup(): Map<string, string> {
   initializeLookupMaps();
@@ -47,14 +75,21 @@ function getMaximalTagLookup(): Map<string, string> {
 // removes the private use variant from what is looked up and restores the variant to what is found.
 // Returns undefined if the langtag (without any private use variant) is not in langtags.txt and so
 // equivalents cannot be looked up.
+// For representative languages, if `langtag` is not the canonical BCP-47 tag, `language` needs to be present so that we
+// can look up the canonical tag. (For representative languages our language chooser packages will generally use the individual
+// language code but the canonical tag may use a macrolanguage code. See macrolanguages.md)
 export function getShortestSufficientLangtag(
-  langtag: string
+  langtag: string,
+  language?: ILanguage
 ): string | undefined {
+  const langtagToLookup = language
+    ? ensureLangSubtagIsCanonicalForReps(langtag, language)
+    : langtag;
   const lookup = getShortPreferredTagLookup();
-  const shorter = lookup.get(langtag.toLowerCase());
-  if (!shorter && langtag.includes("-x-")) {
+  const shorter = lookup.get(langtagToLookup.toLowerCase());
+  if (!shorter && langtagToLookup.includes("-x-")) {
     // try to shorten the langtag before the private use section
-    const parts = langtag.split("-x-");
+    const parts = langtagToLookup.split("-x-");
     const preferredTag = lookup.get(parts[0].toLowerCase());
     if (preferredTag) {
       // If we found a preferred tag, return it with the private use section intact
@@ -65,23 +100,34 @@ export function getShortestSufficientLangtag(
 }
 
 // case insensitive. Returns undefined if langtag is not in langtags.txt and so equivalents cannot be looked up
-export function getMaximalLangtag(langtag: string): string | undefined {
+// For representative languages, if `langtag` is not the canonical BCP-47 tag, `language` should be present so that we
+// can look up the canonical tag.
+export function getMaximalLangtag(
+  langtag: string,
+  language?: ILanguage
+): string | undefined {
   const lookup = getMaximalTagLookup();
-  return lookup.get(langtag.toLowerCase());
+  const langtagToLookup = language
+    ? ensureLangSubtagIsCanonicalForReps(langtag, language)
+    : langtag;
+  return lookup.get(langtagToLookup.toLowerCase());
 }
 
 // This is pretty naive. Exported for unit testing, but most situations should use createTagFromOrthography instead
-export function createTag({
-  languageCode,
-  scriptCode,
-  regionCode,
-  dialectCode,
-}: {
-  languageCode?: string;
-  scriptCode?: string;
-  regionCode?: string;
-  dialectCode?: string;
-}): string {
+export function createTag(
+  {
+    languageCode,
+    scriptCode,
+    regionCode,
+    dialectCode,
+  }: {
+    languageCode?: string;
+    scriptCode?: string;
+    regionCode?: string;
+    dialectCode?: string;
+  },
+  language?: ILanguage
+): string {
   const normalizedDialectCode = formatDialectCode(dialectCode);
   let tag = "";
   if (languageCode) {
@@ -105,7 +151,7 @@ export function createTag({
   if (normalizedDialectCode) {
     tag += `${normalizedDialectCode}`;
   }
-  return getShortestSufficientLangtag(tag) || tag;
+  return getShortestSufficientLangtag(tag, language) || tag;
 }
 
 // Compare codes, ignoring any demarcation or casing
@@ -216,21 +262,24 @@ export function splitTag(tag: string): ITagParts {
 }
 
 // This is used by langtagProcessing.ts to clean the data for searching, so we can't use any searching in here
+// This is also exported for other uses also, e.g. used in Bloom Desktop
+// `langtag` must be a canonical BCP-47 tag. Beware of representative languages where our language chooser packages will
+//  generally use the individual language code but the canonical tag may use a macrolanguage code. See macrolanguages.md
 export function defaultRegionForLangTag(
-  languageTag: string
+  languageTag: string,
+  language?: ILanguage
 ): IRegion | undefined {
   // if languageTag already has a region tag in it, use that
   const { languageSubtag, scriptSubtag, regionSubtag } = splitTag(languageTag);
   if (regionSubtag) {
     return getRegionBySubtag(regionSubtag);
   }
-
   // Otherwise, the maximal equivalent language tag will have the region code
   // Take the most specific/relevant matching maximal tag that we are able to find
   const maximalTag =
-    getMaximalLangtag(languageTag) ||
-    getMaximalLangtag(`${languageSubtag}-${scriptSubtag}`) ||
-    getMaximalLangtag(`${languageSubtag}`) ||
+    getMaximalLangtag(languageTag, language) ||
+    getMaximalLangtag(`${languageSubtag}-${scriptSubtag}`, language) ||
+    getMaximalLangtag(`${languageSubtag}`, language) ||
     "";
 
   const impliedRegionTag = splitTag(maximalTag).regionSubtag;
@@ -256,6 +305,8 @@ export function formatDialectCode(dialect?: string): string {
     .join("-");
 }
 
+// Will use an individual language specific subtag even if there is a macrolanguage subtag which is considered to be the
+// canonical/preferred equivalent
 export function createTagFromOrthography(orthography: IOrthography): string {
   const strippedOrthography = deepStripDemarcation(orthography);
   if (isManuallyEnteredTagLanguage(strippedOrthography.language)) {
@@ -271,12 +322,20 @@ export function createTagFromOrthography(orthography: IOrthography): string {
     )
       ? undefined
       : strippedOrthography.script?.code;
-  return createTag({
-    languageCode: strippedOrthography.language?.languageSubtag,
-    scriptCode,
-    regionCode: strippedOrthography.customDetails?.region?.code,
-    dialectCode: formatDialectCode(strippedOrthography.customDetails?.dialect),
-  });
+  return ensureLangSubtagIsIndivForReps(
+    createTag(
+      {
+        languageCode: strippedOrthography.language?.languageSubtag,
+        scriptCode,
+        regionCode: strippedOrthography.customDetails?.region?.code,
+        dialectCode: formatDialectCode(
+          strippedOrthography.customDetails?.dialect
+        ),
+      },
+      strippedOrthography.language
+    ),
+    strippedOrthography.language
+  );
 }
 
 export function defaultDisplayName(

@@ -18,6 +18,12 @@ In the CLDR and other popular usage, macrolanguage codes are often treated as eq
 
 ## When using this package
 
+### Language Tags
+
+**We always use individual language codes instead of the macrolanguage codes when creating language tags for individual languages** (via `createTagFromOrthography`). For example, `swh-Arab` instead of `sw-Arab` for the individual language Swahili in Arabic script even though the latter may be more common/canonical, because `sw` is a code for the Swahili macrolanguage. Similarly, we would output `bcc` instead of `bal` for Southern Balochi in Arabic script, and `uzn-Cyrl` instead of `uz-Cyrl` for Northern Uzbek in Cyrillic script.
+
+### Language Data
+
 This package produces results in the form of `ILanguage` objects, which have 3 properties related to macrolanguages:
 
 - `isMacrolanguage?: boolean;` Currently this is true if the result is a macrolanguage, and may be undefined otherwise. **Software using this package should indicate to users that these are macrolanguages.** Otherwise they may look like duplicates of other language results.
