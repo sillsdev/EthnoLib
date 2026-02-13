@@ -118,7 +118,7 @@ export const useLanguageChooser = (
   // such that the selected language is visible.
   function resetTo(
     searchString: string,
-    // if present, the language in selectionLanguageTag must be a result of this search string or selection won't display
+    // the language in selectionLanguageTag must be a result of this search string or selection won't display
     // unless it is a manually entered tag, in which case there is never a search result anyway
     selectionLanguageTag?: string,
     initialCustomDisplayName?: string // all info can be captured in language tag except display name
