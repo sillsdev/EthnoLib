@@ -519,3 +519,21 @@ describe("other language object types", async () => {
     expect(allAsyncResults[1].id).toEqual("second_eng_result");
   });
 });
+
+// The first entry of alternativeTags should be a canonical tag for some form of the language, and so its subtag should
+// be canonical for use in ensureLangSubtagIsCanonicalForReps
+describe("canonical tag is first in alternativeTags", () => {
+  it("should have the canonical tag first in alternativeTags", () => {
+    const uzn = getLanguageBySubtag("uzn");
+    expect(uzn).toBeDefined();
+    expect(uzn?.alternativeTags[0].split("-")[0]).toBe("uz");
+
+    const ave = getLanguageBySubtag("ave");
+    expect(ave).toBeDefined();
+    expect(ave?.alternativeTags[0].split("-")[0]).toBe("ae");
+
+    const ojg = getLanguageBySubtag("ojg");
+    expect(ojg).toBeDefined();
+    expect(ojg?.alternativeTags[0].split("-")[0]).toBe("oj");
+  });
+});
