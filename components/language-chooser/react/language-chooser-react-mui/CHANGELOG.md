@@ -1,3 +1,14 @@
+## 0.1.21 (2026-02-16)
+
+### 🩹 Fixes
+
+- force publish ([1eb4830](https://github.com/sillsdev/EthnoLib/commit/1eb4830))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.19
+- Updated @ethnolib/find-language to 0.1.18
+
 ## 0.1.20 (2026-02-13)
 
 ### 🩹 Fixes

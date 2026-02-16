@@ -1,3 +1,9 @@
+## 0.1.18 (2026-02-16)
+
+### 🩹 Fixes
+
+- force publish ([1eb4830](https://github.com/sillsdev/EthnoLib/commit/1eb4830))
+
 ## 0.1.17 (2026-02-13)
 
 ### 🩹 Fixes
