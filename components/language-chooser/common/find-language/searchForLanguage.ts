@@ -98,53 +98,23 @@ export function getLanguageBySubtag(
     searchString: string
   ) => ILanguage[]
 ): ILanguage | undefined {
-  const languages = rawLanguages as ILanguage[];
-  /* If the code is used for both a macrolanguage and the representative language (macrolanguageNotes.md),
-  return the representative language by default (BL-14824). */
-  const macrolanguageRepFuse = new Fuse(languages as ILanguage[], {
-    keys: [
-      "parentMacrolanguage.languageSubtag",
-      "parentMacrolanguage.iso639_3_code",
-      "isRepresentativeForMacrolanguage",
-    ],
+  // For the Chinese special case, we actually want the card with iso639_3_code cmn (the individual language card)
+  // because it has all the data on it. At this stage it doesn't have the tag zh which we actually want; that will be
+  //  handled
+  //  by the searchResultModifier
+  const correctedCode = code === "zh" ? "cmn" : code;
+  const fuse = new Fuse(rawLanguages as ILanguage[], {
+    keys: ["languageSubtag", "iso639_3_code"],
     threshold: 0, // exact matches only
     useExtendedSearch: true,
   });
-  let rawResults = macrolanguageRepFuse.search({
-    $and: [
-      {
-        $or: [
-          { "parentMacrolanguage.languageSubtag": "=" + code },
-          { "parentMacrolanguage.iso639_3_code": "=" + code },
-        ],
-      },
-      { isRepresentativeForMacrolanguage: "=true" },
-    ],
-  });
-
-  if (rawResults.length > 1)
-    console.error(
-      "Unexpectedly found multiple representative languages for " +
-        code +
-        ": " +
-        rawResults.map((r) => r.item.iso639_3_code).join(", ")
-    );
-
-  /* If search for code didn't find exactly one representative language for a macrolanguage,
-  do normal language search instead */
-  if (rawResults.length !== 1) {
-    const fuse = new Fuse(languages as ILanguage[], {
-      keys: ["languageSubtag", "iso639_3_code"],
-      threshold: 0, // exact matches only
-      useExtendedSearch: true,
-    });
-    rawResults = fuse.search("=" + code); // exact match
-  }
-
-  const result = rawResults[0]?.item;
+  const rawResults = fuse.search(`="${correctedCode}"`);
   return searchResultModifier
-    ? searchResultModifier([result], code)[0]
-    : result;
+    ? searchResultModifier(
+        rawResults.map((r) => r.item),
+        code
+      )[0]
+    : rawResults[0]?.item;
 }
 
 // This is not a comprehensive language tag parser. It's just built to parse the
