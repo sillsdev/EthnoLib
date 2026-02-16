@@ -1,0 +1,21 @@
+name: Build and test
+description: Build a package and run Nx unit + e2e targets in parallel.
+inputs:
+  package-name:
+    description: Nx package/project to build before tests.
+    required: false
+    default: "@ethnolib/language-chooser-react-mui"
+  test-parallelism:
+    description: Parallel worker count passed to Nx run-many.
+    required: false
+    default: "2"
+runs:
+  using: composite
+  steps:
+    - name: Build package
+      run: npx nx build ${{ inputs.package-name }}
+      shell: bash
+
+    - name: Run unit and e2e tests in parallel
+      run: npx nx run-many --all --targets=test,e2e --parallel=${{ inputs.test-parallelism }}
+      shell: bash

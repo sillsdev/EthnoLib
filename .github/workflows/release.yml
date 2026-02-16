@@ -5,36 +5,30 @@ on:
     branches:
       - main
 
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+# Keep setup/test semantics aligned with runTests.yml where applicable.
 jobs:
   build-test-release:
+    if: github.actor != 'github-actions[bot]'
     runs-on: windows-latest
     permissions:
       contents: write
       pages: write
       id-token: write
-
-      # Many steps are duplicated in buildAndTest.yml. Changes made here may need to be made in both
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install Node
-        uses: actions/setup-node@v4
-        with:
-          # Keep in sync with the version specified for volta in the root package.json
-          node-version: 22
-          registry-url: https://registry.npmjs.org/
-
-      - name: Install dependencies
-        run: npm install
+      - name: Setup Node, dependencies, and Playwright
+        uses: ./.github/actions/setup-ci-deps
 
       - name: Upgrade npm for trusted publishing
         run: npm install -g npm@^11.5.1
-
-      - name: Install playwright browsers for e2e tests
-        run: npx playwright install chromium --with-deps
 
       # Extract new messages, upload to Crowdin, download latest translations
       - name: Extract messages
@@ -61,15 +55,8 @@ jobs:
       - name: Update version numbers in the persistent package.json files
         run: npx nx release version
 
-      - name: Build package
-        run: npx nx build @ethnolib/language-chooser-react-mui
-
-      # find-language is a dependency of language-chooser-react-mui so it will have been built in the build step
-      - name: Run unit tests
-        run: npx nx run-many --all --target=test
-
-      - name: Run e2e tests
-        run: npx nx run-many --all --target=e2e
+      - name: Build package and run tests
+        uses: ./.github/actions/build-and-test
 
       - name: Set name and email for git so we can commit and tag
         run: |

@@ -1,0 +1,45 @@
+name: Setup CI dependencies
+description: Setup Node.js with npm cache, install dependencies, and optionally install Playwright Chromium with cache.
+inputs:
+  node-version:
+    description: Node.js version to install.
+    required: false
+    default: "22"
+  registry-url:
+    description: npm registry URL.
+    required: false
+    default: "https://registry.npmjs.org/"
+  install-playwright:
+    description: Whether to cache and install Playwright Chromium.
+    required: false
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - name: Install Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: package-lock.json
+        registry-url: ${{ inputs.registry-url }}
+
+    - name: Install dependencies
+      run: npm ci --no-audit
+      shell: bash
+
+    - name: Cache Playwright browsers
+      if: inputs.install-playwright == 'true'
+      id: playwright-cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/AppData/Local/ms-playwright
+          ~/Library/Caches/ms-playwright
+          ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('node_modules/playwright-core/package.json') }}
+
+    - name: Install playwright browsers for e2e tests
+      if: inputs.install-playwright == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
+      run: npx playwright install chromium
+      shell: bash
