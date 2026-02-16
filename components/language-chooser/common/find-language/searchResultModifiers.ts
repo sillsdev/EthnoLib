@@ -153,13 +153,13 @@ function simplifySpanishResult(results: ILanguage[]): ILanguage[] {
   return substituteInModifiedEntry("spa", getSimplifiedSpanishResult, results);
 }
 
-function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
-  function getSimplifiedChineseResult(result: ILanguage) {
+function modifyChineseResult(results: ILanguage[]): ILanguage[] {
+  function getModifiedChineseResult(result: ILanguage) {
     return {
       ...result,
       languageSubtag: "zh", // otherwise would be "cmn". For Chinese in particular we remove the macrolanguage card and have just 1 card, and give it tag zh
       autonym: "中文",
-      regionNamesForDisplay: "", // clear the long and confusing list of region names
+      regionNamesForDisplay: "", // don't include the long and confusing list of region names
       regionNamesForSearch: [],
       names: result.names.filter(
         (name) => name !== "中文" && name !== "繁體中文"
@@ -181,7 +181,7 @@ function simplifyChineseResult(results: ILanguage[]): ILanguage[] {
       ],
     } as ILanguage;
   }
-  return substituteInModifiedEntry("cmn", getSimplifiedChineseResult, results);
+  return substituteInModifiedEntry("cmn", getModifiedChineseResult, results);
 }
 
 export function makeIntoMacrolanguageEntry(
@@ -313,7 +313,7 @@ export function defaultSearchResultModifier(
   );
   modifiedResults = simplifyEnglishResult(modifiedResults);
   modifiedResults = simplifyFrenchResult(modifiedResults);
-  modifiedResults = simplifyChineseResult(modifiedResults);
+  modifiedResults = modifyChineseResult(modifiedResults);
   modifiedResults = simplifySpanishResult(modifiedResults);
 
   // The following are necessary because rare anomalies in langtags.json prevent us from mapping them in the usual way
