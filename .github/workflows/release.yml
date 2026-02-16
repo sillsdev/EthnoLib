@@ -9,7 +9,9 @@ jobs:
   build-test-release:
     runs-on: windows-latest
     permissions:
-      write-all
+      contents: write
+      pages: write
+      id-token: write
 
       # Many steps are duplicated in buildAndTest.yml. Changes made here may need to be made in both
     steps:
@@ -27,6 +29,9 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@^11.5.1
 
       - name: Install playwright browsers for e2e tests
         run: npx playwright install chromium --with-deps
@@ -73,8 +78,20 @@ jobs:
 
       - name: Publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx nx release --yes
+          NPM_CONFIG_PROVENANCE: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm config set provenance true
+
+          npx nx release --yes 2>&1 | tee nx-release.log
+
+          # Nx was failing without propagating a failing exit code.
+          # Fail the step (and therefore the job) if the output indicates publish failed.
+          if grep -Eqi "npm publish error:|Failed tasks:|nx-release-publish.*failed" nx-release.log; then
+            echo "Detected publish failure in nx output."
+            exit 1
+          fi
 
       - name: Push the release commit (with version number update and changelog)
         run: git push

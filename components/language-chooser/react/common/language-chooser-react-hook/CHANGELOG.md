@@ -1,3 +1,66 @@
+## 0.1.19 (2026-02-16)
+
+### 🩹 Fixes
+
+- force publish ([1eb4830](https://github.com/sillsdev/EthnoLib/commit/1eb4830))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.18
+
+## 0.1.18 (2026-02-13)
+
+### 🩹 Fixes
+
+- BL-14889 use indiv langtags for rep languages in tag creation ([38baaa0](https://github.com/sillsdev/EthnoLib/commit/38baaa0))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.17
+
+## 0.1.17 (2026-02-12)
+
+### 🩹 Fixes
+
+- clean up release.yml ([a958ec4](https://github.com/sillsdev/EthnoLib/commit/a958ec4))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.16
+
+## 0.1.16 (2026-02-12)
+
+### 🩹 Fixes
+
+- trusted publishing ([ca06f2c](https://github.com/sillsdev/EthnoLib/commit/ca06f2c))
+- trusted publishing ([6dcb12d](https://github.com/sillsdev/EthnoLib/commit/6dcb12d))
+- trusted publishing ([3f9cb65](https://github.com/sillsdev/EthnoLib/commit/3f9cb65))
+- trusted publishing ([ce71384](https://github.com/sillsdev/EthnoLib/commit/ce71384))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.15
+
+## 0.1.15 (2026-02-12)
+
+### 🩹 Fixes
+
+- trusted publishing ([b5e0dcf](https://github.com/sillsdev/EthnoLib/commit/b5e0dcf))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.14
+
+## 0.1.14 (2026-02-04)
+
+### 🩹 Fixes
+
+- Use trusted publishing ([2788a1c](https://github.com/sillsdev/EthnoLib/commit/2788a1c))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.13
+
 ## 0.1.13 (2025-09-30)
 
 ### 🧱 Updated Dependencies

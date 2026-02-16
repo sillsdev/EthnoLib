@@ -80,6 +80,51 @@ test.describe("Search", () => {
     );
   });
 
+  // see macrolanguageNotes.md
+  test("Akan special case", async () => {
+    await search(page, "akan");
+    const akanCard = page.getByTestId(languageCardTestId("aka"));
+    await akanCard.scrollIntoViewIfNeeded();
+    await expect(akanCard).toBeVisible();
+    await expect(akanCard).toContainText("Akan");
+    // language tag should be "ak", not "twi"
+    await expect(akanCard).not.toContainText("twi");
+  });
+
+  // see macrolanguageNotes.md
+  test("Sanskrit special case", async () => {
+    await search(page, "sanskrit");
+    const sanCard = page.getByTestId(languageCardTestId("san"));
+    await sanCard.scrollIntoViewIfNeeded();
+    await expect(sanCard).toBeVisible();
+    await expect(sanCard).toContainText("Sanskrit");
+    // language tag should be "sa", not "cls" or "vsn"
+    await expect(sanCard).not.toContainText("cls");
+    await expect(sanCard).not.toContainText("vsn");
+  });
+
+  test("Chinese special case", async () => {
+    await search(page, "chinese");
+
+    const chineseCard = page.getByTestId(languageCardTestId("cmn"));
+    await chineseCard.scrollIntoViewIfNeeded();
+    await expect(chineseCard).toBeVisible();
+    await expect(chineseCard).toContainText(/chinese/i);
+    await expect(chineseCard).not.toContainText(/macrolanguage/i);
+    await chineseCard.click();
+
+    const zhCard = page.getByTestId(languageCardTestId("zho"));
+    await expect(zhCard).not.toBeVisible();
+
+    // Make sure chinese comes up when searching "zh", "cmn", "中文", and "huayu"
+    for (const searchTerm of ["zh", "cmn", "中文", "huayu"]) {
+      await search(page, searchTerm);
+      const chineseCard = page.getByTestId(languageCardTestId("cmn"));
+      await chineseCard.scrollIntoViewIfNeeded();
+      await expect(chineseCard).toBeVisible();
+    }
+  });
+
   test("X button clears search and results", async () => {
     await search(page, "tok pisin");
     // At least one result is visible

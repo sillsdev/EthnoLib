@@ -1,32 +1,33 @@
 {
-    "editor.formatOnSave": true,
-    "[typescriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[typescript]": {
+  "editor.formatOnSave": true,
+  "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "cSpell.words": [
-        "autonym",
-        "autonyms",
-        "castellano",
-        "CLDR",
-        "ethnolib",
-        "Ethnologue",
-        "exonym",
-        "langtag",
-        "langtags",
-        "lazyload",
-        "localizers",
-        "localname",
-        "localnames",
-        "macrolang",
-        "Macrolangs",
-        "macrolanguage",
-        "macrolanguages",
-        "Subtag",
-        "subtags",
-        "tseslint",
-        "typecheck"
-    ]
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "cSpell.words": [
+    "autonym",
+    "autonyms",
+    "castellano",
+    "CLDR",
+    "ethnolib",
+    "Ethnologue",
+    "exonym",
+    "langtag",
+    "langtags",
+    "lazyload",
+    "localizers",
+    "localname",
+    "localnames",
+    "macrolang",
+    "Macrolangs",
+    "macrolanguage",
+    "macrolanguages",
+    "pipefail",
+    "Subtag",
+    "subtags",
+    "tseslint",
+    "typecheck"
+  ]
 }

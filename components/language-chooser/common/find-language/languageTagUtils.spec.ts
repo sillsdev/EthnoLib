@@ -3,6 +3,8 @@ import {
   createTag,
   createTagFromOrthography,
   defaultRegionForLangTag,
+  ensureLangSubtagIsIndivForReps,
+  ensureLangSubtagIsCanonicalForReps,
   formatDialectCode,
   getMaximalLangtag,
   getShortestSufficientLangtag,
@@ -21,6 +23,21 @@ import {
   ICustomizableLanguageDetails,
 } from "./findLanguageInterfaces";
 import { getRegionBySubtag } from "./regionsAndScripts";
+import {
+  NORTHERN_UZBEK_LANGUAGE,
+  STANDARD_ARABIC_LANGUAGE,
+  ENGLISH_LANGUAGE,
+  NORWEGIAN_MACROLANGUAGE,
+  SERBO_CROATIAN_MACROLANGUAGE,
+  NORWEGIAN_BOKMAL_LANGUAGE,
+  NORWEGIAN_NYNORSK_LANGUAGE,
+  BOSNIAN_LANGUAGE,
+  MONTENEGRIN_LANGUAGE,
+  CROATIAN_LANGUAGE,
+  SERBIAN_LANGUAGE,
+  ARABIC_MACROLANGUAGE,
+  AYMARA_MACROLANGUAGE,
+} from "./testUtils";
 
 describe("Tag creation", () => {
   it("should create the correct language tag for a language", () => {
@@ -57,9 +74,36 @@ describe("Tag creation", () => {
       createTag({
         dialectCode: "foobar",
         scriptCode: "Latn",
-        regionCode: "US"
+        regionCode: "US",
       })
     ).toEqual("qaa-Latn-US-x-foobar");
+  });
+
+  it("should shorten tags when appropriate", () => {
+    expect(
+      createTag({
+        languageCode: "en",
+        scriptCode: "Latn",
+        regionCode: "US",
+      })
+    ).toEqual("en");
+  });
+
+  it("should shorten tags even when the language code is individual rather than canonical for a representative language", () => {
+    // uzn is the individual code for Northern Uzbek, which is the representative for the uz macrolanguage
+    expect(
+      createTag(
+        {
+          languageCode: "uzn",
+          scriptCode: "Latn",
+          regionCode: "UZ",
+        },
+        NORTHERN_UZBEK_LANGUAGE
+      )
+      // The canonical short tag is for Northern Uzbek, Latin Script, Uzbekistan is uz. Currently, createTag is a naive
+      // helper function which will return `uz` and then we need to call ensureLangSubtagIsIndivForReps to transform it
+      // to `uzn`
+    ).toEqual("uz");
   });
 });
 
@@ -146,6 +190,17 @@ describe("get shortest equivalent version of langtag", () => {
     expect(getShortestSufficientLangtag("ta-Arab-PK")).toBeUndefined();
     expect(getShortestSufficientLangtag("sr-Cyrl-RO")).toBeUndefined();
   });
+
+  // Currently, getShortestSufficientLangtag will return canonical tags like `uz` and then we need to
+  // call ensureLangSubtagIsIndivForReps to make them use individual language subtags (like `uzn`) instead.
+  it("should handle representative languages with language parameter", () => {
+    expect(
+      getShortestSufficientLangtag("uzn-Latn-UZ", NORTHERN_UZBEK_LANGUAGE)
+    ).toEqual("uz");
+    expect(
+      getShortestSufficientLangtag("uzn-Cyrl-x-foobar", NORTHERN_UZBEK_LANGUAGE)
+    ).toEqual("uz-Cyrl-x-foobar");
+  });
 });
 
 describe("get maximal equivalent version of langtag", () => {
@@ -159,7 +214,7 @@ describe("get maximal equivalent version of langtag", () => {
         createTag({
           languageCode: "dtp",
           regionCode: "MY",
-          scriptCode: "Latn"
+          scriptCode: "Latn",
         })
       )
     ).toEqual("dtp-Latn-MY");
@@ -181,6 +236,28 @@ describe("get maximal equivalent version of langtag", () => {
     expect(getMaximalLangtag("zzz")).toBeUndefined();
     expect(getMaximalLangtag("")).toBeUndefined();
     expect(getMaximalLangtag("frm-Cyrl")).toBeUndefined();
+  });
+
+  it("should handle representative languages with language parameter", () => {
+    // Currently, getMaximalLangtag will return canonical tags like `uz` and then we need to
+    // call ensureLangSubtagIsIndivForReps to make them use individual language subtags (like `uzn`) instead.
+    // But what we want to test is that getMaximalLangtag has found all the additional implied subtags
+    expect(getMaximalLangtag("uzn", NORTHERN_UZBEK_LANGUAGE)).toEqual(
+      "uz-Latn-UZ"
+    );
+    expect(getMaximalLangtag("uzn-Latn", NORTHERN_UZBEK_LANGUAGE)).toEqual(
+      "uz-Latn-UZ"
+    );
+    expect(getMaximalLangtag("uzn-Cyrl", NORTHERN_UZBEK_LANGUAGE)).toEqual(
+      "uz-Cyrl-UZ"
+    );
+    // ar (Standard Arabic) defaults to Arab script
+    expect(getMaximalLangtag("arb", STANDARD_ARABIC_LANGUAGE)).toEqual(
+      "ar-Arab-EG"
+    );
+    expect(getMaximalLangtag("arb-Arab", STANDARD_ARABIC_LANGUAGE)).toEqual(
+      "ar-Arab-EG"
+    );
   });
 });
 
@@ -239,6 +316,7 @@ describe("Tag parsing", () => {
     ).toEqual("Tibetan");
 
     expect(parseLangtagFromLangChooser("ce")?.script?.name).toEqual("Cyrillic");
+    expect(parseLangtagFromLangChooser("uzn")?.script?.name).toEqual("Latin"); // even with an individual rather than canonical tag for a representative language
   });
 
   it("should put private use subtags into dialect field", () => {
@@ -330,6 +408,26 @@ describe("Tag parsing", () => {
       parseLangtagFromLangChooser("en", modifier)?.language?.exonym
     ).toEqual(foobar);
   });
+
+  it("should be able to find implied scripts even for representative langs with individual rather than canonical language subtags", () => {
+    // uzn is Northern Uzbek, representative for uz macrolanguage
+    const uznResult = parseLangtagFromLangChooser("uzn-x-foobar");
+    expect(uznResult?.language?.iso639_3_code).toEqual("uzn");
+    expect(uznResult?.script?.name).toEqual("Latin");
+  });
+
+  it("should handle normal tags for Chinese correctly", () => {
+    const zhCnResult = parseLangtagFromLangChooser("zh-CN");
+    expect(zhCnResult?.language?.exonym).toEqual("Chinese");
+    expect(zhCnResult?.language?.names.length).toBeGreaterThan(3);
+    expect(zhCnResult?.script?.code).toEqual("Hans");
+
+    // should be case insensitive
+    const zhTwResult = parseLangtagFromLangChooser("zH-TW");
+    expect(zhTwResult?.language?.exonym).toEqual("Chinese");
+    expect(zhTwResult?.language?.names.length).toBeGreaterThan(3);
+    expect(zhTwResult?.script?.code).toEqual("Hant");
+  });
 });
 
 describe("defaultRegionForLangTag", () => {
@@ -350,6 +448,110 @@ describe("defaultRegionForLangTag", () => {
     expect(defaultRegionForLangTag("uz-Taml-x-foobar")?.name).toEqual(
       "Uzbekistan"
     );
+  });
+
+  it("should handle representative languages with language parameter", () => {
+    // When passing uzn tag with language parameter, should use canonical uz for lookup
+    expect(
+      defaultRegionForLangTag("uzn", NORTHERN_UZBEK_LANGUAGE)?.name
+    ).toEqual("Uzbekistan");
+    expect(
+      defaultRegionForLangTag("uzn-Sogd", NORTHERN_UZBEK_LANGUAGE)?.code
+    ).toEqual("CN");
+    expect(
+      defaultRegionForLangTag("uzn-Latn-IN", NORTHERN_UZBEK_LANGUAGE)?.name
+    ).toEqual("India");
+
+    expect(
+      defaultRegionForLangTag("arb", STANDARD_ARABIC_LANGUAGE)?.name
+    ).toEqual("Egypt");
+    expect(
+      defaultRegionForLangTag("arb-Arab-x-foo", STANDARD_ARABIC_LANGUAGE)?.name
+    ).toEqual("Egypt");
+  });
+});
+
+describe("ensureLangSubtagIsIndivForReps", () => {
+  it("should return the original tag when not representative", () => {
+    expect(ensureLangSubtagIsIndivForReps("en", undefined)).toEqual("en");
+    expect(ensureLangSubtagIsIndivForReps("en", ENGLISH_LANGUAGE)).toEqual(
+      "en"
+    );
+    expect(
+      ensureLangSubtagIsIndivForReps("en-Latn-US-x-foo", ENGLISH_LANGUAGE)
+    ).toEqual("en-Latn-US-x-foo");
+  });
+
+  it("should replace the canonical macrolang subtag for representative languages", () => {
+    expect(
+      ensureLangSubtagIsIndivForReps("ar", STANDARD_ARABIC_LANGUAGE)
+    ).toEqual("arb");
+    expect(
+      ensureLangSubtagIsIndivForReps(
+        "ar-Arab-EG-x-foo",
+        STANDARD_ARABIC_LANGUAGE
+      )
+    ).toEqual("arb-Arab-EG-x-foo");
+
+    expect(
+      ensureLangSubtagIsIndivForReps("uz-Latn-UZ", NORTHERN_UZBEK_LANGUAGE)
+    ).toEqual("uzn-Latn-UZ");
+  });
+});
+
+describe("ensureLangSubtagIsCanonicalForReps", () => {
+  it("should return the languageSubtag for non-representative languages", () => {
+    expect(ensureLangSubtagIsCanonicalForReps("eng", ENGLISH_LANGUAGE)).toEqual(
+      "en"
+    );
+    expect(
+      ensureLangSubtagIsCanonicalForReps("en-Latn-US", ENGLISH_LANGUAGE)
+    ).toEqual("en-Latn-US");
+  });
+
+  it("should replace first subtag with canonical macrolanguage code for representative languages", () => {
+    expect(
+      ensureLangSubtagIsCanonicalForReps("arb", STANDARD_ARABIC_LANGUAGE)
+    ).toEqual("ar");
+    expect(
+      ensureLangSubtagIsCanonicalForReps(
+        "arb-Arab-EG",
+        STANDARD_ARABIC_LANGUAGE
+      )
+    ).toEqual("ar-Arab-EG");
+    expect(
+      ensureLangSubtagIsCanonicalForReps("uzn", NORTHERN_UZBEK_LANGUAGE)
+    ).toEqual("uz");
+    expect(
+      ensureLangSubtagIsCanonicalForReps("uzn-Latn-UZ", NORTHERN_UZBEK_LANGUAGE)
+    ).toEqual("uz-Latn-UZ");
+  });
+
+  it("should fallback to languageSubtag if alternativeTags is missing empty", () => {
+    const repLanguageNoAltTags = {
+      iso639_3_code: "arb",
+      languageSubtag: "arb",
+      isRepresentativeForMacrolanguage: true,
+      alternativeTags: [],
+      isMacrolanguage: false,
+      exonym: "Standard Arabic",
+      scripts: [{ code: "Arab", name: "Arabic" }],
+      regionNamesForDisplay: "",
+      regionNamesForSearch: [],
+      names: [],
+      languageType: LanguageType.Living,
+    } as ILanguage;
+    expect(
+      ensureLangSubtagIsCanonicalForReps("arb", repLanguageNoAltTags)
+    ).toEqual("arb");
+  });
+  it("should preserve all other subtags when replacing first subtag", () => {
+    expect(
+      ensureLangSubtagIsCanonicalForReps(
+        "arb-Arab-EG-x-foo-x-bar",
+        STANDARD_ARABIC_LANGUAGE
+      )
+    ).toEqual("ar-Arab-EG-x-foo-x-bar");
   });
 });
 
@@ -440,6 +642,82 @@ describe("createTagFromOrthography", () => {
         } as ICustomizableLanguageDetails,
       })
     ).toEqual("en-x-ai-newFancy");
+  });
+
+  it("should return indiv iso code when language is representative for a macrolanguage", () => {
+    expect(
+      createTagFromOrthography({ language: STANDARD_ARABIC_LANGUAGE })
+    ).toEqual("arb");
+    expect(
+      createTagFromOrthography({
+        language: NORTHERN_UZBEK_LANGUAGE,
+        script: { code: "Cyrl", name: "Cyrillic" },
+      })
+    ).toEqual("uzn-Cyrl");
+
+    expect(
+      createTagFromOrthography({
+        language: NORTHERN_UZBEK_LANGUAGE,
+        script: { code: "Latn", name: "Latin" },
+      })
+    ).toEqual("uzn");
+
+    expect(
+      createTagFromOrthography({
+        language: STANDARD_ARABIC_LANGUAGE,
+        customDetails: {
+          region: { name: "Egypt", code: "EG" },
+          dialect: "foobar",
+        },
+      })
+    ).toEqual("arb-x-foobar");
+  });
+
+  it("should create tags for macrolanguages with the preferred code", () => {
+    // Pure macrolanguages (without isRepresentativeForMacrolanguage) should use their language subtag
+    expect(
+      createTagFromOrthography({ language: ARABIC_MACROLANGUAGE })
+    ).toEqual("ar");
+    expect(
+      createTagFromOrthography({ language: AYMARA_MACROLANGUAGE })
+    ).toEqual("ay");
+  });
+
+  // See macrolanguages.md regarding the special cases. Note however that our desired behavior for Akan (aka/ak) and
+  // Sanskrit (san/sa) is achieved by the search result modifier (searchResultModifier.ts)
+  it("should handle special cases", () => {
+    // Bosnian should give "bs"
+    expect(createTagFromOrthography({ language: BOSNIAN_LANGUAGE })).toEqual(
+      "bs"
+    );
+    // Montenegrin should give "cnr"
+    expect(
+      createTagFromOrthography({ language: MONTENEGRIN_LANGUAGE })
+    ).toEqual("cnr");
+    // Croatian should give "hr"
+    expect(createTagFromOrthography({ language: CROATIAN_LANGUAGE })).toEqual(
+      "hr"
+    );
+    // Serbian should give "sr"
+    expect(createTagFromOrthography({ language: SERBIAN_LANGUAGE })).toEqual(
+      "sr"
+    );
+    // Serbo-Croatian macrolanguage should use "sh"
+    expect(
+      createTagFromOrthography({ language: SERBO_CROATIAN_MACROLANGUAGE })
+    ).toEqual("sh");
+    // Norwegian Bokmål should use "nb"
+    expect(
+      createTagFromOrthography({ language: NORWEGIAN_BOKMAL_LANGUAGE })
+    ).toEqual("nb");
+    // Norwegian Nynorsk should use "nn"
+    expect(
+      createTagFromOrthography({ language: NORWEGIAN_NYNORSK_LANGUAGE })
+    ).toEqual("nn");
+    // Norwegian macrolanguage should use "no"
+    expect(
+      createTagFromOrthography({ language: NORWEGIAN_MACROLANGUAGE })
+    ).toEqual("no");
   });
 });
 

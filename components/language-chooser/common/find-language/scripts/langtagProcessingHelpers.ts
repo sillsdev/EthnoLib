@@ -246,7 +246,8 @@ export function isMacrolanguage(iso639_3: string) {
   return isoCodesDetails[iso639_3]?.isMacrolanguage || false;
 }
 
-export function defaultScriptForLanguage(
+//  Internal helper used by langtagProcessing.ts for data cleaning. Assumes `langtag` is a canonical BCP-47 tag
+function defaultScriptForLanguage(
   languageTag: string,
   language?: ILanguage
 ): IScript | undefined {
@@ -255,8 +256,8 @@ export function defaultScriptForLanguage(
   // If there is no explicit script tag, get the maximal tag which will have the most likely script in it
   if (!scriptSubtag) {
     const maximalTag =
-      getMaximalLangtag(languageTag) ||
-      getMaximalLangtag(`${languageSubtag}`) ||
+      getMaximalLangtag(languageTag, language) ||
+      getMaximalLangtag(`${languageSubtag}`, language) ||
       "";
     scriptSubtag = splitTag(maximalTag).scriptSubtag;
   }

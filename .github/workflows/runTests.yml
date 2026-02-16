@@ -13,7 +13,8 @@ on:
 jobs:
   run-tests:
     runs-on: windows-latest
-    permissions: write-all
+    permissions:
+      contents: read
 
     # Steps are duplicated in release.yml. Changes made here may need to be made in both
     steps:
