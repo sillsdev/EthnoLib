@@ -188,4 +188,36 @@ test.describe("Language tag creation and preview", () => {
     await expect(saLatnTagPreview).toBeVisible();
     await expect(saLatnTagPreview).toContainText("sa-Latn");
   });
+
+  test("Chinese special case", async () => {
+    await search(page, "chinese");
+
+    const chineseCard = page.getByTestId(languageCardTestId("cmn"));
+    await chineseCard.scrollIntoViewIfNeeded();
+    await expect(chineseCard).toBeVisible();
+    await expect(chineseCard).toContainText(/chinese/i);
+    await chineseCard.click();
+
+    const noScriptTagPreview = page.getByTestId("right-panel-langtag-preview");
+    await expect(noScriptTagPreview).toBeVisible();
+    await expect(noScriptTagPreview).toContainText("zh");
+
+    // select Chinese (Traditional) script
+    const tradCard = page.getByTestId(scriptCardTestId("Hant"));
+    await expect(tradCard).toBeVisible();
+    await tradCard.click();
+
+    const tradTagPreview = page.getByTestId("right-panel-langtag-preview");
+    await expect(tradTagPreview).toBeVisible();
+    await expect(tradTagPreview).toContainText("zh-TW");
+
+    // select Chinese (Simplified) script
+    const simpCard = page.getByTestId(scriptCardTestId("Hans"));
+    await expect(simpCard).toBeVisible();
+    await simpCard.click();
+
+    const simpTagPreview = page.getByTestId("right-panel-langtag-preview");
+    await expect(simpTagPreview).toBeVisible();
+    await expect(simpTagPreview).toContainText("zh-CN");
+  });
 });

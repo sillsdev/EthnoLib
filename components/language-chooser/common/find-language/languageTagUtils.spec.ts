@@ -414,6 +414,19 @@ describe("Tag parsing", () => {
     expect(uznResult?.language?.iso639_3_code).toEqual("uzn");
     expect(uznResult?.script?.name).toEqual("Latin");
   });
+
+  it("should handle normal tags for Chinese correctly", () => {
+    const zhCnResult = parseLangtagFromLangChooser("zh-CN");
+    expect(zhCnResult?.language?.exonym).toEqual("Chinese");
+    expect(zhCnResult?.language?.names.length).toBeGreaterThan(3);
+    expect(zhCnResult?.script?.code).toEqual("Hans");
+
+    // should be case insensitive
+    const zhTwResult = parseLangtagFromLangChooser("zH-TW");
+    expect(zhTwResult?.language?.exonym).toEqual("Chinese");
+    expect(zhTwResult?.language?.names.length).toBeGreaterThan(3);
+    expect(zhTwResult?.script?.code).toEqual("Hant");
+  });
 });
 
 describe("defaultRegionForLangTag", () => {
