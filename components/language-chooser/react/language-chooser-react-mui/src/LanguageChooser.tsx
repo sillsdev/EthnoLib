@@ -145,14 +145,14 @@ export const LanguageChooserInner: React.FunctionComponent<
       searchInputRef.value = "";
       searchInputRef.focus();
     }
-    if (props.initialSearchString) {
+    if (props.initialSearchString || props.initialSelectionLanguageTag) {
       // Show the skeleton while waiting for search results
       setIsWaitingForResults(true);
     }
     setTimeout(() => {
       // This can take a bit, so push it to the end of the event queue so that we paint the rest of the component first
       lp.resetTo(
-        props.initialSearchString || "",
+        props.initialSearchString,
         props.initialSelectionLanguageTag,
         props.initialCustomDisplayName
       );
@@ -166,7 +166,7 @@ export const LanguageChooserInner: React.FunctionComponent<
 
   // Show a tooltip prompting user to start typing, only on first load, until they start typing
   const [showInitialPrompt, setShowInitialPrompt] = useState(
-    !props.initialSearchString
+    !(props.initialSearchString || props.initialSelectionLanguageTag)
   );
   useEffect(() => {
     if (showInitialPrompt && (lp.searchString || customizeLanguageDialogOpen)) {
