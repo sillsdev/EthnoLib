@@ -14,6 +14,8 @@ import {
   languageForManuallyEnteredTag,
   UNLISTED_LANGUAGE,
 } from "./languageTagUtils";
+
+import { defaultSearchResultModifier } from "./searchResultModifiers";
 import { parseLangtagFromLangChooser } from "./searchForLanguage";
 import {
   ILanguage,
@@ -260,90 +262,109 @@ describe("get maximal equivalent version of langtag", () => {
   });
 });
 
-describe("Tag parsing", () => {
+describe.each([
+  { modifierName: "no modifier", modifier: undefined },
+  {
+    modifierName: "defaultSearchResultModifier",
+    modifier: defaultSearchResultModifier,
+  },
+])("Tag parsing with $modifierName", ({ modifier }) => {
   it("should find a language by 2 letter language subtag", () => {
-    expect(parseLangtagFromLangChooser("ja")?.language?.exonym).toEqual(
-      "Japanese"
-    );
+    expect(
+      parseLangtagFromLangChooser("ja", modifier)?.language?.exonym
+    ).toEqual("Japanese");
   });
   it("should return undefined if no language found", () => {
-    expect(parseLangtagFromLangChooser("")).toBeUndefined();
-    expect(parseLangtagFromLangChooser("thisistoolong")).toBeUndefined();
-    expect(parseLangtagFromLangChooser("xxx")).toBeUndefined();
+    expect(parseLangtagFromLangChooser("", modifier)).toBeUndefined();
+    expect(
+      parseLangtagFromLangChooser("thisistoolong", modifier)
+    ).toBeUndefined();
+    expect(parseLangtagFromLangChooser("xxx", modifier)).toBeUndefined();
   });
   it("should find a region by its tag", () => {
     expect(
-      parseLangtagFromLangChooser("sqa-Latn-NG")?.customDetails?.region?.name
+      parseLangtagFromLangChooser("sqa-Latn-NG", modifier)?.customDetails
+        ?.region?.name
     ).toEqual("Nigeria");
   });
   it("should not return a region if the tag does not contain an explicit and valid region code", () => {
-    expect(parseLangtagFromLangChooser("en-Latn")).toBeTruthy();
+    expect(parseLangtagFromLangChooser("en-Latn", modifier)).toBeTruthy();
     expect(
-      parseLangtagFromLangChooser("en-Latn")?.customDetails?.region
+      parseLangtagFromLangChooser("en-Latn", modifier)?.customDetails?.region
     ).toBeUndefined();
     // ZZ should be an invalid region code:
     expect(getRegionBySubtag("ZZ")).toBeUndefined();
     expect(
-      parseLangtagFromLangChooser("en-Latn-ZZ")?.customDetails?.region
+      parseLangtagFromLangChooser("en-Latn-ZZ", modifier)?.customDetails?.region
     ).toBeUndefined();
     expect(
-      parseLangtagFromLangChooser("ssh-Arab")?.customDetails?.region
+      parseLangtagFromLangChooser("ssh-Arab", modifier)?.customDetails?.region
     ).toBeUndefined();
   });
   it("should find a script by its tag", () => {
-    expect(parseLangtagFromLangChooser("uz-Sogd")?.script?.name).toEqual(
-      "Sogdian"
-    );
+    expect(
+      parseLangtagFromLangChooser("uz-Sogd", modifier)?.script?.name
+    ).toEqual("Sogdian");
   });
   it("should find valid information even if script, region or dialect is not typically associated with that language", () => {
-    const result = parseLangtagFromLangChooser("ixl-Cyrl-JP-x-foobar"); // Ixil (normally latin script, guatemala region)
+    const result = parseLangtagFromLangChooser(
+      "ixl-Cyrl-JP-x-foobar",
+      modifier
+    ); // Ixil (normally latin script, guatemala region)
     expect(result?.language?.exonym).toEqual("Ixil");
     expect(result?.script?.name).toEqual("Cyrillic");
     expect(result?.customDetails?.region?.name).toEqual("Japan");
   });
 
   it("should find the correct implied scripts", () => {
-    expect(parseLangtagFromLangChooser("clk")?.script?.name).toEqual("Latin");
-    expect(parseLangtagFromLangChooser("clk-x-barfoo")?.script?.name).toEqual(
+    expect(parseLangtagFromLangChooser("clk", modifier)?.script?.name).toEqual(
       "Latin"
     );
-    expect(parseLangtagFromLangChooser("clk-CN")?.script?.name).toEqual(
-      "Tibetan"
-    );
     expect(
-      parseLangtagFromLangChooser("clk-CN-x-foobar")?.script?.name
+      parseLangtagFromLangChooser("clk-x-barfoo", modifier)?.script?.name
+    ).toEqual("Latin");
+    expect(
+      parseLangtagFromLangChooser("clk-CN", modifier)?.script?.name
+    ).toEqual("Tibetan");
+    expect(
+      parseLangtagFromLangChooser("clk-CN-x-foobar", modifier)?.script?.name
     ).toEqual("Tibetan");
 
-    expect(parseLangtagFromLangChooser("ce")?.script?.name).toEqual("Cyrillic");
-    expect(parseLangtagFromLangChooser("uzn")?.script?.name).toEqual("Latin"); // even with an individual rather than canonical tag for a representative language
+    expect(parseLangtagFromLangChooser("ce", modifier)?.script?.name).toEqual(
+      "Cyrillic"
+    );
+    expect(parseLangtagFromLangChooser("uzn", modifier)?.script?.name).toEqual(
+      "Latin"
+    ); // even with an individual rather than canonical tag for a representative language
   });
 
   it("should put private use subtags into dialect field", () => {
     expect(
-      parseLangtagFromLangChooser("en-Latn-x-foo")?.customDetails?.dialect
+      parseLangtagFromLangChooser("en-Latn-x-foo", modifier)?.customDetails
+        ?.dialect
     ).toEqual("foo");
   });
   it("should be case insensitive", () => {
-    const result = parseLangtagFromLangChooser("cE-CyRl-rU");
+    const result = parseLangtagFromLangChooser("cE-CyRl-rU", modifier);
     expect(result?.language?.exonym).toEqual("Chechen");
     expect(result?.script?.name).toEqual("Cyrillic");
     expect(result?.customDetails?.region?.name).toEqual("Russian Federation");
   });
   it("should work for all combos of present and absent subtags", () => {
     // ssh, ssh-Arab, ssh-AE, ssh-x-foobar, ssh-Arab-AE, ssh-Arab-x-foobar, ssh-AE-x-foobar, ssh-Arab-AE-x-foobar
-    const ssh_result = parseLangtagFromLangChooser("ssh");
+    const ssh_result = parseLangtagFromLangChooser("ssh", modifier);
     expect(ssh_result?.language?.exonym).toEqual("Shihhi Arabic");
     expect(ssh_result?.script?.name).toEqual("Arabic");
     expect(ssh_result?.customDetails?.region?.name).toBeUndefined();
     expect(ssh_result?.customDetails?.dialect).toBeUndefined();
 
-    const ssh_Arab_result = parseLangtagFromLangChooser("ssh-Arab");
+    const ssh_Arab_result = parseLangtagFromLangChooser("ssh-Arab", modifier);
     expect(ssh_Arab_result?.language?.exonym).toEqual("Shihhi Arabic");
     expect(ssh_Arab_result?.script?.name).toEqual("Arabic");
     expect(ssh_Arab_result?.customDetails?.region?.name).toBeUndefined();
     expect(ssh_Arab_result?.customDetails?.dialect).toBeUndefined();
 
-    const ssh_AE_result = parseLangtagFromLangChooser("ssh-AE");
+    const ssh_AE_result = parseLangtagFromLangChooser("ssh-AE", modifier);
     expect(ssh_AE_result?.language?.exonym).toEqual("Shihhi Arabic");
     expect(ssh_AE_result?.script?.name).toEqual("Arabic");
     expect(ssh_AE_result?.customDetails?.region?.name).toEqual(
@@ -351,13 +372,19 @@ describe("Tag parsing", () => {
     );
     expect(ssh_AE_result?.customDetails?.dialect).toBeUndefined();
 
-    const ssh_x_foobar_result = parseLangtagFromLangChooser("ssh-x-foobar");
+    const ssh_x_foobar_result = parseLangtagFromLangChooser(
+      "ssh-x-foobar",
+      modifier
+    );
     expect(ssh_x_foobar_result?.language?.exonym).toEqual("Shihhi Arabic");
     expect(ssh_x_foobar_result?.script?.name).toEqual("Arabic");
     expect(ssh_x_foobar_result?.customDetails?.region?.name).toBeUndefined();
     expect(ssh_x_foobar_result?.customDetails?.dialect).toEqual("foobar");
 
-    const ssh_Arab_AE_result = parseLangtagFromLangChooser("ssh-Arab-AE");
+    const ssh_Arab_AE_result = parseLangtagFromLangChooser(
+      "ssh-Arab-AE",
+      modifier
+    );
     expect(ssh_Arab_AE_result?.language?.exonym).toEqual("Shihhi Arabic");
     expect(ssh_Arab_AE_result?.script?.name).toEqual("Arabic");
     expect(ssh_Arab_AE_result?.customDetails?.region?.name).toEqual(
@@ -365,8 +392,10 @@ describe("Tag parsing", () => {
     );
     expect(ssh_Arab_AE_result?.customDetails?.dialect).toBeUndefined();
 
-    const ssh_Arab_x_foobar_result =
-      parseLangtagFromLangChooser("ssh-Arab-x-foobar");
+    const ssh_Arab_x_foobar_result = parseLangtagFromLangChooser(
+      "ssh-Arab-x-foobar",
+      modifier
+    );
     expect(ssh_Arab_x_foobar_result?.language?.exonym).toEqual("Shihhi Arabic");
     expect(ssh_Arab_x_foobar_result?.script?.name).toEqual("Arabic");
     expect(
@@ -374,8 +403,10 @@ describe("Tag parsing", () => {
     ).toBeUndefined();
     expect(ssh_Arab_x_foobar_result?.customDetails?.dialect).toEqual("foobar");
 
-    const ssh_AE_x_foobar_result =
-      parseLangtagFromLangChooser("ssh-AE-x-foobar");
+    const ssh_AE_x_foobar_result = parseLangtagFromLangChooser(
+      "ssh-AE-x-foobar",
+      modifier
+    );
     expect(ssh_AE_x_foobar_result?.language?.exonym).toEqual("Shihhi Arabic");
     expect(ssh_AE_x_foobar_result?.script?.name).toEqual("Arabic");
     expect(ssh_AE_x_foobar_result?.customDetails?.region?.name).toEqual(
@@ -384,7 +415,8 @@ describe("Tag parsing", () => {
     expect(ssh_AE_x_foobar_result?.customDetails?.dialect).toEqual("foobar");
 
     const ssh_Arab_AE_x_foobar_result = parseLangtagFromLangChooser(
-      "ssh-Arab-AE-x-foobar"
+      "ssh-Arab-AE-x-foobar",
+      modifier
     );
     expect(ssh_Arab_AE_x_foobar_result?.language?.exonym).toEqual(
       "Shihhi Arabic"
@@ -399,30 +431,30 @@ describe("Tag parsing", () => {
   });
   it("uses searchResultModifier if provided", () => {
     const foobar = "foobar";
-    const modifier = (results: ILanguage[], _searchString: string) =>
+    const customModifier = (results: ILanguage[], _searchString: string) =>
       results.map((result) => {
         return { ...result, exonym: foobar };
       });
     expect(
-      parseLangtagFromLangChooser("en", modifier)?.language?.exonym
+      parseLangtagFromLangChooser("en", customModifier)?.language?.exonym
     ).toEqual(foobar);
   });
 
   it("should be able to find implied scripts even for representative langs with individual rather than canonical language subtags", () => {
     // uzn is Northern Uzbek, representative for uz macrolanguage
-    const uznResult = parseLangtagFromLangChooser("uzn-x-foobar");
+    const uznResult = parseLangtagFromLangChooser("uzn-x-foobar", modifier);
     expect(uznResult?.language?.iso639_3_code).toEqual("uzn");
     expect(uznResult?.script?.name).toEqual("Latin");
   });
 
   it("should handle normal tags for Chinese correctly", () => {
-    const zhCnResult = parseLangtagFromLangChooser("zh-CN");
+    const zhCnResult = parseLangtagFromLangChooser("zh-CN", modifier);
     expect(zhCnResult?.language?.exonym).toEqual("Chinese");
     expect(zhCnResult?.language?.names.length).toBeGreaterThan(3);
     expect(zhCnResult?.script?.code).toEqual("Hans");
 
     // should be case insensitive
-    const zhTwResult = parseLangtagFromLangChooser("zH-TW");
+    const zhTwResult = parseLangtagFromLangChooser("zH-TW", modifier);
     expect(zhTwResult?.language?.exonym).toEqual("Chinese");
     expect(zhTwResult?.language?.names.length).toBeGreaterThan(3);
     expect(zhTwResult?.script?.code).toEqual("Hant");
