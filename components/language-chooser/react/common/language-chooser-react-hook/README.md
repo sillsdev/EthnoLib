@@ -46,7 +46,7 @@ Install with npm: `npm i @ethnolib/language-chooser-react-hook`
 
 - `saveLanguageDetails: (details: ICustomizableLanguageDetails, script: IScript | undefined) => void` - Sets `customizableLanguageDetails` and `selectedScript`.
 
-- `resetTo: (searchString: string, selectionLanguageTag?: string, initialCustomDisplayName?: string) => void` - For restoring preexisting data when the LanguageChooser is first opened. Sets `selectedLanguage`, `selectedScript`, and `customizableLanguageDetails` to the values in `initialState`.
+- `resetTo: (searchString?: string, selectionLanguageTag?: string, initialCustomDisplayName?: string) => void` - For restoring preexisting data when the LanguageChooser is first opened. Sets `selectedLanguage`, `selectedScript`, and `customizableLanguageDetails` to the values in `initialState`.
 
 ### Example
 

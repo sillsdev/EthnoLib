@@ -19,7 +19,8 @@ export function languageCardTestId(languageCode: string) {
 }
 
 export async function clearSearch(page) {
-  await page.getByTestId("clear-search-X-button").click();
+  const clearButton = page.getByTestId("clear-search-X-button");
+  await clearButton.click();
 }
 
 export async function search(page, searchString: string) {
@@ -91,12 +92,37 @@ export async function manuallyEnterValidLanguageTag(page, tag) {
   );
   await expect(customizationDialogTagPreview).toBeVisible();
   // clicking the tag preview will trigger a windows.prompt dialog, enter tag into it
-  const dialogHandled = page.waitForEvent("dialog").then((dialog) => {
-    expect(dialog.type()).toBe("prompt");
+  const dialogHandled = page.waitForEvent("dialog").then(async (dialog) => {
+    await expect(dialog.type()).toBe("prompt");
     return dialog.accept(tag);
   });
   await customizationDialogTagPreview.click({ modifiers: ["Control"] });
   await dialogHandled;
   // Check that the tag was accepted. Not a robust check, but see that it is at least visible somewhere
   await expect(page.getByText(/.*tag.*/)).toBeVisible();
+}
+
+export function customizationDialogLocator(page) {
+  return page.getByTestId("customization-dialog");
+}
+
+export function cancelButtonLocator(customizationDialog) {
+  return customizationDialog.getByRole("button", { name: "Cancel" });
+}
+
+export async function cleanupDialogHandlers(page) {
+  await page.removeAllListeners("dialog");
+}
+
+export async function resetBeforeEach(page) {
+  // In case some got left for some reason
+  await cleanupDialogHandlers(page);
+
+  // close customization dialog if open
+  const customizationDialog = await customizationDialogLocator(page);
+  if (await customizationDialog.isVisible()) {
+    await cancelButtonLocator(customizationDialog).click();
+  }
+  // clear search
+  await clearSearch(page);
 }
