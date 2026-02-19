@@ -72,6 +72,33 @@ test.describe("Right panel functionality", () => {
     await expect(displayNameField).not.toHaveValue(customName);
   });
 
+  test("Display name persists when toggling script cards", async () => {
+    await selectChechenCard(page);
+
+    const displayNameField = page.locator("#language-name-bar");
+
+    // Set a custom display name
+    const customName = "My Chechen";
+    await displayNameField.fill(customName);
+    await expect(displayNameField).toHaveValue(customName);
+
+    // Toggle a script card
+    await toggleScriptCard(page, "Cyrl");
+
+    // Display name should persist
+    await expect(displayNameField).toHaveValue(customName);
+
+    // Toggle script again
+    await toggleScriptCard(page, "Cyrl");
+
+    // Display name should still persist
+    await expect(displayNameField).toHaveValue(customName);
+
+    // Now toggle a different script
+    await toggleScriptCard(page, "Arab");
+    await expect(displayNameField).toHaveValue(customName);
+  });
+
   test("Tag preview updates when language selected", async () => {
     await selectChechenCard(page);
 

@@ -203,13 +203,20 @@ export const useLanguageChooser = (
     clearCustomizableLanguageDetails();
   }
 
+  function clearCustomizableDetailsExceptDisplayName() {
+    setCustomizableLanguageDetails((d) => ({
+      ...EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS,
+      customDisplayName: d.customDisplayName,
+    }));
+  }
+
   function selectScript(script: IScript) {
     setSelectedScript(script);
-    clearCustomizableLanguageDetails();
+    clearCustomizableDetailsExceptDisplayName();
   }
   function clearScriptSelection() {
     setSelectedScript(undefined);
-    clearCustomizableLanguageDetails();
+    clearCustomizableDetailsExceptDisplayName();
   }
 
   function onSearchStringChange(newSearchString: string) {
