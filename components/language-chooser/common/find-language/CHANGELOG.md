@@ -1,3 +1,9 @@
+## 0.1.19 (2026-02-19)
+
+### 🩹 Fixes
+
+- BL-15920 reopening with selected script ([8f2b658](https://github.com/sillsdev/EthnoLib/commit/8f2b658))
+
 ## 0.1.18 (2026-02-16)
 
 ### 🩹 Fixes

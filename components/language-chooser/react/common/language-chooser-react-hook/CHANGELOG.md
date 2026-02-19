@@ -1,3 +1,9 @@
+## 0.1.20 (2026-02-19)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.1.19
+
 ## 0.1.19 (2026-02-16)
 
 ### 🩹 Fixes
