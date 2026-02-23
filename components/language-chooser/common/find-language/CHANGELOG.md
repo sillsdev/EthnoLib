@@ -1,3 +1,9 @@
+## 0.1.20 (2026-02-23)
+
+### 🩹 Fixes
+
+- BL-15923 e2e tests and temp fix for BL-15919 ([2a7b278](https://github.com/sillsdev/EthnoLib/commit/2a7b278))
+
 ## 0.1.19 (2026-02-19)
 
 ### 🩹 Fixes
