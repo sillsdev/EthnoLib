@@ -1,7 +1,11 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { OptionCard, OptionCardProps } from "./OptionCard";
-import { ILanguage, rawIsoCode } from "@ethnolib/find-language";
+import {
+  ILanguage,
+  rawIsoCode,
+  stripDemarcation,
+} from "@ethnolib/find-language";
 import { PartiallyBoldedTypography } from "./PartiallyBoldedTypography";
 import WarningIcon from "@mui/icons-material/Warning";
 import { lighten, Typography, useTheme } from "@mui/material";
@@ -56,16 +60,20 @@ export const LanguageCard: React.FunctionComponent<
               {languageCardData.autonym}
             </PartiallyBoldedTypography>
           )}
-          {languageCardData.exonym !== languageCardData.autonym && (
-            <PartiallyBoldedTypography
-              variant="h2"
-              css={css`
-                flex-grow: 0;
-              `}
-            >
-              {languageCardData.exonym}
-            </PartiallyBoldedTypography>
-          )}
+          {
+            // TODO temporary fix for BL-15919. Probably will be changed by BL-15922
+            stripDemarcation(languageCardData.exonym) !==
+              stripDemarcation(languageCardData.autonym) && (
+              <PartiallyBoldedTypography
+                variant="h2"
+                css={css`
+                  flex-grow: 0;
+                `}
+              >
+                {languageCardData.exonym}
+              </PartiallyBoldedTypography>
+            )
+          }
         </div>
         <PartiallyBoldedTypography
           variant="body2"

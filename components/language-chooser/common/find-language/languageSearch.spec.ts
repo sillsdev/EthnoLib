@@ -8,10 +8,8 @@ import { describe, expect, it } from "vitest";
 import { expectTypeOf } from "vitest";
 import { codeMatches } from "./languageTagUtils";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
-import {
-  defaultSearchResultModifier,
-  LanguageSearcher,
-} from "@ethnolib/find-language";
+import { defaultSearchResultModifier } from "./searchResultModifiers";
+import { LanguageSearcher } from "./languageSearcher";
 
 // wait for all the results from asyncSearchForLanguage so we can check them
 export async function asyncGetAllLanguageResults(
