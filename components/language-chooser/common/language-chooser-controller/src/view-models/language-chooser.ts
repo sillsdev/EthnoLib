@@ -148,8 +148,10 @@ export function useLanguageChooserViewModel(
   }
 
   function _onDisplayNameChanged() {
-    customizations.value ??= {};
-    customizations.value.customDisplayName = displayName.value;
+    const _cust = customizations.value ?? {};
+    _cust.customDisplayName = displayName.value;
+    customizations.value = _cust;
+
     _updateIsReadyToSubmit();
   }
 

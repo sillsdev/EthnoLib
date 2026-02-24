@@ -4,7 +4,11 @@ import {
   useLanguageChooserViewModel,
 } from "../src/view-models/language-chooser";
 import { fakeLanguage } from "./fake-utils";
-import { type ILanguage, UNLISTED_LANGUAGE } from "@ethnolib/find-language";
+import {
+  ICustomizableLanguageDetails,
+  type ILanguage,
+  UNLISTED_LANGUAGE,
+} from "@ethnolib/find-language";
 import { NorthernUzbekLanguage, WaataLanguage } from "./sample-data/languages";
 import { AndorraRegion } from "./sample-data/regions";
 
@@ -191,6 +195,21 @@ describe("display name", () => {
     test.viewModel.listedScripts.value[0].isSelected.requestUpdate(true);
 
     expect(test.viewModel.displayName.value).toBe("oʻzbek tili");
+  });
+
+  it("should notify customizations UI listener of change", () => {
+    const test = new TestHelper({ initialLanguageCount: 1 });
+
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+
+    let customizations: ICustomizableLanguageDetails | undefined;
+
+    test.viewModel.customizations.updateUI = (value) => {
+      customizations = { ...value };
+    };
+
+    test.viewModel.displayName.requestUpdate("my language");
+    expect(customizations?.customDisplayName).toBe("my language");
   });
 });
 
