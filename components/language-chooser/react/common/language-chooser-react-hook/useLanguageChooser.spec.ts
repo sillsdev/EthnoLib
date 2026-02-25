@@ -128,6 +128,22 @@ describe("isReadyToSubmit", () => {
       ).toBe(false);
     });
 
+    it.each(["!!!", "   ", "---"])(
+      "returns false for unlisted language with invalid dialect: %s",
+      (dialect) => {
+        expect(
+          isReadyToSubmit({
+            language: UNLISTED_LANGUAGE,
+            customDetails: {
+              customDisplayName: "Test",
+              region: testRegion,
+              dialect,
+            },
+          })
+        ).toBe(false);
+      }
+    );
+
     it("returns false for unlisted or manually entered tag with no display name", () => {
       expect(
         isReadyToSubmit({

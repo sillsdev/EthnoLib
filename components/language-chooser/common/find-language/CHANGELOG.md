@@ -1,3 +1,54 @@
+## 0.1.20 (2026-02-23)
+
+### 🩹 Fixes
+
+- BL-15923 e2e tests and temp fix for BL-15919 ([2a7b278](https://github.com/sillsdev/EthnoLib/commit/2a7b278))
+
+## 0.1.19 (2026-02-19)
+
+### 🩹 Fixes
+
+- BL-15920 reopening with selected script ([8f2b658](https://github.com/sillsdev/EthnoLib/commit/8f2b658))
+
+## 0.1.18 (2026-02-16)
+
+### 🩹 Fixes
+
+- force publish ([1eb4830](https://github.com/sillsdev/EthnoLib/commit/1eb4830))
+
+## 0.1.17 (2026-02-13)
+
+### 🩹 Fixes
+
+- BL-14889 use indiv langtags for rep languages in tag creation ([38baaa0](https://github.com/sillsdev/EthnoLib/commit/38baaa0))
+
+## 0.1.16 (2026-02-12)
+
+### 🩹 Fixes
+
+- clean up release.yml ([a958ec4](https://github.com/sillsdev/EthnoLib/commit/a958ec4))
+
+## 0.1.15 (2026-02-12)
+
+### 🩹 Fixes
+
+- trusted publishing ([ca06f2c](https://github.com/sillsdev/EthnoLib/commit/ca06f2c))
+- trusted publishing ([6dcb12d](https://github.com/sillsdev/EthnoLib/commit/6dcb12d))
+- trusted publishing ([3f9cb65](https://github.com/sillsdev/EthnoLib/commit/3f9cb65))
+- trusted publishing ([ce71384](https://github.com/sillsdev/EthnoLib/commit/ce71384))
+
+## 0.1.14 (2026-02-12)
+
+### 🩹 Fixes
+
+- trusted publishing ([b5e0dcf](https://github.com/sillsdev/EthnoLib/commit/b5e0dcf))
+
+## 0.1.13 (2026-02-04)
+
+### 🩹 Fixes
+
+- Use trusted publishing ([2788a1c](https://github.com/sillsdev/EthnoLib/commit/2788a1c))
+
 ## 0.1.12 (2025-09-30)
 
 ### 🩹 Fixes

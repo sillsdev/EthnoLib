@@ -17,13 +17,11 @@
     "@ethnolib/state-management-core": "0.1.0"
   },
   "devDependencies": {
-    "@nx/vite": "^19.1.2",
     "@types/node": "^20.16.11",
     "svelte": "^5.38.6",
     "svelte-check": "^4.0.0",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.2.2"
+    "tsx": "^4.19.2"
   },
   "volta": {
     "extends": "../../../package.json"

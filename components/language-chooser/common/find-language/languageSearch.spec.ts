@@ -8,10 +8,8 @@ import { describe, expect, it } from "vitest";
 import { expectTypeOf } from "vitest";
 import { codeMatches } from "./languageTagUtils";
 import { stripDemarcation } from "./matchingSubstringDemarcation";
-import {
-  defaultSearchResultModifier,
-  LanguageSearcher,
-} from "@ethnolib/find-language";
+import { defaultSearchResultModifier } from "./searchResultModifiers";
+import { LanguageSearcher } from "./languageSearcher";
 
 // wait for all the results from asyncSearchForLanguage so we can check them
 export async function asyncGetAllLanguageResults(
@@ -376,20 +374,20 @@ describe("getLanguageBySubtag", () => {
   it("should find languages by valid languageSubtag field", () => {
     expect(getLanguageBySubtag("aaa")?.exonym).toEqual("Ghotuo");
     expect(getLanguageBySubtag("ab")?.exonym).toEqual("Abkhaz");
-    expect(getLanguageBySubtag("uz")?.exonym).toEqual("Uzbek");
-    expect(getLanguageBySubtag("mg")?.iso639_3_code).toEqual("plt");
+    expect(getLanguageBySubtag("uz")?.iso639_3_code).toEqual("uzb");
+    expect(getLanguageBySubtag("mg")?.iso639_3_code).toEqual("mlg");
     expect(getLanguageBySubtag("zh")?.exonym).toEqual("Chinese");
     expect(getLanguageBySubtag("za")?.exonym).toEqual("Zhuang");
-    expect(getLanguageBySubtag("bnc")?.iso639_3_code).toEqual("lbk");
+    expect(getLanguageBySubtag("bnc")?.iso639_3_code).toEqual("bnc");
     expect(getLanguageBySubtag("no")?.exonym).toEqual("Norwegian");
     expect(getLanguageBySubtag("sh")?.iso639_3_code).toEqual("hbs");
+    expect(getLanguageBySubtag("hbs")?.iso639_3_code).toEqual("hbs");
     expect(getLanguageBySubtag("sa")?.exonym).toEqual("Sanskrit");
     expect(getLanguageBySubtag("zap")?.exonym).toEqual("Zapotec");
-    expect(getLanguageBySubtag("ik")?.iso639_3_code).toEqual("esk");
+    expect(getLanguageBySubtag("ik")?.iso639_3_code).toEqual("ipk");
     expect(getLanguageBySubtag("id")?.exonym).toEqual("Indonesian");
     expect(getLanguageBySubtag("ja")?.exonym).toEqual("Japanese");
-    expect(getLanguageBySubtag("yi")?.autonym).toEqual("יידיש");
-    expect(getLanguageBySubtag("luy")?.iso639_3_code).toEqual("bxk");
+    expect(getLanguageBySubtag("luy")?.iso639_3_code).toEqual("luy");
   });
   it("should find languages using the defaultSearchResultModifier", () => {
     expect(
@@ -401,19 +399,25 @@ describe("getLanguageBySubtag", () => {
     // The exonym for uz gets demarcated as [Uz]bek, so have to check different field
     expect(
       getLanguageBySubtag("uz", defaultSearchResultModifier)?.iso639_3_code
-    ).toEqual("uzn");
+    ).toEqual("uzb");
     expect(
       getLanguageBySubtag("mg", defaultSearchResultModifier)?.iso639_3_code
-    ).toEqual("plt");
+    ).toEqual("mlg");
+    const chineseResult = getLanguageBySubtag(
+      "zh",
+      defaultSearchResultModifier
+    );
+    expect(chineseResult?.exonym).toEqual("Chinese");
+    expect(chineseResult?.names.length).toBeGreaterThan(3);
     expect(
-      getLanguageBySubtag("zh", defaultSearchResultModifier)?.exonym
-    ).toEqual("Chinese");
+      getLanguageBySubtag("es", defaultSearchResultModifier)?.exonym
+    ).toEqual("Spanish");
     expect(
       getLanguageBySubtag("za", defaultSearchResultModifier)?.exonym
     ).toEqual("Zhuang");
     expect(
       getLanguageBySubtag("bnc", defaultSearchResultModifier)?.iso639_3_code
-    ).toEqual("lbk");
+    ).toEqual("bnc");
     expect(
       getLanguageBySubtag("no", defaultSearchResultModifier)?.exonym
     ).toEqual("Norwegian");
@@ -421,14 +425,14 @@ describe("getLanguageBySubtag", () => {
       getLanguageBySubtag("sh", defaultSearchResultModifier)?.iso639_3_code
     ).toEqual("hbs");
     expect(
-      getLanguageBySubtag("sa", defaultSearchResultModifier)?.exonym
-    ).toEqual("Sanskrit");
+      getLanguageBySubtag("hbs", defaultSearchResultModifier)?.iso639_3_code
+    ).toEqual("hbs");
     expect(
       getLanguageBySubtag("zap", defaultSearchResultModifier)?.exonym
     ).toEqual("Zapotec");
     expect(
       getLanguageBySubtag("ik", defaultSearchResultModifier)?.iso639_3_code
-    ).toEqual("esk");
+    ).toEqual("ipk");
     expect(
       getLanguageBySubtag("id", defaultSearchResultModifier)?.exonym
     ).toEqual("Indonesian");
@@ -436,11 +440,34 @@ describe("getLanguageBySubtag", () => {
       getLanguageBySubtag("ja", defaultSearchResultModifier)?.exonym
     ).toEqual("Japanese");
     expect(
-      getLanguageBySubtag("yi", defaultSearchResultModifier)?.autonym
+      getLanguageBySubtag("ydd", defaultSearchResultModifier)?.autonym
     ).toEqual("יידיש");
     expect(
+      getLanguageBySubtag("yi", defaultSearchResultModifier)?.exonym
+    ).toEqual("Yiddish");
+    expect(
       getLanguageBySubtag("luy", defaultSearchResultModifier)?.iso639_3_code
-    ).toEqual("bxk");
+    ).toEqual("luy");
+    expect(
+      getLanguageBySubtag("ak", defaultSearchResultModifier)?.exonym
+    ).toEqual("Akan");
+    expect(
+      getLanguageBySubtag("sa", defaultSearchResultModifier)?.exonym
+    ).toEqual("Sanskrit");
+
+    // Because we only demarcate one part of the card, it just so happens that only in these couple cases do we find
+    // demarcation on the field we are testing.
+    // Enhance: strip demarcation in all the tests in this group
+    expect(
+      stripDemarcation(
+        getLanguageBySubtag("aka", defaultSearchResultModifier)?.exonym
+      )
+    ).toEqual("Akan");
+    expect(
+      stripDemarcation(
+        getLanguageBySubtag("san", defaultSearchResultModifier)?.exonym
+      )
+    ).toEqual("Sanskrit");
   });
   it("should use searchResultModifier if provided", () => {
     const foobar = "foobar";
@@ -517,5 +544,23 @@ describe("other language object types", async () => {
     expect(allAsyncResults.length).toBe(2);
     expect(allAsyncResults[0].id).toEqual("first_eng_result");
     expect(allAsyncResults[1].id).toEqual("second_eng_result");
+  });
+});
+
+// The first entry of alternativeTags should be a canonical tag for some form of the language, and so its subtag should
+// be canonical for use in ensureLangSubtagIsCanonicalForReps
+describe("canonical tag is first in alternativeTags", () => {
+  it("should have the canonical tag first in alternativeTags", () => {
+    const uzn = getLanguageBySubtag("uzn");
+    expect(uzn).toBeDefined();
+    expect(uzn?.alternativeTags[0].split("-")[0]).toBe("uz");
+
+    const ave = getLanguageBySubtag("ave");
+    expect(ave).toBeDefined();
+    expect(ave?.alternativeTags[0].split("-")[0]).toBe("ae");
+
+    const ojg = getLanguageBySubtag("ojg");
+    expect(ojg).toBeDefined();
+    expect(ojg?.alternativeTags[0].split("-")[0]).toBe("oj");
   });
 });

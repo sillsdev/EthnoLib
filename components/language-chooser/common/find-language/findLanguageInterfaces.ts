@@ -24,7 +24,7 @@ export interface ILanguage {
   autonym?: string;
   exonym: string;
   iso639_3_code: string; // ISO 639-3 code
-  languageSubtag: string; // BCP-47 canonical code
+  languageSubtag: string; // BCP-47 canonical code, except for representative languages where the canonical code is actually the macrolanguage code, in which case we use a specifically individual language code instead
   regionNamesForDisplay: string; // For macrolanguages, we display a region but don't want the macrolanguage to come up in searches for that region
   regionNamesForSearch: string[];
   names: string[];

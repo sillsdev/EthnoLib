@@ -14,7 +14,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.1.12",
+    "@ethnolib/find-language": "0.1.20",
     "@ethnolib/state-management-core": "0.1.0"
   },
   "devDependencies": {

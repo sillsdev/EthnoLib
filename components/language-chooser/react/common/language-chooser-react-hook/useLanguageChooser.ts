@@ -16,6 +16,7 @@ import {
   IOrthography,
   createTagFromOrthography,
   defaultDisplayName,
+  formatDialectCode,
 } from "@ethnolib/find-language";
 
 export interface ILanguageChooser {
@@ -37,7 +38,7 @@ export interface ILanguageChooser {
     script: IScript | undefined
   ) => void;
   resetTo: (
-    searchString: string,
+    searchString?: string,
     selectionLanguageTag?: string,
     initialCustomDisplayName?: string
   ) => void;
@@ -113,17 +114,16 @@ export const useLanguageChooser = (
     })();
   }, [searchString]);
 
-  // For reopening to a specific selection. We should then also set the search string
-  // such that the selected language is visible.
+  // For reopening to a specific selection
   function resetTo(
-    searchString: string,
-    // if present, the language in selectionLanguageTag must be a result of this search string or selection won't display
-    // unless it is a manually entered tag, in which case there is never a search result anyway
+    searchString?: string,
     selectionLanguageTag?: string,
     initialCustomDisplayName?: string // all info can be captured in language tag except display name
   ) {
-    onSearchStringChange(searchString);
-    if (!selectionLanguageTag) return;
+    if (!selectionLanguageTag) {
+      onSearchStringChange(searchString || "");
+      return;
+    }
 
     let initialSelections = parseLangtagFromLangChooser(
       selectionLanguageTag || "",
@@ -139,6 +139,11 @@ export const useLanguageChooser = (
         },
       };
     }
+    // If we have an initially selected language but no search string, might as well set the search string to something
+    // that will definitely show that selected language in the results
+    searchString = searchString || initialSelections?.language?.languageSubtag;
+    onSearchStringChange(searchString || "");
+
     if (initialSelections?.language) {
       selectLanguage(initialSelections?.language as ILanguage);
     }
@@ -198,13 +203,20 @@ export const useLanguageChooser = (
     clearCustomizableLanguageDetails();
   }
 
+  function clearCustomizableDetailsExceptDisplayName() {
+    setCustomizableLanguageDetails((d) => ({
+      ...EMPTY_CUSTOMIZABLE_LANGUAGE_DETAILS,
+      customDisplayName: d.customDisplayName,
+    }));
+  }
+
   function selectScript(script: IScript) {
     setSelectedScript(script);
-    clearCustomizableLanguageDetails();
+    clearCustomizableDetailsExceptDisplayName();
   }
   function clearScriptSelection() {
     setSelectedScript(undefined);
-    clearCustomizableLanguageDetails();
+    clearCustomizableDetailsExceptDisplayName();
   }
 
   function onSearchStringChange(newSearchString: string) {
@@ -276,6 +288,7 @@ function hasValidDisplayName(selection: IOrthography) {
 }
 
 export function isReadyToSubmit(selection: IOrthography): boolean {
+  const normalizedDialect = formatDialectCode(selection.customDetails?.dialect);
   return (
     !!selection.language &&
     hasValidDisplayName(selection) &&
@@ -283,8 +296,7 @@ export function isReadyToSubmit(selection: IOrthography): boolean {
     (!!selection.script || selection.language?.scripts?.length === 0) &&
     // if unlisted language, name and country are required
     (!isUnlistedLanguage(selection.language) ||
-      (!!selection.customDetails?.dialect &&
-        !!selection.customDetails?.region?.name)) &&
+      (!!normalizedDialect && !!selection.customDetails?.region?.name)) &&
     // if this was a manually entered langtag, check that tag is valid BCP 47
     (!isManuallyEnteredTagLanguage(selection.language) ||
       isValidBcp47Tag(selection.language?.manuallyEnteredTag))

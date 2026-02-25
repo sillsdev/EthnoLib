@@ -14,6 +14,7 @@ import {
   getMaximalLangtag,
 } from "./languageTagUtils";
 import { getRegionBySubtag, getScriptForLanguage } from "./regionsAndScripts";
+import { deepStripDemarcation } from "./matchingSubstringDemarcation";
 
 const exactMatchPrioritizableFuseSearchKeys = [
   { name: "autonym", weight: 100 },
@@ -98,59 +99,31 @@ export function getLanguageBySubtag(
     searchString: string
   ) => ILanguage[]
 ): ILanguage | undefined {
-  const languages = rawLanguages as ILanguage[];
-  /* If the code is used for both a macrolanguage and the representative language (macrolanguageNotes.md),
-  return the representative language by default (BL-14824). */
-  const macrolanguageRepFuse = new Fuse(languages as ILanguage[], {
-    keys: [
-      "parentMacrolanguage.languageSubtag",
-      "parentMacrolanguage.iso639_3_code",
-      "isRepresentativeForMacrolanguage",
-    ],
+  // For the Chinese special case, we actually want the card with iso639_3_code cmn (the individual language card)
+  // because it has all the data on it. At this stage it doesn't have the tag zh which we actually want; that will be
+  //  handled
+  //  by the searchResultModifier
+  const correctedCode = code.toLowerCase() === "zh" ? "cmn" : code;
+  const fuse = new Fuse(rawLanguages as ILanguage[], {
+    keys: ["languageSubtag", "iso639_3_code"],
     threshold: 0, // exact matches only
     useExtendedSearch: true,
   });
-  let rawResults = macrolanguageRepFuse.search({
-    $and: [
-      {
-        $or: [
-          { "parentMacrolanguage.languageSubtag": "=" + code },
-          { "parentMacrolanguage.iso639_3_code": "=" + code },
-        ],
-      },
-      { isRepresentativeForMacrolanguage: "=true" },
-    ],
-  });
-
-  if (rawResults.length > 1)
-    console.error(
-      "Unexpectedly found multiple representative languages for " +
-        code +
-        ": " +
-        rawResults.map((r) => r.item.iso639_3_code).join(", ")
-    );
-
-  /* If search for code didn't find exactly one representative language for a macrolanguage,
-  do normal language search instead */
-  if (rawResults.length !== 1) {
-    const fuse = new Fuse(languages as ILanguage[], {
-      keys: ["languageSubtag", "iso639_3_code"],
-      threshold: 0, // exact matches only
-      useExtendedSearch: true,
-    });
-    rawResults = fuse.search("=" + code); // exact match
-  }
-
-  const result = rawResults[0]?.item;
+  const rawResults = fuse.search(`="${correctedCode}"`);
   return searchResultModifier
-    ? searchResultModifier([result], code)[0]
-    : result;
+    ? deepStripDemarcation(
+        searchResultModifier(
+          rawResults.map((r) => r.item),
+          code
+        )[0]
+      )
+    : rawResults[0]?.item;
 }
 
 // This is not a comprehensive language tag parser. It's just built to parse the
 // langtags output by the language chooser and the libPalasso language picker that
-// was in BloomDesktop. The languageTag must be the default language subtag for
-// that language (the first part of the "tag" field of langtags.json), which may
+// was in BloomDesktop. The languageTag must be either the ISO 639-3 code or the
+// preferred/canonical language subtag for that language (the first part of the "tag" field of langtags.json), which may
 // be a 2-letter code even if an equivalent ISO 639-3 code exists. This parser is not
 // designed to handle other BCP-47 langtag corner cases, e.g. irregular codes,
 // extension codes, langtags with both macrolanguage code and language code. It will return
@@ -223,14 +196,15 @@ export function parseLangtagFromLangChooser(
     script = language.scripts[0];
   }
 
-  // Otherwise, the script must be implied, look for the equivalent maximal tag, which will have a script subtag explicit.
   if (!script && !scriptSubtag) {
+    // The script must be implied; look for the equivalent maximal tag, which will have a script subtag explicit.
+
     const maximalTag =
-      getMaximalLangtag(languageTag) ||
+      getMaximalLangtag(languageTag, language) ||
       // The user may have entered a dialect and/or region that are not in the langtags database
       // so if necessary check for the langtag without the dialect and/or region
-      getMaximalLangtag(`${languageSubtag}-${regionSubtag}`) ||
-      getMaximalLangtag(`${languageSubtag}`) ||
+      getMaximalLangtag(`${languageSubtag}-${regionSubtag}`, language) ||
+      getMaximalLangtag(`${languageSubtag}`, language) ||
       "";
     // Look for a script code in the maximal tag:
     const impliedScriptSubtag = maximalTag

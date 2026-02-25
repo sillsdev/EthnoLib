@@ -31,14 +31,11 @@ The Language Chooser will adopt the primary color of the [MUI theme](https://mui
   results: FuseResult<ILanguage>[],
   searchString: string
 ) => ILanguage[]` - Can be used to add, remove, and modify results. See [find-language](../../common/find-language/README.md) for details.
-- `initialSearchString?: string`
+- `initialSearchString?: string` **Currently (February 2026) the initialSearchString will not be displayed in the search bar, but the results shown will reflect it.**
 - `initialSelectionLanguageTag?: string` - The Language Chooser will open with the language information captured by this language tag being already selected. If the user has already previously selected a language and is using the LanguageChooser to modify their selection, use this to prepopulate with their preexisting selection.
-
   - We expect this to be a language tag which was output either by this Language Chooser or by the [libPalasso](https://github.com/sillsdev/libpalaso)-based language picker. **The language subtag must be the default language subtag for the language** (the first part of the "tag" field of langtags.json), which may be a 2-letter code even if an equivalent ISO 639-3 code exists. May not corectly handle irregular codes, extension codes, langtags with both macrolanguage code and language code, and other comparably unusual nuances of BCP-47.
 
   - If the initialSelectionLanguageTag does not have an explicit script subtag, the Language Chooser will select the script implied by the language subtag and region subtag if present. For example, if initialSelectionLanguageTag is "uz" (Uzbek), Latin script will be selected because "uz" is an equivalent language tag to "uz-Latn". If initialSelectionLanguageTag is "uz-AF" (Uzbek, Afghanistan), Arabic script will be selected because "uz-AF" is an equivalent language tag to "uz-Arab-AF".
-
-  - **If an initialSelectionLanguageTag is provided, an initialSearchString must also be provided such that the initially selected language is a result of the search string in order for the selected card to be visible.**
 
 - `initialCustomDisplayName?: string` - If using initialSelectionLanguageTag to prepopulate with a language, this field can be used to prepopulate a customized display name for the language.
 - `onSelectionChange?: (orthographyInfo: IOrthography | undefined, languageTag: string | undefined) => void` - Whenever the user makes or unselects a complete language selection, this function will be called with the selected language information or undefined, respectively.

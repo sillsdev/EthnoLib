@@ -70,6 +70,7 @@ function addOrCombineLangtagsEntry(
     ]);
     langs[entry.indivIsoCode].alternativeTags = new Set([
       ...langs[entry.indivIsoCode].alternativeTags,
+      entry.tag,
       entry.full,
       ...(entry.tags ?? []),
     ]);
@@ -110,7 +111,8 @@ function addOrCombineLangtagsEntry(
       parentMacrolanguage:
         macrolanguagesByCode[indivlangsToMacrolangs[entry.indivIsoCode]],
       isRepresentativeForMacrolanguage: entry.isRepresentativeForMacrolanguage,
-      alternativeTags: new Set([entry.full, ...(entry.tags || [])]),
+      // entry.tag is the canonical tag (https://github.com/silnrsi/langtags/blob/release/doc/langtags.md)
+      alternativeTags: new Set([entry.tag, entry.full, ...(entry.tags || [])]),
       languageType: getLanguageType(entry.indivIsoCode),
     } as ILanguageInternal;
   }
