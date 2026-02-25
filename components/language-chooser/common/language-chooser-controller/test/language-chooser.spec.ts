@@ -430,6 +430,13 @@ describe("custom language tag", () => {
     test.viewModel.searchString.requestUpdate("x");
     expect(test.viewModel.customLanguageTag.value).toBe("");
   });
+
+  it("clears display name", () => {
+    const test = new TestHelper();
+    test.viewModel.displayName.requestUpdate("Hello world");
+    test.viewModel.customLanguageTag.requestUpdate("abc");
+    expect(test.viewModel.displayName.value).toBe("");
+  });
 });
 
 describe("is ready to submit", () => {

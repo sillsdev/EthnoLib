@@ -168,6 +168,7 @@ export function useLanguageChooserViewModel(
     );
     selectedScript.value = undefined;
     tagPreview.value = customLanguageTag.value;
+    customizations.value = undefined;
     _onOrthographyChanged();
   }
 
