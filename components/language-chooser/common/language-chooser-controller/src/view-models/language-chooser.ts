@@ -261,12 +261,12 @@ export function useLanguageChooserViewModel(
     region?: IRegion;
     dialect?: string;
   }) {
+    selectedScript.requestUpdate(script);
     customizations.requestUpdate({
       region,
       dialect,
       customDisplayName: customizations.value?.customDisplayName,
     });
-    selectedScript.requestUpdate(script);
   }
 
   if (initialLanguages) {

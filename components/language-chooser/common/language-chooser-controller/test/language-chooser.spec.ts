@@ -5,6 +5,7 @@ import {
 } from "../src/view-models/language-chooser";
 import { fakeLanguage } from "./fake-utils";
 import {
+  createTagFromOrthography,
   ICustomizableLanguageDetails,
   type ILanguage,
   UNLISTED_LANGUAGE,
@@ -629,6 +630,26 @@ describe("customize language modal", () => {
       code: "abc",
       name: "ABC Script",
     });
+  });
+
+  it("updates language tag preview on submit", () => {
+    const t = new TestHelper({ initialLanguages: [NorthernUzbekLanguage] });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+
+    const myScript = {
+      code: "abc",
+      name: "ABC Script",
+    };
+
+    t.viewModel.submitCustomizeLanguageModal({ script: myScript });
+
+    expect(t.viewModel.tagPreview.value).toEqual(
+      createTagFromOrthography({
+        language: NorthernUzbekLanguage,
+        script: myScript,
+        customDetails: t.viewModel.customizations.value,
+      })
+    );
   });
 });
 
