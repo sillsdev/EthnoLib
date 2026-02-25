@@ -6,6 +6,7 @@ import {
 import { fakeLanguage } from "./fake-utils";
 import {
   createTagFromOrthography,
+  defaultDisplayName,
   ICustomizableLanguageDetails,
   type ILanguage,
   UNLISTED_LANGUAGE,
@@ -152,7 +153,11 @@ describe("tag preview", () => {
 
     test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
 
-    expect(test.viewModel.tagPreview.value).toBe("uz");
+    expect(test.viewModel.tagPreview.value).toBe(
+      createTagFromOrthography({
+        language: NorthernUzbekLanguage,
+      })
+    );
   });
 
   it("should be based on selected language and script", () => {
@@ -161,7 +166,12 @@ describe("tag preview", () => {
     test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
     test.viewModel.listedScripts.value[1].isSelected.requestUpdate(true);
 
-    expect(test.viewModel.tagPreview.value).toBe("uz-AF");
+    expect(test.viewModel.tagPreview.value).toBe(
+      createTagFromOrthography({
+        language: NorthernUzbekLanguage,
+        script: NorthernUzbekLanguage.scripts[1],
+      })
+    );
   });
 
   it("after language selection cleared, should be based on search", () => {
@@ -186,7 +196,9 @@ describe("display name", () => {
 
     test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
 
-    expect(test.viewModel.displayName.value).toBe("ўзбек тили");
+    expect(test.viewModel.displayName.value).toBe(
+      defaultDisplayName(NorthernUzbekLanguage)
+    );
   });
 
   it("should hold default name on script selection", () => {
@@ -195,7 +207,12 @@ describe("display name", () => {
     test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
     test.viewModel.listedScripts.value[0].isSelected.requestUpdate(true);
 
-    expect(test.viewModel.displayName.value).toBe("oʻzbek tili");
+    expect(test.viewModel.displayName.value).toBe(
+      defaultDisplayName(
+        NorthernUzbekLanguage,
+        NorthernUzbekLanguage.scripts[0]
+      )
+    );
   });
 
   it("should notify customizations UI listener of change", () => {
