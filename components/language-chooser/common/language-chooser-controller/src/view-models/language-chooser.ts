@@ -205,8 +205,8 @@ export function useLanguageChooserViewModel(
   // Public methods
   async function search(query: string) {
     listedLanguages.value = [];
+    _currentSearchId++;
     if (query.length > 1) {
-      _currentSearchId++;
       const searchId = _currentSearchId;
       await asyncSearchForLanguage(query, (results) => {
         if (searchId !== _currentSearchId) {
