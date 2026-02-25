@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../../dist/out-tsc",
+    "types": ["node", "vite/client"],
+    "declaration": true,
+    "declarationMap": true
+  },
+  "exclude": [
+    "langtagProcessing.ts",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.spec.tsx",
+    "**/*.test.tsx",
+    "**/*.spec.js",
+    "**/*.test.js",
+    "**/*.spec.jsx",
+    "**/*.test.jsx",
+    "dist/**/*",
+    "node_modules/**/*"
+  ],
+  "include": ["src/**/*", "test/**/*", "index.ts"]
+}

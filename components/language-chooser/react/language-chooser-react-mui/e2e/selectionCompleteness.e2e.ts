@@ -12,7 +12,7 @@ import {
 let page: Page; // All the tests in this file use the same page object to save time; we only load the language chooser once.
 
 // Okay, this is testing the OK button which is part of the demo, but it's a easy way to test
-// whether the language chooser is detecting and outputing a valid langauge selection at the right times
+// whether the language chooser is detecting and outputing a valid language selection at the right times
 test.describe("Language selection validity", () => {
   async function expectOkButtonEnabled(page) {
     await expect(

@@ -1,0 +1,29 @@
+{
+  "name": "@ethnolib/state-management-svelte",
+  "description": "An adapter to use @ethnolib/state-management-core with Svelte",
+  "author": "SIL Global",
+  "license": "MIT",
+  "version": "0.1.0",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "scripts": {
+    "build": "nx vite:build",
+    "typecheck": "tsc",
+    "test": "nx vite:test --config vitest.config.ts",
+    "testonce": "nx vite:test --config vitest.config.ts --run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@ethnolib/state-management-core": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.11",
+    "svelte": "^5.38.6",
+    "svelte-check": "^4.0.0",
+    "@sveltejs/vite-plugin-svelte": "^4.0.0",
+    "tsx": "^4.19.2"
+  },
+  "volta": {
+    "extends": "../../../package.json"
+  }
+}
