@@ -79,7 +79,7 @@ function addOrCombineLangtagsEntry(
       entry.isRepresentativeForMacrolanguage;
   } else {
     const scriptCode = entry.script;
-    const scripts = {};
+    const scripts: { [key: string]: IScript } = {};
     if (scriptCode) {
       scripts[scriptCode] = {
         code: scriptCode,
@@ -106,6 +106,7 @@ function addOrCombineLangtagsEntry(
       regionNames: new Set([entry.regionname]),
       names: getAllPossibleNames(entry),
       scripts,
+      isMacrolanguage: entry.isMacrolanguage || false,
       parentMacrolanguage:
         macrolanguagesByCode[indivlangsToMacrolangs[entry.indivIsoCode]],
       isRepresentativeForMacrolanguage: entry.isRepresentativeForMacrolanguage,
@@ -132,13 +133,14 @@ function parseLangtagsJson() {
         : entry.iso639_3;
 
       if (!augmentedEntry["indivIsoCode"]) {
-        // This is a data anomaly but we do have 5 as of Feb 2025: bnc, nor, san, hbs, zap
+        // This is a data anomaly but we do have a few as of Sep 2025: nor, san, hbs, zap, ar-SA, ku-Arab-TR, and man-Latn-GN
         // See macrolanguageNotes.md. These cases should be specially handled.
         console.log(
           "No indivIsoCode found for macrolang",
           entry.iso639_3,
           entry.tag
         );
+        augmentedEntry["isMacrolanguage"] = true;
       }
     }
 
@@ -177,7 +179,7 @@ function parseLangtagsJson() {
         ].filter((name) => !!name),
         alternativeTags: [...langData.alternativeTags],
         parentMacrolanguage: langData.parentMacrolanguage,
-        isMacrolanguage: false, // we add macrolanguages separately below. See macrolanguageNotes.md
+        isMacrolanguage: langData.isMacrolanguage,
         isRepresentativeForMacrolanguage:
           langData.isRepresentativeForMacrolanguage,
         languageType: langData.languageType,

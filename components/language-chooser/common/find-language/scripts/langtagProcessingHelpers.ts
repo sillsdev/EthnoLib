@@ -53,6 +53,7 @@ export interface ILangtagsJsonEntryInternal {
   windows: string;
 
   // These are not in the langtags.json file but may be added in the processing
+  isMacrolanguage: boolean;
   isRepresentativeForMacrolanguage: boolean;
   indivIsoCode: string; // If iso639_3 is a macrolanguage code, this is the corresponding (representative) individual language code - see macrolanguageNotes.md
 }
@@ -158,8 +159,9 @@ for (const line of macrolangMappingFile.split("\n")) {
 // So in langtags.json, for representative languages, the iso639_3 field is often the macrolanguage code,
 // but the tags field (in some but not all entries) contains equivalent tags that use the individual language codes.
 // We want to save the individual language codes, so gather as many macrolanguage to representative individual language
-// mappings as we can. As of 2/2025, this covers all macrolanguage codes in langtags.json except for
-// bnc, nor, san, hbs, and zap which should all be handled by search result modifiers. (a fix for `man` was incorporated 8/2025)
+// mappings as we can. As of 9/2025, this covers all macrolanguage codes in langtags.json except for
+// nor, san, hbs, and zap which should all be handled by search result modifiers. (a fix for `man` was incorporated 8/2025.
+//  We had previously noted that bnc was a problem, but it seems to be working now.)
 // See macrolanguageNotes.md for more explanation.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

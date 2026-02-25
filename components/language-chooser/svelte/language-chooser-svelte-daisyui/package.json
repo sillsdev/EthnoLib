@@ -14,12 +14,11 @@
     "test": "nx vite:test --config vitest.config.ts"
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.1.11",
+    "@ethnolib/find-language": "0.1.12",
     "@ethnolib/language-chooser-controller": "0.1.0",
     "@ethnolib/state-management-svelte": "0.1.0"
   },
   "devDependencies": {
-    "@nx/vite": "^20.4.6",
     "@sveltejs/vite-plugin-svelte": "^6.1.4",
     "@tailwindcss/postcss": "^4.1.13",
     "@tailwindcss/typography": "^0.5.16",
