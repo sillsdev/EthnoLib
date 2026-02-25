@@ -43,6 +43,24 @@ export function asUnwrapped<T extends object>(
       }
       return false;
     },
+
+    has(_, prop: string | symbol) {
+      return typeof prop === "string" && prop in svelteFields;
+    },
+
+    ownKeys(_) {
+      return Object.keys(svelteFields);
+    },
+
+    getOwnPropertyDescriptor(_, prop: string | symbol) {
+      if (typeof prop === "string" && prop in svelteFields) {
+        return {
+          configurable: true,
+          enumerable: true,
+          value: (svelteFields as any)[prop],
+        };
+      }
+    },
   });
 }
 

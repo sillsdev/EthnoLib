@@ -59,4 +59,46 @@ describe("use view model", () => {
     viewModel.haveBirthday();
     expect(viewModel.age).toBe(51);
   });
+
+  it("supports `in` operator for field properties", () => {
+    const viewModel = transformViewModel(useMyViewModel(), FakeSvelteField);
+    expect("age" in viewModel).toBe(true);
+  });
+
+  it("supports `in` operator for non-field properties", () => {
+    const viewModel = transformViewModel(useMyViewModel(), FakeSvelteField);
+    expect("name" in viewModel).toBe(true);
+  });
+
+  it("supports `in` operator for non-existent properties", () => {
+    const viewModel = transformViewModel(useMyViewModel(), FakeSvelteField);
+    expect("nonExistent" in viewModel).toBe(false);
+  });
+
+  it("returns correct keys with Object.keys()", () => {
+    const viewModel = transformViewModel(useMyViewModel(), FakeSvelteField);
+    const keys = Object.keys(viewModel);
+    expect(keys).toContain("age");
+    expect(keys).toContain("name");
+    expect(keys).toContain("haveBirthday");
+  });
+
+  it("supports spread syntax", () => {
+    const viewModel = transformViewModel(useMyViewModel(), FakeSvelteField);
+    const spread = { ...viewModel };
+    expect(spread.age).toBe(31);
+    expect(spread.name).toBe("abc");
+    expect(typeof spread.haveBirthday).toBe("function");
+  });
+
+  it("supports for...in loop", () => {
+    const viewModel = transformViewModel(useMyViewModel(), FakeSvelteField);
+    const keys: string[] = [];
+    for (const key in viewModel) {
+      keys.push(key);
+    }
+    expect(keys).toContain("age");
+    expect(keys).toContain("name");
+    expect(keys).toContain("haveBirthday");
+  });
 });
