@@ -162,6 +162,7 @@ export function useLanguageChooserViewModel(
 
   function _onCustomLanguageTagChanged() {
     searchString.value = "";
+    _cancelSearch();
     listedLanguages.value = [];
     selectedLanguage.value = languageForManuallyEnteredTag(
       customLanguageTag.value
@@ -203,10 +204,14 @@ export function useLanguageChooserViewModel(
     });
   }
 
+  function _cancelSearch() {
+    _currentSearchId++;
+  }
+
   // Public methods
   async function search(query: string) {
     listedLanguages.value = [];
-    _currentSearchId++;
+    _cancelSearch();
     if (query.length > 1) {
       const searchId = _currentSearchId;
       await asyncSearchForLanguage(query, (results) => {
