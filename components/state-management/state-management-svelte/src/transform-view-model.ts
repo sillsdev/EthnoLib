@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Field } from "@ethnolib/state-management-core";
+import { Field, ReadonlyValue } from "@ethnolib/state-management-core";
 
 export abstract class SvelteField<T> {
-  abstract value: T;
+  abstract get value(): ReadonlyValue<T>;
+  abstract set value(v: T);
 }
 
 type UnwrappedField<T> = T extends Field<infer U> ? U : T;

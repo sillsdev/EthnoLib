@@ -40,4 +40,26 @@ describe("Field", () => {
     expect(events).toEqual(["updateUI:end,value:end"]);
     expect(field.value).toBe("end");
   });
+
+  describe("Readonly getter", () => {
+    it("returns the stored value", () => {
+      const obj = { a: 1 };
+      const field = new Field(obj);
+      expect(field.value).toEqual({ a: 1 });
+    });
+
+    it("getter return type is Readonly<T> — compile-time check", () => {
+      const field = new Field({ a: 1 });
+      // This must produce a TS error if uncommented, proving the type contract:
+      // @ts-expect-error — mutating a Readonly field value is not allowed
+      field.value.a = 99;
+      expect(true).toBe(true); // test is about the type annotation above compiling correctly
+    });
+
+    it("setter accepts a plain (non-readonly) T", () => {
+      const field = new Field<{ a: number }>({ a: 1 });
+      field.value = { a: 2 }; // must compile without error
+      expect(field.value.a).toBe(2);
+    });
+  });
 });

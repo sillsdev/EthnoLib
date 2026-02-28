@@ -4,7 +4,7 @@ export interface Selectable {
   isSelected: Field<boolean>;
 }
 
-export function selectItem(index: number, items: Selectable[]) {
+export function selectItem(index: number, items: readonly Selectable[]) {
   items.forEach((item, i) => {
     item.isSelected.value = i === index;
   });
