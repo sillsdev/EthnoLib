@@ -41,6 +41,20 @@ or
 nx dev @ethnolib/language-chooser-react-mui
 ```
 
+### Dependency Versions
+
+We are currently having all packages manage their own dependencies in their package level `package.json` files, but keeping them all on the same versions of commonly used packages for compatibility. Current versions:
+
+    "react": "^17.0.2",
+    "@mui/material": "^5.15.19",
+    "@emotion/react": "^11.11.4",
+
+For volta users, we specify the node version in the main package.json, and then all packages should inherit it by adding something like the following to their package.json, with the path relative path to the main package.json. See https://docs.volta.sh/advanced/workspaces
+
+    "volta": {
+        "extends": "../../../../package.json"
+    }
+
 ## Testing
 
 Vitest is used for writing unit tests. From the top level folder, all of the unit tests can be run with these commands:
@@ -65,16 +79,12 @@ End-to-end tests can be run with:
 npm run e2e
 ```
 
-### Dependency Versions
+## Commit Messages
 
-We are currently having all packages manage their own dependencies in their package level `package.json` files, but keeping them all on the same versions of commonly used packages for compatibility. Current versions:
+This repo uses Conventional Commit-style prefixes (enforced by commit-hook), which inform Nx's automatic versioning in our Github Actions release pipeline.
 
-    "react": "^17.0.2",
-    "@mui/material": "^5.15.19",
-    "@emotion/react": "^11.11.4",
+Accepted prefixes are:
 
-For volta users, we specify the node version in the main package.json, and then all packages should inherit it by adding something like the following to their package.json, with the path relative path to the main package.json. See https://docs.volta.sh/advanced/workspaces
-
-    "volta": {
-        "extends": "../../../../package.json"
-    }
+- `feat:` to trigger a minor version bump
+- `fix:` to trigger a patch version bump
+- `chore:` for a commit that doesn't trigger a release/version bump
