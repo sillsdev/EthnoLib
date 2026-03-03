@@ -212,11 +212,11 @@ export const useLanguageChooser = (
 
   function selectScript(script: IScript) {
     setSelectedScript(script);
-    clearCustomizableDetailsExceptDisplayName();
+    clearCustomizableDetailsExceptDisplayName(); // BL-15918
   }
   function clearScriptSelection() {
     setSelectedScript(undefined);
-    clearCustomizableDetailsExceptDisplayName();
+    clearCustomizableDetailsExceptDisplayName(); // BL-15918
   }
 
   function onSearchStringChange(newSearchString: string) {
