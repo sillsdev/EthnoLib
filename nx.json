@@ -58,9 +58,13 @@
       }
     },
     "projects": [
-      "@ethnolib/language-chooser-react-mui",
+      "@ethnolib/find-language",
+      "@ethnolib/language-chooser-controller",
       "@ethnolib/language-chooser-react-hook",
-      "@ethnolib/find-language"
+      "@ethnolib/language-chooser-react-mui",
+      "@ethnolib/language-chooser-svelte-daisyui",
+      "@ethnolib/state-management-core",
+      "@ethnolib/state-management-svelte"
     ]
   }
 }
