@@ -1,3 +1,9 @@
+## 0.1.24 (2026-03-03)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/language-chooser-react-hook to 0.1.22
+
 ## 0.1.23 (2026-02-23)
 
 ### 🩹 Fixes

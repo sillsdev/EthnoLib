@@ -1,3 +1,9 @@
+## 0.1.22 (2026-03-03)
+
+### 🩹 Fixes
+
+- trigger new version of language-chooser-react-hook for BL-15918 (added comment) ([65fc954](https://github.com/sillsdev/EthnoLib/commit/65fc954))
+
 ## 0.1.21 (2026-02-23)
 
 ### 🩹 Fixes
