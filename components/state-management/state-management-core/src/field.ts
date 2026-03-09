@@ -17,6 +17,11 @@ export class Field<T> {
     this._onUpdateRequested = onUpdateRequested;
   }
 
+  /**
+   * Framework adapters use this hook to mirror field updates back into UI
+   * state. Adapters assume ownership of this callback while they are mounted,
+   * so application code should not overwrite it directly.
+   */
   public updateUI: ((newValue: ReadonlyValue<T>) => void) | null = null;
 
   /**
