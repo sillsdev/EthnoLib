@@ -64,6 +64,7 @@
       "@ethnolib/language-chooser-react-mui",
       "@ethnolib/language-chooser-svelte-daisyui",
       "@ethnolib/state-management-core",
+      "@ethnolib/state-management-react",
       "@ethnolib/state-management-svelte"
     ]
   }

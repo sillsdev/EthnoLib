@@ -7,7 +7,7 @@ import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 export default defineConfig({
   root: __dirname,
   cacheDir:
-    "../../../node_modules/.vite/components/state-management/state-management-core",
+    "../../../node_modules/.vite/components/state-management/state-management-react",
 
   plugins: [
     nxViteTsPaths(),
@@ -28,9 +28,12 @@ export default defineConfig({
     },
     lib: {
       entry: "./index.ts",
-      name: "@ethnolib/find-language",
+      name: "@ethnolib/state-management-react",
       fileName: "index",
       formats: ["es", "cjs"],
+    },
+    rollupOptions: {
+      external: ["react", "react-dom", "react/jsx-runtime"],
     },
   },
 });

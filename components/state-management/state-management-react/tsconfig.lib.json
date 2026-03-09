@@ -8,7 +8,6 @@
     "declarationMap": true
   },
   "exclude": [
-    "langtagProcessing.ts",
     "**/*.spec.ts",
     "**/*.test.ts",
     "**/*.spec.tsx",
