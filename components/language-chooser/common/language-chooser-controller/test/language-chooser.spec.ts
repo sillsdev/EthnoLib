@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  canSubmitOrthography,
   LanguageChooserViewModel,
   useLanguageChooserViewModel,
 } from "../src/view-models/language-chooser";
@@ -514,6 +515,34 @@ describe("is ready to submit", () => {
     test.viewModel.customLanguageTag.requestUpdate("abc");
     test.viewModel.displayName.requestUpdate("hello");
     expect(test.viewModel.isReadyToSubmit.value).toBe(true);
+  });
+});
+
+describe("canSubmitOrthography", () => {
+  it("is false when unlisted dialect is whitespace-only", () => {
+    expect(
+      canSubmitOrthography({
+        language: UNLISTED_LANGUAGE,
+        customDetails: {
+          customDisplayName: "hello",
+          dialect: "   ",
+          region: AndorraRegion,
+        },
+      })
+    ).toBe(false);
+  });
+
+  it("is false when unlisted region name is whitespace-only", () => {
+    expect(
+      canSubmitOrthography({
+        language: UNLISTED_LANGUAGE,
+        customDetails: {
+          customDisplayName: "hello",
+          dialect: "hello",
+          region: { ...AndorraRegion, name: "   " },
+        },
+      })
+    ).toBe(false);
   });
 });
 

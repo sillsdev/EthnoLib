@@ -2,6 +2,7 @@ import {
   asyncSearchForLanguage,
   createTagFromOrthography,
   defaultDisplayName,
+  formatDialectCode,
   type ICustomizableLanguageDetails,
   type ILanguage,
   type IOrthography,
@@ -310,21 +311,25 @@ function hasValidDisplayName(selection: IOrthography) {
   if (!selection.language) {
     return false;
   }
+  const trimmedCustomDisplayName =
+    selection.customDetails?.customDisplayName?.trim();
   // Check that user has not entered an empty string or whitespace only in the custom display name
   if (
     typeof selection.customDetails?.customDisplayName === "string" &&
-    !selection.customDetails?.customDisplayName?.trim()
+    !trimmedCustomDisplayName
   ) {
     return false;
   }
   // Check that we have a default display name and/or a custom display name
   return (
     !!defaultDisplayName(selection.language, selection.script) ||
-    !!selection.customDetails?.customDisplayName
+    !!trimmedCustomDisplayName
   );
 }
 
 export function canSubmitOrthography(selection: IOrthography): boolean {
+  const normalizedDialect = formatDialectCode(selection.customDetails?.dialect);
+  const hasRegionName = !!selection.customDetails?.region?.name?.trim();
   return (
     !!selection.language &&
     hasValidDisplayName(selection) &&
@@ -332,8 +337,7 @@ export function canSubmitOrthography(selection: IOrthography): boolean {
     (!!selection.script || selection.language?.scripts?.length === 0) &&
     // if unlisted language, name and country are required
     (!isUnlistedLanguage(selection.language) ||
-      (!!selection.customDetails?.dialect &&
-        !!selection.customDetails?.region?.name)) &&
+      (!!normalizedDialect && hasRegionName)) &&
     // if this was a manually entered langtag, check that tag is valid BCP 47
     (!isManuallyEnteredTagLanguage(selection.language) ||
       isValidBcp47Tag(selection.language?.manuallyEnteredTag))
