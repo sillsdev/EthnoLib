@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Field } from "@ethnolib/state-management-core";
+import { Field, ReadonlyValue } from "@ethnolib/state-management-core";
 import { SvelteField, transformViewModel } from "../src/transform-view-model";
 
 function useMyViewModel(params: { name?: string } = {}) {
@@ -21,7 +21,7 @@ class FakeSvelteField<T> extends SvelteField<T> {
 
   private field: Field<T>;
 
-  public get value(): T {
+  public get value(): ReadonlyValue<T> {
     return this.field.value;
   }
 
@@ -100,5 +100,24 @@ describe("use view model", () => {
     expect(keys).toContain("age");
     expect(keys).toContain("name");
     expect(keys).toContain("haveBirthday");
+  });
+
+  it("ignores inherited properties", () => {
+    const viewModelBase = {
+      inherited: new Field(99),
+    };
+    const viewModel = Object.create(viewModelBase);
+    viewModel.name = "abc";
+    viewModel.age = new Field(31);
+
+    const transformed = transformViewModel(viewModel, FakeSvelteField);
+    expect("inherited" in transformed).toBe(false);
+    expect(Object.keys(transformed)).not.toContain("inherited");
+
+    const keys: string[] = [];
+    for (const key in transformed) {
+      keys.push(key);
+    }
+    expect(keys).not.toContain("inherited");
   });
 });
