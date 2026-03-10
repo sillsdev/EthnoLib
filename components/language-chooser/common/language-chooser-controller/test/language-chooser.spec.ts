@@ -275,6 +275,30 @@ describe("search", () => {
     expect(test.viewModel.customizations.value).toBe(undefined);
   });
 
+  it("should reset selection state when search() is called directly", async () => {
+    const test = new TestHelper({ initialLanguages: [NorthernUzbekLanguage] });
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    test.viewModel.listedScripts.value[1].isSelected.requestUpdate(true);
+    test.viewModel.customizations.requestUpdate({ customDisplayName: "hi" });
+
+    await test.viewModel.search("en");
+
+    expect(test.viewModel.selectedLanguage.value).toBeUndefined();
+    expect(test.viewModel.selectedScript.value).toBeUndefined();
+    expect(test.viewModel.customizations.value).toBe(undefined);
+    expect(test.viewModel.searchString.value).toBe("en");
+    expect(test.viewModel.tagPreview.value).toBe("qaa-x-en");
+  });
+
+  it("should clear custom language tag when search() is called directly", async () => {
+    const test = new TestHelper();
+    test.viewModel.customLanguageTag.requestUpdate("uz-AF");
+
+    await test.viewModel.search("en");
+
+    expect(test.viewModel.customLanguageTag.value).toBe("");
+  });
+
   it("should handle frequent changes in search query", async () => {
     const test = new TestHelper();
     const search1 = test.viewModel.search("s");

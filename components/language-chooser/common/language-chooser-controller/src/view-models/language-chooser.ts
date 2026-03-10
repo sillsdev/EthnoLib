@@ -81,10 +81,6 @@ export function useLanguageChooserViewModel(
   let _currentSearchId = 0;
 
   function _onSearchStringUpdated() {
-    _onLanguageDeselected();
-    customLanguageTag.value = "";
-    customizations.value = undefined;
-    _updateTagPreview();
     search(searchString.value);
   }
 
@@ -211,6 +207,11 @@ export function useLanguageChooserViewModel(
 
   // Public methods
   async function search(query: string) {
+    searchString.value = query;
+    _onLanguageDeselected();
+    customLanguageTag.value = "";
+    customizations.value = undefined;
+    _updateTagPreview();
     listedLanguages.value = [];
     _cancelSearch();
     if (query.length > 1) {
