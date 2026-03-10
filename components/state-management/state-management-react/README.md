@@ -1,6 +1,6 @@
 # State Management Core
 
-This package provides a simple interface for working with multiple reactive framworks.
+This package provides a simple interface for working with multiple reactive frameworks.
 
 It assumes a view/view model architecture for your app. The view is responsible for what
 the user sees, and the view model is responsible for the stateful logic that makes the view
@@ -87,7 +87,7 @@ Behind the scenes, the adapter does something like this to keep the view model i
 const person = usePersonViewModel();
 
 // Replace `defineReactiveState` with your framework's mechanism
-const reactiveName = defineReactiveSate();
+const reactiveName = defineReactiveState();
 
 /**
  * Establish a two-way binding between `reactiveName` and `person.name`:

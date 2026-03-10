@@ -5,20 +5,29 @@ import { useField } from "./use-field";
 const reactMocks = vi.hoisted(() => ({
   setState: vi.fn(),
   useState: vi.fn(),
+  useEffect: vi.fn(),
+  cleanup: null as null | (() => void),
 }));
 
 vi.mock("react", () => ({
   useState: reactMocks.useState,
+  useEffect: reactMocks.useEffect,
 }));
 
 describe("useField", () => {
   beforeEach(() => {
     reactMocks.setState.mockReset();
     reactMocks.useState.mockReset();
+    reactMocks.useEffect.mockReset();
+    reactMocks.cleanup = null;
     reactMocks.useState.mockImplementation((initialValue: unknown) => [
       initialValue,
       reactMocks.setState,
     ]);
+    reactMocks.useEffect.mockImplementation((effect: () => void | (() => void)) => {
+      const cleanup = effect();
+      reactMocks.cleanup = typeof cleanup === "function" ? cleanup : null;
+    });
   });
 
   it("returns the current field value and wires updateUI to state updates", () => {
@@ -33,7 +42,7 @@ describe("useField", () => {
     expect(reactMocks.setState).toHaveBeenCalledWith("from-ui");
   });
 
-  it("setter requests field update and updates local state", () => {
+  it("setter requests field update and relies on updateUI for state sync", () => {
     const onUpdateRequested = vi.fn();
     const field = new Field("old", onUpdateRequested);
 
@@ -43,5 +52,15 @@ describe("useField", () => {
     expect(field.value).toBe("new");
     expect(onUpdateRequested).toHaveBeenCalledWith("new", "old");
     expect(reactMocks.setState).toHaveBeenCalledWith("new");
+    expect(reactMocks.setState).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears field.updateUI on cleanup", () => {
+    const field = new Field("initial");
+    useField(field);
+
+    expect(field.updateUI).not.toBeNull();
+    reactMocks.cleanup?.();
+    expect(field.updateUI).toBeNull();
   });
 });
