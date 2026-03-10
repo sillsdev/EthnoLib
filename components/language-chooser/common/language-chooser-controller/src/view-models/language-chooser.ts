@@ -254,9 +254,10 @@ export function useLanguageChooserViewModel(
     name: string;
     region: IRegion;
   }) {
+    const normalizedDialect = formatDialectCode(name);
     customizations.requestUpdate({
       customDisplayName: name,
-      dialect: name,
+      dialect: normalizedDialect,
       region,
     });
   }

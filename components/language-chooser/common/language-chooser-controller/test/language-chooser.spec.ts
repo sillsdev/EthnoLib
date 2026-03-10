@@ -576,10 +576,10 @@ describe("unlisted language modal", () => {
   it("sets dialect on submit", () => {
     const t = new TestHelper();
     t.viewModel.submitUnlistedLanguageModal({
-      name: "hello",
+      name: " foo!! bar ",
       region: AndorraRegion,
     });
-    expect(t.viewModel.customizations.value?.dialect).toBe("hello");
+    expect(t.viewModel.customizations.value?.dialect).toBe("foobar");
   });
 
   it("sets region on submit", () => {
