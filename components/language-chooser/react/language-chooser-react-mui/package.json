@@ -33,8 +33,6 @@
     "@mui/icons-material": "^5.15.19"
   },
   "devDependencies": {
-    "@nx/playwright": "^19.8.10",
-    "@nx/storybook": "^19.8.0",
     "@storybook/addon-essentials": "^8.2.8",
     "@storybook/core-server": "^8.2.8",
     "@storybook/react-vite": "^8.2.8",
