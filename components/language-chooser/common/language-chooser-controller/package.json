@@ -1,0 +1,27 @@
+{
+  "name": "@ethnolib/language-chooser-controller",
+  "description": "A framework-agnostic controller for a language chooser",
+  "author": "SIL Global",
+  "license": "MIT",
+  "version": "0.1.0",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "scripts": {
+    "build": "nx vite:build",
+    "typecheck": "tsc",
+    "test": "nx vite:test --config vitest.config.ts",
+    "testonce": "nx vite:test --config vitest.config.ts --run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@ethnolib/find-language": "0.1.20",
+    "@ethnolib/state-management-core": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.11",
+    "tsx": "^4.19.2"
+  },
+  "volta": {
+    "extends": "../../../../package.json"
+  }
+}
