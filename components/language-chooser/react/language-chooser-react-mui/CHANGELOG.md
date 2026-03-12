@@ -1,3 +1,19 @@
+## 0.2.0 (2026-03-12)
+
+### 🚀 Features
+
+- Vanilla state management for language chooser ([29c7385](https://github.com/sillsdev/EthnoLib/commit/29c7385))
+
+### 🩹 Fixes
+
+- add repository.url for provenance publishing ([2dd218e](https://github.com/sillsdev/EthnoLib/commit/2dd218e))
+- svelte build ([f6ed760](https://github.com/sillsdev/EthnoLib/commit/f6ed760))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.2.0
+- Updated @ethnolib/language-chooser-react-hook to 0.2.0
+
 ## 0.1.24 (2026-03-03)
 
 ### 🧱 Updated Dependencies
