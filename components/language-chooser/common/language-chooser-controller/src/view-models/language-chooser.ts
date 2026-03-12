@@ -1,6 +1,8 @@
 import {
   asyncSearchForLanguage,
+  codeMatches,
   createTagFromOrthography,
+  deepStripDemarcation,
   defaultDisplayName,
   formatDialectCode,
   type ICustomizableLanguageDetails,
@@ -12,6 +14,7 @@ import {
   isUnlistedLanguage,
   isValidBcp47Tag,
   languageForManuallyEnteredTag,
+  parseLangtagFromLangChooser,
   UNLISTED_LANGUAGE,
 } from "@ethnolib/find-language";
 import { Field } from "@ethnolib/state-management-core";
@@ -20,10 +23,17 @@ import {
   useLanguageCardViewModel,
 } from "./language-card";
 import { ScriptCardViewModel, useScriptCardViewModel } from "./script-card";
-import { selectItem } from "../selectable";
 
 interface UseLanguageChooserParams {
   initialLanguages?: ILanguage[];
+  onSelectionChange?: (
+    orthography: IOrthography | undefined,
+    langtag: string | undefined
+  ) => void;
+  searchResultModifier?: (
+    results: ILanguage[],
+    searchString: string
+  ) => ILanguage[];
 }
 
 export type LanguageChooserViewModel = ReturnType<
@@ -34,7 +44,11 @@ export function useLanguageChooserViewModel(
   params: UseLanguageChooserParams = {}
 ) {
   const { initialLanguages } = params;
+  let selectionChangeListener = params.onSelectionChange;
+  let searchResultModifier = params.searchResultModifier;
+  let previousStateWasValidSelection = false;
 
+  const languageResults = new Field<ILanguage[]>([]);
   const listedLanguages = new Field<LanguageCardViewModel[]>([]);
   const listedScripts = new Field<ScriptCardViewModel[]>([]);
   const tagPreview = new Field("");
@@ -80,38 +94,72 @@ export function useLanguageChooserViewModel(
   });
 
   let _currentSearchId = 0;
+  let rawLanguageResults: ILanguage[] = [];
 
   function _onSearchStringUpdated() {
     search(searchString.value);
   }
 
-  function _appendLanguages(languages: ILanguage[]) {
-    const baseIndex = listedLanguages.value.length;
-    const newLanguages = languages.map((lang, i) =>
-      useLanguageCardViewModel(lang, {
-        onSelect: (isSelected) =>
-          isSelected
-            ? _onLanguageSelected(baseIndex + i)
-            : _onLanguageDeselected(),
-      })
-    );
-
-    listedLanguages.value = [...listedLanguages.value, ...newLanguages];
-  }
-
-  function _onLanguageSelected(index: number) {
-    selectItem(index, listedLanguages.value);
-    selectedLanguage.value = listedLanguages.value[index].language;
-    selectedScript.value = undefined;
-    _updateScriptList(selectedLanguage.value);
+  function _clearCustomizations() {
     customizations.value = undefined;
-    _onOrthographyChanged();
   }
 
-  function _onLanguageDeselected() {
-    selectedLanguage.value = undefined;
-    selectedScript.value = undefined;
-    _onOrthographyChanged();
+  function _clearCustomizationsExceptDisplayName() {
+    customizations.value = {
+      customDisplayName: customizations.value?.customDisplayName,
+    };
+  }
+
+  function _syncLanguageCardSelection() {
+    listedLanguages.value.forEach((languageCard) => {
+      languageCard.isSelected.value = codeMatches(
+        languageCard.language.iso639_3_code,
+        selectedLanguage.value?.iso639_3_code
+      );
+    });
+  }
+
+  function _syncScriptSelection() {
+    listedScripts.value.forEach((scriptCard) => {
+      scriptCard.isSelected.value = codeMatches(
+        scriptCard.script.code,
+        selectedScript.value?.code
+      );
+    });
+  }
+
+  function _createLanguageCardViewModel(language: ILanguage) {
+    const languageCard = useLanguageCardViewModel(language, {
+      onSelect: (isSelected) => {
+        if (isSelected) {
+          selectLanguage(language);
+        } else if (
+          codeMatches(
+            language.iso639_3_code,
+            selectedLanguage.value?.iso639_3_code
+          )
+        ) {
+          clearLanguageSelection();
+        }
+      },
+    });
+    languageCard.isSelected.value = codeMatches(
+      language.iso639_3_code,
+      selectedLanguage.value?.iso639_3_code
+    );
+    return languageCard;
+  }
+
+  function _appendLanguages(
+    languages: ILanguage[],
+    modifier: (results: ILanguage[], searchString: string) => ILanguage[],
+    searchQuery: string
+  ) {
+    rawLanguageResults = [...rawLanguageResults, ...languages];
+    const modifiedLanguages = modifier(rawLanguageResults, searchQuery);
+    languageResults.value = modifiedLanguages;
+    listedLanguages.value = modifiedLanguages.map(_createLanguageCardViewModel);
+    _syncLanguageCardSelection();
   }
 
   function _updateScriptList(selectedLang: ILanguage) {
@@ -128,20 +176,14 @@ export function useLanguageChooserViewModel(
     listedScripts.value = scripts.map((script, i) =>
       useScriptCardViewModel(script, {
         onSelect: (isSelected) =>
-          isSelected ? _onScriptSelected(i) : _onScriptDeselected(),
+          isSelected ? _onScriptSelected(i) : clearScriptSelection(),
       })
     );
+    _syncScriptSelection();
   }
 
   function _onScriptSelected(index: number) {
-    selectItem(index, listedScripts.value);
-    selectedScript.value = listedScripts.value[index].script;
-    _onOrthographyChanged();
-  }
-
-  function _onScriptDeselected() {
-    selectedScript.value = undefined;
-    _onOrthographyChanged();
+    selectScript(listedScripts.value[index].script);
   }
 
   function _onDisplayNameChanged() {
@@ -149,7 +191,6 @@ export function useLanguageChooserViewModel(
       ...(customizations.value ?? {}),
       customDisplayName: displayName.value,
     };
-
     _updateIsReadyToSubmit();
   }
 
@@ -161,13 +202,16 @@ export function useLanguageChooserViewModel(
   function _onCustomLanguageTagChanged() {
     searchString.value = "";
     _cancelSearch();
+    rawLanguageResults = [];
+    languageResults.value = [];
     listedLanguages.value = [];
+    listedScripts.value = [];
     selectedLanguage.value = languageForManuallyEnteredTag(
       customLanguageTag.value
     );
     selectedScript.value = undefined;
     tagPreview.value = customLanguageTag.value;
-    customizations.value = undefined;
+    _clearCustomizations();
     _onOrthographyChanged();
   }
 
@@ -175,6 +219,7 @@ export function useLanguageChooserViewModel(
     _updateTagPreview();
     _updateDisplayName();
     _updateIsReadyToSubmit();
+    _notifySelectionChange();
   }
 
   function _updateTagPreview() {
@@ -206,25 +251,196 @@ export function useLanguageChooserViewModel(
     _currentSearchId++;
   }
 
+  function _notifySelectionChange() {
+    if (!selectionChangeListener) {
+      return;
+    }
+
+    if (isReadyToSubmit.value) {
+      const resultingOrthography = deepStripDemarcation({
+        language: selectedLanguage.value,
+        script: selectedScript.value,
+        customDetails: customizations.value,
+      }) as IOrthography;
+      selectionChangeListener(
+        resultingOrthography,
+        createTagFromOrthography(resultingOrthography)
+      );
+      previousStateWasValidSelection = true;
+    } else if (previousStateWasValidSelection) {
+      selectionChangeListener(undefined, undefined);
+      previousStateWasValidSelection = false;
+    }
+  }
+
   // Public methods
   async function search(query: string) {
     searchString.value = query;
-    _onLanguageDeselected();
+    selectedLanguage.value = undefined;
+    selectedScript.value = undefined;
+    listedScripts.value = [];
+    _syncLanguageCardSelection();
+    _syncScriptSelection();
     customLanguageTag.value = "";
-    customizations.value = undefined;
+    _clearCustomizations();
     _updateTagPreview();
+    rawLanguageResults = [];
+    languageResults.value = [];
     listedLanguages.value = [];
     _cancelSearch();
+    _onOrthographyChanged();
     if (query.length > 1) {
       const searchId = _currentSearchId;
+      const modifierForThisSearch =
+        searchResultModifier || ((results) => results);
       await asyncSearchForLanguage(query, (results) => {
         if (searchId !== _currentSearchId) {
           return false;
         }
-        _appendLanguages(results);
+        _appendLanguages(results, modifierForThisSearch, query);
         return true;
       });
     }
+  }
+
+  function onSearchStringChange(query: string) {
+    searchString.requestUpdate(query);
+  }
+
+  function selectLanguage(language: ILanguage) {
+    selectedLanguage.value = language;
+    selectedScript.value =
+      language.scripts.length === 1 ? language.scripts[0] : undefined;
+    _updateScriptList(language);
+    _clearCustomizations();
+    _syncLanguageCardSelection();
+    _syncScriptSelection();
+    _onOrthographyChanged();
+  }
+
+  function selectUnlistedLanguage() {
+    selectLanguage(UNLISTED_LANGUAGE);
+  }
+
+  function selectManuallyEnteredTagLanguage(manuallyEnteredTag: string) {
+    searchString.value = "";
+    rawLanguageResults = [];
+    languageResults.value = [];
+    listedLanguages.value = [];
+    listedScripts.value = [];
+    selectedLanguage.value = languageForManuallyEnteredTag(manuallyEnteredTag);
+    selectedScript.value = undefined;
+    customLanguageTag.value = manuallyEnteredTag;
+    _clearCustomizations();
+    _syncLanguageCardSelection();
+    _syncScriptSelection();
+    _onOrthographyChanged();
+  }
+
+  function clearLanguageSelection() {
+    selectedLanguage.value = undefined;
+    selectedScript.value = undefined;
+    listedScripts.value = [];
+    _clearCustomizations();
+    _syncLanguageCardSelection();
+    _syncScriptSelection();
+    _onOrthographyChanged();
+  }
+
+  function selectScript(script: IScript) {
+    selectedScript.value = script;
+    _clearCustomizationsExceptDisplayName();
+    _syncScriptSelection();
+    _onOrthographyChanged();
+  }
+
+  function clearScriptSelection() {
+    selectedScript.value = undefined;
+    _clearCustomizationsExceptDisplayName();
+    _syncScriptSelection();
+    _onOrthographyChanged();
+  }
+
+  function saveLanguageDetails(
+    details: ICustomizableLanguageDetails,
+    script: IScript | undefined
+  ) {
+    customizations.value = details;
+    if (!script && selectedLanguage.value?.scripts.length === 1) {
+      script = selectedLanguage.value.scripts[0];
+    }
+    selectedScript.value = script;
+    _syncScriptSelection();
+    _onOrthographyChanged();
+  }
+
+  function resetTo(
+    initialSearchString?: string,
+    selectionLanguageTag?: string,
+    initialCustomDisplayName?: string
+  ) {
+    if (!selectionLanguageTag) {
+      onSearchStringChange(initialSearchString || "");
+      return;
+    }
+
+    let initialSelections = parseLangtagFromLangChooser(
+      selectionLanguageTag || "",
+      searchResultModifier
+    );
+    if (selectionLanguageTag && !initialSelections) {
+      initialSelections = {
+        language: languageForManuallyEnteredTag(selectionLanguageTag || ""),
+        script: undefined,
+        customDetails: {
+          customDisplayName: initialCustomDisplayName,
+        },
+      };
+    }
+
+    initialSearchString =
+      initialSearchString || initialSelections?.language?.languageSubtag;
+    onSearchStringChange(initialSearchString || "");
+
+    if (initialSelections?.language) {
+      selectLanguage(initialSelections.language as ILanguage);
+    }
+    if (initialSelections?.script) {
+      selectScript(initialSelections.script);
+    }
+
+    customizations.value = {
+      ...(initialSelections?.customDetails || {}),
+      customDisplayName:
+        initialCustomDisplayName &&
+        initialCustomDisplayName !==
+          defaultDisplayName(
+            initialSelections?.language,
+            initialSelections?.script
+          )
+          ? initialCustomDisplayName
+          : undefined,
+    };
+    _onOrthographyChanged();
+  }
+
+  function setSelectionChangeListener(
+    callback:
+      | ((
+          orthography: IOrthography | undefined,
+          langtag: string | undefined
+        ) => void)
+      | undefined
+  ) {
+    selectionChangeListener = callback;
+  }
+
+  function setSearchResultModifier(
+    modifier:
+      | ((results: ILanguage[], searchString: string) => ILanguage[])
+      | undefined
+  ) {
+    searchResultModifier = modifier;
   }
 
   function onCustomizeButtonClicked() {
@@ -255,11 +471,13 @@ export function useLanguageChooserViewModel(
     region: IRegion;
   }) {
     const normalizedDialect = formatDialectCode(name);
-    customizations.requestUpdate({
+    selectUnlistedLanguage();
+    customizations.value = {
       customDisplayName: name,
       dialect: normalizedDialect,
       region,
-    });
+    };
+    _onOrthographyChanged();
   }
 
   function submitCustomizeLanguageModal({
@@ -271,21 +489,28 @@ export function useLanguageChooserViewModel(
     region?: IRegion;
     dialect?: string;
   }) {
-    selectedScript.requestUpdate(script);
-    customizations.requestUpdate({
-      region,
-      dialect,
-      customDisplayName: customizations.value?.customDisplayName,
-    });
+    saveLanguageDetails(
+      {
+        region,
+        dialect,
+        customDisplayName: customizations.value?.customDisplayName,
+      },
+      script
+    );
   }
 
   if (initialLanguages) {
-    _appendLanguages(initialLanguages);
+    _appendLanguages(
+      initialLanguages,
+      searchResultModifier || ((results) => results),
+      ""
+    );
   }
   _updateTagPreview();
 
   return {
     // Fields
+    languageResults,
     listedLanguages,
     listedScripts,
     searchString,
@@ -293,8 +518,10 @@ export function useLanguageChooserViewModel(
     displayName,
     selectedLanguage,
     selectedScript,
+    customizableLanguageDetails: customizations,
     customizations,
     customLanguageTag,
+    readyToSubmit: isReadyToSubmit,
     isReadyToSubmit,
     showUnlistedLanguageModal,
     showCustomizeLanguageModal,
@@ -302,6 +529,17 @@ export function useLanguageChooserViewModel(
 
     // Methods
     search,
+    onSearchStringChange,
+    selectLanguage,
+    selectUnlistedLanguage,
+    selectManuallyEnteredTagLanguage,
+    clearLanguageSelection,
+    selectScript,
+    clearScriptSelection,
+    saveLanguageDetails,
+    resetTo,
+    setSelectionChangeListener,
+    setSearchResultModifier,
     onCustomizeButtonClicked,
     submitUnlistedLanguageModal,
     submitCustomizeLanguageModal,
@@ -330,6 +568,7 @@ function hasValidDisplayName(selection: IOrthography) {
 
 export function canSubmitOrthography(selection: IOrthography): boolean {
   const normalizedDialect = formatDialectCode(selection.customDetails?.dialect);
+  const hasDialectCode = /[a-z0-9]/i.test(normalizedDialect);
   const hasRegionName = !!selection.customDetails?.region?.name?.trim();
   return (
     !!selection.language &&
@@ -338,7 +577,7 @@ export function canSubmitOrthography(selection: IOrthography): boolean {
     (!!selection.script || selection.language?.scripts?.length === 0) &&
     // if unlisted language, name and country are required
     (!isUnlistedLanguage(selection.language) ||
-      (!!normalizedDialect && hasRegionName)) &&
+      (hasDialectCode && hasRegionName)) &&
     // if this was a manually entered langtag, check that tag is valid BCP 47
     (!isManuallyEnteredTagLanguage(selection.language) ||
       isValidBcp47Tag(selection.language?.manuallyEnteredTag))

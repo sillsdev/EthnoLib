@@ -11,7 +11,7 @@
   },
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.3.0",
+  "version": "0.2.0",
   "main": "./index.js",
   "types": "./index.d.ts",
   "scripts": {
@@ -23,7 +23,10 @@
     "testonce": "nx vite:test --config vitest.config.ts --run"
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.3.0",
+    "@ethnolib/find-language": "0.2.0",
+    "@ethnolib/language-chooser-controller": "0.1.1",
+    "@ethnolib/state-management-core": "0.1.1",
+    "@ethnolib/state-management-react": "0.1.0",
     "fuse.js": "^7.0.0",
     "iso-15924": "^3.2.0",
     "iso-3166": "^4.3.0"
@@ -34,6 +37,10 @@
     "@types/react-dom": "^17",
     "@vitejs/plugin-react-swc": "^3.8.0",
     "vite-plugin-dts": "^4.2.1"
+  },
+  "peerDependencies": {
+    "react": "^17.0.0 || ^18.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0"
   },
   "volta": {
     "extends": "../../../../../package.json"
