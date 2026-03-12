@@ -21,17 +21,18 @@ if (/^(Merge|Revert|fixup!|squash!)/.test(firstLine)) {
   process.exit(0);
 }
 
-const conventionalReleasePrefix = /^(feat|fix|chore)(\([^)]+\))?(!)?:\s.+$/;
+const conventionalReleasePrefix = /^(feat|fix|chore|ci)(\([^)]+\))?(!)?:\s.+$/;
 
 if (!conventionalReleasePrefix.test(firstLine)) {
   console.error("❌ Invalid conventional commit message.");
   console.error(
-    "   Required prefix: feat:, fix:, or chore: (scope and ! are allowed)."
+    "   Required prefix: feat:, fix:, chore:, or ci: (scope and ! are allowed)."
   );
   console.error("   Examples:");
   console.error("   - feat: add language search sorting");
   console.error("   - fix(find-language): handle zh-CN fallback");
   console.error("   - chore(repo): update dev tooling");
+  console.error("   - ci(github): tighten workflow permissions");
   console.error("   - feat(api)!: remove legacy endpoint");
   process.exit(1);
 }

@@ -19,7 +19,8 @@
     "prebuild": "npm run typecheck",
     "build": "nx vite:build",
     "lint": "eslint .",
-    "test": "nx vite:test --config vitest.config.ts"
+    "test": "nx vite:test --config vitest.config.ts",
+    "testonce": "nx vite:test --config vitest.config.ts --run"
   },
   "dependencies": {
     "@ethnolib/find-language": "0.1.20",
