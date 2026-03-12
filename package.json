@@ -9,6 +9,10 @@
   ],
   "version": "0.0.0",
   "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillsdev/EthnoLib.git"
+  },
   "keywords": [],
   "author": "",
   "license": "MIT",

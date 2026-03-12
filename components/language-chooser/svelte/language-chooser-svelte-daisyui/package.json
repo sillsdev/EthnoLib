@@ -1,6 +1,11 @@
 {
   "name": "@ethnolib/language-chooser-svelte-daisyui",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillsdev/EthnoLib.git",
+    "directory": "components/language-chooser/svelte/language-chooser-svelte-daisyui"
+  },
   "type": "module",
   "main": "./index.js",
   "types": "./index.d.ts",

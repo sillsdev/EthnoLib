@@ -1,6 +1,11 @@
 {
   "name": "@ethnolib/language-chooser-controller",
   "description": "A framework-agnostic controller for a language chooser",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillsdev/EthnoLib.git",
+    "directory": "components/language-chooser/common/language-chooser-controller"
+  },
   "author": "SIL Global",
   "license": "MIT",
   "version": "0.1.0",
