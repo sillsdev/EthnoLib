@@ -22,13 +22,14 @@
     "@ethnolib/state-management-core": "0.2.2"
   },
   "peerDependencies": {
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react": "^17.0.0 || ^18.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0"
   },
   "devDependencies": {
     "@types/react": "17.0.88",
     "@types/react-dom": "17.0.26",
     "@types/node": "20.19.37",
+    "@vitejs/plugin-react-swc": "3.11.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "jsdom": "26.1.0",

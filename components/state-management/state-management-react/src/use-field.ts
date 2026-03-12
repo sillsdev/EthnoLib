@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Field } from "@ethnolib/state-management-core";
 
 type FieldSubscriber<T> = (value: T) => void;
@@ -52,9 +52,9 @@ function subscribeToField<T>(field: Field<T>, subscriber: FieldSubscriber<T>) {
 export function useField<T>(field: Field<T>): [T, (value: T) => void] {
   const [fieldValue, setFieldValueState] = useState<T>(field.value as T);
 
-  const setFieldValue = useCallback((value: T) => {
+  function setFieldValue(value: T) {
     field.requestUpdate(value);
-  }, [field]);
+  }
 
   useEffect(() => {
     const unsubscribe = subscribeToField(field, (value) => {
