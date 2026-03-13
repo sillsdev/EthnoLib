@@ -15,6 +15,8 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "prebuild": "npm run typecheck",
     "build": "nx vite:build",
+    "storybook": "storybook dev -p 6007",
+    "build-storybook": "storybook build",
     "lint": "eslint .",
     "test": "nx vite:test --config vitest.config.ts",
     "testonce": "nx vite:test --config vitest.config.ts --run"
@@ -25,6 +27,8 @@
     "@ethnolib/state-management-svelte": "0.2.0"
   },
   "devDependencies": {
+    "@storybook/addon-essentials": "^8.2.8",
+    "@storybook/svelte-vite": "^8.2.8",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@tailwindcss/postcss": "^4.1.13",
     "@tailwindcss/typography": "^0.5.16",
@@ -33,6 +37,7 @@
     "daisyui": "^5.1.12",
     "eslint-plugin-svelte": "^2.44.0",
     "postcss": "^8.5.6",
+    "storybook": "^8.2.8",
     "svelte": "^5.38.6",
     "svelte-check": "^4.0.5",
     "svelte-preprocess": "^6.0.0",
