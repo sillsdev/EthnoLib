@@ -34,12 +34,18 @@
   let scrollContainer: HTMLElement;
 
   viewModel.promptForCustomTag = (_default?: string) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
     const tag = window.prompt(
       "If this user interface is not offering you a language tag that you know is valid ISO 639 code, you can enter it here:",
       _default
     );
     if (tag && !isValidBcp47Tag(tag)) {
-      alert(`This is not in a valid IETF BCP 47 format: ${tag}`);
+      if (typeof window !== "undefined") {
+        window.alert(`This is not in a valid IETF BCP 47 format: ${tag}`);
+      }
     } else if (tag) {
       viewModel.customLanguageTag = tag;
       closeModal();

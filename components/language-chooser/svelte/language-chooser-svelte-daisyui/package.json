@@ -20,7 +20,7 @@
   },
   "files": [
     "dist",
-    "src",
+    "src/lib",
     "index.ts"
   ],
   "scripts": {
