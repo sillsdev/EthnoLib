@@ -28,7 +28,32 @@
     customDetails: viewModel.customizations,
   });
 
-  let languageTag = $derived(createTagFromOrthography(orthography));
+  function safeCreateTagFromOrthography(
+    maybeOrthography: IOrthography
+  ): string | undefined {
+    const language = maybeOrthography?.language;
+
+    // During SSR/initial render, selectedLanguage can be partially populated.
+    // createTagFromOrthography expects language.scripts to be an array.
+    if (!language || !Array.isArray(language.scripts)) {
+      return undefined;
+    }
+
+    try {
+      return createTagFromOrthography(maybeOrthography);
+    } catch {
+      return undefined;
+    }
+  }
+
+  let languageTag = $derived(safeCreateTagFromOrthography(orthography));
+
+  let listedLanguages = $derived(
+    Array.isArray(viewModel.listedLanguages) ? viewModel.listedLanguages : []
+  );
+  let listedScripts = $derived(
+    Array.isArray(viewModel.listedScripts) ? viewModel.listedScripts : []
+  );
 
   let closeModal = $state(() => {});
   let scrollContainer: HTMLElement;
@@ -74,6 +99,14 @@
       behavior: "smooth",
     });
   }
+
+  function onSearchInput(event: Event) {
+    viewModel.searchString = (event.currentTarget as HTMLInputElement).value;
+  }
+
+  function onDisplayNameInput(event: Event) {
+    viewModel.displayName = (event.currentTarget as HTMLInputElement).value;
+  }
 </script>
 
 <div class="h-full flex flex-col">
@@ -89,13 +122,14 @@
           <input
             type="search"
             placeholder="Search by name, code, or country"
-            bind:value={viewModel.searchString}
+              value={viewModel.searchString ?? ""}
+              oninput={onSearchInput}
           />
         </label>
       </div>
 
-      <div class="flex-1 overflow-y-auto min-h-0" bind:this={scrollContainer}>
-        {#each viewModel.listedLanguages
+        <div class="flex-1 overflow-y-auto min-h-0" bind:this={scrollContainer}>
+          {#each listedLanguages
           .slice(0, 100)
           .map(svelteViewModel) as lang}
           <LanguageCard
@@ -103,13 +137,13 @@
             searchText={viewModel.searchString}
             onSelect={onLanguageSelected}
           />
-          {#if lang.isSelected && viewModel.listedScripts.length > 0}
+            {#if lang.isSelected && listedScripts.length > 0}
             <div class="ml-8 mb-4">
               <div class="py-2">
                 <p class="font-semibold text-sm">Select a script:</p>
               </div>
               <div class="grid grid-cols-3 gap-4">
-                {#each viewModel.listedScripts.map(svelteViewModel) as script}
+                  {#each listedScripts.map(svelteViewModel) as script}
                   <ScriptCard viewModel={script} />
                 {/each}
               </div>
@@ -155,7 +189,8 @@
             >
             <input
               class="input input-xl w-full"
-              bind:value={viewModel.displayName}
+                value={viewModel.displayName ?? ""}
+                oninput={onDisplayNameInput}
             />
           </label>
           <div class="font-mono opacity-70 p-2">
