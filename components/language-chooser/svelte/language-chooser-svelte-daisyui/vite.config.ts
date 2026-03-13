@@ -49,5 +49,15 @@ export default defineConfig({
       fileName: "index",
       formats: ["es", "cjs"],
     },
+    rollupOptions: {
+      external: [
+        "svelte",
+        /^svelte\//,
+        "@ethnolib/find-language",
+        "@ethnolib/language-chooser-controller",
+        "@ethnolib/state-management-svelte",
+        /^@ethnolib\//,
+      ],
+    },
   },
 });

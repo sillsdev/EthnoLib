@@ -7,8 +7,23 @@
     "directory": "components/language-chooser/svelte/language-chooser-svelte-daisyui"
   },
   "type": "module",
-  "main": "./index.js",
-  "types": "./index.d.ts",
+  "svelte": "./index.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "svelte": "./index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "src/lib",
+    "index.ts"
+  ],
   "scripts": {
     "dev": "vite --open",
     "typecheck": "tsc",
