@@ -10,9 +10,10 @@
   "svelte": "./index.ts",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
-  "types": "./index.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "svelte": "./index.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
