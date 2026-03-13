@@ -1,6 +1,6 @@
 {
   "name": "@ethnolib/language-chooser-svelte-daisyui",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sillsdev/EthnoLib.git",
@@ -20,9 +20,9 @@
     "testonce": "nx vite:test --config vitest.config.ts --run"
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.2.0",
-    "@ethnolib/language-chooser-controller": "0.1.1",
-    "@ethnolib/state-management-svelte": "0.1.1"
+    "@ethnolib/find-language": "0.3.0",
+    "@ethnolib/language-chooser-controller": "0.2.0",
+    "@ethnolib/state-management-svelte": "0.2.0"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
