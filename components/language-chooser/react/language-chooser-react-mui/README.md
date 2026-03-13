@@ -1,6 +1,3 @@
-> [!warning]
-> This project is currently under development and not ready for public use.
-
 # MUI React Language Chooser
 
 A MUI-styled React component that uses the [find-language](../../common/find-language/README.md) and [language-chooser-react-hook](../common/language-chooser-react-hook/README.md) packages to present a language chooser interface.
