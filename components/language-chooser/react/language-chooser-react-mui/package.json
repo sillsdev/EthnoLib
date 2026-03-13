@@ -11,7 +11,7 @@
   },
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.1.21",
+  "version": "0.3.0",
   "main": "./index.js",
   "types": "./index.d.ts",
   "exports": {
@@ -22,19 +22,19 @@
     "typecheck": "tsc",
     "prebuild": "npm run typecheck",
     "build": "nx vite:build",
+    "storybook:composed": "node ./scripts/run-composed-storybook.mjs dev",
+    "build-storybook:composed": "node ./scripts/run-composed-storybook.mjs build",
     "lint": "eslint .",
     "e2e": "playwright test"
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.1.18",
-    "@ethnolib/language-chooser-react-hook": "0.1.19",
+    "@ethnolib/find-language": "0.3.0",
+    "@ethnolib/language-chooser-react-hook": "0.3.0",
     "lodash": "^4.17.21",
     "react-lazyload": "^3.2.1",
     "@mui/icons-material": "^5.15.19"
   },
   "devDependencies": {
-    "@nx/playwright": "^19.8.10",
-    "@nx/storybook": "^19.8.0",
     "@storybook/addon-essentials": "^8.2.8",
     "@storybook/core-server": "^8.2.8",
     "@storybook/react-vite": "^8.2.8",

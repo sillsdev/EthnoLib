@@ -1,21 +1,29 @@
 {
   "name": "@ethnolib/source",
   "workspaces": [
+    "components/state-management/*",
     "components/language-chooser/common/*",
     "components/language-chooser/react/common/*",
-    "components/language-chooser/react/*"
+    "components/language-chooser/react/*",
+    "components/language-chooser/svelte/*"
   ],
   "version": "0.0.0",
   "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillsdev/EthnoLib.git"
+  },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "scripts": {
+    "prepare": "husky",
     "l10n:extract": "lingui extract",
     "l10n:compile": "lingui compile",
     "l10n:upload": "crowdin upload sources",
     "l10n:download": "crowdin download",
     "l10n:update-locales": "ts-node scripts/update-locales.ts",
+    "storybook:language-chooser:all": "concurrently --names svelte,react --prefix name --prefix-colors cyan,green \"npm run --workspace components/language-chooser/svelte/language-chooser-svelte-daisyui storybook\" \"npx wait-on http://localhost:6007/index.json && npm run --workspace components/language-chooser/react/language-chooser-react-mui storybook:composed\"",
     "test": "nx run-many --target test --all --parallel",
     "testonce": "nx run-many --target test --all --run",
     "e2e": "nx run-many --target e2e --all"
@@ -31,6 +39,7 @@
     "@nx/eslint-plugin": "20.4.6",
     "@nx/js": "20.4.6",
     "@nx/playwright": "20.4.6",
+    "@nx/storybook": "20.4.6",
     "@nx/vite": "20.4.6",
     "@nx/web": "20.4.6",
     "@playwright/test": "^1.36.0",
@@ -41,12 +50,14 @@
     "@typescript-eslint/eslint-plugin": "8.19.0",
     "@typescript-eslint/parser": "8.19.0",
     "@vitest/ui": "^2.1.9",
+    "concurrently": "^9.2.1",
     "eslint": "~8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-playwright": "^1.6.2",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.0.0",
+    "husky": "^9.1.7",
     "nx": "20.4.6",
     "prettier": "^3.3.3",
     "ts-node": "10.9.1",
@@ -54,7 +65,8 @@
     "typescript-eslint": "8.19.0",
     "vite": "^5.0.8",
     "vite-plugin-dts": "^4.2.1",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "wait-on": "^8.0.3"
   },
   "dependencies": {
     "@lingui/core": "^5.2.0",

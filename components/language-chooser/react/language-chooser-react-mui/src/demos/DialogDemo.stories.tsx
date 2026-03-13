@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import DialogDemo from "./DialogDemo";
 
 const meta: Meta<typeof DialogDemo> = {
+  title: "Demos/Dialog Demo",
   component: DialogDemo,
 };
 

@@ -14,6 +14,7 @@ import {
   getMaximalLangtag,
 } from "./languageTagUtils";
 import { getRegionBySubtag, getScriptForLanguage } from "./regionsAndScripts";
+import { deepStripDemarcation } from "./matchingSubstringDemarcation";
 
 const exactMatchPrioritizableFuseSearchKeys = [
   { name: "autonym", weight: 100 },
@@ -110,10 +111,12 @@ export function getLanguageBySubtag(
   });
   const rawResults = fuse.search(`="${correctedCode}"`);
   return searchResultModifier
-    ? searchResultModifier(
-        rawResults.map((r) => r.item),
-        code
-      )[0]
+    ? deepStripDemarcation(
+        searchResultModifier(
+          rawResults.map((r) => r.item),
+          code
+        )[0]
+      )
     : rawResults[0]?.item;
 }
 

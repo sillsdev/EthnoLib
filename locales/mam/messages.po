@@ -1,0 +1,141 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2023-10-05 16:59-0500\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: mam\n"
+"Project-Id-Version: sil-common-libraries\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2026-02-23 20:46\n"
+"Last-Translator: \n"
+"Language-Team: Mam\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Crowdin-Project: sil-common-libraries\n"
+"X-Crowdin-Project-ID: 393909\n"
+"X-Crowdin-Language: mam\n"
+"X-Crowdin-File: messages.po\n"
+"X-Crowdin-File-ID: 21083\n"
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:172
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:628
+msgid "If you cannot find a language and it does not appear in ethnologue.com, you can instead define the language here."
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:187
+msgid "Name"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:364
+msgid "If this user interface is not offering you a code that you know is valid <0>BCP 47 code</0>, you can enter it by hand. Hold down CTRL key while clicking on this tag."
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:601
+msgid "Edit Language Tag"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:466
+msgid "Select a script"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:236
+msgid "Country"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageCard.tsx:125
+msgid "It is usually better to pick a specific language instead of a macrolanguage."
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:177
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:634
+msgid "If you found the main language but need to change some of the specifics like Script or Dialect, you can do that here."
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:340
+msgid "We have a list of almost every known language, where it is spoken, and how it is written."
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:337
+msgid "Start typing to find your language."
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageCard.tsx:104
+msgid "A macrolanguage of {regionNames}"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:599
+msgid "Create Unlisted Language"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/demos/LanguageChooserDialog.tsx:143
+msgid "Choose Language"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:205
+msgid "Script"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:674
+msgid "Display this language this way"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageCard.tsx:95
+#~ msgid "A language of {0}"
+#~ msgstr "A language of {0}"
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:447
+#: components/language-chooser/react/language-chooser-react-mui/src/demos/LanguageChooserDialog.tsx:85
+msgid "Cancel"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:273
+msgid "If this user interface is not offering you a code that you know is valid ISO 639 code, you can enter it here:"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:332
+msgid "Search by name, code, or country"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:141
+msgid "Custom Language Tag"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:139
+msgid "Unlisted Language Tag"
+msgstr ""
+
+#. placeholder {0}: createTagFromOrthography({ language: props.selectedLanguage, script: dialogSelectedScript, customDetails: { dialect: dialogSelectedDialect, region: dialogSelectedRegion, } as ICustomizableLanguageDetails, } as IOrthography)
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:312
+msgid "BCP 47 Tag: <0>{0}</0>"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:280
+msgid "This is not in a valid IETF BCP 47 format: {customTag}"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/FormFieldLabel.tsx:49
+msgid "required"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageChooser.tsx:602
+msgid "Customize"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:351
+msgid "Advanced"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/LanguageCard.tsx:106
+msgid "A language of {regionNames}"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:280
+msgid "Variant (dialect)"
+msgstr ""
+
+#: components/language-chooser/react/language-chooser-react-mui/src/CustomizeLanguageDialog.tsx:436
+#: components/language-chooser/react/language-chooser-react-mui/src/demos/LanguageChooserDialog.tsx:75
+msgid "OK"
+msgstr ""
+

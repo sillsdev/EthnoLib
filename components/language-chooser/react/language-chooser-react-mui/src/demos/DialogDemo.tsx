@@ -33,12 +33,15 @@ export const DialogDemo: React.FunctionComponent<{
   initialLanguageTag,
   demoRightPanelComponent,
   primaryColor,
-  initialSearchString: demoInitialSearchString,
+  initialSearchString,
   ...languageChooserDialogProps
 }) => {
   // To demonstrate the ability to reopen to a desired state
   const initialSelection: IOrthography | undefined =
-    parseLangtagFromLangChooser(initialLanguageTag || "", defaultSearchResultModifier);
+    parseLangtagFromLangChooser(
+      initialLanguageTag || "",
+      defaultSearchResultModifier
+    );
   if (initialSelection?.language) {
     initialSelection.customDetails = {
       ...(initialSelection.customDetails || []),
@@ -49,9 +52,6 @@ export const DialogDemo: React.FunctionComponent<{
   }
 
   const [open, setOpen] = React.useState(true);
-  if (initialSelection && demoInitialSearchString) {
-    console.warn("When both initialLanguageTag and initialSearchString are entered, initialSearchString will be ignored.")
-  }
   const [selectedValue, setSelectedValue] = React.useState(
     initialSelection || ({} as IOrthography)
   );
@@ -153,7 +153,7 @@ export const DialogDemo: React.FunctionComponent<{
             rightPanelComponent={
               demoRightPanelComponent ? <DummyRightPanelComponent /> : undefined
             }
-            initialSearchString={selectedValue?.language?.languageSubtag || demoInitialSearchString}
+            initialSearchString={initialSearchString}
           />
         </div>
       </div>

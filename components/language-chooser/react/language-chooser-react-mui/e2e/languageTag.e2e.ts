@@ -220,4 +220,159 @@ test.describe("Language tag creation and preview", () => {
     await expect(simpTagPreview).toBeVisible();
     await expect(simpTagPreview).toContainText("zh-CN");
   });
+
+  test("Tag preview updates when customizations applied via dialog", async () => {
+    await search(page, "uzbek");
+
+    const uzbCard = page.getByTestId(languageCardTestId("uzn"));
+    await uzbCard.scrollIntoViewIfNeeded();
+    await expect(uzbCard).toBeVisible();
+    await uzbCard.click();
+
+    // Select a script first
+    const cyrlCard = page.getByTestId(scriptCardTestId("Cyrl"));
+    await cyrlCard.click();
+
+    let tagPreview = page.getByTestId("right-panel-langtag-preview");
+    await expect(tagPreview).toContainText("uzn-Cyrl");
+
+    // Open customization dialog and add region
+    const customizationButton = page.getByTestId("customization-button");
+    await customizationButton.click();
+
+    const customizationDialog = page.getByTestId("customization-dialog");
+    await expect(customizationDialog).toBeVisible();
+
+    // Add a region
+    const regionField = customizationDialog.locator(
+      "#customize-region-field-wrapper"
+    );
+    await regionField.getByLabel("Open").click();
+    await page
+      .getByRole("option", { name: /Afghanistan/ })
+      .first()
+      .click();
+
+    // Dialog tag preview should update
+    const dialogTagPreview = customizationDialog.getByTestId(
+      "customization-dialog-tag-preview"
+    );
+    await expect(dialogTagPreview).toContainText("uzn-Cyrl-AF");
+
+    // Click OK
+    await customizationDialog.getByRole("button", { name: "OK" }).click();
+
+    // Main tag preview should now show the region
+    tagPreview = page.getByTestId("right-panel-langtag-preview");
+    await expect(tagPreview).toContainText("uzn-Cyrl-AF");
+  });
+
+  test("Tag preview updates when variant/dialect added", async () => {
+    await search(page, "chechen");
+
+    const chechenCard = page.getByTestId(languageCardTestId("che"));
+    await chechenCard.click();
+
+    // Open customization dialog
+    const customizationButton = page.getByTestId("customization-button");
+    await customizationButton.click();
+
+    const customizationDialog = page.getByTestId("customization-dialog");
+    await expect(customizationDialog).toBeVisible();
+
+    // Add a variant
+    const variantField = customizationDialog.locator(
+      "#customize-variant-field"
+    );
+    await variantField.fill("foobar");
+
+    // Dialog tag preview should update
+    const dialogTagPreview = customizationDialog.getByTestId(
+      "customization-dialog-tag-preview"
+    );
+    await expect(dialogTagPreview).toContainText("ce-x-foobar");
+
+    // Click OK
+    await customizationDialog.getByRole("button", { name: "OK" }).click();
+
+    // Main tag preview should include the variant
+    const tagPreview = page.getByTestId("right-panel-langtag-preview");
+    await expect(tagPreview).toContainText("ce-x-foobar");
+  });
+
+  test("Tag preview updates correctly when switching between languages", async () => {
+    // Select first language
+    await search(page, "chechen");
+    const chechenCard = page.getByTestId(languageCardTestId("che"));
+    await chechenCard.click();
+
+    let tagPreview = page.getByTestId("right-panel-langtag-preview");
+    await expect(tagPreview).toContainText("ce");
+
+    // Switch to different language
+    await search(page, "japanese");
+    const japaneseCard = page.getByTestId(languageCardTestId("jpn"));
+    await japaneseCard.click();
+
+    // Tag preview should update to Japanese
+    tagPreview = page.getByTestId("right-panel-langtag-preview");
+    await expect(tagPreview).toContainText("ja");
+    await expect(tagPreview).not.toContainText("ce");
+
+    // Switch again
+    await search(page, "german");
+    const germanCard = page.getByTestId(languageCardTestId("deu"));
+    await germanCard.click();
+
+    // Tag preview should update to German
+    tagPreview = page.getByTestId("right-panel-langtag-preview");
+    await expect(tagPreview).toContainText("de");
+    await expect(tagPreview).not.toContainText("ja");
+  });
+
+  test("Tag preview shows complex tag with script, region, and variant", async () => {
+    await search(page, "serbian");
+
+    const serbianCard = page.getByTestId(languageCardTestId("srp"));
+    await serbianCard.click();
+
+    // Select Latin script
+    const latnCard = page.getByTestId(scriptCardTestId("Latn"));
+    await latnCard.click();
+
+    // Open customization dialog
+    const customizationButton = page.getByTestId("customization-button");
+    await customizationButton.click();
+
+    const customizationDialog = page.getByTestId("customization-dialog");
+
+    // Add region
+    const regionField = customizationDialog.locator(
+      "#customize-region-field-wrapper"
+    );
+    await regionField.getByLabel("Open").click();
+    await page
+      .getByRole("option", { name: /Bosnia/ })
+      .first()
+      .click();
+
+    // Add variant
+    const variantField = customizationDialog.locator(
+      "#customize-variant-field"
+    );
+    await variantField.fill("variant1");
+
+    // Dialog should show complete tag
+    const dialogTagPreview = customizationDialog.getByTestId(
+      "customization-dialog-tag-preview"
+    );
+    await expect(dialogTagPreview).toContainText("sr-Latn-BA-x-variant1");
+
+    // Click OK
+    await customizationDialog.getByRole("button", { name: "OK" }).click();
+
+    // Main tag preview should show complete tag
+    const tagPreview = page.getByTestId("right-panel-langtag-preview");
+    await expect(tagPreview).toContainText("sr-Latn-BA-x-variant1");
+  });
 });
