@@ -61,6 +61,20 @@ or
 nx dev @ethnolib/language-chooser-svelte-daisyui
 ```
 
+### Composed Storybook
+
+The language chooser demos are also available as a composed Storybook that shows both the React MUI stories and the Svelte DaisyUI stories.
+
+For local development, run:
+
+```
+npm run storybook:language-chooser:all
+```
+
+This starts the Svelte Storybook on port `6007`, waits for it to be ready, and then starts the React Storybook shell on port `6006`.
+
+For GitHub Pages deployment, the React Storybook is built as the root site and the Svelte Storybook is built into its nested `storybook-static/svelte` folder. The Pages workflow uploads the entire React `storybook-static` directory, so the nested Svelte files are deployed along with it.
+
 ### Dependency Versions
 
 We are currently having all packages manage their own dependencies in their package level `package.json` files, but keeping them all on the same versions of commonly used packages for compatibility. Current versions:

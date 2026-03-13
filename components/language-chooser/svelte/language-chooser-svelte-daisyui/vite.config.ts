@@ -12,7 +12,18 @@ export default defineConfig({
 
   plugins: [
     nxViteTsPaths(),
-    svelte(),
+    svelte({
+      dynamicCompileOptions: ({ filename, compileOptions }) => {
+        const normalizedFilename = filename.replaceAll("\\", "/");
+
+        if (
+          normalizedFilename.includes("/node_modules/@storybook/svelte/") &&
+          compileOptions.runes
+        ) {
+          return { runes: false };
+        }
+      },
+    }),
     dts({
       entryRoot: ".",
       tsconfigPath: path.join(__dirname, "tsconfig.lib.json"),

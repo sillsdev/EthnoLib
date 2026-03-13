@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { ThemeDemo } from "./ThemeDemo";
 
 const meta: Meta<typeof ThemeDemo> = {
+  title: "Demos/Theme Demo",
   component: ThemeDemo,
 };
 

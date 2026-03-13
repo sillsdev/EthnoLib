@@ -87,7 +87,12 @@ jobs:
         run: git push --tags
 
       - name: Build storybook
-        run: npx nx build-storybook @ethnolib/language-chooser-react-mui
+        run: npm run --workspace components/language-chooser/react/language-chooser-react-mui build-storybook:composed
+
+      - name: Build composed Svelte storybook
+        shell: bash
+        run: |
+          npm run --workspace components/language-chooser/svelte/language-chooser-svelte-daisyui build-storybook -- --output-dir ../../react/language-chooser-react-mui/storybook-static/svelte
 
       - name: Upload for deploy to github pages
         uses: actions/upload-pages-artifact@v3
