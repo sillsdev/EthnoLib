@@ -39,7 +39,14 @@ export default defineConfig({
       formats: ["es", "cjs"],
     },
     rollupOptions: {
-      external: ["svelte", /^svelte\//],
+      external: [
+        "svelte",
+        /^svelte\//,
+        "@ethnolib/find-language",
+        "@ethnolib/language-chooser-controller",
+        "@ethnolib/state-management-svelte",
+        /^@ethnolib\//,
+      ],
     },
   },
 });
