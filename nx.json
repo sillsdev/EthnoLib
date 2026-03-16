@@ -17,7 +17,8 @@
         "serveTargetName": "serve",
         "previewTargetName": "vite:preview",
         "serveStaticTargetName": "serve-static"
-      }
+      },
+      "exclude": ["components/language-chooser/svelte/language-chooser-svelte-demo/**"]
     },
     {
       "plugin": "@nx/storybook/plugin",

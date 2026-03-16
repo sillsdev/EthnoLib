@@ -1,12 +1,9 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import "./app.css";
-  import LanguageChooser from "./lib/LanguageChooser.svelte";
-  import LanguageChooserModal from "./lib/LanguageChooserModal.svelte";
   import {
     defaultDisplayName,
     type IOrthography,
   } from "@ethnolib/find-language";
+  import { LanguageChooserModal } from "@ethnolib/language-chooser-svelte-daisyui";
 
   let showModal = $state(() => {});
   let orthography: IOrthography = $state({});
