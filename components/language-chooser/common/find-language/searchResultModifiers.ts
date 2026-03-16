@@ -1,4 +1,5 @@
-import { ILanguage, IScript, LanguageType } from "./findLanguageInterfaces";
+import { LanguageType } from "./findLanguageInterfaces";
+import type { ILanguage, IScript } from "./findLanguageInterfaces";
 import {
   demarcateResults,
   stripDemarcation,

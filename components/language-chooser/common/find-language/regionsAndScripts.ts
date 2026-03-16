@@ -1,6 +1,6 @@
 import { iso31661 } from "iso-3166";
 import { iso15924 } from "iso-15924";
-import { ILanguage, IRegion, IScript } from "./findLanguageInterfaces";
+import type { ILanguage, IRegion, IScript } from "./findLanguageInterfaces";
 
 // ISO-3166-1 is a region code to region name lookup
 export function getAllRegions(): IRegion[] {
