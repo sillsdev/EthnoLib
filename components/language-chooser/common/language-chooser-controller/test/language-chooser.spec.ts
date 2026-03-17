@@ -308,6 +308,19 @@ describe("search", () => {
     await Promise.all([search1, search2, search3]);
     expect(test.viewModel.listedLanguages.value.length).toBe(1);
   });
+
+  it("applies the active search result modifier for the duration of a search", async () => {
+    const test = new TestHelper();
+
+    test.viewModel.setSearchResultModifier((results) => results.slice(0, 1));
+    const searchPromise = test.viewModel.search("arabic");
+    test.viewModel.setSearchResultModifier((results) => results.slice(0, 3));
+
+    await searchPromise;
+
+    expect(test.viewModel.languageResults.value.length).toBe(1);
+    expect(test.viewModel.listedLanguages.value.length).toBe(1);
+  });
 });
 
 describe("selected language", () => {
@@ -369,6 +382,26 @@ describe("selected script", () => {
     expect(test.viewModel.selectedScript.value).toEqual(
       WaataLanguage.scripts[0]
     );
+  });
+
+  it("clears region and dialect but preserves display name when script changes", () => {
+    const test = new TestHelper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.selectLanguage(NorthernUzbekLanguage);
+    test.viewModel.saveLanguageDetails(
+      {
+        customDisplayName: "Custom Uzbek",
+        region: AndorraRegion,
+        dialect: "custom-dialect",
+      },
+      NorthernUzbekLanguage.scripts[0]
+    );
+
+    test.viewModel.selectScript(NorthernUzbekLanguage.scripts[1]);
+
+    expect(test.viewModel.customizations.value).toEqual({
+      customDisplayName: "Custom Uzbek",
+    });
   });
 });
 
@@ -543,6 +576,48 @@ describe("canSubmitOrthography", () => {
         },
       })
     ).toBe(false);
+  });
+});
+
+describe("resetTo", () => {
+  it("restores manually entered tags", () => {
+    const test = new TestHelper();
+
+    test.viewModel.resetTo(undefined, "zzz-Foo", "Test");
+
+    expect(test.viewModel.selectedLanguage.value).toEqual(
+      expect.objectContaining({ manuallyEnteredTag: "zzz-Foo" })
+    );
+    expect(test.viewModel.customizations.value).toEqual(
+      expect.objectContaining({ customDisplayName: "Test" })
+    );
+    expect(test.viewModel.isReadyToSubmit.value).toBe(true);
+  });
+});
+
+describe("selection change listener", () => {
+  it("notifies when selection becomes valid and clears when it becomes invalid", () => {
+    const onSelectionChange = vi.fn();
+    const test = new TestHelper({ initialLanguages: [WaataLanguage] });
+
+    test.viewModel.setSelectionChangeListener(onSelectionChange);
+    test.viewModel.selectLanguage(WaataLanguage);
+
+    expect(onSelectionChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        language: expect.objectContaining({
+          iso639_3_code: WaataLanguage.iso639_3_code,
+        }),
+        script: expect.objectContaining({
+          code: WaataLanguage.scripts[0].code,
+        }),
+      }),
+      "ssn"
+    );
+
+    test.viewModel.onSearchStringChange("ab");
+
+    expect(onSelectionChange).toHaveBeenLastCalledWith(undefined, undefined);
   });
 });
 

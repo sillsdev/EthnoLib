@@ -4,7 +4,7 @@ runs:
   using: composite
   steps:
     - name: Build UI packages
-      run: npx nx run-many --target=build --projects=@ethnolib/state-management-react,@ethnolib/language-chooser-react-mui,@ethnolib/language-chooser-svelte-daisyui
+      run: npx nx run-many --target=build --projects=@ethnolib/language-chooser-react-mui,@ethnolib/language-chooser-svelte-daisyui
       shell: bash
 
     - name: Run unit and e2e tests in parallel
