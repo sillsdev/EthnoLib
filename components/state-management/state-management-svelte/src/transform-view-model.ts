@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Field, ReadonlyValue } from "@ethnolib/state-management-core";
+import { Field, isField, ReadonlyValue } from "@ethnolib/state-management-core";
 
 /**
  * Base class for a field wrapper that exposes the underlying {@link Field}
@@ -89,8 +89,8 @@ export function transformViewModel<T extends object>(
   for (const key of keys) {
     const value = viewModel[key];
 
-    if (value instanceof Field) {
-      const svelteField = new svelteFieldConstructor(value);
+    if (isField(value)) {
+      const svelteField = new svelteFieldConstructor(value as Field<unknown>);
       svelteFields[key] = svelteField;
     } else {
       svelteFields[key] = value;

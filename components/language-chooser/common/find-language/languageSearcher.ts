@@ -1,7 +1,8 @@
 /* allow anys so we can handle any shape of language object */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import Fuse, { FuseResult } from "fuse.js";
+import Fuse from "fuse.js";
+import type { FuseResult } from "fuse.js";
 
 const ORIGINAL_LANGUAGE_OBJECT_KEY = "_originalLanguageObject";
 

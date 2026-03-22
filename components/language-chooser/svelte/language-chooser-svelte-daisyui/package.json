@@ -6,20 +6,37 @@
     "url": "git+https://github.com/sillsdev/EthnoLib.git",
     "directory": "components/language-chooser/svelte/language-chooser-svelte-daisyui"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
-  "main": "./index.js",
-  "types": "./index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "svelte": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "svelte": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
-    "dev": "vite --open",
+    "dev": "storybook dev -p 6007",
     "typecheck": "tsc",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "prebuild": "npm run typecheck",
-    "build": "nx vite:build",
+    "build": "svelte-package -i src/lib",
     "storybook": "storybook dev -p 6007",
     "build-storybook": "storybook build",
     "lint": "eslint .",
     "test": "nx vite:test --config vitest.config.ts",
     "testonce": "nx vite:test --config vitest.config.ts --run"
+  },
+  "peerDependencies": {
+    "svelte": ">=5.0.0"
   },
   "dependencies": {
     "@ethnolib/find-language": "0.3.0",
@@ -29,8 +46,8 @@
   "devDependencies": {
     "@storybook/addon-essentials": "^8.2.8",
     "@storybook/svelte-vite": "^8.2.8",
+    "@sveltejs/package": "^2.3.10",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
-    "@tailwindcss/postcss": "^4.1.13",
     "@tailwindcss/typography": "^0.5.16",
     "@tsconfig/svelte": "^5.0.0",
     "autoprefixer": "^10.4.21",
@@ -46,5 +63,13 @@
   "engines": {
     "node": ">=18.18"
   },
-  "nx": {}
+  "nx": {
+    "targets": {
+      "nx-release-publish": {
+        "options": {
+          "packageRoot": "{projectRoot}"
+        }
+      }
+    }
+  }
 }

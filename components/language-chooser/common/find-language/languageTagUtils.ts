@@ -1,10 +1,10 @@
 import equivalentTags from "./language-data/equivalentTags.json" with { type: "json" };
-import {
+import { LanguageType } from "./findLanguageInterfaces";
+import type {
   ILanguage,
   IOrthography,
   IRegion,
   IScript,
-  LanguageType,
 } from "./findLanguageInterfaces";
 import {
   deepStripDemarcation,

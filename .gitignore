@@ -140,6 +140,8 @@ dist
 storybook-static
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+.svelte-kit/
+.playwright-cli/
 
 *.orig
 

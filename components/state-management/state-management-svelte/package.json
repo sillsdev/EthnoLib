@@ -9,8 +9,12 @@
   "author": "SIL Global",
   "license": "MIT",
   "version": "0.2.0",
-  "main": "./index.js",
-  "types": "./index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "nx vite:build",
     "typecheck": "tsc",

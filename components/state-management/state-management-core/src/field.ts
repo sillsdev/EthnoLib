@@ -60,3 +60,19 @@ export class Field<T> {
     if (this.updateUI) this.updateUI(this._value as ReadonlyValue<T>);
   }
 }
+
+/**
+ * Duck-type check for {@link Field}. Using instanceof would fail when
+ * state-management-core is bundled separately by each package (e.g. in Vite
+ * pre-bundling), producing distinct class instances that fail instanceof even
+ * though they are structurally identical.
+ */
+export function isField(value: unknown): value is Field<unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "updateUI" in value &&
+    "value" in value &&
+    "requestUpdate" in value
+  );
+}

@@ -1,5 +1,5 @@
 import Fuse from "fuse.js";
-import {
+import type {
   ICustomizableLanguageDetails,
   ILanguage,
   IOrthography,

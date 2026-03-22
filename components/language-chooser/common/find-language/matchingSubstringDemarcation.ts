@@ -1,5 +1,5 @@
 import { cloneDeep } from "lodash";
-import { ILanguage } from "./findLanguageInterfaces";
+import type { ILanguage } from "./findLanguageInterfaces";
 
 // for marking/bolding the substrings which match the search string
 export const START_OF_MATCH_MARKER = "[";
