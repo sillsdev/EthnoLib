@@ -76,6 +76,22 @@ export function asUnwrapped<T extends object>(
 }
 
 /**
+ * Duck-type check for {@link Field}. Using instanceof would fail when
+ * state-management-core is bundled separately by each package (e.g. in Vite
+ * pre-bundling), producing distinct class instances that fail instanceof even
+ * though they are structurally identical.
+ */
+function isField(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "updateUI" in value &&
+    "value" in value &&
+    "requestUpdate" in value
+  );
+}
+
+/**
  * Converts a plain view model into its Svelte-friendly counterpart by wrapping
  * {@link Field}s with {@link SvelteField} adapters.
  */
@@ -89,8 +105,8 @@ export function transformViewModel<T extends object>(
   for (const key of keys) {
     const value = viewModel[key];
 
-    if (value instanceof Field) {
-      const svelteField = new svelteFieldConstructor(value);
+    if (isField(value)) {
+      const svelteField = new svelteFieldConstructor(value as Field<unknown>);
       svelteFields[key] = svelteField;
     } else {
       svelteFields[key] = value;

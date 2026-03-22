@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import * as path from "path";
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 
 export default defineConfig({
   root: __dirname,
@@ -10,6 +11,7 @@ export default defineConfig({
     "../../../node_modules/.vite/components/state-management/state-management-svelte",
 
   plugins: [
+    svelte(),
     nxViteTsPaths(),
     dts({
       entryRoot: ".",
@@ -31,6 +33,13 @@ export default defineConfig({
       name: "@ethnolib/state-management-svelte",
       fileName: "index",
       formats: ["es", "cjs"],
+    },
+    rollupOptions: {
+      // Do not bundle dependencies — the consuming app must supply them.
+      // This is critical for @ethnolib/state-management-core: if it were
+      // bundled here AND in @ethnolib/language-chooser-controller, the two
+      // copies would produce distinct Field classes, breaking instanceof checks.
+      external: ["@ethnolib/state-management-core", "svelte", /^svelte\//],
     },
   },
 });
