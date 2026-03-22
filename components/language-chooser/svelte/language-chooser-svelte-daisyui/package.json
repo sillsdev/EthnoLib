@@ -9,6 +9,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -60,5 +63,13 @@
   "engines": {
     "node": ">=18.18"
   },
-  "nx": {}
+  "nx": {
+    "targets": {
+      "nx-release-publish": {
+        "options": {
+          "packageRoot": "{projectRoot}"
+        }
+      }
+    }
+  }
 }
