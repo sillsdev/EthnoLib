@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Field, ReadonlyValue } from "@ethnolib/state-management-core";
+import { Field, isField, ReadonlyValue } from "@ethnolib/state-management-core";
 
 /**
  * Base class for a field wrapper that exposes the underlying {@link Field}
@@ -73,22 +73,6 @@ export function asUnwrapped<T extends object>(
       }
     },
   });
-}
-
-/**
- * Duck-type check for {@link Field}. Using instanceof would fail when
- * state-management-core is bundled separately by each package (e.g. in Vite
- * pre-bundling), producing distinct class instances that fail instanceof even
- * though they are structurally identical.
- */
-function isField(value: unknown): boolean {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "updateUI" in value &&
-    "value" in value &&
-    "requestUpdate" in value
-  );
 }
 
 /**

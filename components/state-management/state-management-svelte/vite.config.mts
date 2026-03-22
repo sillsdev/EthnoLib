@@ -37,8 +37,9 @@ export default defineConfig({
     rollupOptions: {
       // Do not bundle dependencies — the consuming app must supply them.
       // This is critical for @ethnolib/state-management-core: if it were
-      // bundled here AND in @ethnolib/language-chooser-controller, the two
-      // copies would produce distinct Field classes, breaking instanceof checks.
+      // bundled here AND in @ethnolib/language-chooser-controller, each would
+      // get its own copy, causing duck-type checks and any shared state to
+      // operate on separate module instances.
       external: ["@ethnolib/state-management-core", "svelte", /^svelte\//],
     },
   },
