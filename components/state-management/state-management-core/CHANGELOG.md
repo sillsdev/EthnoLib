@@ -1,3 +1,9 @@
+## 0.2.1 (2026-06-22)
+
+### 🩹 Fixes
+
+- stop package-lock.json npm-version thrash ([bad4e7b](https://github.com/sillsdev/EthnoLib/commit/bad4e7b))
+
 ## 0.2.0 (2026-03-13)
 
 ### 🚀 Features
