@@ -206,29 +206,34 @@ function parseLangtagsJson() {
   fs.writeFileSync("language-data/languageData.json", data);
 }
 
-/* From https://github.com/silnrsi/langtags/blob/master/doc/langtags.md 
-Langtags.txt contains a sequence of equivalence sets. Each set consists of a 
-list of language tags separated by =. The first tag on the line is the canonical
-tag and the last tag on the line is the maximal tag. In addition, a tag is 
-prefixed with * if there is an entry in the SLDR for that particular tag. */
-function parseLangTagsTxt() {
-  const langTagsTxtRaw = fs.readFileSync("language-data/langtags.txt", "utf8");
-  const langTagsTxt = langTagsTxtRaw.replaceAll("*", "");
-  const lines = langTagsTxt.split("\n");
+/* Build the tag equivalence sets that the runtime uses to map any langtag to its
+canonical (shortest) and maximal forms.
+
+These were previously parsed from langtags.txt, but langtags.json carries the same
+information: each entry's `tag` is the canonical tag, `full` is the maximal tag, and
+`tags` lists the equivalent tags in between. (langtags.txt additionally prefixes tags
+with * to mark SLDR presence, but that was always stripped here and is unused.) See
+https://github.com/silnrsi/langtags/blob/master/doc/langtags.md */
+function buildEquivalentTags() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const langTags = langTagsJson as any[];
   const tagLookups: {
     shortest: string;
     maximal: string;
     allTags: string[];
   }[] = [];
-  for (const line of lines) {
-    if (line.length === 0) {
+  for (const entry of langTags) {
+    // langtags.json has metadata items mixed in with the data entries; skip them
+    if (!entry.tag || !entry.full) {
       continue;
     }
-    const tags = line.split(" = ").map((t) => t.trim());
+    const allTags = [
+      ...new Set([entry.tag, ...(entry.tags ?? []), entry.full]),
+    ];
     tagLookups.push({
-      shortest: tags[0],
-      maximal: tags[tags.length - 1],
-      allTags: tags,
+      shortest: entry.tag,
+      maximal: entry.full,
+      allTags,
     });
   }
   fs.writeFileSync(
@@ -238,4 +243,4 @@ function parseLangTagsTxt() {
 }
 
 parseLangtagsJson();
-parseLangTagsTxt();
+buildEquivalentTags();

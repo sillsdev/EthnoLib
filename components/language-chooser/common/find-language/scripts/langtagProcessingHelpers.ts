@@ -225,7 +225,7 @@ for (const {
     macrolanguagesByCode[iso639_3Code] = {
       isMacrolanguage: true,
       iso639_3_code: iso639_3Code,
-      languageSubtag: iso639_1Code || iso639_3Code, // from langtags.txt it looks like the ISO 639-1 code is generally used when a macrolanguage has one
+      languageSubtag: iso639_1Code || iso639_3Code, // from the langtags data it looks like the ISO 639-1 code is generally used when a macrolanguage has one
       exonym: uncomma(stripMacrolanguageParenthetical(name)), // we are already denoting elsewhere that this is a macrolanguage
       regionNamesForDisplay: uncomma(region?.name || ""),
       regionNamesForSearch: [], // We don't want these to come up in region searches
