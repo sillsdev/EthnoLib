@@ -8,7 +8,7 @@
   },
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "main": "./index.js",
   "types": "./index.d.ts",
   "scripts": {
@@ -19,8 +19,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@ethnolib/find-language": "0.3.1",
-    "@ethnolib/state-management-core": "0.2.1"
+    "@ethnolib/find-language": "0.3.2",
+    "@ethnolib/state-management-core": "0.2.2"
   },
   "devDependencies": {
     "@types/node": "^20.16.11",

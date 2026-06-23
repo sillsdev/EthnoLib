@@ -1,3 +1,13 @@
+## 0.1.3 (2026-06-23)
+
+### 🩹 Fixes
+
+- declare all peerDependencies as devDependencies ([adb96d9](https://github.com/sillsdev/EthnoLib/commit/adb96d9))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/state-management-core to 0.2.2
+
 ## 0.1.2 (2026-06-22)
 
 ### 🩹 Fixes

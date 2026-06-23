@@ -1,3 +1,14 @@
+## 0.3.2 (2026-06-23)
+
+### 🩹 Fixes
+
+- declare all peerDependencies as devDependencies ([adb96d9](https://github.com/sillsdev/EthnoLib/commit/adb96d9))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.3.2
+- Updated @ethnolib/language-chooser-react-hook to 0.3.2
+
 ## 0.3.1 (2026-06-22)
 
 ### 🩹 Fixes
