@@ -184,7 +184,7 @@ describe("get shortest equivalent version of langtag", () => {
     expect(getShortestSufficientLangtag("fRm")).toEqual("frm");
     expect(getShortestSufficientLangtag("FRM-LaTn")).toEqual("frm");
   });
-  it("should return undefined if tag is not found in the equivalence list (langtags.txt)", () => {
+  it("should return undefined if tag is not found in the equivalence list (equivalentTags.json)", () => {
     expect(getShortestSufficientLangtag("zzz")).toBeUndefined();
     expect(getShortestSufficientLangtag("")).toBeUndefined();
     expect(getShortestSufficientLangtag("frm-Cyrl")).toBeUndefined();
@@ -233,7 +233,7 @@ describe("get maximal equivalent version of langtag", () => {
     expect(getMaximalLangtag("DTP-Latn-My")).toEqual("dtp-Latn-MY");
     expect(getMaximalLangtag("DtP")).toEqual("dtp-Latn-MY");
   });
-  it("should return undefined if tag is not found in the equivalence list (langtags.txt)", () => {
+  it("should return undefined if tag is not found in the equivalence list (equivalentTags.json)", () => {
     expect(getMaximalLangtag("zzz")).toBeUndefined();
     expect(getMaximalLangtag("")).toBeUndefined();
     expect(getMaximalLangtag("frm-Cyrl")).toBeUndefined();
