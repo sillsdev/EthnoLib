@@ -12,6 +12,9 @@
     "skipLibCheck": true
   },
   "exclude": [
+    "src/main.ts",
+    "src/App.svelte",
+    "src/app.css",
     "langtagProcessing.ts",
     "**/*.spec.ts",
     "**/*.test.ts",
@@ -23,11 +26,8 @@
     "**/*.test.jsx"
   ],
   "include": [
-    "./**/*.js",
-    "./**/*.jsx",
-    "./**/*.ts",
-    "./**/*.tsx",
-    "./**/*.svelte",
-    "../index.ts"
+    "src/lib/**/*.ts",
+    "src/lib/**/*.svelte",
+    "index.ts"
   ]
 }
