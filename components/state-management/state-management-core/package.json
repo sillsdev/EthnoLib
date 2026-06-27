@@ -19,9 +19,9 @@
     "lint": "eslint ."
   },
   "devDependencies": {
-    "@types/node": "^20.16.11",
-    "tsx": "^4.19.2",
-    "typescript": "^5.2.2"
+    "@types/node": "20.19.37",
+    "tsx": "4.20.5",
+    "typescript": "5.7.3"
   },
   "volta": {
     "extends": "../../../package.json"
