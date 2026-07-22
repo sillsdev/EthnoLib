@@ -14,6 +14,7 @@ import {
   ILangtagsJsonEntryInternal,
   stripMacrolanguageParenthetical,
   stripMacrolanguageParentheticalFromAll,
+  iso639_1To639_3,
 } from "./langtagProcessingHelpers";
 
 import fs from "fs";
@@ -125,6 +126,21 @@ function parseLangtagsJson() {
   for (const entry of langTags) {
     const augmentedEntry = entry as ILangtagsJsonEntryInternal;
     const languageSubtag = entry.tag.split("-")[0];
+
+    // As of langtags.json API 1.4 (BL-15916), most region-specific entries (e.g. en-GB,
+    // de-AT, the ar-Arab-* set) no longer carry the iso639_3 field. Without it these entries
+    // were being skipped entirely, dropping the bulk of each language's regions and
+    // alternative tags. Derive the iso639_3 code from the language subtag when it is absent
+    // so these entries consolidate into their language as before. The rest of the pipeline
+    // (including macrolanguage handling below) then treats them like any normal entry.
+    if (!augmentedEntry.iso639_3) {
+      const derivedIso639_3 =
+        iso639_1To639_3[languageSubtag] ||
+        (languageSubtag.length === 3 ? languageSubtag : undefined);
+      if (derivedIso639_3) {
+        augmentedEntry.iso639_3 = derivedIso639_3;
+      }
+    }
 
     // If listed with a macrolanguage code, this is a "representative language", we need to identify it by its equivalent
     // individual language code. See macrolanguageNotes.md

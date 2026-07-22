@@ -73,7 +73,8 @@ describe("asyncGetAllLanguageResults", () => {
 
   it("should find languages by autonym", async () => {
     await asyncSearchDoesFindLanguage("нохчийн", "che");
-    await asyncSearchDoesFindLanguage("Kamarakotos", "aoc");
+    // (aoc's autonym "Kamarakotos" was dropped from langtags.json in the API 1.4 update; see BL-15916)
+    await asyncSearchDoesFindLanguage("한국어", "kor");
   });
   it("should find languages by exonym", async () => {
     await asyncSearchDoesFindLanguage("luba-katanga", "lub");
@@ -109,12 +110,15 @@ describe("asyncGetAllLanguageResults", () => {
       "mci"
     );
 
-    // "chorasmian" comes before "ch'orti'"
+    // "ch'orti'" comes before "chorasmian": caa matches "cho" in higher-priority fields
+    // (its autonym "Chortiꞌ" and alternative names) while xco matches only in its exonym
+    // "Chorasmian". (Before the langtags.json API 1.4 update caa's autonym did not begin
+    // with "cho", so this ordering was reversed; see BL-15916.)
     const choQuery = "cho";
     await asyncExpectToComeBefore(
       await asyncGetAllLanguageResults(choQuery),
-      "xco",
-      "caa"
+      "caa",
+      "xco"
     );
   });
   it("should find matches regardless of case", async () => {
