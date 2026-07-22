@@ -42,6 +42,12 @@ A Svelte adapter published as `@ethnolib/state-management-svelte`. It wraps view
 
 ## Development
 
+First:
+
+```
+npm i
+```
+
 Ethnolib is a [monorepo using nx](https://nx.dev/concepts/decisions/why-monorepos), with npm for package management.
 
 We recommend installing nx globally.
