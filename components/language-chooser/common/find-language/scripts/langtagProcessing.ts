@@ -18,7 +18,7 @@ import {
 } from "./langtagProcessingHelpers";
 
 import fs from "fs";
-import langTagsJson from "../language-data/langtags.json" with { type: "json" };
+import langTagsJson from "../language-data/source/langtags.json" with { type: "json" };
 
 function bestAutonymFromEntry(entry: any) {
   return entry.localnames ? entry.localnames[0] : entry.localname;

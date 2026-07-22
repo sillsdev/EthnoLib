@@ -206,7 +206,7 @@ For languages that are representative for a macrolanguage, however, we use the i
 
 ## Data sources
 
-We get our data from the [langtags repository](https://github.com/silnrsi/langtags/tree/master) and [ISO 639-3](https://iso639-3.sil.org/). All live in the [language-data](./language-data/) folder. In the future, we plan to automate the update of these data files, but currently it is done manually.
+We get our raw source data from the [langtags repository](https://github.com/silnrsi/langtags/tree/master) and [ISO 639-3](https://iso639-3.sil.org/). These raw files live in the [language-data/source](./language-data/source/) folder, kept separate from the processed files (see below) that our pipeline generates from them. In the future, we plan to automate the update of these data files, but currently it is done manually.
 
 - langtags.json
   - source: https://ldml.api.sil.org/langtags.json
@@ -218,7 +218,7 @@ We get our data from the [langtags repository](https://github.com/silnrsi/langta
   - source: https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3-macrolanguages.tab
   - documentation: https://iso639-3.sil.org/code_tables/download_tables
 
-Currently also in the folder, data files compiled by our language data processing (see section above):
+The processed data files compiled by our language data processing (see section above) live in the [language-data](./language-data/) folder:
 
 - languageData.json
 - equivalentTags.json

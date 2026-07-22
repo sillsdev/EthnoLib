@@ -1,5 +1,5 @@
 import { iso15924 } from "iso-15924";
-import langTagsJson from "../language-data/langtags.json" with { type: "json" };
+import langTagsJson from "../language-data/source/langtags.json" with { type: "json" };
 import fs from "fs";
 import { ILanguage, IScript, LanguageType } from "../findLanguageInterfaces";
 import {
@@ -78,7 +78,7 @@ export const scriptNames: { [key: string]: string } = iso15924.reduce(
                                     -- E(xtinct), H(istorical), L(iving), S(pecial)
 */
 const isoCodesDetailsFile = fs.readFileSync(
-  "language-data/iso-639-3.tab",
+  "language-data/source/iso-639-3.tab",
   "utf8"
 );
 
@@ -140,7 +140,7 @@ for (const line of isoCodesDetailsFile.split("\n")) {
 }
 
 const macrolangMappingFile = fs.readFileSync(
-  "language-data/iso-639-3-macrolanguages.tab",
+  "language-data/source/iso-639-3-macrolanguages.tab",
   "utf8"
 );
 export const indivlangsToMacrolangs: { [key: string]: string } = {};
