@@ -88,7 +88,11 @@ function modifyAkaLanguageResult(
     return {
       ...result,
       scripts: [
-        { code: "Latn", name: "Latin", languageNameInScript: "Akan" },
+        {
+          code: "Latn",
+          name: "Latin",
+          languageNameInScript: "Akan",
+        },
         { code: "Arab", name: "Arabic" },
         { code: "Brai", name: "Braille" },
       ],

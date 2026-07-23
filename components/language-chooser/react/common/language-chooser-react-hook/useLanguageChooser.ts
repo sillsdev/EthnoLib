@@ -1,6 +1,7 @@
 import {
   ILanguage,
   IScript,
+  isRTLScript,
   asyncSearchForLanguage,
   ICustomizableLanguageDetails,
   deepStripDemarcation,
@@ -238,10 +239,11 @@ export const useLanguageChooser = (
           script: selectedScript,
           customDetails: customizableLanguageDetails,
         }) as IOrthography;
-        onSelectionChange(
-          resultingOrthography,
-          createTagFromOrthography(resultingOrthography)
-        );
+        const tag = createTagFromOrthography(resultingOrthography);
+        if (resultingOrthography.script) {
+          resultingOrthography.script.isRtl = isRTLScript(tag);
+        }
+        onSelectionChange(resultingOrthography, tag);
         setPreviousStateWasValidSelection(true);
       } else if (previousStateWasValidSelection) {
         onSelectionChange(undefined, undefined);

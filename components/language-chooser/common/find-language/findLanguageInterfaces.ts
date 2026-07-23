@@ -6,6 +6,7 @@ export interface IRegion {
 export interface IScript {
   code: string;
   name: string;
+  isRtl?: boolean;
   languageNameInScript?: string;
 }
 
@@ -55,4 +56,11 @@ export interface IOrthography {
   language?: ILanguage;
   script?: IScript;
   customDetails?: ICustomizableLanguageDetails;
+}
+
+export function isRTLScript(bcp47: string): boolean {
+  const locale = new Intl.Locale(bcp47).maximize();
+  // getTextInfo is the standardized property; textInfo is the older name
+  const info = locale.getTextInfo?.() ?? (locale as any).textInfo;
+  return info?.direction === "rtl";
 }
