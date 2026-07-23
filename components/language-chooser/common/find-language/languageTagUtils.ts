@@ -75,11 +75,12 @@ function getMaximalTagLookup(): Map<string, string> {
   return maximalTagLookup!;
 }
 
-// case insensitive on input. Tries to find a shorter (or the same) equivalent in the language data
-// loaded from langtags.txt.  If the input tag has a private use variant (starts with -x-), then it
-// removes the private use variant from what is looked up and restores the variant to what is found.
-// Returns undefined if the langtag (without any private use variant) is not in langtags.txt and so
-// equivalents cannot be looked up.
+// case insensitive on input. Tries to find a shorter (or the same) equivalent in the equivalence
+// sets (equivalentTags.json, derived from langtags.json).  If the input tag has a private use
+// variant (starts with -x-), then it removes the private use variant from what is looked up and
+// restores the variant to what is found.
+// Returns undefined if the langtag (without any private use variant) is not in the equivalence sets
+// and so equivalents cannot be looked up.
 // For representative languages, if `langtag` is not the canonical BCP-47 tag, `language` needs to be present so that we
 // can look up the canonical tag. (For representative languages our language chooser packages will generally use the individual
 // language code but the canonical tag may use a macrolanguage code. See macrolanguages.md)
@@ -104,7 +105,7 @@ export function getShortestSufficientLangtag(
   return shorter;
 }
 
-// case insensitive. Returns undefined if langtag is not in langtags.txt and so equivalents cannot be looked up
+// case insensitive. Returns undefined if langtag is not in the equivalence sets and so equivalents cannot be looked up
 // For representative languages, if `langtag` is not the canonical BCP-47 tag, `language` should be present so that we
 // can look up the canonical tag.
 export function getMaximalLangtag(
@@ -148,7 +149,7 @@ export function createTag(
     tag += `-${regionCode}`;
   }
   // TODO future work: If we ever make the language chooser aware of registered variants, some should not be preceded by the "-x-"
-  // For example, compare aai-x-suboro and be-tarask in langtags.txt and langtags.json
+  // For example, compare aai-x-suboro and be-tarask in langtags.json
   if (!languageCode || normalizedDialectCode) {
     tag += "-x-";
   }

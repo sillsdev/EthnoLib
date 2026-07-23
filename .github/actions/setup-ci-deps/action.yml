@@ -24,6 +24,15 @@ runs:
         cache-dependency-path: package-lock.json
         registry-url: ${{ inputs.registry-url }}
 
+    # Pin npm so the lockfile is generated/validated by the same version everywhere
+    # (local Volta pin, CI install, and release publish). Mismatched npm versions
+    # rewrite package-lock.json differently and cause `npm ci` <-> `npm i` thrash.
+    # The version is read from the Volta pin in package.json so CI and local dev
+    # share a single source of truth and cannot drift apart.
+    - name: Pin npm version
+      run: npm install -g npm@$(node -p "require('./package.json').volta.npm")
+      shell: bash
+
     - name: Install dependencies
       run: npm ci --no-audit
       shell: bash

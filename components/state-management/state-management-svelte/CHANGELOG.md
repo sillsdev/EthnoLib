@@ -1,3 +1,23 @@
+## 0.2.2 (2026-06-23)
+
+### 🩹 Fixes
+
+- declare all peerDependencies as devDependencies ([adb96d9](https://github.com/sillsdev/EthnoLib/commit/adb96d9))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/state-management-core to 0.2.2
+
+## 0.2.1 (2026-06-22)
+
+### 🩹 Fixes
+
+- stop package-lock.json npm-version thrash ([bad4e7b](https://github.com/sillsdev/EthnoLib/commit/bad4e7b))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/state-management-core to 0.2.1
+
 ## 0.2.0 (2026-03-13)
 
 ### 🚀 Features

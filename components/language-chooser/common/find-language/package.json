@@ -11,7 +11,7 @@
   },
   "author": "SIL Global",
   "license": "MIT",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "main": "./index.js",
   "types": "./index.d.ts",
   "sideEffects": false,
@@ -25,13 +25,13 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "fuse.js": "^7.0.0",
-    "iso-15924": "^3.2.0",
-    "iso-3166": "^4.3.0"
+    "fuse.js": "7.1.0",
+    "iso-15924": "3.2.0",
+    "iso-3166": "4.3.0"
   },
   "devDependencies": {
-    "@types/node": "^20.16.11",
-    "tsx": "^4.19.2"
+    "@types/node": "20.19.37",
+    "tsx": "4.20.5"
   },
   "volta": {
     "extends": "../../../../package.json"
