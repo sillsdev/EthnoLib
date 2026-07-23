@@ -360,6 +360,47 @@ test.describe("Customization button and dialog", () => {
     await expect(dialogTagPreview).toContainText("ce-x-test123f");
   });
 
+  test("Invalidly formatted variant shows alert on OK", async () => {
+    await selectChechenCard(page);
+    await clickCustomizationButton(page);
+    const customizationDialog = await customizationDialogLocator(page);
+    await expect(customizationDialog).toBeVisible();
+
+    // 11 characters, too long for a BCP 47 variant subtag (5-8)
+    await enterVariant(customizationDialog, "dialectTest");
+
+    let alertMessage = "";
+    const alertHandled = page.waitForEvent("dialog").then(async (dialog) => {
+      alertMessage = dialog.message();
+      await dialog.accept();
+    });
+
+    await okButtonLocator(customizationDialog).click();
+    await alertHandled;
+
+    await expect(alertMessage).toContain(
+      "Variant is not in a valid BCP 47 format."
+    );
+  });
+
+  test("Script dropdown finds scripts by fuzzy matching", async () => {
+    await selectChechenCard(page);
+    await clickCustomizationButton(page);
+    const customizationDialog = await customizationDialogLocator(page);
+    await expect(customizationDialog).toBeVisible();
+
+    // "Cyrilic" (misspelled) is not a substring of "Cyrillic", so only the
+    // fuzzy search can surface it
+    await scriptFieldLocator(customizationDialog).fill("Cyrilic");
+    await expect(
+      page.getByRole("option", { name: "Cyrillic", exact: true })
+    ).toBeVisible();
+
+    // close the options popup so it doesn't block the next test's cleanup
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("listbox")).not.toBeVisible();
+  });
+
   test("Live BCP 47 tag preview updates as fields change in dialog", async () => {
     await selectChechenCard(page);
     await clickCustomizationButton(page);
