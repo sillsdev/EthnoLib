@@ -730,6 +730,96 @@ describe("customize language modal", () => {
   });
 });
 
+describe("script options search", () => {
+  it("returns all scripts for an empty query", () => {
+    const t = new TestHelper();
+    const allScripts = t.viewModel.searchScriptOptions("");
+    expect(allScripts.length).toBeGreaterThan(100);
+  });
+
+  it("finds a script by fuzzy matching a misspelled name", () => {
+    const t = new TestHelper();
+    const results = t.viewModel.searchScriptOptions("Cyrilic");
+    expect(results[0].code).toBe("Cyrl");
+  });
+
+  it("finds a script by code", () => {
+    const t = new TestHelper();
+    const results = t.viewModel.searchScriptOptions("Latn");
+    expect(results[0].code).toBe("Latn");
+  });
+});
+
+describe("invalid variant warning", () => {
+  it("fires when customize modal submits an invalidly formatted variant", () => {
+    const t = new TestHelper({ initialLanguages: [NorthernUzbekLanguage] });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    const spy = vi.fn();
+    t.viewModel.warnInvalidVariant.requestUpdate(spy);
+
+    // 11 characters, too long for a BCP 47 variant subtag (5-8)
+    t.viewModel.submitCustomizeLanguageModal({ dialect: "dialectTest" });
+
+    expect(spy).toHaveBeenCalledWith("dialectTest");
+  });
+
+  it("still applies the customizations after warning", () => {
+    const t = new TestHelper({ initialLanguages: [NorthernUzbekLanguage] });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    t.viewModel.warnInvalidVariant.requestUpdate(vi.fn());
+
+    t.viewModel.submitCustomizeLanguageModal({ dialect: "dialectTest" });
+
+    expect(t.viewModel.customizations.value?.dialect).toBe("dialectTest");
+  });
+
+  it("does not fire for a valid variant", () => {
+    const t = new TestHelper({ initialLanguages: [NorthernUzbekLanguage] });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    const spy = vi.fn();
+    t.viewModel.warnInvalidVariant.requestUpdate(spy);
+
+    t.viewModel.submitCustomizeLanguageModal({ dialect: "foobar" });
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("does not fire for an empty variant", () => {
+    const t = new TestHelper({ initialLanguages: [NorthernUzbekLanguage] });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    const spy = vi.fn();
+    t.viewModel.warnInvalidVariant.requestUpdate(spy);
+
+    t.viewModel.submitCustomizeLanguageModal({});
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("does not fire for ai- variants", () => {
+    const t = new TestHelper({ initialLanguages: [NorthernUzbekLanguage] });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    const spy = vi.fn();
+    t.viewModel.warnInvalidVariant.requestUpdate(spy);
+
+    t.viewModel.submitCustomizeLanguageModal({ dialect: "ai-translation" });
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("fires when unlisted modal submits a name that is not a valid variant", () => {
+    const t = new TestHelper();
+    const spy = vi.fn();
+    t.viewModel.warnInvalidVariant.requestUpdate(spy);
+
+    t.viewModel.submitUnlistedLanguageModal({
+      name: "Foo Bar",
+      region: AndorraRegion,
+    });
+
+    expect(spy).toHaveBeenCalledWith("Foo Bar");
+  });
+});
+
 describe("edit custom tag prompt", () => {
   it("shows when custom tag exists and customization button is clicked", () => {
     const t = new TestHelper();
