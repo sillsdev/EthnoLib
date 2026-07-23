@@ -30,11 +30,11 @@ import {
   IOrthography,
   formatDialectCode,
   isValidBcp47VariantSubtag,
+  fuzzilySearchForScripts,
 } from "@ethnolib/find-language";
 import { FormFieldLabel } from "./FormFieldLabel";
 import { PrimaryTooltip } from "./PrimaryTooltip";
 import { IconAndText } from "./IconAndText";
-import {fuzzilySearchForScripts} from "@ethnolib/find-language/searchForScript"
 
 // ISO-3166-1 is a region code to region name lookup
 function getAllRegionOptions() {

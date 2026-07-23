@@ -5,4 +5,5 @@ export * from "./languageSearcher";
 export * from "./searchForLanguage";
 export * from "./searchResultModifiers";
 export * from "./regionsAndScripts";
+export * from "./searchForScript";
 export * from "./scriptSamples";
