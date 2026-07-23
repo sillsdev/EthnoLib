@@ -3,6 +3,8 @@ import {
   createTagFromOrthography,
   defaultDisplayName,
   formatDialectCode,
+  fuzzilySearchForScripts,
+  getAllScripts,
   type ICustomizableLanguageDetails,
   type ILanguage,
   type IOrthography,
@@ -11,6 +13,7 @@ import {
   isManuallyEnteredTagLanguage,
   isUnlistedLanguage,
   isValidBcp47Tag,
+  isValidBcp47VariantSubtag,
   languageForManuallyEnteredTag,
   UNLISTED_LANGUAGE,
 } from "@ethnolib/find-language";
@@ -58,6 +61,13 @@ export function useLanguageChooserViewModel(
     () => {}
   );
   const promptForCustomTag = new Field<(populateWith?: string) => void>(
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    () => {}
+  );
+  // Called when a submitted variant (dialect) is not in valid BCP 47 variant subtag format.
+  // Submission still proceeds; the resulting tag stays valid because dialects become
+  // private use (-x-) subtags. Views typically show a warning (BL-14904).
+  const warnInvalidVariant = new Field<(dialect: string) => void>(
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     () => {}
   );
@@ -247,6 +257,20 @@ export function useLanguageChooserViewModel(
     }
   }
 
+  // All the scripts if the query is empty, otherwise fuzzy matches on script name
+  // and code, best matches first. For script dropdowns with search (BL-14903).
+  function searchScriptOptions(query: string): IScript[] {
+    return query
+      ? fuzzilySearchForScripts(getAllScripts(), query)
+      : getAllScripts();
+  }
+
+  function _warnIfInvalidVariant(dialect: string | undefined) {
+    if (dialect && !isValidBcp47VariantSubtag(dialect)) {
+      warnInvalidVariant.value(dialect);
+    }
+  }
+
   function submitUnlistedLanguageModal({
     name,
     region,
@@ -254,6 +278,7 @@ export function useLanguageChooserViewModel(
     name: string;
     region: IRegion;
   }) {
+    _warnIfInvalidVariant(name);
     const normalizedDialect = formatDialectCode(name);
     customizations.requestUpdate({
       customDisplayName: name,
@@ -271,6 +296,7 @@ export function useLanguageChooserViewModel(
     region?: IRegion;
     dialect?: string;
   }) {
+    _warnIfInvalidVariant(dialect);
     selectedScript.requestUpdate(script);
     customizations.requestUpdate({
       region,
@@ -299,12 +325,14 @@ export function useLanguageChooserViewModel(
     showUnlistedLanguageModal,
     showCustomizeLanguageModal,
     promptForCustomTag,
+    warnInvalidVariant,
 
     // Methods
     search,
     onCustomizeButtonClicked,
     submitUnlistedLanguageModal,
     submitCustomizeLanguageModal,
+    searchScriptOptions,
   };
 }
 
