@@ -37,7 +37,7 @@ const DEFAULT_EXCLUDED_SCRIPT_CODES = new Set([
   "Zzzz",
 ]);
 
-const latinScriptData = { code: "Latn", name: "Latin" } as IScript;
+const latinScriptData = { code: "Latn", name: "Latin", rtl: false } as IScript;
 
 function replaceIsoCode(
   origIsoCode: string,
@@ -88,9 +88,14 @@ function modifyAkaLanguageResult(
     return {
       ...result,
       scripts: [
-        { code: "Latn", name: "Latin", languageNameInScript: "Akan" },
-        { code: "Arab", name: "Arabic" },
-        { code: "Brai", name: "Braille" },
+        {
+          code: "Latn",
+          name: "Latin",
+          rtl: false,
+          languageNameInScript: "Akan",
+        },
+        { code: "Arab", name: "Arabic", rtl: true },
+        { code: "Brai", name: "Braille", rtl: false },
       ],
       isMacrolanguage: false,
       parentMacrolanguage: undefined,
@@ -170,11 +175,13 @@ function modifyChineseResult(results: ILanguage[]): ILanguage[] {
         {
           code: "Hans",
           name: "Chinese (Simplified)",
+          rtl: false,
           languageNameInScript: "中文",
         } as IScript,
         {
           code: "Hant",
           name: "Chinese (Traditional)",
+          rtl: false,
           languageNameInScript: "中文",
         } as IScript,
         { ...latinScriptData, languageNameInScript: "Chinese" } as IScript,

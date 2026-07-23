@@ -1,4 +1,4 @@
-import { IScript, ILanguage } from "../findLanguageInterfaces";
+import { IScript, ILanguage, isRTLScript } from "../findLanguageInterfaces";
 import {
   getAllPossibleNames,
   isMacrolanguage,
@@ -57,6 +57,7 @@ function addOrCombineLangtagsEntry(
       langs[entry.indivIsoCode].scripts[entry.script] = {
         code: entry.script,
         name: scriptNames[entry.script],
+        rtl: isRTLScript(entry.script),
         languageNameInScript:
           (entry.localnames || [undefined])[0] ||
           langs[entry.indivIsoCode].scripts[entry.script]
@@ -85,6 +86,7 @@ function addOrCombineLangtagsEntry(
       scripts[scriptCode] = {
         code: scriptCode,
         name: scriptNames[scriptCode],
+        rtl: isRTLScript(scriptCode),
         languageNameInScript:
           (entry.localnames || [undefined])[0] || entry.localname,
       } as IScript;
