@@ -336,9 +336,10 @@ describe("selected script", () => {
     test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
     test.viewModel.listedScripts.value[0].isSelected.requestUpdate(true);
 
-    expect(test.viewModel.selectedScript.value).toEqual(
-      NorthernUzbekLanguage.scripts[0]
-    );
+    expect(test.viewModel.selectedScript.value).toEqual({
+      ...NorthernUzbekLanguage.scripts[0],
+      isRtl: false,
+    });
   });
 
   it("should be undefined after script deselected", () => {
@@ -366,9 +367,20 @@ describe("selected script", () => {
 
     test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
 
-    expect(test.viewModel.selectedScript.value).toEqual(
-      WaataLanguage.scripts[0]
-    );
+    expect(test.viewModel.selectedScript.value).toEqual({
+      ...WaataLanguage.scripts[0],
+      isRtl: false,
+    });
+  });
+
+  it("should populate isRtl for a right-to-left script", () => {
+    const test = new TestHelper({ initialLanguages: [NorthernUzbekLanguage] });
+
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+    // NorthernUzbekLanguage.scripts[1] is Arabic, a right-to-left script
+    test.viewModel.listedScripts.value[1].isSelected.requestUpdate(true);
+
+    expect(test.viewModel.selectedScript.value?.isRtl).toBe(true);
   });
 });
 
@@ -626,7 +638,9 @@ describe("customize language modal", () => {
     scriptViewModel.isSelected.requestUpdate(true);
     t.viewModel.onCustomizeButtonClicked();
 
-    expect(spy).toHaveBeenCalledWith({ script: scriptViewModel.script });
+    expect(spy).toHaveBeenCalledWith({
+      script: { ...scriptViewModel.script, isRtl: false },
+    });
   });
 
   it("populates with dialect when custom dialect was selected", () => {
@@ -706,6 +720,7 @@ describe("customize language modal", () => {
     expect(t.viewModel.selectedScript.value).toEqual({
       code: "abc",
       name: "ABC Script",
+      isRtl: false,
     });
   });
 
