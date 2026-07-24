@@ -1,3 +1,18 @@
+## 0.4.0 (2026-07-24)
+
+### 🚀 Features
+
+- added rtl attribute to scripts ([f758c27](https://github.com/sillsdev/EthnoLib/commit/f758c27))
+
+### 🩹 Fixes
+
+- **ci:** unblock npm publish under allow-directory=root ([92be8f7](https://github.com/sillsdev/EthnoLib/commit/92be8f7))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.4.0
+- Updated @ethnolib/language-chooser-react-hook to 0.3.3
+
 ## 0.3.2 (2026-06-23)
 
 ### 🩹 Fixes

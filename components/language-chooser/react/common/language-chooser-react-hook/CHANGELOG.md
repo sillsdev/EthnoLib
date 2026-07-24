@@ -1,3 +1,13 @@
+## 0.3.3 (2026-07-24)
+
+### 🩹 Fixes
+
+- **ci:** unblock npm publish under allow-directory=root ([92be8f7](https://github.com/sillsdev/EthnoLib/commit/92be8f7))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.4.0
+
 ## 0.3.2 (2026-06-23)
 
 ### 🩹 Fixes
