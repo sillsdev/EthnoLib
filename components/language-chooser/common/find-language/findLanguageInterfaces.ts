@@ -72,8 +72,14 @@ export interface IOrthography {
 // isRtl setting to match its IScript in every case, which can accomplish
 // with und-{script}.
 export function isRTLScript(scriptCode: string): boolean {
-  const locale = new Intl.Locale(`und-${scriptCode}`);
-  // getTextInfo is the standardized property; textInfo is the older name
-  const info = locale.getTextInfo?.() ?? (locale as any).textInfo;
-  return info?.direction === "rtl";
+  try {
+    const locale = new Intl.Locale(`und-${scriptCode}`);
+    // getTextInfo is the standardized property; textInfo is the older name
+    const info = locale.getTextInfo?.() ?? (locale as any).textInfo;
+    return info?.direction === "rtl";
+  } catch {
+    // An unrecognized/malformed script code makes Intl.Locale throw. Such a
+    // script has no known RTL direction, so treat it as not RTL.
+    return false;
+  }
 }

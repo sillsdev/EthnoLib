@@ -70,7 +70,15 @@
 
           <div>
             <div class="text-base-content/60">Script</div>
-            <div>{orthography.script?.name || "-"}</div>
+            <div>
+              {#if orthography.script}
+                {orthography.script.name} ({orthography.script.isRtl
+                  ? "RTL"
+                  : "LTR"})
+              {:else}
+                -
+              {/if}
+            </div>
           </div>
 
           <div>

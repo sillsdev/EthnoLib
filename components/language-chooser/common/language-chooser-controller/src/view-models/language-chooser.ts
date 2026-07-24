@@ -9,6 +9,7 @@ import {
   type IRegion,
   type IScript,
   isManuallyEnteredTagLanguage,
+  isRTLScript,
   isUnlistedLanguage,
   isValidBcp47Tag,
   languageForManuallyEnteredTag,
@@ -118,7 +119,7 @@ export function useLanguageChooserViewModel(
     if (selectedLang.scripts.length === 1) {
       // Automatically select a language's only script
       _setScriptList([]);
-      selectedScript.value = selectedLang.scripts[0];
+      selectedScript.value = scriptWithReadingDirection(selectedLang.scripts[0]);
     } else {
       _setScriptList(selectedLang.scripts);
     }
@@ -135,7 +136,9 @@ export function useLanguageChooserViewModel(
 
   function _onScriptSelected(index: number) {
     selectItem(index, listedScripts.value);
-    selectedScript.value = listedScripts.value[index].script;
+    selectedScript.value = scriptWithReadingDirection(
+      listedScripts.value[index].script
+    );
     _onOrthographyChanged();
   }
 
@@ -271,7 +274,9 @@ export function useLanguageChooserViewModel(
     region?: IRegion;
     dialect?: string;
   }) {
-    selectedScript.requestUpdate(script);
+    selectedScript.requestUpdate(
+      script ? scriptWithReadingDirection(script) : script
+    );
     customizations.requestUpdate({
       region,
       dialect,
@@ -306,6 +311,13 @@ export function useLanguageChooserViewModel(
     submitUnlistedLanguageModal,
     submitCustomizeLanguageModal,
   };
+}
+
+// Returns a copy of the script with its reading direction (isRtl) populated,
+// so consumers receive the direction as part of the selected orthography.
+// Mirrors the behavior of the React useLanguageChooser hook.
+function scriptWithReadingDirection(script: IScript): IScript {
+  return { ...script, isRtl: isRTLScript(script.code) };
 }
 
 function hasValidDisplayName(selection: IOrthography) {
