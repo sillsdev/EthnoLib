@@ -6,6 +6,7 @@ export interface IRegion {
 export interface IScript {
   code: string;
   name: string;
+  isRtl?: boolean;
   languageNameInScript?: string;
 }
 
@@ -55,4 +56,24 @@ export interface IOrthography {
   language?: ILanguage;
   script?: IScript;
   customDetails?: ICustomizableLanguageDetails;
+}
+
+// Intl.Locale takes in a bcp47 tag, but here we are giving it
+// the tag und-{insert script code}, where the und means no
+// specified language, so that the rtl attribute will be based
+// solely on the selected script. If you give the full tag generated
+// by createTagFromOrthography, and use .maximizeSince to get the
+// most possible values, then you can actually end up with the wrong
+// rtl attribute. For example, if you were to choose the Uzbek langauge
+// and the country Afghanistan, you would get the tag uz-AF. You can
+// specify the Latin script for this combination, but looking up the script
+// uz-AF can create a mismatch between Arabic(RTL) and Latin(LTR), since the
+// .maximize will return the Arabic script for uz-AF. We always want the
+// isRtl setting to match its IScript in every case, which can accomplish
+// with und-{script}.
+export function isRTLScript(scriptCode: string): boolean {
+  const locale = new Intl.Locale(`und-${scriptCode}`);
+  // getTextInfo is the standardized property; textInfo is the older name
+  const info = locale.getTextInfo?.() ?? (locale as any).textInfo;
+  return info?.direction === "rtl";
 }

@@ -89,8 +89,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
   // name (dialect) and country (region) are required for unlisted language
   const isReadyToSubmit =
     !isUnlistedLanguageDialog ||
-    (formatDialectCode(dialogSelectedDialect) !== "" &&
-      !!dialogSelectedRegion);
+    (formatDialectCode(dialogSelectedDialect) !== "" && !!dialogSelectedRegion);
 
   const theme = useTheme();
 
@@ -425,7 +424,7 @@ export const CustomizeLanguageDialog: React.FunctionComponent<{
                   region: dialogSelectedRegion,
                   dialect: isUnlistedLanguageDialog
                     ? normalizedDialect
-                    : dialogSelectedDialect
+                    : dialogSelectedDialect,
                 } as ICustomizableLanguageDetails,
                 dialogSelectedScript
               );
