@@ -63,6 +63,15 @@ jobs:
       - name: Publish
         env:
           NPM_CONFIG_PROVENANCE: true
+          # Work around an npm bug: libnpmpack calls pacote.tarball() without
+          # _isRoot, so publishing a local directory (which is what
+          # nx-release-publish does, from each package's dist) trips our
+          # .npmrc allow-directory=root policy with EALLOWDIRECTORY. Still
+          # broken as of npm 12.0.1. Scoped to this step so installs keep the
+          # full policy; safe only because nothing resolves dependencies here
+          # (no npm install, and no package has a prepare/prepack script --
+          # if one is ever added, revisit this).
+          NPM_CONFIG_ALLOW_DIRECTORY: all
         shell: bash
         run: |
           set -euo pipefail
