@@ -1,3 +1,9 @@
+## 0.4.1 (2026-07-24)
+
+### 🩹 Fixes
+
+- populate script isRtl in controller and svelte ([6b5cf77](https://github.com/sillsdev/EthnoLib/commit/6b5cf77))
+
 ## 0.4.0 (2026-07-24)
 
 ### 🚀 Features

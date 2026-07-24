@@ -1,3 +1,14 @@
+## 0.2.4 (2026-07-24)
+
+### 🩹 Fixes
+
+- populate script isRtl in controller and svelte ([6b5cf77](https://github.com/sillsdev/EthnoLib/commit/6b5cf77))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.4.1
+- Updated @ethnolib/language-chooser-controller to 0.2.4
+
 ## 0.2.3 (2026-07-24)
 
 ### 🩹 Fixes
