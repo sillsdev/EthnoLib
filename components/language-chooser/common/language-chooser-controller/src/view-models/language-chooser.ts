@@ -316,8 +316,15 @@ export function useLanguageChooserViewModel(
 // Returns a copy of the script with its reading direction (isRtl) populated,
 // so consumers receive the direction as part of the selected orthography.
 // Mirrors the behavior of the React useLanguageChooser hook.
+// When the direction is unknown (see isRTLScript) we leave isRtl off entirely
+// rather than claiming left-to-right.
 function scriptWithReadingDirection(script: IScript): IScript {
-  return { ...script, isRtl: isRTLScript(script.code) };
+  const isRtl = isRTLScript(script.code);
+  if (isRtl === undefined) {
+    const { isRtl: _unused, ...scriptWithoutDirection } = script;
+    return scriptWithoutDirection;
+  }
+  return { ...script, isRtl };
 }
 
 function hasValidDisplayName(selection: IOrthography) {

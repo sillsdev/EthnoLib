@@ -240,9 +240,14 @@ export const useLanguageChooser = (
           customDetails: customizableLanguageDetails,
         }) as IOrthography;
         if (resultingOrthography.script) {
-          resultingOrthography.script.isRtl = isRTLScript(
-            resultingOrthography.script.code
-          );
+          const isRtl = isRTLScript(resultingOrthography.script.code);
+          // Leave isRtl off entirely when the direction is unknown (see
+          // isRTLScript) rather than claiming left-to-right.
+          if (isRtl === undefined) {
+            delete resultingOrthography.script.isRtl;
+          } else {
+            resultingOrthography.script.isRtl = isRtl;
+          }
         }
         const tag = createTagFromOrthography(resultingOrthography);
         onSelectionChange(resultingOrthography, tag);
