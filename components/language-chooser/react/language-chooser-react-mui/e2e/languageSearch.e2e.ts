@@ -3,6 +3,7 @@ import {
   clearSearch,
   createPageAndLoadLanguageChooser,
   languageCardTestId,
+  scrollListToLanguageCard,
   search,
 } from "./e2eHelpers";
 
@@ -164,15 +165,16 @@ test.describe("Search", () => {
   });
 
   test("Search with typos gets fuzzy matches", async () => {
-    // Search with a typo for Russian
+    // Search with a typo for Russian. Russian is a fuzzy match that isn't near the top of the
+    // results (an exact substring match like "Belarusian" outranks it), so it can be below the
+    // lazy-rendered window — scroll the list until its card mounts rather than expecting it on
+    // screen immediately.
     await search(page, "rusian");
-    const russianCard = page.getByTestId(languageCardTestId("rus"));
-    await russianCard.scrollIntoViewIfNeeded();
+    const russianCard = await scrollListToLanguageCard(page, "rus");
     await expect(russianCard).toBeVisible();
 
     await search(page, "jxpanese");
-    const japaneseCard = page.getByTestId(languageCardTestId("jpn"));
-    await japaneseCard.scrollIntoViewIfNeeded();
+    const japaneseCard = await scrollListToLanguageCard(page, "jpn");
     await expect(japaneseCard).toBeVisible();
   });
 
