@@ -67,7 +67,7 @@ export interface IOrthography {
 
 // ISO 15924 codes which are placeholders rather than actual scripts, so
 // reading direction is either unknown or not applicable. Zxxx in particular
-// covers 164 languages in our data (mostly sign languages), which have no
+// covers 165 languages in our data (mostly sign languages), which have no
 // written form and therefore no reading direction at all. Intl reports all of
 // these as "ltr", which is a fabricated answer rather than a real one.
 const SCRIPT_CODES_WITH_NO_DIRECTION = new Set([
