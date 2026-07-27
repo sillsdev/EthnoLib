@@ -73,7 +73,8 @@ describe("asyncGetAllLanguageResults", () => {
 
   it("should find languages by autonym", async () => {
     await asyncSearchDoesFindLanguage("нохчийн", "che");
-    await asyncSearchDoesFindLanguage("Kamarakotos", "aoc");
+    // (aoc's autonym "Kamarakotos" was dropped from langtags.json in the API 1.4 update; see BL-15916)
+    await asyncSearchDoesFindLanguage("한국어", "kor");
   });
   it("should find languages by exonym", async () => {
     await asyncSearchDoesFindLanguage("luba-katanga", "lub");
@@ -109,12 +110,15 @@ describe("asyncGetAllLanguageResults", () => {
       "mci"
     );
 
-    // "chorasmian" comes before "ch'orti'"
+    // "ch'orti'" comes before "chorasmian": caa matches "cho" in higher-priority fields
+    // (its autonym "Chortiꞌ" and alternative names) while xco matches only in its exonym
+    // "Chorasmian". (Before the langtags.json API 1.4 update caa's autonym did not begin
+    // with "cho", so this ordering was reversed; see BL-15916.)
     const choQuery = "cho";
     await asyncExpectToComeBefore(
       await asyncGetAllLanguageResults(choQuery),
-      "xco",
-      "caa"
+      "caa",
+      "xco"
     );
   });
   it("should find matches regardless of case", async () => {
@@ -341,6 +345,60 @@ describe("Macrolanguage handling", () => {
     }
     await asyncExpectNoMacrolanguageParentheticals("Swahili");
     await asyncExpectNoMacrolanguageParentheticals("doi");
+  });
+
+  // For a macrolanguage that has a representative individual language, we surface that
+  // individual language by its own ISO 639-3 code (not the macrolanguage code) while still
+  // keeping the macrolanguage itself findable. See macrolanguageNotes.md. These two pairs
+  // (arb/ara and the multi-member gon set) were called out for coverage during the
+  // langtags.json API 1.4 update; see BL-15916.
+  it("should handle representative and member languages of macrolanguages (arb/ara, wsg/esg/gno/gon)", async () => {
+    // Arabic: arb (Standard Arabic) is the representative individual language for the
+    // ara macrolanguage.
+    const arabicResults = await asyncGetAllLanguageResults("Arabic");
+    expect(
+      arabicResults.some((result) => codeMatches(result.iso639_3_code, "ara")),
+      `search for "Arabic" should find the macrolanguage ara`
+    ).toBe(true);
+    const arb = arabicResults.find((result) =>
+      codeMatches(result.iso639_3_code, "arb")
+    );
+    expect(arb).toBeDefined();
+    // We use the individual language subtag, not the canonical macrolanguage subtag "ar".
+    expect(arb?.languageSubtag).toBe("arb");
+    expect(arb?.isRepresentativeForMacrolanguage).toBe(true);
+    expect(arb?.parentMacrolanguage?.iso639_3_code).toBe("ara");
+
+    // Gondi: gon is a macrolanguage with several individual members (wsg, esg, gno, ...);
+    // gno is its representative individual language.
+    const gondiResults = await asyncGetAllLanguageResults("Gondi");
+    for (const code of ["gon", "gno", "wsg", "esg"]) {
+      expect(
+        gondiResults.some((result) => codeMatches(result.iso639_3_code, code)),
+        `search for "Gondi" should find ${code}`
+      ).toBe(true);
+    }
+    const gon = gondiResults.find((result) =>
+      codeMatches(result.iso639_3_code, "gon")
+    );
+    expect(gon?.isMacrolanguage).toBe(true);
+    const gno = gondiResults.find((result) =>
+      codeMatches(result.iso639_3_code, "gno")
+    );
+    expect(gno?.languageSubtag).toBe("gno");
+    expect(gno?.isRepresentativeForMacrolanguage).toBe(true);
+    expect(gno?.parentMacrolanguage?.iso639_3_code).toBe("gon");
+    const wsg = gondiResults.find((result) =>
+      codeMatches(result.iso639_3_code, "wsg")
+    );
+    expect(wsg?.parentMacrolanguage?.iso639_3_code).toBe("gon");
+
+    // Searching the macrolanguage code "gon" also surfaces the individual members.
+    await asyncSearchDoesFindLanguage("gon", "wsg");
+    await asyncSearchDoesFindLanguage("gon", "esg");
+
+    // wsg (Adilabad Gondi) absorbs the retired code "ggo", so searching "ggo" still finds it.
+    await asyncSearchDoesFindLanguage("ggo", "wsg");
   });
 }, 15000);
 
