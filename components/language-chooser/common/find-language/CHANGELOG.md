@@ -1,3 +1,9 @@
+## 0.4.3 (2026-07-27)
+
+### 🩹 Fixes
+
+- report unknown script reading direction instead of guessing left-to-right ([9de4456](https://github.com/sillsdev/EthnoLib/commit/9de4456))
+
 ## 0.4.2 (2026-07-27)
 
 ### 🩹 Fixes

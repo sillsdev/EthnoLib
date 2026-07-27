@@ -1,3 +1,13 @@
+## 0.3.6 (2026-07-27)
+
+### 🩹 Fixes
+
+- report unknown script reading direction instead of guessing left-to-right ([9de4456](https://github.com/sillsdev/EthnoLib/commit/9de4456))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.4.3
+
 ## 0.3.5 (2026-07-27)
 
 ### 🧱 Updated Dependencies

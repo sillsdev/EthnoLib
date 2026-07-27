@@ -1,3 +1,14 @@
+## 0.4.3 (2026-07-27)
+
+### 🩹 Fixes
+
+- report unknown script reading direction instead of guessing left-to-right ([9de4456](https://github.com/sillsdev/EthnoLib/commit/9de4456))
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.4.3
+- Updated @ethnolib/language-chooser-react-hook to 0.3.6
+
 ## 0.4.2 (2026-07-27)
 
 ### 🧱 Updated Dependencies
