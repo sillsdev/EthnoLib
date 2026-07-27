@@ -382,6 +382,22 @@ describe("selected script", () => {
 
     expect(test.viewModel.selectedScript.value?.isRtl).toBe(true);
   });
+
+  it("should leave isRtl unset for a script with no reading direction", () => {
+    // Zxxx means "unwritten", which is how sign languages are tagged. There is
+    // no reading direction to report, so we must not claim left-to-right.
+    const signLanguage: ILanguage = {
+      ...WaataLanguage,
+      scripts: [{ code: "Zxxx", name: "Code for unwritten documents" }],
+    };
+    const test = new TestHelper({ initialLanguages: [signLanguage] });
+
+    test.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+
+    expect(test.viewModel.selectedScript.value?.code).toBe("Zxxx");
+    expect(test.viewModel.selectedScript.value?.isRtl).toBeUndefined();
+    expect(test.viewModel.selectedScript.value).not.toHaveProperty("isRtl");
+  });
 });
 
 describe("creating unlisted language", () => {
@@ -717,10 +733,31 @@ describe("customize language modal", () => {
       },
     });
 
+    // "abc" is not a registered ISO 15924 script, so its reading direction is
+    // unknown and isRtl is left unset. toEqual ignores properties whose value
+    // is undefined, so assert the absence of the key explicitly as well.
     expect(t.viewModel.selectedScript.value).toEqual({
       code: "abc",
       name: "ABC Script",
-      isRtl: false,
+    });
+    expect(t.viewModel.selectedScript.value).not.toHaveProperty("isRtl");
+  });
+
+  it("sets script with reading direction on submit", () => {
+    const t = new TestHelper({ initialLanguages: [NorthernUzbekLanguage] });
+    t.viewModel.listedLanguages.value[0].isSelected.requestUpdate(true);
+
+    t.viewModel.submitCustomizeLanguageModal({
+      script: {
+        code: "Arab",
+        name: "Arabic",
+      },
+    });
+
+    expect(t.viewModel.selectedScript.value).toEqual({
+      code: "Arab",
+      name: "Arabic",
+      isRtl: true,
     });
   });
 

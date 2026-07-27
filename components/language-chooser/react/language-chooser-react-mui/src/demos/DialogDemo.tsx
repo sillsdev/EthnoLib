@@ -126,7 +126,7 @@ export const DialogDemo: React.FunctionComponent<{
                 <br />
                 Script:
                 {selectedValue?.script &&
-                  ` ${selectedValue?.script?.name} (${selectedValue?.script?.isRtl ? "RTL" : "LTR"})`}
+                  ` ${selectedValue?.script?.name} (${selectedValue?.script?.isRtl === undefined ? "direction unknown" : selectedValue?.script?.isRtl ? "RTL" : "LTR"})`}
                 <br />
                 Region: {selectedValue?.customDetails?.region?.name}
                 <br />
