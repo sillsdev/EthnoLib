@@ -1,3 +1,9 @@
+## 0.4.2 (2026-07-27)
+
+### 🩹 Fixes
+
+- BL-15916 Update language data to langtags.json API 1.4 ([49ac28c](https://github.com/sillsdev/EthnoLib/commit/49ac28c))
+
 ## 0.4.1 (2026-07-24)
 
 ### 🩹 Fixes

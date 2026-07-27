@@ -1,3 +1,10 @@
+## 0.4.2 (2026-07-27)
+
+### 🧱 Updated Dependencies
+
+- Updated @ethnolib/find-language to 0.4.2
+- Updated @ethnolib/language-chooser-react-hook to 0.3.5
+
 ## 0.4.1 (2026-07-24)
 
 ### 🧱 Updated Dependencies
