@@ -72,9 +72,12 @@
             <div class="text-base-content/60">Script</div>
             <div>
               {#if orthography.script}
-                {orthography.script.name} ({orthography.script.isRtl
-                  ? "RTL"
-                  : "LTR"})
+                {orthography.script.name} ({orthography.script.isRtl ===
+                undefined
+                  ? "direction unknown"
+                  : orthography.script.isRtl
+                    ? "RTL"
+                    : "LTR"})
               {:else}
                 -
               {/if}
