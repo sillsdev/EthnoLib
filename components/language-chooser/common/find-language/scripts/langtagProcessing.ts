@@ -15,6 +15,7 @@ import {
   stripMacrolanguageParenthetical,
   stripMacrolanguageParentheticalFromAll,
   iso639_1To639_3,
+  isCurrentIsoCode,
 } from "./langtagProcessingHelpers";
 
 import fs from "fs";
@@ -140,6 +141,29 @@ function parseLangtagsJson() {
       if (derivedIso639_3) {
         augmentedEntry.iso639_3 = derivedIso639_3;
       }
+    }
+
+    // langtags.json sometimes keeps a code ISO has since retired in the iso639_3 field even
+    // though the entry's own tag already uses the surviving code, e.g. tag "enm-Latn-IE" with
+    // iso639_3 "yol", or tag "jkp-Zyyy-MM" with iso639_3 "kpp". Filing such an entry under the
+    // retired code creates a second, duplicate card for a language we already list under its
+    // current code. Worse, when the surviving code belongs to a *different* language the
+    // duplicate also inherits the wrong name and subtag: "yol" (Yola) was showing up as
+    // "Middle English (1100-1500) - A language of Ireland" with subtag "enm", which would write
+    // the tag enm onto a collection and slipped past the deliberate enm historic-language
+    // exclusion (see defaultExcludedHistoricLanguages.ts). So when the iso639_3 code is no
+    // longer in iso-639-3.tab but the tag's language subtag is, trust the tag. Entries whose
+    // retired code matches their own tag (e.g. "aoh"/Arma) are left alone - there is no
+    // surviving code to fold them into. See BL-15916.
+    const subtagIso639_3 =
+      iso639_1To639_3[languageSubtag] || languageSubtag;
+    if (
+      augmentedEntry.iso639_3 &&
+      subtagIso639_3 !== augmentedEntry.iso639_3 &&
+      !isCurrentIsoCode(augmentedEntry.iso639_3) &&
+      isCurrentIsoCode(subtagIso639_3)
+    ) {
+      augmentedEntry.iso639_3 = subtagIso639_3;
     }
 
     // If listed with a macrolanguage code, this is a "representative language", we need to identify it by its equivalent

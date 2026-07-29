@@ -622,3 +622,60 @@ describe("canonical tag is first in alternativeTags", () => {
     expect(ojg?.alternativeTags[0].split("-")[0]).toBe("oj");
   });
 });
+
+// langtags.json sometimes keeps a code that ISO has retired in an entry's iso639_3 field even
+// though the entry's own tag already uses the surviving code, e.g. tag "enm-Latn-IE" with
+// iso639_3 "yol". Such an entry must fold into the surviving code rather than becoming a
+// duplicate language of its own. See the comment in scripts/langtagProcessing.ts and BL-15916.
+describe("entries whose langtags iso639_3 code has been retired by ISO", () => {
+  // [retired code, surviving code the tag uses, exonym of the surviving language]
+  const retiredToSurviving = [
+    ["yol", "enm", "Middle English (1100-1500)"], // Yola; the surviving code is a *different* language
+    ["kpp", "jkp", "Paku Karen"],
+    ["jeg", "oyb", "Oy"],
+    ["dek", "sqm", "Suma"],
+    ["tpw", "tpn", "Tupinambá"],
+  ];
+
+  it("should fold into the surviving language instead of becoming a duplicate, and stay findable by the retired code", () => {
+    for (const [retired, surviving, exonym] of retiredToSurviving) {
+      expect(
+        getLanguageBySubtag(retired),
+        `${retired} is retired and should not be a language entry of its own`
+      ).toBeUndefined();
+
+      const survivor = getLanguageBySubtag(surviving);
+      expect(survivor, `${surviving} should be a language entry`).toBeDefined();
+      expect(survivor?.exonym).toBe(exonym);
+      expect(
+        survivor?.alternativeTags,
+        `the retired tag ${retired} should have folded into ${surviving}`
+      ).toContain(retired);
+      expect(
+        searchForLanguage(retired).some((result) =>
+          codeMatches(result.iso639_3_code, surviving)
+        ),
+        `searching the retired code ${retired} should still find ${surviving}`
+      ).toBe(true);
+    }
+  });
+
+  it("should not offer Yola's entry as a selectable Middle English card", () => {
+    // Regression guard for the user-visible symptom: langtags' "enm-Latn-IE" entry (iso639_3
+    // "yol") used to produce a card reading "Middle English (1100-1500) - A language of Ireland"
+    // carrying the subtag enm. That mislabelled Yola, would have written the tag enm onto a
+    // collection, and slipped past the deliberate enm exclusion in
+    // defaultExcludedHistoricLanguages.ts because the entry was keyed "yol".
+    const searchString = "Middle English";
+    const results = defaultSearchResultModifier(
+      searchForLanguage(searchString),
+      searchString
+    );
+    for (const code of ["enm", "yol"]) {
+      expect(
+        results.some((result) => codeMatches(result.iso639_3_code, code)),
+        `${code} should not be offered as a language option`
+      ).toBe(false);
+    }
+  });
+});
