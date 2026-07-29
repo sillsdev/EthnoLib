@@ -24,19 +24,28 @@ export function languageCardTestId(languageCode: string) {
 // time — letting lazyload mount the newly-visible cards — until the requested card exists, then
 // brings it into view. Use this instead of a bare scrollIntoViewIfNeeded when the target card may
 // be below the initially-rendered window (e.g. a fuzzy match that isn't near the top).
+// Results also arrive in batches, so reaching the bottom of the list does NOT mean the card is
+// absent — more results may still be on their way. Sweeping only once and giving up at the bottom
+// made this flaky under load, so keep sweeping from the top until the card mounts or we run out of
+// time, and let the caller's expect() report the failure if it never does.
+//
+// Consequence: this is for asserting a card IS there. Don't use it to assert a card is absent —
+// it deliberately burns the full timeout below before returning an empty locator.
+const SCROLL_FOR_CARD_TIMEOUT_MS = 15000;
 export async function scrollListToLanguageCard(page, isoCode: string) {
   const card = page.getByTestId(languageCardTestId(isoCode));
   const list = page.locator("#language-card-list");
-  for (let i = 0; i < 40; i++) {
-    if ((await card.count()) > 0) break;
-    const movedDown = await list.evaluate((el: HTMLElement) => {
+  const giveUpAt = Date.now() + SCROLL_FOR_CARD_TIMEOUT_MS;
+  while ((await card.count()) === 0 && Date.now() < giveUpAt) {
+    const reachedBottom = await list.evaluate((el: HTMLElement) => {
       const before = el.scrollTop;
       el.scrollBy(0, Math.max(1, el.clientHeight - 40));
-      return el.scrollTop > before;
+      if (el.scrollTop > before) return false;
+      el.scrollTop = 0; // at the bottom; sweep again in case more results have arrived since
+      return true;
     });
     // Let react-lazyload (and any still-streaming search results) render the newly-visible cards.
-    await page.waitForTimeout(150);
-    if (!movedDown) break; // reached the bottom of the list
+    await page.waitForTimeout(reachedBottom ? 300 : 150);
   }
   await card.scrollIntoViewIfNeeded();
   return card;

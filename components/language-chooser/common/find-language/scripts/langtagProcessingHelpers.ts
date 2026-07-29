@@ -246,6 +246,13 @@ export function isMacrolanguage(iso639_3: string) {
   return isoCodesDetails[iso639_3]?.isMacrolanguage || false;
 }
 
+// Is this code listed in the current iso-639-3.tab? Codes that ISO has retired are not,
+// even though langtags.json may still refer to them. (Accepts either an ISO 639-1 or an
+// ISO 639-3 code, since isoCodesDetails is keyed by both.)
+export function isCurrentIsoCode(code: string | undefined) {
+  return !!code && !!isoCodesDetails[code];
+}
+
 //  Internal helper used by langtagProcessing.ts for data cleaning. Assumes `langtag` is a canonical BCP-47 tag
 function defaultScriptForLanguage(
   languageTag: string,
