@@ -1,3 +1,9 @@
+## 0.4.4 (2026-07-29)
+
+### 🩹 Fixes
+
+- BL-15916 don't create duplicate languages from retired ISO 639-3 codes ([fca1c7e](https://github.com/sillsdev/EthnoLib/commit/fca1c7e))
+
 ## 0.4.3 (2026-07-27)
 
 ### 🩹 Fixes
