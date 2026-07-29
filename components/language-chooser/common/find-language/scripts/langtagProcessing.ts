@@ -155,8 +155,15 @@ function parseLangtagsJson() {
     // longer in iso-639-3.tab but the tag's language subtag is, trust the tag. Entries whose
     // retired code matches their own tag (e.g. "aoh"/Arma) are left alone - there is no
     // surviving code to fold them into. See BL-15916.
-    const subtagIso639_3 =
-      iso639_1To639_3[languageSubtag] || languageSubtag;
+    //
+    // Caveat for whoever regenerates this data next: addOrCombineLangtagsEntry does not
+    // overwrite `exonym` on the combine path, so a folded pair keeps whichever entry langtags
+    // happened to list first. For all five current pairs both entries carry the same `name`, so
+    // it makes no difference. But if a future retired/surviving pair had *differing* names and
+    // langtags listed the retired one first, the merged card would inherit the retired
+    // language's name - the very symptom this block exists to prevent. Worth re-checking the
+    // folded entries' exonyms after a langtags update rather than assuming ordering holds.
+    const subtagIso639_3 = iso639_1To639_3[languageSubtag] || languageSubtag;
     if (
       augmentedEntry.iso639_3 &&
       subtagIso639_3 !== augmentedEntry.iso639_3 &&

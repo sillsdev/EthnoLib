@@ -28,6 +28,9 @@ export function languageCardTestId(languageCode: string) {
 // absent — more results may still be on their way. Sweeping only once and giving up at the bottom
 // made this flaky under load, so keep sweeping from the top until the card mounts or we run out of
 // time, and let the caller's expect() report the failure if it never does.
+//
+// Consequence: this is for asserting a card IS there. Don't use it to assert a card is absent —
+// it deliberately burns the full timeout below before returning an empty locator.
 const SCROLL_FOR_CARD_TIMEOUT_MS = 15000;
 export async function scrollListToLanguageCard(page, isoCode: string) {
   const card = page.getByTestId(languageCardTestId(isoCode));
