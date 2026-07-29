@@ -651,11 +651,14 @@ describe("entries whose langtags iso639_3 code has been retired by ISO", () => {
         survivor?.alternativeTags,
         `the retired tag ${retired} should have folded into ${surviving}`
       ).toContain(retired);
+      // Note this is the raw search. For yol/enm in particular the surviving language is then
+      // filtered out by defaultSearchResultModifier (enm is on the historic-language exclusion
+      // list), so a user searching "yol" sees nothing - that is intended, see the next test.
       expect(
         searchForLanguage(retired).some((result) =>
           codeMatches(result.iso639_3_code, surviving)
         ),
-        `searching the retired code ${retired} should still find ${surviving}`
+        `the raw search for retired code ${retired} should still reach ${surviving}`
       ).toBe(true);
     }
   });
@@ -671,7 +674,9 @@ describe("entries whose langtags iso639_3 code has been retired by ISO", () => {
       searchForLanguage(searchString),
       searchString
     );
-    for (const code of ["enm", "yol"]) {
+    // The yol assertion is the one carrying the regression guard; enm is additionally covered by
+    // the historic-language exclusion, so assert both to pin the whole user-visible outcome.
+    for (const code of ["yol", "enm"]) {
       expect(
         results.some((result) => codeMatches(result.iso639_3_code, code)),
         `${code} should not be offered as a language option`
