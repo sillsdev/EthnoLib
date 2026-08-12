@@ -5,18 +5,23 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   CharacterVariantChoices,
   CharacterVariantList,
-  charactersWithVariants,
+  DIGITS,
   filterVariantsForAlphabet,
   hasOldStyleNumerals,
   parseAlphabet,
   readCharacterVariants,
   readCoverageRanges,
+  variantsBeyond,
+  variantsFor,
 } from "@ethnolib/character-variants-react-mui";
 import { Callout } from "./Callout";
+import { DigitShapes } from "./DigitShapes";
 import { DownloadNeededIcon } from "./icons";
 import { missingFromAlphabet } from "./missingCharacters";
-import { NumberShapes, OLD_STYLE_NUMERALS_TAG } from "./NumberShapes";
 import type { FontInfo } from "./types";
+
+/** The digits, as a set, for telling digit shapes from letter shapes. */
+const DIGIT_SET = parseAlphabet(DIGITS);
 
 export interface FontDetailsPaneProps {
   font: FontInfo;
@@ -61,7 +66,6 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   loading,
   sampleSize,
 }) => {
-  const theme = useTheme();
   const installed = font.installed !== false;
   const coverage = useCoverage(fontData, scannedCoverage, postscriptName);
   const alphabetSet = useMemo(() => parseAlphabet(alphabet), [alphabet]);
@@ -82,15 +86,21 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
     }
   }, [fontData, postscriptName]);
 
+  // The letter shapes leave the digits to the digit section below, so that a
+  // font's figures are offered in one place rather than two.
   const shownVariants = useMemo(
-    () => variants && filterVariantsForAlphabet(variants, alphabetSet),
+    () =>
+      variants &&
+      variantsBeyond(
+        filterVariantsForAlphabet(variants, alphabetSet),
+        DIGIT_SET
+      ),
     [variants, alphabetSet]
   );
-  const markedCount = useMemo(
-    () => (variants ? charactersWithVariants(variants, alphabet).size : 0),
-    [variants, alphabet]
+  const digitVariants = useMemo(
+    () => variants && variantsFor(variants, DIGIT_SET),
+    [variants]
   );
-
   // Reading this means walking the font's feature list, so it happens once per
   // font rather than once per render.
   const showsNumberShapes = useMemo(
@@ -102,105 +112,122 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
     <div
       css={css`
         flex: 1;
+        min-height: 0;
         display: flex;
         flex-direction: column;
         padding: 22px 24px;
-        overflow-y: auto;
       `}
     >
-      <Typography
-        variant="h3"
-        css={css`
-          font-size: 20px;
-          font-weight: 400;
-          color: ${theme.palette.text.primary};
-          margin-bottom: 14px;
-        `}
-      >
-        {font.family}
-      </Typography>
-
+      {/*
+        Everything above the buttons scrolls; the buttons themselves stay put. A
+        font with many letter shapes would otherwise push "Use this font" off the
+        bottom of the screen.
+      */}
       <div
         css={css`
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
+          flex: 1;
+          min-height: 0;
+          overflow-y: auto;
         `}
       >
-        {alphabetSet.size > 0 && missing && (
-          <Callout variant={missing.length === 0 ? "ok" : "warn"}>
-            <b>
-              {missing.length === 0
-                ? "Supports your alphabet"
-                : "Missing some of your letters"}
-            </b>
-            {missing.length > 0 && `: ${missing.join(" ")}`}
-            <br />
-            <span
-              css={css`
-                font-family: "${font.family}";
-                font-size: 20px;
-                letter-spacing: 0.8px;
-              `}
-            >
-              {alphabet}
-            </span>
-          </Callout>
-        )}
-
-        <LicenseCallout font={font} />
-
-        {!installed && (
-          <Callout
-            variant="download"
-            action={
-              <Button
-                variant="outlined"
-                color="secondary"
-                size="small"
-                startIcon={<DownloadNeededIcon size={14} />}
-                onClick={() => onDownloadFont?.(font)}
+        {/*
+          No font name here: the sidebar row the user just clicked already says
+          which font this is, and the pane is short of room.
+        */}
+        <div
+          css={css`
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          `}
+        >
+          {alphabetSet.size > 0 && missing && (
+            <Callout variant={missing.length === 0 ? "ok" : "warn"}>
+              <b>
+                {missing.length === 0
+                  ? "Includes the letters of your alphabet"
+                  : "Missing some of your letters"}
+              </b>
+              {missing.length > 0 && `: ${missing.join(" ")}`}
+              <br />
+              <span
+                css={css`
+                  font-family: "${font.family}";
+                  font-size: 20px;
+                  letter-spacing: 0.8px;
+                `}
               >
-                Download this font
-              </Button>
-            }
-          >
-            This font is not on this computer yet.
-            {font.downloadSizeBytes !== undefined &&
-              ` This font is ${(font.downloadSizeBytes / 1_000_000).toFixed(
-                1
-              )} MB.`}
-          </Callout>
+                {alphabet}
+              </span>
+            </Callout>
+          )}
+
+          <LicenseCallout font={font} />
+
+          {!installed && (
+            <Callout
+              variant="download"
+              action={
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  size="small"
+                  startIcon={<DownloadNeededIcon size={14} />}
+                  onClick={() => onDownloadFont?.(font)}
+                >
+                  Download this font
+                </Button>
+              }
+            >
+              This font is not on this computer yet.
+              {font.downloadSizeBytes !== undefined &&
+                ` This font is ${(font.downloadSizeBytes / 1_000_000).toFixed(
+                  1
+                )} MB.`}
+            </Callout>
+          )}
+        </div>
+
+        <Divider
+          css={css`
+            margin: 18px 0 14px;
+          `}
+        />
+
+        {installed ? (
+          <>
+            <LetterShapes
+              font={font}
+              fontData={fontData}
+              postscriptName={postscriptName}
+              alphabet={alphabet}
+              shownVariantCount={shownVariants?.length}
+              choices={choices}
+              onChoicesChange={onChoicesChange}
+              sampleSize={sampleSize}
+            />
+            <DigitShapes
+              fontFamily={font.family}
+              fontData={fontData}
+              postscriptName={postscriptName}
+              hasDigitVariants={!!digitVariants?.length}
+              hasOldStyleNumerals={showsNumberShapes}
+              choices={choices}
+              onChoicesChange={onChoicesChange}
+              sampleSize={sampleSize}
+              css={css`
+                margin-top: 18px;
+              `}
+            />
+          </>
+        ) : (
+          <GhostedLetterShapes shapeCount={shownVariants?.length} />
         )}
       </div>
 
-      <Divider
-        css={css`
-          margin: 18px 0 14px;
-        `}
-      />
-
-      {installed ? (
-        <LetterShapes
-          font={font}
-          fontData={fontData}
-          postscriptName={postscriptName}
-          alphabet={alphabet}
-          hasAlphabet={alphabetSet.size > 0}
-          shownVariantCount={shownVariants?.length}
-          markedCount={markedCount}
-          choices={choices}
-          onChoicesChange={onChoicesChange}
-          sampleSize={sampleSize}
-          showsNumberShapes={showsNumberShapes}
-        />
-      ) : (
-        <GhostedLetterShapes shapeCount={shownVariants?.length} />
-      )}
-
       <div
         css={css`
-          margin-top: auto;
+          flex: none;
           padding-top: 22px;
           display: flex;
           justify-content: flex-end;
@@ -227,25 +254,19 @@ const LetterShapes: React.FunctionComponent<{
   fontData?: ArrayBuffer;
   postscriptName?: string;
   alphabet: string;
-  hasAlphabet: boolean;
   shownVariantCount?: number;
-  markedCount: number;
   choices: CharacterVariantChoices;
   onChoicesChange: (choices: CharacterVariantChoices) => void;
   sampleSize?: number;
-  showsNumberShapes: boolean;
 }> = ({
   font,
   fontData,
   postscriptName,
   alphabet,
-  hasAlphabet,
   shownVariantCount,
-  markedCount,
   choices,
   onChoicesChange,
   sampleSize,
-  showsNumberShapes,
 }) => {
   const theme = useTheme();
   const hasShapes = !!shownVariantCount;
@@ -256,36 +277,23 @@ const LetterShapes: React.FunctionComponent<{
         css={css`
           font-size: 14px;
           font-weight: 500;
-          margin-bottom: 6px;
+          margin-bottom: 10px;
         `}
       >
-        Letter shapes
+        Letter Shape Choices
       </Typography>
 
       {hasShapes ? (
-        <>
-          <Typography
-            variant="body2"
-            css={css`
-              font-size: 12.5px;
-              color: ${theme.palette.text.secondary};
-              margin-bottom: 12px;
-            `}
-          >
-            {hasAlphabet && markedCount > 0
-              ? `${markedCount} of your letters can be drawn more than one way. Pick the ones you want:`
-              : "This font can draw some characters more than one way:"}
-          </Typography>
-          <CharacterVariantList
-            fontFamily={font.family}
-            fontData={fontData}
-            postscriptName={postscriptName}
-            alphabet={alphabet}
-            choices={choices}
-            onChoicesChange={onChoicesChange}
-            sampleSize={sampleSize}
-          />
-        </>
+        <CharacterVariantList
+          fontFamily={font.family}
+          fontData={fontData}
+          postscriptName={postscriptName}
+          alphabet={alphabet}
+          excludeCharacters={DIGITS}
+          choices={choices}
+          onChoicesChange={onChoicesChange}
+          sampleSize={sampleSize}
+        />
       ) : (
         <Typography
           variant="body2"
@@ -298,19 +306,6 @@ const LetterShapes: React.FunctionComponent<{
             ? "No letter-shape options for your alphabet in this font."
             : "Reading this font…"}
         </Typography>
-      )}
-
-      {showsNumberShapes && (
-        <NumberShapes
-          fontFamily={font.family}
-          choice={choices[OLD_STYLE_NUMERALS_TAG] ?? 0}
-          onChoose={(choice) =>
-            onChoicesChange({ ...choices, [OLD_STYLE_NUMERALS_TAG]: choice })
-          }
-          css={css`
-            margin-top: 18px;
-          `}
-        />
       )}
     </div>
   );
@@ -344,7 +339,7 @@ const GhostedLetterShapes: React.FunctionComponent<{
           margin-bottom: 10px;
         `}
       >
-        Letter shapes
+        Letter Shape Choices
       </Typography>
       {shapeCount !== undefined && (
         <Typography

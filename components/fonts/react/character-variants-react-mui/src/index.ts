@@ -6,7 +6,13 @@ export {
   parseAlphabet,
   filterVariantsForAlphabet,
   charactersWithVariants,
+  representativeSample,
+  variantsFor,
+  variantsBeyond,
+  DIGITS,
 } from "./alphabet";
+export { FormTile } from "./FormTile";
+export type { FormTileProps } from "./FormTile";
 export {
   readCharacterVariants,
   readGsubFeatureTags,

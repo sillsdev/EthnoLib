@@ -1,13 +1,17 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { Alert, Typography, useTheme } from "@mui/material";
+import { Alert } from "@mui/material";
 import React, { useMemo, useState } from "react";
 import {
   CharacterVariant,
   readCharacterVariants,
 } from "./readCharacterVariants";
 import { CharacterVariantCard } from "./CharacterVariantCard";
-import { filterVariantsForAlphabet, parseAlphabet } from "./alphabet";
+import {
+  filterVariantsForAlphabet,
+  parseAlphabet,
+  variantsBeyond,
+} from "./alphabet";
 
 export interface CharacterVariantListProps {
   /**
@@ -29,6 +33,11 @@ export interface CharacterVariantListProps {
    * within each variant. Empty means show everything.
    */
   alphabet?: string;
+  /**
+   * Leave out the variants that affect none of these characters — for a caller
+   * showing them in a list of their own, as the font chooser does with the digits.
+   */
+  excludeCharacters?: string;
   /**
    * The form chosen for each feature, by tag: 0 (or absent) for the font's default,
    * or the 1-based alternate. Pass this to control the choices from outside;
@@ -55,12 +64,12 @@ export const CharacterVariantList: React.FunctionComponent<
   fontData,
   postscriptName,
   alphabet = "",
+  excludeCharacters,
   choices,
   onChoicesChange,
-  sampleSize = 28,
+  sampleSize = 32,
   className,
 }) => {
-  const theme = useTheme();
   const [ownChoices, setOwnChoices] = useState<CharacterVariantChoices>({});
   const chosen = choices ?? ownChoices;
 
@@ -82,11 +91,16 @@ export const CharacterVariantList: React.FunctionComponent<
     }
   }, [fontData, postscriptName]);
 
-  const shown = useMemo(
-    () =>
-      variants && filterVariantsForAlphabet(variants, parseAlphabet(alphabet)),
-    [variants, alphabet]
-  );
+  const shown = useMemo(() => {
+    if (!variants) return undefined;
+    const forAlphabet = filterVariantsForAlphabet(
+      variants,
+      parseAlphabet(alphabet)
+    );
+    return excludeCharacters
+      ? variantsBeyond(forAlphabet, parseAlphabet(excludeCharacters))
+      : forAlphabet;
+  }, [variants, alphabet, excludeCharacters]);
 
   if (error) {
     return (
@@ -110,20 +124,13 @@ export const CharacterVariantList: React.FunctionComponent<
 
   return (
     <div className={className}>
-      <Typography
-        variant="body2"
-        css={css`
-          margin-bottom: ${theme.spacing(1)};
-        `}
-      >
-        {`${fontFamily} supports the following letter shapes for your alphabet:`}
-      </Typography>
       <div
         css={css`
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-          gap: ${theme.spacing(2)};
-          align-items: start;
+          display: flex;
+          flex-direction: column;
+          // Enough that a row of tiles reads as one set of choices, now that no
+          // heading separates one feature from the next.
+          gap: 18px;
         `}
       >
         {shown.map((variant: CharacterVariant) => (

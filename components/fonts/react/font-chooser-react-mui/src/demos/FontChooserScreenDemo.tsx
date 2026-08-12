@@ -40,7 +40,7 @@ const theme = createTheme({
     secondary: { main: "#96668f" },
     error: { main: "#d65649" },
     warning: { main: "#f3aa18" },
-    background: { default: "#f1f3f4" },
+    background: { default: "#ffffff" },
   },
   typography: { fontFamily: "Roboto, sans-serif" },
   shape: { borderRadius: 4 },
