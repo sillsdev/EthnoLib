@@ -1,10 +1,10 @@
 {
-  "name": "@ethnolib/character-variants-react-mui",
-  "description": "A MUI styled React component for browsing and choosing a font's OpenType character variants (cvXX)",
+  "name": "@ethnolib/font-chooser-react-mui",
+  "description": "A MUI styled full-screen font chooser React component with license info, alphabet coverage, and character variant picking",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sillsdev/EthnoLib.git",
-    "directory": "components/fonts/react/character-variants-react-mui"
+    "directory": "components/fonts/react/font-chooser-react-mui"
   },
   "publishConfig": {
     "access": "public"
@@ -26,7 +26,9 @@
     "testonce": "nx vite:test --config vitest.config.ts --run",
     "lint": "eslint ."
   },
-  "dependencies": {},
+  "dependencies": {
+    "@ethnolib/character-variants-react-mui": "0.0.1"
+  },
   "devDependencies": {
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",

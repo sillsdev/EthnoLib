@@ -115,13 +115,29 @@ export async function loadLocalFontData(
 export async function loadLocalFontDataByFamily(
   family: string
 ): Promise<ArrayBuffer> {
+  return (await loadLocalFontDataByFamilyWithName(family)).data;
+}
+
+/**
+ * The same, but also saying which face the family name resolved to. Worth having
+ * because the bytes of a face in a collection (.ttc) are the whole collection, so
+ * whoever reads them needs the PostScript name to know which font inside is meant;
+ * see sfntBlob.ts. `loadLocalFontDataByFamily` throws that name away, which is
+ * fine for a caller that only wants to show the font.
+ */
+export async function loadLocalFontDataByFamilyWithName(
+  family: string
+): Promise<{ data: ArrayBuffer; postscriptName: string }> {
   const match = (await queryLocalFontFamilies()).find(
     (f) => f.family === family
   );
   if (!match) {
     throw new Error(`${family} does not seem to be installed on this machine.`);
   }
-  return await loadLocalFontData(match.postscriptName);
+  return {
+    data: await loadLocalFontData(match.postscriptName),
+    postscriptName: match.postscriptName,
+  };
 }
 
 function isRegularStyle(style: string | undefined): boolean {

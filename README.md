@@ -18,6 +18,10 @@ A MUI styled language chooser interface, initially developed for use in [BloomDe
 
 A MUI styled React component for a font's OpenType character variants (`cv01`..`cv99`), intended for use inside a host app's dialog. Early scaffolding, with a demo app for development.
 
+#### [MUI Font Chooser](components/fonts/react/font-chooser-react-mui/README.md)
+
+A MUI styled full-screen font chooser: a font list with license and download status on the left, and a detail pane on the right showing license info, alphabet coverage, and the character variant picker.
+
 #### [Svelte DaisyUI Language Chooser](components/language-chooser/svelte/language-chooser-svelte-daisyui/README.md)
 
 A DaisyUI-styled Svelte language chooser package published as `@ethnolib/language-chooser-svelte-daisyui`. It provides `LanguageChooser` and `LanguageChooserModal` components built on `find-language`, `language-chooser-controller`, and `state-management-svelte`.

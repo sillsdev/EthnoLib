@@ -19,6 +19,12 @@ export interface CharacterVariantListProps {
   /** The bytes of that font, which is where the cvXX information comes from. */
   fontData?: ArrayBuffer;
   /**
+   * Which face those bytes are of. Only matters for a font collection (.ttc),
+   * where the bytes hold several families and this says which one is meant;
+   * without it the first font in the collection answers.
+   */
+  postscriptName?: string;
+  /**
    * Show only the variants that affect these characters, and only those characters
    * within each variant. Empty means show everything.
    */
@@ -47,6 +53,7 @@ export const CharacterVariantList: React.FunctionComponent<
 > = ({
   fontFamily,
   fontData,
+  postscriptName,
   alphabet = "",
   choices,
   onChoicesChange,
@@ -66,11 +73,14 @@ export const CharacterVariantList: React.FunctionComponent<
   const { variants, error } = useMemo(() => {
     if (!fontData) return { variants: undefined, error: undefined };
     try {
-      return { variants: readCharacterVariants(fontData), error: undefined };
+      return {
+        variants: readCharacterVariants(fontData, postscriptName),
+        error: undefined,
+      };
     } catch (e) {
       return { variants: undefined, error: e as Error };
     }
-  }, [fontData]);
+  }, [fontData, postscriptName]);
 
   const shown = useMemo(
     () =>

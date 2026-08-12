@@ -38,7 +38,7 @@ export interface CharacterVariant {
   codePoints: number[];
 }
 
-interface TableEntry {
+export interface TableEntry {
   offset: number;
   length: number;
 }
@@ -46,15 +46,78 @@ interface TableEntry {
 const CV_TAG = /^cv([0-9]{2})$/;
 
 /**
+ * Every feature tag the font's GSUB table declares, e.g. "liga", "onum", "cv01".
+ * Empty for a font with no GSUB. Each tag appears once however many script and
+ * language systems list it.
+ *
+ * `postscriptName` says which font of a collection (.ttc) is meant; see
+ * readTableDirectory.
+ */
+export function readGsubFeatureTags(
+  fontData: ArrayBuffer,
+  postscriptName?: string
+): Set<string> {
+  const view = new DataView(fontData);
+  const gsub = readTableDirectory(view, postscriptName)["GSUB"];
+  return gsub ? readFeatureTags(view, gsub.offset) : new Set<string>();
+}
+
+/**
+ * Whether the font offers old style (text) figures through its "onum" feature.
+ * Some fonts instead ship them as a separate face, or under "pnum"/"tnum" only,
+ * so a false here means "we found no onum", not "this font has none".
+ */
+export function hasOldStyleNumerals(
+  fontData: ArrayBuffer,
+  postscriptName?: string
+): boolean {
+  return readGsubFeatureTags(fontData, postscriptName).has("onum");
+}
+
+/** The feature tags of one GSUB table, given the table's offset in `view`. */
+function readFeatureTags(view: DataView, gsubOffset: number): Set<string> {
+  const tags = new Set<string>();
+  for (const { tag } of featureRecords(view, gsubOffset)) tags.add(tag);
+  return tags;
+}
+
+/**
+ * Walk a GSUB table's FeatureList, yielding each feature's tag and the offset of
+ * its Feature table. The same feature is usually listed once per script/language
+ * system, so tags repeat.
+ */
+function* featureRecords(
+  view: DataView,
+  gsubOffset: number
+): Generator<{ tag: string; featureOffset: number }> {
+  // GSUB header: uint32 version, then Offset16 to the script, feature and lookup lists.
+  const featureListOffset = gsubOffset + view.getUint16(gsubOffset + 6);
+  const featureCount = view.getUint16(featureListOffset);
+
+  for (let i = 0; i < featureCount; i++) {
+    // FeatureRecord: Tag featureTag, Offset16 featureOffset (from the FeatureList).
+    const record = featureListOffset + 2 + i * 6;
+    yield {
+      tag: readTag(view, record),
+      featureOffset: featureListOffset + view.getUint16(record + 4),
+    };
+  }
+}
+
+/**
  * Read the cvXX features out of raw font bytes, sorted by tag.
  * Returns an empty array for a font with no character variants.
  * Throws if the bytes aren't a font we can read.
+ *
+ * `postscriptName` says which font of a collection (.ttc) is meant; see
+ * readTableDirectory.
  */
 export function readCharacterVariants(
-  fontData: ArrayBuffer
+  fontData: ArrayBuffer,
+  postscriptName?: string
 ): CharacterVariant[] {
   const view = new DataView(fontData);
-  const tables = readTableDirectory(view);
+  const tables = readTableDirectory(view, postscriptName);
 
   const gsub = tables["GSUB"];
   if (!gsub) return [];
@@ -66,21 +129,12 @@ export function readCharacterVariants(
   const variants: CharacterVariant[] = [];
   const seen = new Set<string>();
 
-  // GSUB header: uint32 version, then Offset16 to the script, feature and lookup lists.
-  const featureListOffset = gsub.offset + view.getUint16(gsub.offset + 6);
-  const featureCount = view.getUint16(featureListOffset);
-
-  for (let i = 0; i < featureCount; i++) {
-    // FeatureRecord: Tag featureTag, Offset16 featureOffset (from the FeatureList).
-    const record = featureListOffset + 2 + i * 6;
-    const tag = readTag(view, record);
+  for (const { tag, featureOffset } of featureRecords(view, gsub.offset)) {
     const match = CV_TAG.exec(tag);
     if (!match) continue;
-    // The same feature is usually listed once per script/language system.
     if (seen.has(tag)) continue;
     seen.add(tag);
 
-    const featureOffset = featureListOffset + view.getUint16(record + 4);
     // FeatureTable: Offset16 featureParamsOffset, uint16 lookupIndexCount, ...
     // The spec says this offset is measured from the start of the Feature table.
     // (Some old fonts, and the 'size' feature in particular, measure it from the
@@ -139,13 +193,88 @@ function readFeatureParams(
   };
 }
 
-function readTableDirectory(view: DataView): Record<string, TableEntry> {
+/**
+ * Where each table sits in the font. For a collection (.ttc), which of its fonts
+ * we read depends on `postscriptName`: pass the face you actually asked for, or
+ * the first font of the collection is used, which is very likely the wrong family.
+ */
+export function readTableDirectory(
+  view: DataView,
+  postscriptName?: string
+): Record<string, TableEntry> {
   let directory = 0;
   if (readTag(view, 0) === "ttcf") {
-    // A font collection: uint32 version, uint32 numFonts, then Offset32 per font.
-    directory = view.getUint32(12);
+    directory = chooseSubfont(view, postscriptName);
   }
+  return readTableDirectoryAt(view, directory);
+}
 
+/**
+ * The offset of the font we want within a collection. A .ttc holds several
+ * families in one file, and the platform hands us the whole file whichever face we
+ * asked for, so taking the first font means reporting some other family's
+ * characters and features as if they were this one's. We ask each font in turn
+ * what it is called and take the one that answers to the name we asked for.
+ *
+ * ttcf header: Tag, uint16 majorVersion, uint16 minorVersion, uint32 numFonts,
+ * then an Offset32 per font.
+ */
+function chooseSubfont(view: DataView, postscriptName?: string): number {
+  const firstFont = view.getUint32(12);
+  const numFonts = view.getUint32(8);
+  if (!postscriptName || numFonts <= 1) return firstFont;
+
+  let bestOffset = firstFont;
+  let bestScore = 0;
+  for (let i = 0; i < numFonts; i++) {
+    const offset = view.getUint32(12 + i * 4);
+    let score = 0;
+    try {
+      const tables = readTableDirectoryAt(view, offset);
+      if (!tables["name"]) continue;
+      score = scoreSubfontName(
+        readNameTable(view, tables["name"].offset),
+        postscriptName
+      );
+    } catch {
+      continue; // A font in the collection we can't read is one we can't pick.
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestOffset = offset;
+    }
+  }
+  // No font in there admits to the name: the first one is as good a guess as any.
+  return bestOffset;
+}
+
+/**
+ * How well a font's `name` table answers to the name we asked for: its PostScript
+ * name (ID 6) is the one we are given and the one to trust, with the full name
+ * (ID 4) and the family (ID 1) as looser fallbacks. 0 for no match at all.
+ */
+export function scoreSubfontName(
+  names: Map<number, string>,
+  postscriptName: string
+): number {
+  const wanted = normalizeFontName(postscriptName);
+  if (!wanted) return 0;
+  if (normalizeFontName(names.get(6)) === wanted) return 3;
+  if (normalizeFontName(names.get(4)) === wanted) return 2;
+  if (normalizeFontName(names.get(1)) === wanted) return 1;
+  return 0;
+}
+
+// The same font is "NotoSerifCJKjp-Regular" in one field and "Noto Serif CJK JP
+// Regular" in another, so we compare without the spaces and hyphens.
+function normalizeFontName(name: string | undefined): string {
+  return (name ?? "").toLowerCase().replace(/[\s-]/g, "");
+}
+
+function readTableDirectoryAt(
+  view: DataView,
+  directory: number
+): Record<string, TableEntry> {
   const version = readTag(view, directory);
   const isSfnt =
     version === "OTTO" ||
@@ -176,7 +305,10 @@ function readTableDirectory(view: DataView): Record<string, TableEntry> {
  * several platforms/languages, we keep the one an English-speaking user is most
  * likely to want. (Localizing these against the app's UI language is future work.)
  */
-function readNameTable(view: DataView, offset: number): Map<number, string> {
+export function readNameTable(
+  view: DataView,
+  offset: number
+): Map<number, string> {
   const count = view.getUint16(offset + 2);
   const storage = offset + view.getUint16(offset + 4);
 

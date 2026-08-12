@@ -88,10 +88,18 @@ the Local Font Access API. Two props override that for an app with its own idea 
 fonts exist:
 
 - `availableFonts?: string[]` — offer these families instead of the installed ones.
-- `getFontData?: (font: string) => Promise<ArrayBuffer>` — where the bytes come from. The
+- `getFontData?: (font: string) => Promise<FontDataResult>` — where the bytes come from. The
   bytes matter because they are the only place `cvXX` information lives; a family name alone
   tells you nothing about a font's features. An app supplying bytes for a font that isn't
   installed also has to register it (`document.fonts.add`) before CSS can render it.
+
+  A loader may return the bytes on their own, as before, or `{ data, postscriptName }`. The
+  name is worth supplying when the app knows it, because the bytes of a face in a collection
+  (`.ttc`) are the bytes of the whole collection, and only the name says which font inside is
+  meant. `loadLocalFontDataByFamilyWithName` is the built-in loader that returns both, and it is what
+  the component uses by default; `loadLocalFontDataByFamily` still returns bare bytes for a
+  caller that wants them. `useFontData` normalizes either shape and reports the name it got
+  alongside the bytes.
 
 `CharacterVariantList` is the same presentation without the chooser, for an app that already
 has a font picker; it takes `fontFamily` and `fontData` directly.
@@ -106,15 +114,54 @@ has a font picker; it takes `fontFamily` and `fontData` directly.
 | `src/CharacterVariantList.tsx`, `src/CharacterVariantCard.tsx`, `src/FormTile.tsx` | Presentation of the variants themselves                                                                                          |
 | `src/alphabet.ts`                                                                  | Parsing the typed alphabet, and narrowing the variants to it                                                                     |
 | `src/readCharacterVariants.ts`                                                     | Reads the `GSUB` and `name` tables out of raw font bytes to find the `cvXX` features and their labels                            |
+| `src/fontLicense.ts`                                                               | Reads the `name` and OS/2 licence hints out of a font, and sorts them into four rough categories                                 |
+| `src/useFontData.ts`                                                               | The hook behind the component: loads one family's bytes, with a retry for after the font permission is granted                   |
 | `src/localFonts.ts`                                                                | Local Font Access API wrapper (list families, fetch a family's bytes)                                                            |
 | `src/fontCoverage.ts`                                                              | Reads a font's `cmap` to see which characters it actually has                                                                    |
+| `src/sfntBlob.ts`                                                                  | Ranged reads of a font Blob's table directory, and picking the right font out of a `.ttc` collection                             |
 | `src/scanForCharacterVariants.ts`                                                  | The background sweep behind the chooser's ordering: coverage, a cheap "any `cvXX`?" check, then a full read of the few that pass |
 | `src/demos/`, `src/main.tsx`, `index.html`                                         | The demo app; not part of the published package                                                                                  |
+
+## Licence hints
+
+`readLicenseHints` and `classifyLicense` answer, roughly, whether a font looks like one
+the user may pass on with their book: `open` (an OFL-family licence we recognize),
+`system-restricted` (the font asks not to be embedded at all), `limits-apply` (something
+is declared that we can't read as open), or `unknown`. The background sweep runs this over
+every installed family, so a `FamilyScan` carries `license` and `licenseUrl` alongside the
+coverage and variants.
+
+These are hints for a nudge in the UI, not a licence check. The two things a font can tell
+us are free text (`name` IDs 13 and 14, which a foundry fills in however it likes) and the
+OS/2 `fsType` bits, which govern _embedding_ and say nothing about redistributing the font
+file. Where the host app knows something about a font — it shipped it, or its font server
+said so — that outranks anything read here, and it is up to the host app to enforce that
+precedence.
+
+## Tests
+
+`npm run testonce -w @ethnolib/character-variants-react-mui`, or
+`npx vitest run --root components/fonts/react/character-variants-react-mui`. They cover the
+byte-level readers against synthetic fonts built in `src/testFontBuilder.ts`; the React
+side has no tests yet.
+
+## Font parsing
 
 `readCharacterVariants` parses the font itself rather than pulling in opentype.js or
 fontkit, because all it needs is one table walk, and the `cvXX` `FeatureParams` (the
 labels, sample text, and affected characters) aren't exposed by those libraries anyway.
-It understands uncompressed sfnt data: `.ttf`, `.otf`, and the first font of a `.ttc`.
+It understands uncompressed sfnt data: `.ttf`, `.otf`, and `.ttc`.
+
+A `.ttc` needs care. The collection holds several families in one file, and the Local Font
+Access API hands back the whole file whichever face was asked for, so reading the first
+font in it reports some other family's characters, features and licence as this face's —
+which is how a font came to claim it could write an alphabet that it visibly rendered in a
+fallback face. Every reader therefore takes an optional PostScript name
+(`readCoverageRanges(blob, postscriptName)`, `readCharacterVariants(bytes, postscriptName)`,
+and so on) and finds the font in the collection that answers to it, matching on `name` ID 6,
+then ID 4, then ID 1. Omitting the name still reads the first font, so existing callers
+behave as they did — but a caller that knows the face should pass it. The background sweep
+does, since it started from a PostScript name.
 
 ## Not done yet
 
@@ -123,6 +170,8 @@ It understands uncompressed sfnt data: `.ttf`, `.otf`, and the first font of a `
 - Matching an alphabet against a variant when the font declares neither a character list nor
   usable sample text: such variants are dropped, so a font that documents its features poorly
   will look emptier than it is.
+- Showing any of this in the UI beyond the `cvXX` cards: the licence category and
+  `hasOldStyleNumerals` are read and reported, but nothing displays them yet.
 - Localization. The rest of the repo uses lingui; this package has no `Trans` wrappers yet,
   so its handful of English strings are hard-coded.
 - Storybook stories and Playwright e2e tests, both of which the language chooser has.

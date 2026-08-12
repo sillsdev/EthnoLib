@@ -12,26 +12,7 @@
  * it later without going back to the font.
  */
 
-async function readRange(
-  blob: Blob,
-  offset: number,
-  length: number
-): Promise<DataView> {
-  const slice = await blob.slice(offset, offset + length).arrayBuffer();
-  if (slice.byteLength < length) {
-    throw new Error("Font data ends sooner than its own tables claim.");
-  }
-  return new DataView(slice);
-}
-
-function tagAt(view: DataView, offset: number): string {
-  return String.fromCharCode(
-    view.getUint8(offset),
-    view.getUint8(offset + 1),
-    view.getUint8(offset + 2),
-    view.getUint8(offset + 3)
-  );
-}
+import { readRange, readTableOffsets } from "./sfntBlob";
 
 /** How much we prefer a cmap subtable: full Unicode beats BMP beats anything. */
 function encodingScore(platform: number, encoding: number): number {
@@ -63,24 +44,16 @@ class RangeBuilder {
  * The code points a font can render, as packed [start, end] pairs. Empty if the
  * font has no cmap we understand, which we treat as "covers nothing" rather than
  * pretending otherwise.
+ *
+ * Pass `postscriptName` for a face that came out of a collection (.ttc): without
+ * it we read the collection's first font, whose coverage may belong to an entirely
+ * different family.
  */
-export async function readCoverageRanges(blob: Blob): Promise<Uint32Array> {
-  let base = 0;
-  let header = await readRange(blob, 0, 12);
-  if (tagAt(header, 0) === "ttcf") {
-    base = (await readRange(blob, 12, 4)).getUint32(0);
-    header = await readRange(blob, base, 12);
-  }
-  const numTables = header.getUint16(4);
-  const directory = await readRange(blob, base + 12, numTables * 16);
-
-  let cmap = 0;
-  for (let i = 0; i < numTables; i++) {
-    if (tagAt(directory, i * 16) === "cmap") {
-      cmap = directory.getUint32(i * 16 + 8);
-      break;
-    }
-  }
+export async function readCoverageRanges(
+  blob: Blob,
+  postscriptName?: string
+): Promise<Uint32Array> {
+  const cmap = (await readTableOffsets(blob, postscriptName))["cmap"]?.offset;
   if (!cmap) return new Uint32Array();
 
   const subtableCount = (await readRange(blob, cmap + 2, 2)).getUint16(0);
@@ -173,15 +146,25 @@ export function coversCodePoint(
 /**
  * Whether a font can write every character of an alphabet. An empty alphabet is
  * covered by anything, which keeps the caller from having to special-case it.
+ *
+ * Every code point of every entry has to be there. An entry can be more than one
+ * code point — an "e" with a combining acute, a digraph a caller kept together —
+ * and a font that has the base letter but not the mark cannot write it; it renders
+ * the mark from some other font, which is exactly the mismatched look the user
+ * sees. (`parseAlphabet` splits what the user typed into single code points, so
+ * entries from that route have one each, but a host app may hand us whole
+ * graphemes.)
  */
 export function coversAlphabet(
   ranges: Uint32Array,
   alphabet: Set<string>
 ): boolean {
   for (const character of alphabet) {
-    const codePoint = character.codePointAt(0);
-    if (codePoint === undefined) continue;
-    if (!coversCodePoint(ranges, codePoint)) return false;
+    for (const part of character) {
+      const codePoint = part.codePointAt(0);
+      if (codePoint === undefined) continue;
+      if (!coversCodePoint(ranges, codePoint)) return false;
+    }
   }
   return true;
 }

@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterVariants } from "../CharacterVariants";
-import { loadLocalFontDataByFamily } from "../localFonts";
+import { loadLocalFontDataByFamilyWithName } from "../localFonts";
 
 /** Remembers a string in local storage, so the demo opens where you left off. */
 function useRememberedString(
@@ -89,9 +89,13 @@ export const CharacterVariantsDemo: React.FunctionComponent<{
 
   // Exercises the component's escape hatch for an app whose fonts don't come from
   // the machine's installed set.
+  // A font the demo loaded itself is just bytes; an installed one comes with the
+  // name of the face, which is what lets the readers pick the right font out of a
+  // collection (.ttc). Both shapes are allowed, and this exercises each.
   const getFontData = useCallback(async (family: string) => {
     return (
-      ownFonts.current.get(family) ?? (await loadLocalFontDataByFamily(family))
+      ownFonts.current.get(family) ??
+      (await loadLocalFontDataByFamilyWithName(family))
     );
   }, []);
 

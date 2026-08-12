@@ -7,20 +7,55 @@ export {
   filterVariantsForAlphabet,
   charactersWithVariants,
 } from "./alphabet";
-export { readCharacterVariants } from "./readCharacterVariants";
+export {
+  readCharacterVariants,
+  readGsubFeatureTags,
+  hasOldStyleNumerals,
+} from "./readCharacterVariants";
 export type { CharacterVariant } from "./readCharacterVariants";
+export {
+  readLicenseHints,
+  classifyLicense,
+  describeLicense,
+  LICENSE_CLASSIFICATION_VERSION,
+} from "./fontLicense";
+export type {
+  FontLicenseCategory,
+  FontLicenseHints,
+  FontLicenseVerdict,
+} from "./fontLicense";
+export {
+  defaultLicenseCacheStorage,
+  licenseCacheKey,
+  readCachedLicense,
+  readCachedLicenses,
+  writeCachedLicense,
+  pruneLicenseCache,
+} from "./fontLicenseCache";
+export type {
+  CachedFontLicense,
+  LicenseCacheStorage,
+} from "./fontLicenseCache";
+export { useFontData, normalizeFontDataResult } from "./useFontData";
+export type { FontDataResult } from "./useFontData";
 export {
   isLocalFontAccessSupported,
   queryLocalFontFamilies,
   loadLocalFontBlob,
   loadLocalFontData,
   loadLocalFontDataByFamily,
+  loadLocalFontDataByFamilyWithName,
 } from "./localFonts";
 export {
   fontBlobHasCharacterVariants,
+  scanFamiliesForLicense,
   scanFamiliesForCharacterVariants,
 } from "./scanForCharacterVariants";
-export type { FamilyScan } from "./scanForCharacterVariants";
+export type {
+  FamilyLicense,
+  FamilyScan,
+  ScanOptions,
+} from "./scanForCharacterVariants";
 export {
   readCoverageRanges,
   coversCodePoint,

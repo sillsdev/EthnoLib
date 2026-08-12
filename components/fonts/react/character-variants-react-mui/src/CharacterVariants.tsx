@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { Alert, LinearProgress, useTheme } from "@mui/material";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { AlphabetField } from "./AlphabetField";
 import { charactersWithVariants } from "./alphabet";
 import { readCharacterVariants } from "./readCharacterVariants";
@@ -10,7 +10,8 @@ import {
   CharacterVariantList,
 } from "./CharacterVariantList";
 import { FontChooser } from "./FontChooser";
-import { loadLocalFontDataByFamily } from "./localFonts";
+import { loadLocalFontDataByFamilyWithName } from "./localFonts";
+import { FontDataResult, useFontData } from "./useFontData";
 
 export interface CharacterVariantsProps {
   /**
@@ -37,8 +38,12 @@ export interface CharacterVariantsProps {
    * How to get the bytes of a font family, which is the only place the cvXX
    * information lives. Defaults to the Local Font Access API; an app with its own
    * font source (a font server, its own font list) supplies this instead.
+   *
+   * Returning the bytes on their own is still fine. An app that knows which face
+   * it handed over can return `{ data, postscriptName }` instead, which is what
+   * lets us read the right font out of a collection (.ttc).
    */
-  getFontData?: (font: string) => Promise<ArrayBuffer>;
+  getFontData?: (font: string) => Promise<FontDataResult>;
   /**
    * The form chosen for each feature, by tag. Pass this to control the choices from
    * outside; otherwise the component keeps them itself.
@@ -63,52 +68,23 @@ export const CharacterVariants: React.FunctionComponent<
   alphabet = "",
   onAlphabetChange,
   availableFonts,
-  getFontData = loadLocalFontDataByFamily,
+  getFontData = loadLocalFontDataByFamilyWithName,
   choices,
   onChoicesChange,
   sampleSize,
   className,
 }) => {
   const theme = useTheme();
-  const [fontData, setFontData] = useState<ArrayBuffer | undefined>();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | undefined>();
+  const { fontData, postscriptName, loading, error, retry } = useFontData(
+    font,
+    getFontData
+  );
   // Reading a font's bytes needs a permission the page may not have yet, and the
   // browser only grants it off a click. So until the chooser has managed to list
   // the machine's fonts we neither complain about a failed load nor make the user
   // read the browser's wording for it — the chooser's own button says what to do.
-  const [attempt, setAttempt] = useState(0);
   const [fontsListed, setFontsListed] = useState(false);
   const showErrors = !!availableFonts || fontsListed;
-
-  // Held in a ref so that an app passing an inline `getFontData` arrow doesn't
-  // reload the font on every render.
-  const getFontDataRef = useRef(getFontData);
-  getFontDataRef.current = getFontData;
-
-  useEffect(() => {
-    setFontData(undefined);
-    setError(undefined);
-    if (!font) return;
-
-    let stale = false;
-    setLoading(true);
-    getFontDataRef
-      .current(font)
-      .then((data) => {
-        if (!stale) setFontData(data);
-      })
-      .catch((e: Error) => {
-        if (!stale) setError(e.message);
-      })
-      .finally(() => {
-        if (!stale) setLoading(false);
-      });
-    // Ignore a load that finished after the user moved on to another font.
-    return () => {
-      stale = true;
-    };
-  }, [font, attempt]);
 
   // Which alphabet characters to pick out in the field. Recomputed when the field
   // is left rather than as the user types, so the text doesn't shift under them.
@@ -117,13 +93,13 @@ export const CharacterVariants: React.FunctionComponent<
     if (!fontData) return undefined;
     try {
       return charactersWithVariants(
-        readCharacterVariants(fontData),
+        readCharacterVariants(fontData, postscriptName),
         markedAlphabet
       );
     } catch {
       return undefined;
     }
-  }, [fontData, markedAlphabet]);
+  }, [fontData, postscriptName, markedAlphabet]);
 
   return (
     <div className={className}>
@@ -152,18 +128,19 @@ export const CharacterVariants: React.FunctionComponent<
           alphabet={markedAlphabet}
           onFontsListed={() => {
             setFontsListed(true);
-            if (!fontData) setAttempt((n) => n + 1);
+            if (!fontData) retry();
           }}
         />
       </div>
 
       {loading && <LinearProgress />}
-      {error && showErrors && <Alert severity="error">{error}</Alert>}
+      {error && showErrors && <Alert severity="error">{error.message}</Alert>}
 
       {font && (
         <CharacterVariantList
           fontFamily={font}
           fontData={fontData}
+          postscriptName={postscriptName}
           alphabet={alphabet}
           choices={choices}
           onChoicesChange={onChoicesChange}
