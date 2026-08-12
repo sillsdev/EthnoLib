@@ -1,0 +1,50 @@
+{
+  "name": "@ethnolib/character-variants-react-mui",
+  "description": "A MUI styled React component for browsing and choosing a font's OpenType character variants (cvXX)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillsdev/EthnoLib.git",
+    "directory": "components/character-variants/react/character-variants-react-mui"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "SIL Global",
+  "license": "MIT",
+  "version": "0.0.1",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "dev": "vite --open",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit",
+    "prebuild": "npm run typecheck",
+    "build": "nx vite:build",
+    "lint": "eslint ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@emotion/react": "11.14.0",
+    "@emotion/styled": "11.14.1",
+    "@mui/material": "5.18.0",
+    "@types/react": "17.0.88",
+    "@types/react-dom": "17.0.26",
+    "@vitejs/plugin-react-swc": "3.11.0",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "vite-plugin-dts": "4.5.4"
+  },
+  "peerDependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/material": "^5.15.19",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "nx": {},
+  "volta": {
+    "extends": "../../../../package.json"
+  }
+}

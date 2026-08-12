@@ -2,6 +2,7 @@
   "name": "@ethnolib/source",
   "workspaces": [
     "components/state-management/*",
+    "components/character-variants/react/*",
     "components/language-chooser/common/*",
     "components/language-chooser/react/common/*",
     "components/language-chooser/react/*",
