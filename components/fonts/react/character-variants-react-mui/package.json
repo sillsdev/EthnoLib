@@ -4,7 +4,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sillsdev/EthnoLib.git",
-    "directory": "components/character-variants/react/character-variants-react-mui"
+    "directory": "components/fonts/react/character-variants-react-mui"
   },
   "publishConfig": {
     "access": "public"

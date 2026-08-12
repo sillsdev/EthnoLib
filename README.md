@@ -14,7 +14,7 @@ A MUI styled language chooser interface, initially developed for use in [BloomDe
 
 ![dialog](LanguageChooserDialog.png)
 
-#### [MUI Character Variants](components/character-variants/react/character-variants-react-mui/README.md)
+#### [MUI Character Variants](components/fonts/react/character-variants-react-mui/README.md)
 
 A MUI styled React component for a font's OpenType character variants (`cv01`..`cv99`), intended for use inside a host app's dialog. Early scaffolding, with a demo app for development.
 
