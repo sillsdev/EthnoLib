@@ -18,7 +18,8 @@
     "paths": {
       "@ethnolib/character-variants-react-mui": [
         "components/fonts/react/character-variants-react-mui/src/index.ts"
-      ]
+      ],
+      "@ethnolib/font-core": ["components/fonts/common/font-core/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

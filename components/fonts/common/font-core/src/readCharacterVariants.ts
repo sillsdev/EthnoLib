@@ -64,6 +64,38 @@ const CV_TAG = /^cv([0-9]{2})$/;
 // Stylistic sets run ss01..ss20 and no further.
 const SS_TAG = /^ss(0[1-9]|1[0-9]|20)$/;
 
+/**
+ * A feature whose own name says it is about the italic, and so about a face other
+ * than the one we are showing.
+ *
+ * SIL's fonts all carry an ss05 called "Slanted italic specials", and in the roman
+ * face it does nothing a reader could see: it swaps f, i, l, v, z and the accented
+ * a's for a parallel set of `.SItal` glyphs drawn to match the roman, so that the
+ * feature can stay switched on across a run that changes style. Only in the italic
+ * face do those glyphs differ. Offered in the chooser, it draws two identical
+ * letters side by side and asks the user to pick one.
+ *
+ * Matching the font's own words for this is a blunt instrument, but it is the only
+ * signal in the tables that costs nothing to read. Over the 317 named cv/ss features
+ * on one Windows machine's 64 roman faces it matched 7 features, every one of them
+ * SIL's ss05 — nothing else came near it. Two whole words only, so that a
+ * "Cursive l" or an "Italian lira" is left alone.
+ *
+ * Future work: show these rather than drop them. It would take a caller opting in —
+ * an app that knows its text will be set in italic — and tiles drawn in the italic
+ * face, since that is the only place the two shapes differ. A real italic face, at
+ * that: `font-style: italic` over a roman face gives a synthesized slant that still
+ * runs the roman face's GSUB, so both tiles would show the same letter leaning over.
+ * Where the family ships no italic there is nothing to draw and the feature should
+ * stay hidden however the caller asks.
+ *
+ * Matching on the label is also the weak half of this. It is free text, and a font
+ * that labels its features in another language slips through; reading the label off
+ * the italic face and comparing it with the roman's would be sounder, at the cost of
+ * opening a second file.
+ */
+const OTHER_FACE_LABEL = /\b(italic|oblique)\b/i;
+
 /** Whether a feature tag is one of the shape features we show the user. */
 export function isShapeFeatureTag(tag: string): boolean {
   return CV_TAG.test(tag) || SS_TAG.test(tag);
@@ -179,11 +211,16 @@ export function readCharacterVariants(
     const cv = CV_TAG.exec(tag);
     const number = parseInt(tag.slice(2), 10);
 
-    const described = cv
+    const described: Omit<CharacterVariant, "tag" | "number"> = cv
       ? params
         ? readFeatureParams(view, params, names)
         : { parameterLabels: [], characters: [], codePoints: [] }
       : readStylisticSetParams(view, params, names, number);
+
+    // A feature the font's own name puts on another face has nothing to offer here;
+    // see OTHER_FACE_LABEL. Dropped before the redundancy pass below so that it
+    // neither appears nor stands in the way of a set that does apply.
+    if (described.label && OTHER_FACE_LABEL.test(described.label)) continue;
 
     const substitutions = readFeatureSubstitutions(
       view,
@@ -501,8 +538,10 @@ export function scoreSubfontName(
 }
 
 // The same font is "NotoSerifCJKjp-Regular" in one field and "Noto Serif CJK JP
-// Regular" in another, so we compare without the spaces and hyphens.
-function normalizeFontName(name: string | undefined): string {
+// Regular" in another, so we compare without the spaces and hyphens. Exported
+// because it is the comparison for font names everywhere: shape memory and the
+// SLDR sibling-family fallback fold names the same way this file does.
+export function normalizeFontName(name: string | undefined): string {
   return (name ?? "").toLowerCase().replace(/[\s-]/g, "");
 }
 

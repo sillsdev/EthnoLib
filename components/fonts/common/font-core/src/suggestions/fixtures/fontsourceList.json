@@ -1,0 +1,280 @@
+[
+  {
+    "id": "andika",
+    "family": "Andika",
+    "subsets": [
+      "cyrillic",
+      "cyrillic-ext",
+      "latin",
+      "latin-ext",
+      "vietnamese"
+    ],
+    "weights": [
+      400,
+      700
+    ],
+    "styles": [
+      "italic",
+      "normal"
+    ],
+    "defSubset": "latin",
+    "variable": false,
+    "lastModified": "2025-09-10",
+    "category": "sans-serif",
+    "license": "OFL-1.1",
+    "type": "google"
+  },
+  {
+    "id": "noto-sans",
+    "family": "Noto Sans",
+    "subsets": [
+      "cyrillic",
+      "cyrillic-ext",
+      "devanagari",
+      "greek",
+      "greek-ext",
+      "latin",
+      "latin-ext",
+      "vietnamese"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "styles": [
+      "italic",
+      "normal"
+    ],
+    "defSubset": "latin",
+    "variable": true,
+    "lastModified": "2025-09-11",
+    "category": "sans-serif",
+    "license": "OFL-1.1",
+    "type": "google"
+  },
+  {
+    "id": "noto-sans-thai",
+    "family": "Noto Sans Thai",
+    "subsets": [
+      "latin",
+      "latin-ext",
+      "thai"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "styles": [
+      "normal"
+    ],
+    "defSubset": "latin",
+    "variable": true,
+    "lastModified": "2025-09-05",
+    "category": "sans-serif",
+    "license": "OFL-1.1",
+    "type": "google"
+  },
+  {
+    "id": "roboto",
+    "family": "Roboto",
+    "subsets": [
+      "cyrillic",
+      "cyrillic-ext",
+      "greek",
+      "greek-ext",
+      "latin",
+      "latin-ext",
+      "math",
+      "symbols",
+      "vietnamese"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "styles": [
+      "italic",
+      "normal"
+    ],
+    "defSubset": "latin",
+    "variable": true,
+    "lastModified": "2026-02-19",
+    "category": "sans-serif",
+    "license": "OFL-1.1",
+    "type": "google"
+  },
+  {
+    "id": "aclonica",
+    "family": "Aclonica",
+    "subsets": [
+      "latin",
+      "latin-ext"
+    ],
+    "weights": [
+      400
+    ],
+    "styles": [
+      "normal"
+    ],
+    "defSubset": "latin",
+    "variable": false,
+    "lastModified": "2025-09-08",
+    "category": "sans-serif",
+    "license": "Apache-2.0",
+    "type": "google"
+  },
+  {
+    "id": "ubuntu",
+    "family": "Ubuntu",
+    "subsets": [
+      "cyrillic",
+      "cyrillic-ext",
+      "greek",
+      "greek-ext",
+      "latin",
+      "latin-ext"
+    ],
+    "weights": [
+      300,
+      400,
+      500,
+      700
+    ],
+    "styles": [
+      "italic",
+      "normal"
+    ],
+    "defSubset": "latin",
+    "variable": false,
+    "lastModified": "2025-09-02",
+    "category": "sans-serif",
+    "license": "UFL-1.0",
+    "type": "google"
+  },
+  {
+    "id": "aileron",
+    "family": "Aileron",
+    "subsets": [
+      "latin"
+    ],
+    "weights": [
+      100,
+      300,
+      400,
+      600,
+      700,
+      800
+    ],
+    "styles": [
+      "normal",
+      "italic"
+    ],
+    "defSubset": "latin",
+    "variable": false,
+    "lastModified": "2023-05-15",
+    "category": "sans-serif",
+    "license": "CC0-1.0",
+    "type": "other"
+  },
+  {
+    "id": "comic-mono",
+    "family": "Comic Mono",
+    "subsets": [
+      "latin"
+    ],
+    "weights": [
+      400,
+      700
+    ],
+    "styles": [
+      "normal"
+    ],
+    "defSubset": "latin",
+    "variable": false,
+    "lastModified": "2023-05-15",
+    "category": "monospace",
+    "license": "mit",
+    "type": "other"
+  },
+  {
+    "id": "metropolis",
+    "family": "Metropolis",
+    "subsets": [
+      "latin"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "styles": [
+      "normal",
+      "italic"
+    ],
+    "defSubset": "latin",
+    "variable": false,
+    "lastModified": "2023-05-15",
+    "category": "sans-serif",
+    "license": "Unlicense",
+    "type": "other"
+  },
+  {
+    "id": "advent-pro",
+    "family": "Advent Pro",
+    "subsets": [
+      "cyrillic",
+      "cyrillic-ext",
+      "greek",
+      "latin",
+      "latin-ext"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "styles": [
+      "italic",
+      "normal"
+    ],
+    "defSubset": "latin",
+    "variable": true,
+    "lastModified": "2025-09-16",
+    "category": "sans-serif",
+    "license": "OFL-1.1",
+    "type": "google"
+  }
+]

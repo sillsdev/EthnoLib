@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+The repository's real LDML for `maq` (Chiquihuitlán Mazatec), fetched from
+https://ldml.api.sil.org/maq?inc[]=special on 2026-08-13, verbatim apart from
+this comment. It carries what the parser has to deal with: one entry with
+OpenType feature settings and two with none.
+-->
+<ldml>
+	<identity>
+		<version number="0.0.1"/>
+		<generation date="2018-11-20 21:40:00"/>
+		<language type="maq"/>
+		<special xmlns:sil="urn://www.sil.org/ldml/0.1">
+			<sil:identity revid="1f9188eccdd20d6b71d82723bbd185f439d50196" defaultRegion="MX" script="Latn" draft="generated"/>
+		</special>
+	</identity>
+	<special xmlns:sil="urn://www.sil.org/ldml/0.1">
+		<sil:external-resources>
+			<sil:font name="Charis" types="default" features="ss04=1 cv43=2 cv68=1 cv77=1 cv90=1">
+				<sil:url>https://lff.api.languagetechnology.org/family/charis</sil:url>
+			</sil:font>
+			<sil:font name="Noto Sans">
+				<!--types="ui"-->
+				<sil:url>https://github.com/googlefonts/noto-fonts/raw/main/hinted/ttf/NotoSans/NotoSans-Regular.ttf</sil:url>
+			</sil:font>
+			<sil:font name="Noto Serif">
+				<sil:url>https://github.com/googlefonts/noto-fonts/raw/main/hinted/ttf/NotoSerif/NotoSerif-Regular.ttf</sil:url>
+			</sil:font>
+		</sil:external-resources>
+	</special>
+</ldml>

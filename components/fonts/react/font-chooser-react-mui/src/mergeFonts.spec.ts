@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type {
-  FamilyScan,
-  LocalFontFamily,
-} from "@ethnolib/character-variants-react-mui";
+import type { FamilyScan, LocalFontFamily } from "@ethnolib/font-core";
 import { mergeFonts } from "./mergeFonts";
 import type { FontInfo } from "./types";
 
@@ -272,5 +269,16 @@ describe("mergeFonts", () => {
       "Corporate Serif",
       "Marula Text",
     ]);
+  });
+
+  it("puts installed fonts above ones that need downloading", () => {
+    const { main } = mergeFonts({
+      local: [localFamily("Zapfino")],
+      catalog: [
+        { family: "Andika", installed: false },
+        { family: "Yrsa", installed: false },
+      ],
+    });
+    expect(main.map((f) => f.family)).toEqual(["Zapfino", "Andika", "Yrsa"]);
   });
 });

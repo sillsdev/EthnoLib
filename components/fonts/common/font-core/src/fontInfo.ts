@@ -1,0 +1,50 @@
+import type { FontLicenseCategory } from "./fontLicense";
+
+/**
+ * One font the chooser can offer, as the host app knows it. Everything but the
+ * family name is optional: the chooser fills in what it can work out for itself
+ * from the fonts installed on the machine, and what the host says wins over that.
+ */
+export interface FontInfo {
+  family: string;
+  /**
+   * Whether the font is on this machine already. Absent means "we don't know yet",
+   * which the chooser treats as installed once it has seen the font in the
+   * machine's own list. A font the host offers for download passes `false`.
+   */
+  installed?: boolean;
+  /** How big the download is, for a font that isn't here yet. */
+  downloadSizeBytes?: number;
+  /**
+   * What the host knows about the licence. This outranks anything read out of the
+   * font's own bytes, since only the host knows where the font came from.
+   */
+  license?: FontLicenseCategory;
+  licenseUrl?: string;
+  /** A sentence the host wants shown alongside the licence, in its own words. */
+  licenseNotes?: string;
+  /**
+   * Where to fetch the font's own bytes from, for a font that isn't installed. The
+   * chooser reads it the same way it reads an installed font — for coverage, and
+   * for how many letter shapes the download would bring — but downloading the font
+   * onto the machine is still the host's job.
+   */
+  fileUrl?: string;
+  /**
+   * A cut-down font holding only the characters of the family's name, as Google
+   * Fonts serves for menus. Carried through for hosts that want to draw a list
+   * entry in its own face without fetching the whole font.
+   */
+  previewFontUrl?: string;
+  /**
+   * That somebody who knows the language says this font is for it, rather than
+   * our having worked out that its characters happen to cover the alphabet.
+   *
+   * The two are worth telling apart in front of the user. Covering the alphabet is
+   * all a character-by-character check can establish, and it says nothing about
+   * whether the marks land where they should or the letters join up; a
+   * recommendation from language data is a person's answer to the question the
+   * user is actually asking.
+   */
+  supportsLanguage?: boolean;
+}

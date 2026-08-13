@@ -3,16 +3,19 @@ import { css } from "@emotion/react";
 import { Alert, LinearProgress, useTheme } from "@mui/material";
 import React, { useMemo, useState } from "react";
 import { AlphabetField } from "./AlphabetField";
-import { charactersWithVariants } from "./alphabet";
-import { readCharacterVariants } from "./readCharacterVariants";
 import {
   CharacterVariantChoices,
   CharacterVariantList,
 } from "./CharacterVariantList";
 import { FontChooser } from "./FontChooser";
 import type { ShapeInfo } from "./ShapeInfoLine";
-import { loadLocalFontDataByFamilyWithName } from "./localFonts";
-import { FontDataResult, useFontData } from "./useFontData";
+import {
+  charactersWithVariants,
+  FontDataResult,
+  loadLocalFontDataByFamilyWithName,
+  readCharacterVariants,
+  useFontData,
+} from "@ethnolib/font-core";
 
 export interface CharacterVariantsProps {
   /**

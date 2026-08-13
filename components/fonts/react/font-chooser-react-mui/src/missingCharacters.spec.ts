@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { missingFromAlphabet } from "./missingCharacters";
+import {
+  missingFromAlphabet,
+  saysSupportsLanguage,
+} from "./missingCharacters";
 
 /** Packed [start, end] coverage pairs, from the characters a font is to have. */
 function coverageOf(characters: string): Uint32Array {
@@ -36,5 +39,24 @@ describe("missingFromAlphabet", () => {
       "a",
       "b",
     ]);
+  });
+});
+
+describe("saysSupportsLanguage", () => {
+  it("says so when the host recommends the font and nothing is missing", () => {
+    expect(saysSupportsLanguage(true, [])).toBe(true);
+  });
+
+  it("says so before the font's coverage has been read", () => {
+    expect(saysSupportsLanguage(true, undefined)).toBe(true);
+  });
+
+  it("gives way to the missing letters when there are some", () => {
+    expect(saysSupportsLanguage(true, ["ɓ"])).toBe(false);
+  });
+
+  it("claims nothing about a font nobody recommended", () => {
+    expect(saysSupportsLanguage(undefined, [])).toBe(false);
+    expect(saysSupportsLanguage(false, [])).toBe(false);
   });
 });

@@ -104,6 +104,37 @@ fonts exist:
 `CharacterVariantList` is the same presentation without the chooser, for an app that already
 has a font picker; it takes `fontFamily` and `fontData` directly.
 
+## Shape memory: choices that outlive the font
+
+A raw pick like `cv43: 2` means nothing outside the font that defined it — there is no
+standard for what a `cvXX` tag does. What is stable is what the user decided: which
+characters, drawn which way, by the name the font gave that way. `shapeMemory.ts` records
+picks in those terms and matches them against other fonts:
+
+```ts
+import {
+  shapeChoiceFor,     // a pick as a durable fact: { characters: ["ŋ"], formLabel: "capital form", ... }
+  matchShapeChoice,   // what a memory says about one row of the current font
+  rememberShapeChoice // fold a new fact in, replacing the old fact about the same row
+} from "@ethnolib/character-variants-react-mui";
+```
+
+Matching goes by exact case-folded character set, then a same-font tag fast path, then a
+case-folded label match. The SIL fonts (Charis, Doulos, Gentium, Andika) ship identical
+labels for the same shapes, so a pick made in one carries to the others; stylistic-set names
+are trusted only within the font they came from, because different fonts use the same `ssNN`
+name for opposite things. A `formLabel` of `null` is an explicit "the font's own form",
+which is a fact too — it outranks a language default.
+
+`effectiveChoices.ts` combines the three sources of an answer — remembered fact, then a
+language's SLDR-recommended settings (`FontFeatureDefault[]` from `@ethnolib/font-core`),
+then the font's own default — into the choices to apply when a font is opened, with
+per-row provenance (`ChoiceSource`) saying which source won. `effectiveShapeChoiceFor`
+turns the live state into the `EffectiveShapeChoice[]` a host is told about: every row in
+force, in font-independent terms, each tagged with its source. `CharacterVariantList`
+reports each pick's fact through `onShapeChoiceChange` and captions rows with a
+`provenance` prop when given one.
+
 ## What's inside
 
 | File                                                                               | Role                                                                                                                             |

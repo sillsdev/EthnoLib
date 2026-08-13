@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterVariants } from "../CharacterVariants";
-import { loadLocalFontDataByFamilyWithName } from "../localFonts";
+import { loadLocalFontDataByFamilyWithName } from "@ethnolib/font-core";
 
 /** Remembers a string in local storage, so the demo opens where you left off. */
 function useRememberedString(

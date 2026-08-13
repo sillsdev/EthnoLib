@@ -8,7 +8,21 @@
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "types": ["vite/client", "@emotion/react/types/css-prop", "@mui/types"]
+    "types": ["vite/client", "@emotion/react/types/css-prop", "@mui/types"],
+    // The two workspace packages come from the base config, repeated because
+    // `paths` replaces rather than merges. The third is the demo's: without it
+    // `tsc` follows @ethnolib/find-language into its own unchecked sources, which
+    // don't compile clean and are not this package's to fix. See
+    // src/demos/findLanguage.d.ts. Vite resolves the real package at runtime.
+    "paths": {
+      "@ethnolib/character-variants-react-mui": [
+        "components/fonts/react/character-variants-react-mui/src/index.ts"
+      ],
+      "@ethnolib/font-core": ["components/fonts/common/font-core/src/index.ts"],
+      "@ethnolib/find-language": [
+        "components/fonts/react/font-chooser-react-mui/src/demos/findLanguage"
+      ]
+    }
   },
   "files": [],
   "include": [],

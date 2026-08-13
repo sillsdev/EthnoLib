@@ -8,7 +8,7 @@
  * cache, a build-time snapshot) rather than having a policy imposed on it.
  */
 
-import type { FontInfo } from "./types";
+import type { FontInfo } from "./fontInfo";
 
 /** Where the Developer API lives, when the host isn't proxying it. */
 const GOOGLE_FONTS_API = "https://www.googleapis.com/webfonts/v1/webfonts";
@@ -138,7 +138,7 @@ export function guessSubsetsForAlphabet(alphabet: string): string[] {
   for (const character of alphabet) {
     const codePoint = character.codePointAt(0);
     if (codePoint === undefined) continue;
-    if (isIgnorable(codePoint)) continue;
+    if (isIgnorableAlphabetCodePoint(codePoint)) continue;
 
     const subsets = subsetsForCodePoint(codePoint);
     if (!subsets) return [];
@@ -148,8 +148,16 @@ export function guessSubsetsForAlphabet(alphabet: string): string[] {
   return [...found];
 }
 
-/** Spacing, ASCII digits and ASCII punctuation say nothing about the script. */
-function isIgnorable(codePoint: number): boolean {
+/**
+ * Spacing, ASCII digits and ASCII punctuation say nothing about the script.
+ *
+ * Exported because the suggestion providers have to make the same judgement about
+ * the same alphabet: a font that hasn't got a comma is not a font that can't write
+ * the language, and dropping a candidate over one would leave the user with a list
+ * that makes no sense. Two answers to "does this character matter?" would show up
+ * as a font this guess sent us to look for and coverage then rejected.
+ */
+export function isIgnorableAlphabetCodePoint(codePoint: number): boolean {
   if (codePoint <= 0x40) return true; // space, digits, most punctuation
   if (codePoint >= 0x5b && codePoint <= 0x60) return true;
   if (codePoint >= 0x7b && codePoint <= 0xbf) return true; // braces, Latin-1 symbols

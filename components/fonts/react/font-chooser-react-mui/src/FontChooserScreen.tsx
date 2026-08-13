@@ -6,14 +6,26 @@ import {
   CircularProgress,
   LinearProgress,
   Paper,
+  Skeleton,
   Typography,
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   CharacterVariantChoices,
+  allVariantGroups,
+  effectiveChoicesFor,
+  effectiveShapeChoiceFor,
+  findSldrEntry,
+  rememberShapeChoice,
+  type ChoiceSource,
+  type ShapeChoice,
+  type ShapeMemory,
+} from "@ethnolib/character-variants-react-mui";
+import {
   FamilyScan,
   LocalFontFamily,
+  coversAlphabet,
   isLocalFontAccessSupported,
   loadLocalFontDataByFamilyWithName,
   parseAlphabet,
@@ -25,7 +37,7 @@ import {
   scanFamiliesForLicense,
   useFontData,
   writeCachedLicense,
-} from "@ethnolib/character-variants-react-mui";
+} from "@ethnolib/font-core";
 import { FontDetailsPane } from "./FontDetailsPane";
 import { FontList } from "./FontList";
 import { findFont, mergeFonts } from "./mergeFonts";
@@ -53,10 +65,19 @@ export const FontChooserScreen: React.FunctionComponent<
   defaultFont = "",
   choices,
   onChoicesChange,
+  shapeMemory,
+  onShapeMemoryChange,
+  fontFeatureDefaults,
+  onEffectiveShapesChange,
+  debug,
   onDownloadFont,
   onCancel,
   onFontSelected,
   sampleSize,
+  sampleText,
+  customSampleText,
+  onCustomSampleTextChange,
+  loading: hostBusy,
   className,
 }) => {
   const [local, setLocal] = useState<LocalFontFamily[]>([]);
@@ -78,7 +99,53 @@ export const FontChooserScreen: React.FunctionComponent<
     onChoicesChange?.(next);
   };
 
+  const [ownShapeMemory, setOwnShapeMemory] = useState<ShapeMemory>([]);
+  const memory = shapeMemory ?? ownShapeMemory;
+  const rememberShape = (choice: ShapeChoice) => {
+    const next = rememberShapeChoice(memory, choice);
+    if (!shapeMemory) setOwnShapeMemory(next);
+    onShapeMemoryChange?.(next);
+  };
+
+  // Why each row's current form is in force, keyed by row. Always maintained —
+  // it feeds onEffectiveShapesChange — whether or not `debug` shows it. A font
+  // switch replaces the whole map; a pick overwrites its own row's entry.
+  const [provenance, setProvenance] = useState<Record<string, ChoiceSource>>(
+    {}
+  );
+
+  // A host that keeps the user's rewritten sample passes it back; one that doesn't
+  // still lets them rewrite it, for as long as the chooser is open.
+  // ownSample mirrors every change, not just the ones made while the host had
+  // nothing: an echoing host goes back to undefined when the user clears the
+  // box, and a stale ownSample from the first keystroke would shadow that.
+  const [ownSample, setOwnSample] = useState<string | undefined>();
+  const sample = customSampleText ?? ownSample;
+  const changeSample = (next: string | undefined) => {
+    setOwnSample(next);
+    onCustomSampleTextChange?.(next);
+  };
+
   const alphabetSet = useMemo(() => parseAlphabet(alphabet), [alphabet]);
+
+  // A change of language pulls the alphabet out from under the selected font.
+  // A font the user picked stays put while its coverage is merely unknown or
+  // imperfect — see writesTheAlphabet — but that grace is for coverage arriving
+  // after their click, not for a selection outliving the language it was made
+  // for: once the alphabet itself has changed and the font is known not to
+  // write it, keeping it selected shows a font the list would never offer.
+  // Deselecting lets the landing effect below pick a font that can.
+  const alphabetWas = useRef(alphabet);
+  useEffect(() => {
+    if (alphabetWas.current === alphabet) return;
+    alphabetWas.current = alphabet;
+    if (!selection || alphabetSet.size === 0) return;
+    const known = coverage[selection];
+    if (known && !coversAlphabet(known, alphabetSet)) select("");
+    // Only an alphabet change is grounds for this; coverage arriving later for
+    // the font the user is on is the case writesTheAlphabet already protects.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alphabet]);
 
   // What each font can write, from wherever we learned it: the background sweep
   // for installed fonts, and — for a font whose bytes we fetched because the user
@@ -148,6 +215,65 @@ export const FontChooserScreen: React.FunctionComponent<
     !installed && !downloadUrl ? "" : selection,
     loadBytes
   );
+
+  // Every shape row the selected font offers for this alphabet, letters and
+  // digits together — the list that shape memory and the language's defaults
+  // are matched against. The letters/digits split is the pane's display concern.
+  const groups = useMemo(
+    () => allVariantGroups(fontData, postscriptName, alphabet),
+    [fontData, postscriptName, alphabet]
+  );
+
+  // On landing on a font, derive its choices — a remembered fact first, then an
+  // SLDR default, then the font's own form — replacing the previous font's raw
+  // tags outright. The replacement is the point: a cvNN carried across fonts
+  // means something unrelated on the next one, and until now it silently
+  // applied there. The ref keeps this to one derivation per font-and-rows, so
+  // the user's later picks on it aren't stomped — and rows are part of the key
+  // because useFontData keeps the old font's bytes for a grace period on a
+  // switch, so the first derivation for a new font can run against the old
+  // font's rows and has to be done again when its own arrive.
+  const derivedFor = useRef<{ selection: string; groups: unknown }>();
+  useEffect(() => {
+    if (!groups || !selection) return;
+    if (
+      derivedFor.current?.selection === selection &&
+      derivedFor.current?.groups === groups
+    ) {
+      return;
+    }
+    derivedFor.current = { selection, groups };
+    const derived = effectiveChoicesFor(
+      groups,
+      memory,
+      selection,
+      fontFeatureDefaults
+    );
+    changeChoices(derived.choices);
+    setProvenance(derived.provenance);
+    // Memory and defaults changing for their own reasons must not re-derive
+    // and undo the user's in-progress edits; only a new font does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups, selection]);
+
+  // The full effective set, told to the host whenever it changes: on the
+  // derivation above and on every pick.
+  useEffect(() => {
+    if (!groups || !onEffectiveShapesChange) return;
+    onEffectiveShapesChange(
+      groups.map((group) => effectiveShapeChoiceFor(group, chosen, provenance))
+    );
+    // `chosen` is state (or the host's prop) rather than something recreated
+    // per render, so this fires on real changes only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups, chosen, provenance]);
+
+  // A pick is both a durable fact to remember and, immediately, its row's
+  // provenance: the reported set says "your pick" without waiting for anything.
+  const handleShapeChoice = (groupKey: string, choice: ShapeChoice) => {
+    rememberShape(choice);
+    setProvenance((previous) => ({ ...previous, [groupKey]: { kind: "user" } }));
+  };
 
   // Bytes we fetched for the pane answer the coverage question too, and the answer
   // outlives the visit: it is what lets a font the user has looked at drop out of
@@ -351,7 +477,9 @@ export const FontChooserScreen: React.FunctionComponent<
         overflow: hidden;
       `}
     >
-      {nothingToShow ? (
+      {hostBusy ? (
+        <ChooserPlaceholder />
+      ) : nothingToShow ? (
         <div
           css={css`
             flex: 1;
@@ -451,12 +579,94 @@ export const FontChooserScreen: React.FunctionComponent<
                 onUse={() => onFontSelected(selection, chosen)}
                 loading={loading}
                 sampleSize={sampleSize}
+                sampleText={sampleText}
+                customSampleText={sample}
+                onCustomSampleTextChange={changeSample}
+                onShapeChoiceChange={handleShapeChoice}
+                debugProvenance={debug ? provenance : undefined}
+                debugInfo={
+                  debug
+                    ? {
+                        sldrEntry: findSldrEntry(
+                          selection,
+                          fontFeatureDefaults ?? []
+                        ),
+                        shapeMemory: memory,
+                        effectiveShapes: groups?.map((group) =>
+                          effectiveShapeChoiceFor(group, chosen, provenance)
+                        ),
+                      }
+                    : undefined
+                }
               />
             )}
           </div>
         </>
       )}
     </Paper>
+  );
+};
+
+/**
+ * The screen while the host works out what to offer for a language it has just
+ * been given.
+ *
+ * The alternative is what was there before, and that is worse than a blank: the
+ * previous language's fonts, sitting under the new language's name, read as this
+ * language's answer. Placeholders in the shape of the list and the pane say
+ * plainly that the answer is on its way and that this is where it will appear.
+ */
+const ChooserPlaceholder: React.FunctionComponent = () => {
+  const theme = useTheme();
+  return (
+    <>
+      <div
+        aria-hidden
+        css={css`
+          width: 190px;
+          flex: none;
+          border-right: 1px solid ${theme.palette.divider};
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        `}
+      >
+        {Array.from({ length: 12 }, (_, index) => index).map((i) => (
+          // Ragged, the way a list of font names is; all one length reads as a
+          // table rather than as a list still filling in.
+          <Skeleton key={i} variant="text" width={`${55 + ((i * 17) % 40)}%`} />
+        ))}
+      </div>
+      <div
+        role="status"
+        aria-label="Finding fonts"
+        css={css`
+          flex: 1;
+          min-width: 0;
+          padding: 22px 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+        `}
+      >
+        <Skeleton variant="rounded" height={54} />
+        <div>
+          <Skeleton variant="text" width="30%" />
+          <Skeleton variant="text" />
+          <Skeleton variant="text" width="80%" />
+        </div>
+        <div
+          css={css`
+            display: flex;
+            gap: 12px;
+          `}
+        >
+          <Skeleton variant="rounded" width={150} height={76} />
+          <Skeleton variant="rounded" width={150} height={76} />
+        </div>
+      </div>
+    </>
   );
 };
 

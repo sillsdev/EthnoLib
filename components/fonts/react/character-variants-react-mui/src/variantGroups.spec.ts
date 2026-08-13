@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CharacterVariant } from "./readCharacterVariants";
+import { CharacterVariant } from "@ethnolib/font-core";
 import {
   chooseForm,
   chosenForm,
@@ -52,6 +52,7 @@ describe("grouping variants into rows", () => {
       }),
     ]);
     expect(group.label).toBe("Capital Eng");
+    expect(group.characters).toEqual(["Ŋ"]);
     expect(forms(group)).toEqual([
       "cv43 1: Lowercase no descender",
       "cv43 2: Capital form",

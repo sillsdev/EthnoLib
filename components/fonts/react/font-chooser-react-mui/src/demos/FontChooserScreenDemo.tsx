@@ -1,27 +1,62 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import {
+  Button,
   createTheme,
   CssBaseline,
+  Paper,
   ThemeProvider,
   Typography,
 } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { FormControlLabel, Switch } from "@mui/material";
 import {
   AlphabetField,
   CharacterVariantChoices,
+  type ShapeMemory,
 } from "@ethnolib/character-variants-react-mui";
+import {
+  loadLocalFontDataByFamilyWithName,
+  normalizeFontName,
+} from "@ethnolib/font-core";
 import { FontChooserScreen } from "../FontChooserScreen";
-import { fetchGoogleFontsCatalog, notoOnly } from "../googleFonts";
 import type { FontInfo } from "../types";
+import { LanguageChooserDemoDialog } from "./LanguageChooserDemoDialog";
+import { useSuggestedFonts } from "./useSuggestedFonts";
 
-/** Remembers a string in local storage, so the demo opens where you left off. */
+/**
+ * Where the demo starts before anyone has chosen anything: a language with an
+ * alphabet the SLDR knows and letters most fonts don't have, so the first thing
+ * on screen is the interesting case rather than an empty field.
+ */
+const OPENING_LANGUAGE = {
+  tag: "fuv",
+  name: "Fulfulde",
+  script: "Latn",
+};
+
+const ALPHABET_KEY = "fontChooserDemo.alphabet";
+const LANGUAGE_TAG_KEY = "fontChooserDemo.languageTag";
+
+/**
+ * Remembers a string in local storage, so the demo opens where you left off.
+ *
+ * An empty remembered value counts as nothing remembered: a field the user
+ * cleared is not a choice worth reopening on, and the initial value is where the
+ * demo is worth starting.
+ */
 function useRememberedString(
   key: string,
   initial = ""
 ): [string, (value: string) => void] {
   const [value, setValue] = useState(
-    () => localStorage.getItem(key) ?? initial
+    () => localStorage.getItem(key) || initial
   );
   const remember = useCallback(
     (newValue: string) => {
@@ -31,6 +66,58 @@ function useRememberedString(
     [key]
   );
   return [value, remember];
+}
+
+/** Remembers a switch in local storage. An absent key is the initial state. */
+function useRememberedBoolean(
+  key: string,
+  initial = false
+): [boolean, (value: boolean) => void] {
+  const [value, setValue] = useState(() => {
+    const stored = localStorage.getItem(key);
+    return stored === null ? initial : stored === "1";
+  });
+  const remember = useCallback(
+    (next: boolean) => {
+      setValue(next);
+      localStorage.setItem(key, next ? "1" : "0");
+    },
+    [key]
+  );
+  return [value, remember];
+}
+
+/**
+ * The durable shape facts for one language, kept the way a host app would keep
+ * them: per language, since "Ŋ: capital form" is a fact about writing Mazatec,
+ * not about whichever font it was decided on.
+ */
+function useShapeMemory(
+  languageTag: string
+): [ShapeMemory, (memory: ShapeMemory) => void] {
+  const key = `fontChooserDemo.shapeMemory.${languageTag}`;
+  const [memory, setMemory] = useState<ShapeMemory>(() => readShapeMemory(key));
+  // A language change swaps in that language's own remembered shapes.
+  useEffect(() => {
+    setMemory(readShapeMemory(key));
+  }, [key]);
+  const remember = useCallback(
+    (next: ShapeMemory) => {
+      setMemory(next);
+      localStorage.setItem(key, JSON.stringify(next));
+    },
+    [key]
+  );
+  return [memory, remember];
+}
+
+function readShapeMemory(key: string): ShapeMemory {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? "[]") as ShapeMemory;
+  } catch {
+    // A hand-edited local storage value shouldn't take the demo down with it.
+    return [];
+  }
 }
 
 // Bloom's colors, so the screen is seen in something close to where it will live.
@@ -47,109 +134,107 @@ const theme = createTheme({
 });
 
 /**
- * The families worth showing out of the whole Google Fonts catalog: the Noto
- * families, which between them cover nearly every script, and the SIL families
- * this audience already works in.
- */
-const SIL_FAMILIES = [
-  "Andika",
-  "Charis SIL",
-  "Gentium Plus",
-  "Gentium Book Basic",
-  "Doulos SIL",
-];
-
-function worthShowing(family: string): boolean {
-  return notoOnly(family) || SIL_FAMILIES.includes(family);
-}
-
-const CACHE_KEY = "fontChooserDemo.googleFonts";
-const CACHE_LIFETIME_MS = 24 * 60 * 60 * 1000;
-
-/** The key, from the URL if it's there and from the build's env if it isn't. */
-function googleFontsApiKey(): string | undefined {
-  const fromUrl = new URLSearchParams(window.location.search).get(
-    "googleFontsApiKey"
-  );
-  return fromUrl || import.meta.env.VITE_GOOGLE_FONTS_API_KEY || undefined;
-}
-
-/**
- * The Google Fonts catalog, kept in local storage for a day. The API is
- * quota-metered per key and the catalog barely moves, so a demo being reloaded
- * every few seconds has no business asking again each time.
- */
-function useGoogleFonts(apiKey: string | undefined): {
-  fonts?: FontInfo[];
-  error?: string;
-} {
-  const [fonts, setFonts] = useState<FontInfo[] | undefined>();
-  const [error, setError] = useState<string | undefined>();
-
-  useEffect(() => {
-    if (!apiKey) return;
-    const cached = readCache();
-    if (cached) {
-      setFonts(cached);
-      return;
-    }
-    let stale = false;
-    fetchGoogleFontsCatalog({ apiKey, sort: "popularity" })
-      .then((all) => {
-        const kept = all.filter((font) => worthShowing(font.family));
-        if (stale) return;
-        setFonts(kept);
-        writeCache(kept);
-      })
-      .catch((e: Error) => {
-        if (!stale) setError(e.message);
-      });
-    return () => {
-      stale = true;
-    };
-  }, [apiKey]);
-
-  return { fonts, error };
-}
-
-function readCache(): FontInfo[] | undefined {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return undefined;
-    const { at, fonts } = JSON.parse(raw) as { at: number; fonts: FontInfo[] };
-    if (!at || Date.now() - at > CACHE_LIFETIME_MS) return undefined;
-    return fonts;
-  } catch {
-    // A cache we can't read is a cache we don't have.
-    return undefined;
-  }
-}
-
-function writeCache(fonts: FontInfo[]): void {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), fonts }));
-  } catch {
-    // Storage being full or blocked costs the demo a refetch, nothing more.
-  }
-}
-
-/**
- * The demo harness. It stands in for the host app, which owns the alphabet, the
- * chosen font and the letter shapes picked for it.
+ * The demo harness. It stands in for the host app, which owns the language, the
+ * alphabet, the chosen font and the letter shapes picked for it.
+ *
+ * The page is laid out to show that division: the language and the alphabet sit
+ * on the host's own grey chrome, and the chooser below them is drawn as the
+ * dialog box a host app would pop up. The suggestions come from services that
+ * need no API key, so there is nothing to set up.
  */
 export const FontChooserScreenDemo: React.FunctionComponent = () => {
-  const [alphabet, setAlphabet] = useRememberedString(
-    "fontChooserDemo.alphabet",
-    "a b d e ə k l m n ŋ o ɔ p r s u v ɤ w"
+  const [alphabet, setAlphabet] = useRememberedString(ALPHABET_KEY);
+  const [languageTag, setLanguageTag] = useRememberedString(
+    LANGUAGE_TAG_KEY,
+    OPENING_LANGUAGE.tag
   );
+  const [languageName, setLanguageName] = useRememberedString(
+    "fontChooserDemo.languageName",
+    OPENING_LANGUAGE.name
+  );
+  const [languageScript, setLanguageScript] = useRememberedString(
+    "fontChooserDemo.languageScript",
+    OPENING_LANGUAGE.script
+  );
+  const [choosingLanguage, setChoosingLanguage] = useState(false);
   const [font, setFont] = useRememberedString("fontChooserDemo.font");
+  // The user's own version of the sample paragraph, kept the way a host app would
+  // keep it: it is their text, so it outlives the font they were looking at and
+  // the session they typed it in.
+  const [customSample, setCustomSample] = useRememberedString(
+    "fontChooserDemo.sampleText"
+  );
   const [choicesJson, setChoicesJson] = useRememberedString(
     "fontChooserDemo.choices",
     "{}"
   );
   const [lastEvent, setLastEvent] = useState<string | undefined>();
-  const [apiKey] = useState(googleFontsApiKey);
-  const { fonts, error: catalogError } = useGoogleFonts(apiKey);
+  // Off by default: this demo doubles as the reference host, and a real user
+  // gets the plain UI. Remembered so a debugging session survives reloads.
+  const [debug, setDebug] = useRememberedBoolean("fontChooserDemo.debug");
+  // The durable facts the chooser reports, per language. This — not the raw
+  // tag choices below — is what carries a pick from one font to another.
+  const [shapeMemory, setShapeMemory] = useShapeMemory(languageTag);
+
+  const {
+    fonts,
+    loading,
+    sldrAlphabet,
+    sldrChecked,
+    sampleText,
+    fontFeatureDefaults,
+    warning,
+  } = useSuggestedFonts({
+    alphabet,
+    languageTag,
+    languageScript: languageScript || undefined,
+  });
+
+  const { downloaded, downloadFont, getFontData } = useSessionFontDownloads({
+    onEvent: setLastEvent,
+  });
+
+  // A font this session has fetched is, as far as anything drawing text is
+  // concerned, installed: the browser has the face and will render with it. Saying
+  // so is what fills the details pane in — the example, the letter shapes, and the
+  // list row in its own face — without a reload.
+  //
+  // And a font the SLDR names for the language is a recommendation from
+  // somebody who knows it — the same claim the Language Font Finder makes for
+  // its fonts — so it gets the same `supportsLanguage` mark.
+  const offeredFonts = useMemo(() => {
+    const sldrNames = new Set(
+      (fontFeatureDefaults ?? []).map((d) => normalizeFontName(d.fontName))
+    );
+    return fonts?.map((font) => ({
+      ...font,
+      ...(downloaded.has(font.family.toLowerCase())
+        ? { installed: true }
+        : undefined),
+      ...(sldrNames.has(normalizeFontName(font.family))
+        ? { supportsLanguage: true }
+        : undefined),
+    }));
+  }, [fonts, downloaded, fontFeatureDefaults]);
+
+  // The tag whose SLDR answer, when it arrives, is still wanted in the field.
+  // Only a freshly chosen language gets to overwrite what is there, so that edits
+  // the user makes afterwards survive — and a first visit, which has a language
+  // and no alphabet and so should look exactly as though the language had just
+  // been chosen. `null` is "not worked out yet"; `useRef` takes no initializer
+  // function, and reading local storage on every render for an answer that can't
+  // change is not worth it.
+  const wantsPrefillFor = useRef<string | undefined | null>(null);
+  if (wantsPrefillFor.current === null) {
+    wantsPrefillFor.current = localStorage.getItem(ALPHABET_KEY)
+      ? undefined
+      : languageTag;
+  }
+  useEffect(() => {
+    if (!sldrChecked || wantsPrefillFor.current !== languageTag) return;
+    wantsPrefillFor.current = undefined;
+    if (sldrAlphabet) setAlphabet(sldrAlphabet);
+  }, [sldrChecked, sldrAlphabet, languageTag, setAlphabet]);
 
   let choices: CharacterVariantChoices = {};
   try {
@@ -163,76 +248,251 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
       <CssBaseline />
       <div
         css={css`
+          min-height: 100vh;
+          box-sizing: border-box;
+          background-color: ${theme.palette.grey[100]};
           padding: 24px;
-          max-width: 1000px;
-          margin: 0 auto;
           font-family: ${theme.typography.fontFamily};
         `}
       >
-        <Typography
-          variant="h5"
+        <div
+          // Wide enough for the chooser's 840px card and little more, so the
+          // host's own controls line up with the dialog rather than floating
+          // off to one side of it.
           css={css`
-            margin-bottom: 16px;
+            max-width: 880px;
+            margin: 0 auto;
           `}
         >
-          Font Chooser
-        </Typography>
+          <Typography
+            variant="caption"
+            css={css`
+              display: block;
+              margin-bottom: 16px;
+              color: ${theme.palette.text.secondary};
+            `}
+          >
+            Host app supplies the language and alphabet; the dialog below is the
+            @ethnolib/font-chooser-react-mui component.
+          </Typography>
 
-        <AlphabetField
-          value={alphabet}
-          onChange={setAlphabet}
-          fontFamily={font || undefined}
-          css={css`
-            margin-bottom: 20px;
-          `}
-        />
+          <div
+            css={css`
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 12px;
+            `}
+          >
+            <Typography variant="body1">
+              {languageName || "No language chosen"}
+            </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setChoosingLanguage(true)}
+            >
+              Choose…
+            </Button>
+            <FormControlLabel
+              css={css`
+                margin-left: auto;
+                .MuiFormControlLabel-label {
+                  font-size: 12px;
+                  color: ${theme.palette.text.secondary};
+                }
+              `}
+              control={
+                <Switch
+                  size="small"
+                  checked={debug}
+                  onChange={(_, next) => setDebug(next)}
+                />
+              }
+              label="Debug info"
+            />
+          </div>
 
-        <FontChooserScreen
-          alphabet={alphabet}
-          fonts={fonts}
-          selectedFont={font}
-          onSelectedFontChange={setFont}
-          choices={choices}
-          onChoicesChange={(next) => setChoicesJson(JSON.stringify(next))}
-          onDownloadFont={(chosen) => {
-            // No-op this round: downloading is the host app's job, and there is no
-            // host app yet. The demo only shows that the button reaches it.
-            console.log("download requested:", chosen.family);
-            setLastEvent(`download requested: ${chosen.family}`);
-          }}
-          onCancel={() => setLastEvent("cancelled")}
-          onFontSelected={(chosenFont, chosenShapes) =>
-            setLastEvent(
-              `chose ${chosenFont} with ${JSON.stringify(chosenShapes)}`
-            )
-          }
-        />
+          <AlphabetField
+            value={alphabet}
+            onChange={setAlphabet}
+            fontFamily={font || undefined}
+          />
+          <Typography
+            variant="caption"
+            css={css`
+              display: block;
+              margin-bottom: 24px;
+              min-height: 1.4em;
+              color: ${theme.palette.text.secondary};
+            `}
+          >
+            {alphabetCaption()}
+          </Typography>
 
-        {(!apiKey || catalogError) && (
+          {warning && (
+            <Typography
+              variant="body2"
+              css={css`
+                margin-bottom: 16px;
+                color: ${theme.palette.warning.dark};
+              `}
+            >
+              {warning}
+            </Typography>
+          )}
+
+          {/* The chooser draws its own white card; lifting it onto an elevated,
+              rounded surface and dropping that inner card's edge is what makes
+              one dialog box out of the two rather than a card inside a card. */}
+          <Paper
+            elevation={8}
+            css={css`
+              width: fit-content;
+              max-width: 100%;
+              margin: 0 auto;
+              border-radius: 8px;
+              overflow: hidden;
+              & > .MuiPaper-root {
+                box-shadow: none;
+                border-radius: 0;
+              }
+            `}
+          >
+            <FontChooserScreen
+              alphabet={alphabet}
+              fonts={offeredFonts}
+              getFontData={getFontData}
+              sampleText={sampleText}
+              customSampleText={customSample || undefined}
+              onCustomSampleTextChange={(text) => setCustomSample(text ?? "")}
+              loading={loading}
+              selectedFont={font}
+              onSelectedFontChange={setFont}
+              choices={choices}
+              onChoicesChange={(next) => setChoicesJson(JSON.stringify(next))}
+              shapeMemory={shapeMemory}
+              onShapeMemoryChange={setShapeMemory}
+              fontFeatureDefaults={fontFeatureDefaults}
+              debug={debug}
+              onDownloadFont={(chosen) => void downloadFont(chosen)}
+              onCancel={() => setLastEvent("cancelled")}
+              onFontSelected={(chosenFont, chosenShapes) =>
+                setLastEvent(
+                  `chose ${chosenFont} with ${JSON.stringify(chosenShapes)}`
+                )
+              }
+            />
+          </Paper>
+
+          {/* Only once there is an event. A line saying nothing has happened yet
+              is a line about the demo harness, and the page is about the
+              component. */}
           <Typography
             variant="body2"
             css={css`
               margin-top: 12px;
+              min-height: 1.5em;
               color: ${theme.palette.text.secondary};
             `}
           >
-            {apiKey
-              ? `Could not load the Google Fonts catalog: ${catalogError}`
-              : "No Google Fonts key — showing installed fonts only. Add ?googleFontsApiKey=… or VITE_GOOGLE_FONTS_API_KEY in .env.local."}
+            {lastEvent}
           </Typography>
-        )}
 
-        <Typography
-          variant="body2"
-          css={css`
-            margin-top: 12px;
-            min-height: 1.5em;
-            color: ${theme.palette.text.secondary};
-          `}
-        >
-          {lastEvent ?? "No events yet."}
-        </Typography>
+          {choosingLanguage && (
+            <LanguageChooserDemoDialog
+              open={choosingLanguage}
+              initialLanguageTag={languageTag || undefined}
+              onSelected={(tag, name, scriptCode) => {
+                setLanguageTag(tag);
+                setLanguageName(name);
+                setLanguageScript(scriptCode ?? "");
+                // Clear the field so the previous language's letters don't stay
+                // and so there is somewhere for the SLDR's answer to land.
+                setAlphabet("");
+                wantsPrefillFor.current = tag;
+                setChoosingLanguage(false);
+              }}
+              onCancel={() => setChoosingLanguage(false)}
+            />
+          )}
+        </div>
       </div>
     </ThemeProvider>
   );
+
+  function alphabetCaption(): string {
+    if (!languageTag) return "Choose a language to look up its alphabet.";
+    if (!sldrChecked) return `Looking up the alphabet for ${languageTag}…`;
+    if (sldrAlphabet) return "Alphabet from SLDR — edit to adjust";
+    return `No alphabet data for ${languageTag} — type one`;
+  }
 };
+
+/**
+ * The demo's answer to "download this font", and what the chooser is told
+ * afterwards.
+ *
+ * The chooser never touches storage itself — where a font goes and whether it
+ * survives the session are the host app's business, and a browser page has no say
+ * in what is installed on the machine anyway. What a page *can* do is fetch the
+ * file and hand it to the browser as a `FontFace`, which makes the family real for
+ * everything on this page until it is reloaded. Nothing is installed; the user's
+ * machine is untouched.
+ *
+ * The bytes are kept as well as registered, because the chooser reads fonts rather
+ * than only drawing with them: coverage, letter shapes and the digit forms all come
+ * out of the file, and the Local Font Access API — where it answers at all — knows
+ * nothing about a face that only exists in this page's memory.
+ */
+function useSessionFontDownloads({
+  onEvent,
+}: {
+  onEvent: (line: string) => void;
+}) {
+  const [downloaded, setDownloaded] = useState<ReadonlySet<string>>(new Set());
+  // Keyed by family, folded, since that is how the chooser matches families.
+  const bytes = useRef(new Map<string, ArrayBuffer>());
+  const started = useRef(new Set<string>());
+
+  const downloadFont = useCallback(
+    async (font: FontInfo) => {
+      const key = font.family.toLowerCase();
+      // Asking twice is asking once: the second click lands while the first fetch
+      // is still in the air, and `started` is what remembers that.
+      if (started.current.has(key)) return;
+      if (!font.fileUrl) {
+        onEvent(`no download url for ${font.family}`);
+        return;
+      }
+      started.current.add(key);
+      onEvent(`downloading ${font.family}…`);
+      try {
+        const response = await fetch(font.fileUrl);
+        if (!response.ok) {
+          throw new Error(`${response.status} ${response.statusText}`.trim());
+        }
+        const file = await response.arrayBuffer();
+        const face = new FontFace(font.family, file);
+        await face.load();
+        document.fonts.add(face);
+        bytes.current.set(key, file);
+        setDownloaded((previous) => new Set(previous).add(key));
+        onEvent(`downloaded ${font.family} (this session only)`);
+      } catch (error) {
+        started.current.delete(key);
+        const said = error instanceof Error ? error.message : String(error);
+        onEvent(`could not download ${font.family}: ${said}`);
+      }
+    },
+    [onEvent]
+  );
+
+  const getFontData = useCallback(async (family: string) => {
+    const file = bytes.current.get(family.toLowerCase());
+    if (file) return file;
+    return loadLocalFontDataByFamilyWithName(family);
+  }, []);
+
+  return { downloaded, downloadFont, getFontData };
+}

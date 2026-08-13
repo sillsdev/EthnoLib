@@ -119,6 +119,61 @@ describe("stylistic set parameters", () => {
   });
 });
 
+describe("features belonging to another face", () => {
+  // SIL's fonts all carry this one, and in the roman face it redraws f, i, l, v and
+  // z as glyphs that look exactly like the ones they replace.
+  it("drops a set whose name says it is for the italic", () => {
+    const variants = readCharacterVariants(
+      font(
+        [
+          { tag: "ss01", params: buildStylisticSetParams(0x100) },
+          { tag: "ss05", params: buildStylisticSetParams(0x101) },
+        ],
+        {
+          names: [
+            { nameId: 0x100, text: "Single-storey a" },
+            { nameId: 0x101, text: "Slanted italic specials" },
+          ],
+        }
+      )
+    );
+    expect(variants.map((v) => v.tag)).toEqual(["ss01"]);
+  });
+
+  it("drops a cvXX the same way", () => {
+    const variants = readCharacterVariants(
+      font(
+        [
+          {
+            tag: "cv01",
+            params: buildCharacterVariantParams({ labelNameId: 0x100 }),
+          },
+        ],
+        {
+          names: [{ nameId: 0x100, text: "Oblique f" }],
+        }
+      )
+    );
+    expect(variants).toEqual([]);
+  });
+
+  // The match is on whole words, so that a set about a letter shape survives a name
+  // that merely contains the letters.
+  it("keeps a set whose name only looks like it mentions a face", () => {
+    const variants = readCharacterVariants(
+      font([{ tag: "ss02", params: buildStylisticSetParams(0x100) }], {
+        names: [{ nameId: 0x100, text: "Italianate lira sign" }],
+      })
+    );
+    expect(variants.map((v) => v.label)).toEqual(["Italianate lira sign"]);
+  });
+
+  it("keeps an unnamed set, having nothing to go on", () => {
+    const variants = readCharacterVariants(font(["ss05"]));
+    expect(variants.map((v) => v.tag)).toEqual(["ss05"]);
+  });
+});
+
 describe("characters derived from the substitutions", () => {
   it("reads them from a single substitution's coverage", () => {
     const variants = readCharacterVariants(

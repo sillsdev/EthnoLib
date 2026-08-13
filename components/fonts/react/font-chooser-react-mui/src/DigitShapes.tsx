@@ -2,9 +2,11 @@ import React from "react";
 import {
   CharacterVariantChoices,
   CharacterVariantList,
-  DIGITS,
   ShapeInfo,
+  type ChoiceSource,
+  type ShapeChoice,
 } from "@ethnolib/character-variants-react-mui";
+import { DIGITS } from "@ethnolib/font-core";
 import { SectionHeading } from "./SectionHeading";
 
 export interface DigitShapesProps {
@@ -19,6 +21,10 @@ export interface DigitShapesProps {
   hasDigitVariants: boolean;
   choices: CharacterVariantChoices;
   onChoicesChange: (choices: CharacterVariantChoices) => void;
+  /** See CharacterVariantList: the durable fact behind every pick. */
+  onShapeChoiceChange?: (groupKey: string, choice: ShapeChoice) => void;
+  /** See CharacterVariantList: why each row's form is in force, for captions. */
+  provenance?: Record<string, ChoiceSource>;
   sampleSize?: number;
   /** Told what the tile under the pointer is, and told null when it leaves. */
   onHoverChange?: (info: ShapeInfo | null) => void;
@@ -38,6 +44,8 @@ export const DigitShapes: React.FunctionComponent<DigitShapesProps> = ({
   hasDigitVariants,
   choices,
   onChoicesChange,
+  onShapeChoiceChange,
+  provenance,
   sampleSize,
   onHoverChange,
   className,
@@ -55,6 +63,8 @@ export const DigitShapes: React.FunctionComponent<DigitShapesProps> = ({
         alphabet={DIGITS}
         choices={choices}
         onChoicesChange={onChoicesChange}
+        onShapeChoiceChange={onShapeChoiceChange}
+        provenance={provenance}
         sampleSize={sampleSize}
         onHoverChange={onHoverChange}
       />

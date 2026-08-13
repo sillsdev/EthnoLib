@@ -4,6 +4,7 @@ import { alpha, useTheme } from "@mui/material";
 import React from "react";
 import { DEFAULT_SAMPLE_SIZE, FormTile, scaledPx } from "./FormTile";
 import type { ShapeInfo } from "./ShapeInfoLine";
+import type { ChoiceSource } from "./effectiveChoices";
 import type { VariantForm, VariantGroup } from "./variantGroups";
 
 /** The row's spacing, as multiples of the sample glyph's size. See FormTile.tsx. */
@@ -28,6 +29,13 @@ export const CharacterVariantCard: React.FunctionComponent<{
   onChoose: (form?: VariantForm) => void;
   /** Told what the tile under the pointer is, and told null when it leaves. */
   onHoverChange?: (info: ShapeInfo | null) => void;
+  /**
+   * Why the row's current form is in force, when a caller tracks that. The card
+   * captions anything that isn't the plain font default — a remembered pick, a
+   * language default — and stays silent otherwise: a "font default" badge on
+   * every untouched row would be noise.
+   */
+  provenance?: ChoiceSource;
 }> = ({
   group,
   fontFamily,
@@ -35,9 +43,11 @@ export const CharacterVariantCard: React.FunctionComponent<{
   chosen,
   onChoose,
   onHoverChange,
+  provenance,
 }) => {
   const theme = useTheme();
   const primary = theme.palette.primary.main;
+  const caption = provenance && provenanceCaption(provenance);
   // The row's own spacing is in the same currency as the tiles': multiples of the
   // sample's size, so one number sizes the whole control.
   const size = sampleSize ?? DEFAULT_SAMPLE_SIZE;
@@ -87,6 +97,39 @@ export const CharacterVariantCard: React.FunctionComponent<{
           onClick={() => onChoose(form)}
         />
       ))}
+      {caption && (
+        <div
+          css={css`
+            /* Its own line under the tiles: the card is a wrapping flex row,
+               and full width is what puts a child on the next one. */
+            width: 100%;
+            font-size: ${scaledPx(size, 0.3)};
+            color: ${theme.palette.text.secondary};
+          `}
+        >
+          {caption}
+        </div>
+      )}
     </div>
   );
 };
+
+/** What to say about the source, or nothing for the plain font default. */
+function provenanceCaption(source: ChoiceSource): string | undefined {
+  switch (source.kind) {
+    case "user":
+      return "your pick";
+    case "remembered":
+      return source.fromFont
+        ? `remembered (from ${source.fromFont})`
+        : "remembered";
+    case "remembered-default":
+      return "remembered: font default";
+    case "sldr":
+      return source.fromFont
+        ? `SLDR default (from ${source.fromFont})`
+        : "SLDR default";
+    case "font-default":
+      return undefined;
+  }
+}

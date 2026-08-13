@@ -13,9 +13,3 @@ export {
   writesTheAlphabet,
 } from "./mergeFonts";
 export type { MergeFontsInput, MergedFonts } from "./mergeFonts";
-export {
-  fetchGoogleFontsCatalog,
-  guessSubsetsForAlphabet,
-  notoOnly,
-} from "./googleFonts";
-export type { GoogleFontsOptions } from "./googleFonts";

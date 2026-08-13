@@ -10,16 +10,15 @@ import {
 } from "@mui/material";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  coversAlphabet,
+  FamilyScan,
+  filterVariantsForAlphabet,
   isLocalFontAccessSupported,
   LocalFontFamily,
+  parseAlphabet,
   queryLocalFontFamilies,
-} from "./localFonts";
-import {
-  FamilyScan,
   scanFamiliesForCharacterVariants,
-} from "./scanForCharacterVariants";
-import { filterVariantsForAlphabet, parseAlphabet } from "./alphabet";
-import { coversAlphabet } from "./fontCoverage";
+} from "@ethnolib/font-core";
 
 export interface FontChooserProps {
   /** The font family currently chosen; "" for none. */

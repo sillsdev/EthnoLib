@@ -7,11 +7,8 @@
  * the host's word beats the font's own bytes, which beat nothing at all.
  */
 
-import { coversAlphabet } from "@ethnolib/character-variants-react-mui";
-import type {
-  FamilyScan,
-  LocalFontFamily,
-} from "@ethnolib/character-variants-react-mui";
+import { coversAlphabet } from "@ethnolib/font-core";
+import type { FamilyScan, LocalFontFamily } from "@ethnolib/font-core";
 import type { FontInfo } from "./types";
 
 export interface MergeFontsInput {
@@ -101,6 +98,19 @@ function byFamily(a: FontInfo, b: FontInfo): number {
 }
 
 /**
+ * Fonts already on the machine first, then the ones that would have to be fetched;
+ * alphabetical within each. A font the user can use right now is worth more to them
+ * than one they would have to wait for, and interleaving the two by name buries the
+ * usable ones among downloads.
+ */
+function byReadinessThenFamily(a: FontInfo, b: FontInfo): number {
+  const aReady = a.installed !== false;
+  const bReady = b.installed !== false;
+  if (aReady !== bReady) return aReady ? -1 : 1;
+  return byFamily(a, b);
+}
+
+/**
  * One list of fonts, split into the ones to show and the ones to tuck away.
  *
  * Families are matched case-insensitively, since a catalog written by hand won't
@@ -141,12 +151,17 @@ export function mergeFonts(input: MergeFontsInput): MergedFonts {
     });
   }
 
-  const all = [...merged.values()]
-    .filter((font) => writesTheAlphabet(font, input))
-    .sort(byFamily);
+  const all = [...merged.values()].filter((font) =>
+    writesTheAlphabet(font, input)
+  );
   return {
-    main: all.filter((font) => !isClosedLicense(font.license)),
-    closed: all.filter((font) => isClosedLicense(font.license)),
+    // The main list is the one the user reads down, so it leads with what they can
+    // use immediately. The closed group is a place people go looking for a
+    // particular font, so it stays plainly alphabetical.
+    main: all
+      .filter((font) => !isClosedLicense(font.license))
+      .sort(byReadinessThenFamily),
+    closed: all.filter((font) => isClosedLicense(font.license)).sort(byFamily),
   };
 }
 

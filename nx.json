@@ -66,6 +66,7 @@
       "@ethnolib/state-management-core",
       "@ethnolib/state-management-react",
       "@ethnolib/state-management-svelte",
+      "@ethnolib/font-core",
       "@ethnolib/character-variants-react-mui",
       "@ethnolib/font-chooser-react-mui"
     ]

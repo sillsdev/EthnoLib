@@ -27,11 +27,13 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@ethnolib/character-variants-react-mui": "0.0.1"
+    "@ethnolib/character-variants-react-mui": "0.0.1",
+    "@ethnolib/font-core": "0.0.1"
   },
   "devDependencies": {
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
+    "@ethnolib/language-chooser-react-mui": "0.4.4",
     "@mui/material": "5.18.0",
     "@types/react": "17.0.88",
     "@types/react-dom": "17.0.26",

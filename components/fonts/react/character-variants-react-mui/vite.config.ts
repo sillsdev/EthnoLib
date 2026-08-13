@@ -40,6 +40,7 @@ export default defineConfig({
         "@emotion/react",
         // Externalizing "@emotion/styled" broke the language chooser package
         // (we never figured out why), so we leave it bundled here too.
+        "@ethnolib/font-core",
         "@mui/material",
         "react",
         "react-dom",

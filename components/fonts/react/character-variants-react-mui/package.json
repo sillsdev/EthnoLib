@@ -26,7 +26,9 @@
     "testonce": "nx vite:test --config vitest.config.ts --run",
     "lint": "eslint ."
   },
-  "dependencies": {},
+  "dependencies": {
+    "@ethnolib/font-core": "0.0.1"
+  },
   "devDependencies": {
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",

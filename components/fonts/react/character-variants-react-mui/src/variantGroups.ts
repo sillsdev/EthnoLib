@@ -26,8 +26,11 @@
  * drawn?" and must not be made to compete with the cvXX that is.
  */
 
-import { affectedCharacters, representativeSample } from "./alphabet";
-import { CharacterVariant } from "./readCharacterVariants";
+import {
+  affectedCharacters,
+  representativeSample,
+  type CharacterVariant,
+} from "@ethnolib/font-core";
 
 /** Which form of each feature is chosen, keyed by tag ("cv07"). */
 export type CharacterVariantChoices = Record<string, number>;
@@ -52,6 +55,12 @@ export interface VariantGroup {
   label: string;
   /** Every feature the row covers, so that picking one form clears the others. */
   tags: string[];
+  /**
+   * The characters the row is about, as the font and alphabet gave them — the
+   * set the variants were grouped on. This is the row's font-independent
+   * identity, which is what shape memory matches on (see shapeMemory.ts).
+   */
+  characters: string[];
   /** The alternates, in the order the tiles go in after the default. */
   forms: VariantForm[];
 }
@@ -85,6 +94,9 @@ export function groupVariants(variants: CharacterVariant[]): VariantGroup[] {
       sample,
       label: labelOf(sample, together),
       tags: together.map(({ tag }) => tag),
+      // Every variant here shares this set by construction: it is the map key
+      // they were grouped on.
+      characters: affectedCharacters(together[0]),
       forms: together.flatMap((variant) =>
         formsOf(variant, together.length === 1)
       ),

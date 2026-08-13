@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import type { FontInfo } from "./types";
 import {
   AlertCircleIcon,
+  CheckCircleIcon,
   ChevronIcon,
   DownloadNeededIcon,
   UnknownRulesIcon,
@@ -242,6 +243,15 @@ const StatusIcons: React.FunctionComponent<{ font: FontInfo }> = ({ font }) => {
         flex: none;
       `}
     >
+      {/* A person's recommendation, not our character-by-character check —
+          the same distinction the details pane draws. See
+          FontInfo.supportsLanguage. */}
+      {font.supportsLanguage && (
+        <CheckCircleIcon
+          color={theme.palette.primary.main}
+          title="Recommended for your language"
+        />
+      )}
       {font.installed === false && (
         <DownloadNeededIcon
           color={theme.palette.secondary.main}

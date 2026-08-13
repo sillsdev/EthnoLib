@@ -2,15 +2,15 @@
 import { css } from "@emotion/react";
 import { Alert } from "@mui/material";
 import React, { useMemo, useState } from "react";
-import { readCharacterVariants } from "./readCharacterVariants";
 import { CharacterVariantCard } from "./CharacterVariantCard";
 import { DEFAULT_SAMPLE_SIZE, scaledPx } from "./FormTile";
 import type { ShapeInfo } from "./ShapeInfoLine";
 import {
   filterVariantsForAlphabet,
   parseAlphabet,
+  readCharacterVariants,
   variantsBeyond,
-} from "./alphabet";
+} from "@ethnolib/font-core";
 import {
   chooseForm,
   chosenForm,
@@ -19,6 +19,8 @@ import {
   type VariantForm,
   type VariantGroup,
 } from "./variantGroups";
+import { shapeChoiceFor, type ShapeChoice } from "./shapeMemory";
+import type { ChoiceSource } from "./effectiveChoices";
 
 export interface CharacterVariantListProps {
   /**
@@ -52,6 +54,21 @@ export interface CharacterVariantListProps {
    */
   choices?: CharacterVariantChoices;
   onChoicesChange?: (choices: CharacterVariantChoices) => void;
+  /**
+   * Told the font-independent fact behind every pick — which characters, which
+   * form by name (see shapeMemory.ts) — so a caller can remember it across
+   * fonts, and told which row it belongs to (`VariantGroup.key`) so a caller
+   * tracking rows needn't re-match. Fired for every pick, a return to the
+   * font's own form included: that too is a decision worth remembering.
+   */
+  onShapeChoiceChange?: (groupKey: string, choice: ShapeChoice) => void;
+  /**
+   * Why each row's current form is in force, keyed by `VariantGroup.key` — a
+   * caller that derives choices from remembered facts or language defaults
+   * says so here, and each card captions itself with it. Rows without an entry,
+   * and rows resting on the font's own form, caption nothing.
+   */
+  provenance?: Record<string, ChoiceSource>;
   /** Font size, in px, for the glyph samples. `<FormTile>` sets the default. */
   sampleSize?: number;
   /**
@@ -80,6 +97,8 @@ export const CharacterVariantList: React.FunctionComponent<
   excludeCharacters,
   choices,
   onChoicesChange,
+  onShapeChoiceChange,
+  provenance,
   // No default here. It used to be 32, which quietly beat the one in FormTile and
   // made that one dead code — so changing the size in the obvious place did
   // nothing. The tile owns its own size; everything above it only passes a size on.
@@ -94,6 +113,7 @@ export const CharacterVariantList: React.FunctionComponent<
     const next = chooseForm(chosen, group, form);
     if (!choices) setOwnChoices(next);
     onChoicesChange?.(next);
+    onShapeChoiceChange?.(group.key, shapeChoiceFor(fontFamily, group, form));
   };
 
   const { variants, error } = useMemo(() => {
@@ -167,6 +187,7 @@ export const CharacterVariantList: React.FunctionComponent<
             chosen={chosenForm(group, chosen)}
             onChoose={(form) => choose(group, form)}
             onHoverChange={onHoverChange}
+            provenance={provenance?.[group.key]}
           />
         ))}
       </div>

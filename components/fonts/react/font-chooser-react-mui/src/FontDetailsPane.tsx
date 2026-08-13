@@ -5,24 +5,29 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   CharacterVariantChoices,
   CharacterVariantList,
+  groupVariants,
+  ShapeInfo,
+  ShapeInfoLine,
+  type ChoiceSource,
+  type ShapeChoice,
+} from "@ethnolib/character-variants-react-mui";
+import {
   DIGITS,
   filterVariantsForAlphabet,
-  groupVariants,
   parseAlphabet,
   readCharacterVariants,
   readCoverageRanges,
-  ShapeInfo,
-  ShapeInfoLine,
   variantsBeyond,
   variantsFor,
-} from "@ethnolib/character-variants-react-mui";
+} from "@ethnolib/font-core";
 import { Callout } from "./Callout";
 import { DigitShapes } from "./DigitShapes";
+import { SampleTextSection } from "./SampleTextSection";
 import { SectionHeading } from "./SectionHeading";
 import { generateExampleText } from "./exampleText";
 import { featureSettingsFor } from "./featureSettings";
 import { DownloadNeededIcon } from "./icons";
-import { missingFromAlphabet } from "./missingCharacters";
+import { missingFromAlphabet, saysSupportsLanguage } from "./missingCharacters";
 import { scrollbarCss } from "./scrollbarStyle";
 import type { FontInfo } from "./types";
 
@@ -52,6 +57,31 @@ export interface FontDetailsPaneProps {
   /** True while the font's bytes are still on their way. */
   loading?: boolean;
   sampleSize?: number;
+  /**
+   * Real writing in the user's own language, for the sample paragraph. Without it
+   * the sample is made up out of the alphabet, and says so.
+   */
+  sampleText?: string;
+  /** What the user has typed over the sample, if they have. */
+  customSampleText?: string;
+  onCustomSampleTextChange?: (text: string | undefined) => void;
+  /**
+   * Told the font-independent fact behind every shape pick, letters and digits
+   * alike, with the row it belongs to. See CharacterVariantList.
+   */
+  onShapeChoiceChange?: (groupKey: string, choice: ShapeChoice) => void;
+  /**
+   * Why each row's current form is in force, keyed by row, for captioning the
+   * shape cards. A caller showing debug information passes it; otherwise the
+   * cards stay uncluttered.
+   */
+  debugProvenance?: Record<string, ChoiceSource>;
+  /**
+   * Whatever else the caller wants shown in the collapsed debug block at the
+   * pane's foot — shape memory, SLDR defaults, the reported effective set —
+   * rendered as JSON. The block appears only when this is given.
+   */
+  debugInfo?: unknown;
 }
 
 /**
@@ -71,6 +101,12 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   onUse,
   loading,
   sampleSize,
+  sampleText,
+  customSampleText,
+  onCustomSampleTextChange,
+  onShapeChoiceChange,
+  debugProvenance,
+  debugInfo,
 }) => {
   const installed = font.installed !== false;
   // What the pointer is on, wherever it is: one line at the foot of the pane
@@ -135,16 +171,40 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   const licenseAtTop = font.license !== undefined && font.license !== "open";
   const licenseAtFoot = font.license === "open";
 
+  // The letter shapes are shapes *for an alphabet*: which choices are worth
+  // offering, and which letters they are drawn on, both come out of it. With no
+  // alphabet the section would offer every choice the font happens to declare, on
+  // letters nobody asked about, so instead it gives way to a line saying what the
+  // alphabet would buy.
+  const showsShapeHint = alphabetSet.size === 0;
   // A font with nothing to choose between says nothing at all: no headings, and
   // no line announcing the absence. The one exception is a font we don't have
   // yet, where the ghosted section is part of explaining the download.
-  const showsGhost = !installed && shapeRowCount !== 0;
-  // The example needs the font on the machine to draw with and an alphabet to
-  // write in; without either there is nothing to show.
-  const showsExample = installed && !!fontData && alphabetSet.size > 0;
-  const showsShapes = installed
-    ? !!shapeRowCount || !!digitVariants?.length || showsExample
-    : showsGhost;
+  const showsGhost = !installed && !showsShapeHint && shapeRowCount !== 0;
+
+  // The figures go on the end of the made-up text, in running text rather than
+  // alone on a tile, since a digit shape picked below is a choice about the
+  // numbers in the user's books. They are not part of the pseudo-text itself: an
+  // alphabet is letters, and a generator that wrote digits into its nonsense words
+  // would be inventing a numeral system for the language.
+  const invented = useMemo(() => {
+    const nonsense = generateExampleText(alphabet);
+    return nonsense ? `${nonsense} ${DIGITS}` : undefined;
+  }, [alphabet]);
+
+  // The sample needs the font on the machine to draw with, and something to
+  // write: the user's own words, the host's sample text, or an alphabet to make
+  // one up out of.
+  const showsExample =
+    installed &&
+    !!fontData &&
+    (!!sampleText || !!customSampleText || !!invented);
+  const vouchedFor = saysSupportsLanguage(font.supportsLanguage, missing);
+  const showsShapes =
+    showsShapeHint ||
+    (installed
+      ? !!shapeRowCount || !!digitVariants?.length || showsExample
+      : showsGhost);
   // Only what the user has to know before looking at the font at all.
   const showsPreamble = licenseAtTop || !installed;
 
@@ -234,23 +294,32 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
             {/* First, because it is the font doing the user's own writing;
                 the shape choices below it are adjustments to what it shows. */}
             {showsExample && (
-              <ExampleParagraph
+              <SampleTextSection
                 fontFamily={font.family}
-                alphabet={alphabet}
+                languageText={sampleText}
+                inventedText={invented}
+                customText={customSampleText}
+                onCustomTextChange={onCustomSampleTextChange}
                 choices={choices}
               />
             )}
-            <LetterShapes
-              font={font}
-              fontData={fontData}
-              postscriptName={postscriptName}
-              alphabet={alphabet}
-              shapeRowCount={shapeRowCount}
-              choices={choices}
-              onChoicesChange={onChoicesChange}
-              sampleSize={sampleSize}
-              onHoverChange={setHovered}
-            />
+            {showsShapeHint ? (
+              <AlphabetWantedHint />
+            ) : (
+              <LetterShapes
+                font={font}
+                fontData={fontData}
+                postscriptName={postscriptName}
+                alphabet={alphabet}
+                shapeRowCount={shapeRowCount}
+                choices={choices}
+                onChoicesChange={onChoicesChange}
+                onShapeChoiceChange={onShapeChoiceChange}
+                provenance={debugProvenance}
+                sampleSize={sampleSize}
+                onHoverChange={setHovered}
+              />
+            )}
             <DigitShapes
               fontFamily={font.family}
               fontData={fontData}
@@ -258,10 +327,14 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
               hasDigitVariants={!!digitVariants?.length}
               choices={choices}
               onChoicesChange={onChoicesChange}
+              onShapeChoiceChange={onShapeChoiceChange}
+              provenance={debugProvenance}
               sampleSize={sampleSize}
               onHoverChange={setHovered}
             />
           </div>
+        ) : showsShapeHint ? (
+          <AlphabetWantedHint />
         ) : (
           showsGhost && <GhostedLetterShapes shapeCount={shapeRowCount} />
         )}
@@ -271,31 +344,51 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
           can do rather than at the head of it. The shapes above are the reason
           they opened this font; this is the check they make on the way out, and
           it reads next to the licence, which is the other one.
+
+          Two quite different things can be said here, and the difference matters
+          to the user. Where somebody who knows the language has recommended this
+          font, that is the answer to their question, and the letters are not worth
+          spelling out: they were never in doubt. Where all we have done is check
+          the characters one by one, the claim is only that — which is why the
+          alphabet itself is shown underneath, for the user to look at, since a
+          font can hold every letter and still set the marks wrongly.
         */}
-        {alphabetSet.size > 0 && missing && (
+        {vouchedFor ? (
           <Callout
-            variant={missing.length === 0 ? "ok" : "warn"}
+            variant="ok"
             css={css`
               margin-top: 18px;
             `}
           >
-            <b>
-              {missing.length === 0
-                ? "Includes the letters of your alphabet"
-                : "Missing some of your letters"}
-            </b>
-            {missing.length > 0 && `: ${missing.join(" ")}`}
-            <br />
-            <span
+            <b>Supports your language</b>
+          </Callout>
+        ) : (
+          alphabetSet.size > 0 &&
+          missing && (
+            <Callout
+              variant={missing.length === 0 ? "ok" : "warn"}
               css={css`
-                font-family: "${font.family}";
-                font-size: 20px;
-                letter-spacing: 0.8px;
+                margin-top: 18px;
               `}
             >
-              {alphabet}
-            </span>
-          </Callout>
+              <b>
+                {missing.length === 0
+                  ? "Includes the letters of your alphabet"
+                  : "Missing some of your letters"}
+              </b>
+              {missing.length > 0 && `: ${missing.join(" ")}`}
+              <br />
+              <span
+                css={css`
+                  font-family: "${font.family}";
+                  font-size: 20px;
+                  letter-spacing: 0.8px;
+                `}
+              >
+                {alphabet}
+              </span>
+            </Callout>
+          )
         )}
 
         {/* The open case: a licence that says yes is worth confirming but not
@@ -308,6 +401,31 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
               margin-top: 18px;
             `}
           />
+        )}
+
+        {/* The raw facts behind the shapes above, for whoever is debugging:
+            collapsed, plain JSON, at the very foot where it bothers nobody. */}
+        {debugInfo !== undefined && (
+          <details
+            css={css`
+              margin-top: 18px;
+              font-size: 11px;
+            `}
+          >
+            <summary>Shape debug info</summary>
+            <pre
+              css={css`
+                white-space: pre-wrap;
+                word-break: break-word;
+              `}
+            >
+              {JSON.stringify(
+                { fontFeatureSettings: featureSettingsFor(choices), ...(debugInfo as object) },
+                null,
+                2
+              )}
+            </pre>
+          </details>
         )}
       </div>
 
@@ -358,6 +476,8 @@ const LetterShapes: React.FunctionComponent<{
   shapeRowCount?: number;
   choices: CharacterVariantChoices;
   onChoicesChange: (choices: CharacterVariantChoices) => void;
+  onShapeChoiceChange?: (groupKey: string, choice: ShapeChoice) => void;
+  provenance?: Record<string, ChoiceSource>;
   sampleSize?: number;
   onHoverChange?: (info: ShapeInfo | null) => void;
 }> = ({
@@ -368,6 +488,8 @@ const LetterShapes: React.FunctionComponent<{
   shapeRowCount,
   choices,
   onChoicesChange,
+  onShapeChoiceChange,
+  provenance,
   sampleSize,
   onHoverChange,
 }) => {
@@ -387,6 +509,8 @@ const LetterShapes: React.FunctionComponent<{
         excludeCharacters={DIGITS}
         choices={choices}
         onChoicesChange={onChoicesChange}
+        onShapeChoiceChange={onShapeChoiceChange}
+        provenance={provenance}
         sampleSize={sampleSize}
         onHoverChange={onHoverChange}
       />
@@ -395,47 +519,24 @@ const LetterShapes: React.FunctionComponent<{
 };
 
 /**
- * A few sentences of nothing, in the user's own alphabet and the font's own
- * shapes. Lorem ipsum is no use for judging a font you are going to set Nateni or
- * Yoruba in: what matters is how the letters you actually use look next to each
- * other, and how the shapes you just picked look in running text rather than
- * alone on a tile.
+ * Where the letter shapes would be, for a user who hasn't said what they write.
+ * The section can't be built without an alphabet, and a blank space where it
+ * belongs looks like a font with nothing to offer rather than a question waiting
+ * to be answered.
  */
-const ExampleParagraph: React.FunctionComponent<{
-  fontFamily: string;
-  alphabet: string;
-  choices: CharacterVariantChoices;
-  className?: string;
-}> = ({ fontFamily, alphabet, choices, className }) => {
-  const text = useMemo(() => generateExampleText(alphabet), [alphabet]);
-  const settings = useMemo(() => featureSettingsFor(choices), [choices]);
-  if (!text) return null;
-
-  // The figures go on the end, in running text rather than alone on a tile, since
-  // a digit shape picked above is a choice about the numbers in the user's books.
-  // They are not part of the pseudo-text itself: an alphabet is letters, and a
-  // generator that wrote digits into its nonsense words would be inventing a
-  // numeral system for the language.
-  const example = `${text} ${DIGITS}`;
-
+const AlphabetWantedHint: React.FunctionComponent = () => {
+  const theme = useTheme();
   return (
-    <div className={className}>
-      <SectionHeading>Example</SectionHeading>
-      <p
-        // Nonsense words: worth seeing, not worth reading out.
-        aria-hidden
-        css={css`
-          margin: 0;
-          font-family: "${fontFamily}";
-          font-size: 17px;
-          line-height: 1.65;
-          // The picked shapes, so that choosing one changes the example under it.
-          font-feature-settings: ${settings};
-        `}
-      >
-        {example}
-      </p>
-    </div>
+    <Typography
+      variant="body2"
+      css={css`
+        font-size: 12.5px;
+        color: ${theme.palette.text.secondary};
+      `}
+    >
+      Enter your language&apos;s alphabet to see the letter-shape choices that
+      matter for it.
+    </Typography>
   );
 };
 
