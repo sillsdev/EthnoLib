@@ -1,6 +1,13 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { Button, Divider, Link, Typography, useTheme } from "@mui/material";
+import {
+  Button,
+  Divider,
+  Link,
+  Popover,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   CharacterVariantChoices,
@@ -28,6 +35,7 @@ import { SectionHeading } from "./SectionHeading";
 import { generateExampleText } from "./exampleText";
 import { featureSettingsFor } from "./featureSettings";
 import { DownloadNeededIcon } from "./icons";
+import { licenseExplanation } from "./licenseExplanation";
 import { missingFromAlphabet, saysSupportsLanguage } from "./missingCharacters";
 import { scrollbarCss } from "./scrollbarStyle";
 import type { FontInfo } from "./types";
@@ -556,33 +564,90 @@ const AlphabetWantedHint: React.FunctionComponent<{
   );
 };
 
+/**
+ * The word "license", always a link.
+ *
+ * Where the font says where its licence lives (`name` ID 14) that is where the
+ * link goes. Where it doesn't — which is most installed fonts; see
+ * `licenseExplanation` — the same words open a small panel saying what we know
+ * and how we know it. The alternative was plain grey text next to a claim about
+ * what the user may publish, which invites the question and then refuses to take
+ * it.
+ */
+const LicenseLink: React.FunctionComponent<{
+  font: FontInfo;
+  children: React.ReactNode;
+}> = ({ font, children }) => {
+  const [anchor, setAnchor] = useState<HTMLElement | undefined>(undefined);
+
+  if (font.licenseUrl) {
+    return (
+      <Link href={font.licenseUrl} target="_blank" rel="noreferrer">
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <>
+      <Link
+        component="button"
+        type="button"
+        onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+          setAnchor(e.currentTarget)
+        }
+        css={css`
+          /* A button sitting in a sentence: it has to sit on the same baseline
+             and be set in the same type as the words around it. */
+          font: inherit;
+          vertical-align: baseline;
+        `}
+      >
+        {children}
+      </Link>
+      <Popover
+        open={!!anchor}
+        anchorEl={anchor}
+        onClose={() => setAnchor(undefined)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      >
+        <div
+          css={css`
+            max-width: 300px;
+            padding: 12px 14px;
+            font-size: 12.5px;
+            line-height: 1.45;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          `}
+        >
+          {licenseExplanation(font).map((line) => (
+            <span key={line}>{line}</span>
+          ))}
+        </div>
+      </Popover>
+    </>
+  );
+};
+
 const LicenseCallout: React.FunctionComponent<{
   font: FontInfo;
   className?: string;
 }> = ({ font, className }) => {
   const license = font.license ?? "unknown";
-  const link = font.licenseUrl && (
+  const link = (
     <>
       {" "}
-      <Link href={font.licenseUrl} target="_blank" rel="noreferrer">
-        {license === "open" ? "license" : "Read the license"}
-      </Link>
-      .
+      <LicenseLink font={font}>Read the license</LicenseLink>.
     </>
   );
 
   if (license === "open") {
     return (
       <Callout variant="open-license" className={className}>
-        This font&apos;s{" "}
-        {font.licenseUrl ? (
-          <Link href={font.licenseUrl} target="_blank" rel="noreferrer">
-            license
-          </Link>
-        ) : (
-          "license"
-        )}{" "}
-        allows printing, ebooks, apps, and publishing to web.
+        This font&apos;s <LicenseLink font={font}>license</LicenseLink> allows
+        printing, ebooks, apps, and publishing to web.
       </Callout>
     );
   }

@@ -28,7 +28,7 @@ import { readCoverageRanges } from "./fontCoverage";
 import {
   FontLicenseCategory,
   FontLicenseHints,
-  classifyLicense,
+  describeLicense,
 } from "./fontLicense";
 import { readRange, readTableOffsets, tagAt } from "./sfntBlob";
 
@@ -108,6 +108,13 @@ export interface FamilyLicense {
   license?: FontLicenseCategory;
   /** Where the font says its licence lives (`name` ID 14), if it says. */
   licenseUrl?: string;
+  /**
+   * Which rule in `describeLicense` produced that verdict — "Open Font License",
+   * "Microsoft font", "no reliable information". A short phrase, not the font's
+   * licence text: it is what we can show a user who asks why we said what we
+   * said, and it is small enough to cache, which the licence text is not.
+   */
+  licenseReason?: string;
 }
 
 /** What the sweep found out about one font family. */
@@ -209,7 +216,12 @@ async function readFamilyLicense(
 ): Promise<FamilyLicense> {
   try {
     const hints = await readLicenseHintsFromBlob(blob, postscriptName);
-    return { license: classifyLicense(hints), licenseUrl: hints.url };
+    const verdict = describeLicense(hints);
+    return {
+      license: verdict.category,
+      licenseUrl: hints.url,
+      licenseReason: verdict.notes,
+    };
   } catch {
     return {};
   }

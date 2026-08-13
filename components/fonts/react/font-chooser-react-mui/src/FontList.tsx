@@ -8,7 +8,6 @@ import {
   ChevronIcon,
   DownloadNeededIcon,
   UnknownRulesIcon,
-  VouchedForIcon,
 } from "./icons";
 import { scrollbarCss } from "./scrollbarStyle";
 
@@ -217,12 +216,23 @@ const FontRow: React.FunctionComponent<{
         }
       `}
     >
-      <StatusIcons font={font} languageName={languageName} />
+      <StatusIcons font={font} />
+      {/* A recommended font is bold rather than ticked. The list is read by
+          running an eye down the names, and weight is visible in that sweep in a
+          way a small mark beside the name is not — while a tick, sitting in the
+          same row as the licence warnings, read as one more piece of status
+          rather than as "this is the sort of font you came here for". */}
       <span
+        title={
+          font.supportsLanguage
+            ? `Recommended for ${languageName || "your language"}`
+            : undefined
+        }
         css={css`
           flex: 1;
           min-width: 0;
           font-size: 15px;
+          font-weight: ${font.supportsLanguage ? 700 : 400};
           // A font that isn't here yet can't draw its own name, so it borrows the
           // interface font rather than falling back to something arbitrary.
           font-family: ${installed
@@ -252,10 +262,7 @@ const FontRow: React.FunctionComponent<{
   );
 };
 
-const StatusIcons: React.FunctionComponent<{
-  font: FontInfo;
-  languageName?: string;
-}> = ({ font, languageName }) => {
+const StatusIcons: React.FunctionComponent<{ font: FontInfo }> = ({ font }) => {
   const theme = useTheme();
   return (
     <span
@@ -266,15 +273,6 @@ const StatusIcons: React.FunctionComponent<{
         flex: none;
       `}
     >
-      {/* A person's recommendation, not our character-by-character check —
-          the same distinction the details pane draws. See
-          FontInfo.supportsLanguage. */}
-      {font.supportsLanguage && (
-        <VouchedForIcon
-          color={theme.palette.primary.main}
-          title={`Recommended for ${languageName || "your language"}`}
-        />
-      )}
       {font.license === "limits-apply" && (
         <AlertCircleIcon
           color={theme.palette.warning.main}

@@ -1,6 +1,9 @@
 .nx/cache
 .nx/workspace-data
 
+# swc plugin wasm cache (written by the lingui swc plugin)
+.swc
+
 .DS_Store
 
 

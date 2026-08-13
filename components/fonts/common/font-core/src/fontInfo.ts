@@ -24,6 +24,13 @@ export interface FontInfo {
   /** A sentence the host wants shown alongside the licence, in its own words. */
   licenseNotes?: string;
   /**
+   * Why we say what we say about the licence, where the answer came from reading
+   * the font: "Open Font License", "Microsoft font", "no reliable information".
+   * Shown to a user who asks about a font that gives us no `licenseUrl` to send
+   * them to, which is the common case for fonts installed on a machine.
+   */
+  licenseReason?: string;
+  /**
    * Where to fetch the font's own bytes from, for a font that isn't installed. The
    * chooser reads it the same way it reads an installed font — for coverage, and
    * for how many letter shapes the download would bring — but downloading the font

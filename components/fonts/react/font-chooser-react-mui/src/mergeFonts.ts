@@ -141,6 +141,7 @@ export function mergeFonts(input: MergeFontsInput): MergedFonts {
       installed: true,
       license: scan?.license,
       licenseUrl: scan?.licenseUrl,
+      licenseReason: scan?.licenseReason,
     });
   }
 

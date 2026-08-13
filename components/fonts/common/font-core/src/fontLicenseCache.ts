@@ -35,6 +35,8 @@ import type { LocalFontFamily } from "./localFonts";
 export interface CachedFontLicense {
   license?: FontLicenseCategory;
   licenseUrl?: string;
+  /** The rule that produced the verdict; a short phrase. See `FamilyLicense`. */
+  licenseReason?: string;
 }
 
 /** The slice of the `Storage` interface we use; `localStorage` satisfies it. */
@@ -46,8 +48,12 @@ export interface LicenseCacheStorage {
   removeItem(key: string): void;
 }
 
-/** The schema of the stored value, separate from the rules that produced it. */
-const SCHEMA_VERSION = 1;
+/**
+ * The schema of the stored value, separate from the rules that produced it.
+ * 2: added `licenseReason`, so entries written before it re-read rather than
+ * leaving the pane unable to say why it decided what it did.
+ */
+const SCHEMA_VERSION = 2;
 const PREFIX = "ethnolib.fontLicense";
 const CURRENT_PREFIX = `${PREFIX}.s${SCHEMA_VERSION}.r${LICENSE_CLASSIFICATION_VERSION}.`;
 
@@ -95,6 +101,7 @@ export function readCachedLicense(
     return {
       license: parsed.license,
       licenseUrl: parsed.licenseUrl,
+      licenseReason: parsed.licenseReason,
     };
   } catch {
     return undefined;
@@ -126,6 +133,7 @@ export function writeCachedLicense(
         definedOnly({
           license: value.license,
           licenseUrl: value.licenseUrl,
+          licenseReason: value.licenseReason,
         })
       )
     );
