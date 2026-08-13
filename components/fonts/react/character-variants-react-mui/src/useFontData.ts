@@ -42,6 +42,13 @@ export function normalizeFontDataResult(result: FontDataResult): {
  * PostScript name. It is held in a ref, so an inline arrow doesn't set off a
  * reload on every render.
  */
+/**
+ * How long the previous font's bytes may stand in for a font still loading. Long
+ * enough to cover reading a file off the machine, short enough that a real wait —
+ * a download — clears the pane rather than leaving the wrong font's shapes up.
+ */
+const STALE_BYTES_GRACE_MS = 150;
+
 export function useFontData(
   font: string,
   getFontData: (
@@ -65,13 +72,26 @@ export function useFontData(
   getFontDataRef.current = getFontData;
 
   useEffect(() => {
-    setFontData(undefined);
-    setPostscriptName(undefined);
+    const forget = () => {
+      setFontData(undefined);
+      setPostscriptName(undefined);
+    };
+
     setError(undefined);
-    if (!font) return;
+    if (!font) {
+      forget();
+      return;
+    }
 
     let stale = false;
     setLoading(true);
+    // Reading an installed font takes a few milliseconds, and dropping the old
+    // bytes at the start of it emptied everything drawn from them and filled it
+    // again a frame or two later — a flash, for a wait nobody could have noticed.
+    // So the font before this one stays up until either the new bytes arrive or
+    // the wait grows long enough that showing another font's shapes would be a
+    // lie rather than a smoothing.
+    const forgetIfSlow = setTimeout(forget, STALE_BYTES_GRACE_MS);
     getFontDataRef
       .current(font)
       .then((result) => {
@@ -81,14 +101,18 @@ export function useFontData(
         setPostscriptName(name);
       })
       .catch((e: Error) => {
-        if (!stale) setError(e);
+        if (stale) return;
+        setError(e);
+        forget();
       })
       .finally(() => {
+        clearTimeout(forgetIfSlow);
         if (!stale) setLoading(false);
       });
     // Ignore a load that finished after the user moved on to another font.
     return () => {
       stale = true;
+      clearTimeout(forgetIfSlow);
     };
   }, [font, attempt]);
 

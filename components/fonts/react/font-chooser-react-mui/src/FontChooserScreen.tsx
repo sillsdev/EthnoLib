@@ -420,7 +420,7 @@ export const FontChooserScreen: React.FunctionComponent<
               min-height: 0;
             `}
           >
-            {(listing || loading) && <LinearProgress />}
+            <LoadingBar active={listing || loading} />
             {/* When the sidebar is asking for permission it reports its own
                 failures; saying it twice would be worse than saying it once. */}
             {listError && !offerListing && (
@@ -457,6 +457,55 @@ export const FontChooserScreen: React.FunctionComponent<
         </>
       )}
     </Paper>
+  );
+};
+
+/**
+ * How long a wait has to last before it is worth telling the user about. Below
+ * this they have not yet perceived a delay, so a bar saying "wait" is itself the
+ * only thing they notice.
+ */
+const WORTH_REPORTING_MS = 300;
+
+/**
+ * The progress bar over the details pane, and the room it takes whether or not it
+ * is showing anything.
+ *
+ * Reading an installed font takes a few milliseconds, so a bar that appeared for
+ * every font the user clicked was a blue line flickering on and off at the top of
+ * the pane — and, since it took its own height out of the pane, shoving everything
+ * below it down four pixels and back. The space is kept whatever happens, and the
+ * bar itself waits to see whether this is a real wait.
+ */
+const LoadingBar: React.FunctionComponent<{ active: boolean }> = ({
+  active,
+}) => {
+  const [showing, setShowing] = useState(false);
+
+  useEffect(() => {
+    if (!active) {
+      setShowing(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowing(true), WORTH_REPORTING_MS);
+    return () => clearTimeout(timer);
+  }, [active]);
+
+  return (
+    <div
+      css={css`
+        flex: none;
+        height: 4px;
+      `}
+    >
+      {showing && (
+        <LinearProgress
+          css={css`
+            height: 4px;
+          `}
+        />
+      )}
+    </div>
   );
 };
 

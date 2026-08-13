@@ -129,42 +129,286 @@ export function buildOs2Table(fsType: number): Uint8Array {
 }
 
 /**
- * A GSUB table declaring these feature tags, in the order given, with an empty
- * script list and no lookups. Each feature carries no FeatureParams, which is what
- * readCharacterVariants sees in a font that declares a cvXX without describing it.
+ * One feature of a synthetic GSUB. A bare tag is the plainest case — no
+ * FeatureParams and no lookups — which is what readCharacterVariants sees in a font
+ * that declares a cvXX without describing it.
  */
-export function buildGsubTable(featureTags: string[]): Uint8Array {
+export interface SyntheticFeature {
+  tag: string;
+  /** Indices into the table's lookup list, in the order the feature applies them. */
+  lookupIndices?: number[];
+  /** FeatureParams bytes; see buildStylisticSetParams and buildCharacterVariantParams. */
+  params?: Uint8Array;
+}
+
+/** One lookup: its type, and its subtables as built by the helpers below. */
+export interface SyntheticLookup {
+  type: number;
+  subtables: Uint8Array[];
+}
+
+/**
+ * A GSUB table declaring these features, in the order given, over these lookups,
+ * with an empty script list.
+ *
+ * Every block written here is self-contained — a feature's FeatureParams sit inside
+ * the feature table, a subtable's Coverage inside the subtable — because the
+ * offsets to them are measured from the block's own start. That is what lets the
+ * pieces be built separately and concatenated.
+ */
+export function buildGsubTable(
+  features: (string | SyntheticFeature)[],
+  lookups: SyntheticLookup[] = []
+): Uint8Array {
+  const declared = features.map((feature) =>
+    typeof feature === "string" ? { tag: feature } : feature
+  );
+  const featureBlocks = declared.map(buildFeatureTable);
+
   const scriptListOffset = 10; // straight after the GSUB header
   const featureListOffset = scriptListOffset + 2; // an empty ScriptList is a count of 0
-  const featureRecordsSize = 2 + featureTags.length * 6;
-  const lookupListOffset =
-    featureListOffset + featureRecordsSize + featureTags.length * 4;
+  const featureList = concatWithOffsets(featureBlocks, 2 + declared.length * 6);
+  const lookupListOffset = featureListOffset + featureList.bytes.length;
+  const lookupBlocks = lookups.map(buildLookupTable);
+  const lookupList = concatWithOffsets(lookupBlocks, 2 + lookups.length * 2);
 
-  const table = new Uint8Array(lookupListOffset + 2);
+  const table = new Uint8Array(lookupListOffset + lookupList.bytes.length);
   const view = new DataView(table.buffer);
 
   view.setUint32(0, 0x00010000);
   view.setUint16(4, scriptListOffset);
   view.setUint16(6, featureListOffset);
   view.setUint16(8, lookupListOffset);
-
   view.setUint16(scriptListOffset, 0); // scriptCount
-  view.setUint16(featureListOffset, featureTags.length);
 
-  featureTags.forEach((tag, i) => {
+  const featureView = new DataView(
+    featureList.bytes.buffer,
+    featureList.bytes.byteOffset
+  );
+  featureView.setUint16(0, declared.length);
+  declared.forEach(({ tag }, i) => {
     // FeatureRecord: Tag, Offset16 to the Feature table, from the FeatureList's start.
-    const record = featureListOffset + 2 + i * 6;
-    const featureOffset = featureRecordsSize + i * 4;
-    writeTag(view, record, tag);
-    view.setUint16(record + 4, featureOffset);
-    // Feature table: featureParamsOffset (none), lookupIndexCount (none).
-    view.setUint16(featureListOffset + featureOffset, 0);
-    view.setUint16(featureListOffset + featureOffset + 2, 0);
+    const record = 2 + i * 6;
+    writeTag(featureView, record, tag);
+    featureView.setUint16(record + 4, featureList.offsets[i]);
   });
+  table.set(featureList.bytes, featureListOffset);
 
-  view.setUint16(lookupListOffset, 0); // lookupCount
+  const lookupView = new DataView(
+    lookupList.bytes.buffer,
+    lookupList.bytes.byteOffset
+  );
+  lookupView.setUint16(0, lookups.length);
+  lookups.forEach((_, i) => {
+    lookupView.setUint16(2 + i * 2, lookupList.offsets[i]);
+  });
+  table.set(lookupList.bytes, lookupListOffset);
 
   return table;
+}
+
+/** Feature table: featureParamsOffset, lookupIndexCount, the indices, the params. */
+function buildFeatureTable({ lookupIndices = [], params }: SyntheticFeature) {
+  const headerSize = 4 + lookupIndices.length * 2;
+  const block = new Uint8Array(headerSize + (params?.length ?? 0));
+  const view = new DataView(block.buffer);
+  view.setUint16(0, params ? headerSize : 0);
+  view.setUint16(2, lookupIndices.length);
+  lookupIndices.forEach((index, i) => view.setUint16(4 + i * 2, index));
+  if (params) block.set(params, headerSize);
+  return block;
+}
+
+/** Lookup table: lookupType, lookupFlag, subTableCount, the subtable offsets. */
+function buildLookupTable({ type, subtables }: SyntheticLookup) {
+  const subtableList = concatWithOffsets(subtables, 6 + subtables.length * 2);
+  const view = new DataView(
+    subtableList.bytes.buffer,
+    subtableList.bytes.byteOffset
+  );
+  view.setUint16(0, type);
+  view.setUint16(2, 0); // lookupFlag
+  view.setUint16(4, subtables.length);
+  subtables.forEach((_, i) =>
+    view.setUint16(6 + i * 2, subtableList.offsets[i])
+  );
+  return subtableList.bytes;
+}
+
+/**
+ * `blocks` laid end to end after `headerSize` bytes of room, with where each one
+ * landed. The header is left as zeroes for the caller to fill in.
+ */
+function concatWithOffsets(blocks: Uint8Array[], headerSize: number) {
+  const offsets: number[] = [];
+  let at = headerSize;
+  for (const block of blocks) {
+    offsets.push(at);
+    at += block.length;
+  }
+  const bytes = new Uint8Array(at);
+  blocks.forEach((block, i) => bytes.set(block, offsets[i]));
+  return { bytes, offsets };
+}
+
+/** A stylistic set's FeatureParams: version 0, and the name id of its UI label. */
+export function buildStylisticSetParams(uiNameId: number): Uint8Array {
+  const params = new Uint8Array(4);
+  new DataView(params.buffer).setUint16(2, uiNameId);
+  return params;
+}
+
+/** A cvXX FeatureParams block (format 0), with an optional list of code points. */
+export function buildCharacterVariantParams({
+  labelNameId = 0,
+  tooltipNameId = 0,
+  sampleTextNameId = 0,
+  namedParameterCount = 0,
+  firstParameterNameId = 0,
+  codePoints = [] as number[],
+} = {}): Uint8Array {
+  const params = new Uint8Array(14 + codePoints.length * 3);
+  const view = new DataView(params.buffer);
+  view.setUint16(0, 0); // format
+  view.setUint16(2, labelNameId);
+  view.setUint16(4, tooltipNameId);
+  view.setUint16(6, sampleTextNameId);
+  view.setUint16(8, namedParameterCount);
+  view.setUint16(10, firstParameterNameId);
+  view.setUint16(12, codePoints.length);
+  codePoints.forEach((codePoint, i) => {
+    const at = 14 + i * 3;
+    view.setUint8(at, codePoint >> 16);
+    view.setUint16(at + 1, codePoint & 0xffff);
+  });
+  return params;
+}
+
+/** A Coverage table over these glyphs, in either format. */
+export function buildCoverageTable(
+  glyphs: number[],
+  format: 1 | 2 = 1
+): Uint8Array {
+  const sorted = [...glyphs].sort((a, b) => a - b);
+
+  if (format === 1) {
+    const table = new Uint8Array(4 + sorted.length * 2);
+    const view = new DataView(table.buffer);
+    view.setUint16(0, 1);
+    view.setUint16(2, sorted.length);
+    sorted.forEach((glyph, i) => view.setUint16(4 + i * 2, glyph));
+    return table;
+  }
+
+  // Format 2 lists runs, so gather the consecutive ones.
+  const ranges: [number, number][] = [];
+  for (const glyph of sorted) {
+    const last = ranges[ranges.length - 1];
+    if (last && glyph === last[1] + 1) last[1] = glyph;
+    else ranges.push([glyph, glyph]);
+  }
+
+  const table = new Uint8Array(4 + ranges.length * 6);
+  const view = new DataView(table.buffer);
+  view.setUint16(0, 2);
+  view.setUint16(2, ranges.length);
+  let coverageIndex = 0;
+  ranges.forEach(([start, end], i) => {
+    const record = 4 + i * 6;
+    view.setUint16(record, start);
+    view.setUint16(record + 2, end);
+    view.setUint16(record + 4, coverageIndex);
+    coverageIndex += end - start + 1;
+  });
+  return table;
+}
+
+/** A single substitution (LookupType 1, format 1): every glyph moves by `delta`. */
+export function buildSingleSubstitution(
+  glyphs: number[],
+  delta: number,
+  coverageFormat: 1 | 2 = 1
+): Uint8Array {
+  const coverage = buildCoverageTable(glyphs, coverageFormat);
+  const subtable = new Uint8Array(6 + coverage.length);
+  const view = new DataView(subtable.buffer);
+  view.setUint16(0, 1); // substFormat
+  view.setUint16(2, 6); // coverageOffset, from this subtable's start
+  view.setInt16(4, delta);
+  subtable.set(coverage, 6);
+  return subtable;
+}
+
+/**
+ * A single substitution (LookupType 1, format 2): each glyph with the one glyph
+ * that replaces it, so a test can say exactly what a feature draws instead.
+ */
+export function buildSingleSubstitutionFormat2(
+  substitutions: { glyph: number; substitute: number }[],
+  coverageFormat: 1 | 2 = 1
+): Uint8Array {
+  const sorted = [...substitutions].sort((a, b) => a.glyph - b.glyph);
+  const coverage = buildCoverageTable(
+    sorted.map((s) => s.glyph),
+    coverageFormat
+  );
+  const headerSize = 6 + sorted.length * 2;
+  const subtable = new Uint8Array(headerSize + coverage.length);
+  const view = new DataView(subtable.buffer);
+  view.setUint16(0, 2); // substFormat
+  view.setUint16(2, headerSize); // coverageOffset
+  view.setUint16(4, sorted.length); // glyphCount
+  sorted.forEach(({ substitute }, i) => view.setUint16(6 + i * 2, substitute));
+  subtable.set(coverage, headerSize);
+  return subtable;
+}
+
+/** An alternate substitution (LookupType 3): each glyph with its list of choices. */
+export function buildAlternateSubstitution(
+  alternates: { glyph: number; choices: number[] }[],
+  coverageFormat: 1 | 2 = 1
+): Uint8Array {
+  const sorted = [...alternates].sort((a, b) => a.glyph - b.glyph);
+  const coverage = buildCoverageTable(
+    sorted.map((a) => a.glyph),
+    coverageFormat
+  );
+  const sets = sorted.map(({ choices }) => {
+    const set = new Uint8Array(2 + choices.length * 2);
+    const view = new DataView(set.buffer);
+    view.setUint16(0, choices.length);
+    choices.forEach((glyph, i) => view.setUint16(2 + i * 2, glyph));
+    return set;
+  });
+
+  const headerSize = 6 + sorted.length * 2;
+  const body = concatWithOffsets(sets, headerSize + coverage.length);
+  const subtable = new Uint8Array(body.bytes.length);
+  subtable.set(body.bytes);
+  subtable.set(coverage, headerSize);
+  const view = new DataView(subtable.buffer);
+  view.setUint16(0, 1); // substFormat
+  view.setUint16(2, headerSize); // coverageOffset
+  view.setUint16(4, sorted.length); // alternateSetCount
+  sorted.forEach((_, i) => view.setUint16(6 + i * 2, body.offsets[i]));
+  return subtable;
+}
+
+/**
+ * An extension subtable (LookupType 7) wrapping one of the above, which is how a
+ * large font reaches a subtable past the 16-bit offset limit.
+ */
+export function buildExtensionSubstitution(
+  innerType: number,
+  inner: Uint8Array
+): Uint8Array {
+  const subtable = new Uint8Array(8 + inner.length);
+  const view = new DataView(subtable.buffer);
+  view.setUint16(0, 1); // extensionFormat
+  view.setUint16(2, innerType);
+  view.setUint32(4, 8); // extensionOffset, from this subtable's start
+  subtable.set(inner, 8);
+  return subtable;
 }
 
 /**
@@ -192,6 +436,59 @@ export function buildCmapTable(ranges: [number, number][]): Uint8Array {
     view.setUint32(group, start);
     view.setUint32(group + 4, end);
     view.setUint32(group + 8, 1 + i); // startGlyphID, any non-zero glyph will do
+  });
+
+  return table;
+}
+
+/**
+ * A `cmap` mapping exactly these characters to these glyphs, as a single format 4
+ * subtable under Windows BMP (platform 3, encoding 1) — the older encoding, and the
+ * one whose segment arithmetic is worth testing against.
+ */
+export function buildCmapFormat4Table(
+  entries: { codePoint: number; glyph: number }[]
+): Uint8Array {
+  // One segment per run of consecutive characters whose glyphs run consecutively
+  // too, so that a single idDelta covers the whole run.
+  const sorted = [...entries].sort((a, b) => a.codePoint - b.codePoint);
+  const segments: { start: number; end: number; delta: number }[] = [];
+  for (const { codePoint, glyph } of sorted) {
+    const delta = (glyph - codePoint) & 0xffff;
+    const last = segments[segments.length - 1];
+    if (last && last.delta === delta && codePoint === last.end + 1) {
+      last.end = codePoint;
+    } else {
+      segments.push({ start: codePoint, end: codePoint, delta });
+    }
+  }
+  segments.push({ start: 0xffff, end: 0xffff, delta: 1 }); // the required last segment
+
+  const subtableOffset = 12; // version, numTables, one 8-byte record
+  const subtableLength = 16 + segments.length * 8;
+  const table = new Uint8Array(subtableOffset + subtableLength);
+  const view = new DataView(table.buffer);
+
+  view.setUint16(0, 0); // version
+  view.setUint16(2, 1); // numTables
+  view.setUint16(4, 3); // platformID
+  view.setUint16(6, 1); // encodingID
+  view.setUint32(8, subtableOffset);
+
+  view.setUint16(subtableOffset, 4); // format
+  view.setUint16(subtableOffset + 2, subtableLength);
+  view.setUint16(subtableOffset + 6, segments.length * 2); // segCountX2
+  // searchRange/entrySelector/rangeShift: no reader of ours consults them.
+
+  const endCodes = subtableOffset + 14;
+  const startCodes = endCodes + segments.length * 2 + 2;
+  const deltas = startCodes + segments.length * 2;
+  const rangeOffsets = deltas + segments.length * 2;
+  segments.forEach(({ start, end, delta }, i) => {
+    view.setUint16(endCodes + i * 2, end);
+    view.setUint16(startCodes + i * 2, start);
+    view.setUint16(deltas + i * 2, delta);
+    view.setUint16(rangeOffsets + i * 2, 0); // glyph ids come from the delta alone
   });
 
   return table;

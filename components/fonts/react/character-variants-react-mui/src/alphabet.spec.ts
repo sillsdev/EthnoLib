@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  DIGITS,
   charactersWithVariants,
   filterVariantsForAlphabet,
   parseAlphabet,
   representativeSample,
+  sortVariantsByCharacter,
+  variantsFor,
 } from "./alphabet";
 import { CharacterVariant } from "./readCharacterVariants";
 
@@ -90,6 +93,85 @@ describe("filterVariantsForAlphabet", () => {
     expect(
       filterVariantsForAlphabet([sharpS], parseAlphabet("ß")).map((v) => v.tag)
     ).toEqual(["cv60"]);
+  });
+});
+
+describe("sortVariantsByCharacter", () => {
+  function labelled(tag: string, characters: string[], label: string) {
+    return { ...variant(tag, characters), label };
+  }
+
+  it("follows the order the alphabet was written in, not the code points", () => {
+    // Alphabets are ordered lists; plenty of them are not in code point order.
+    const sorted = sortVariantsByCharacter(
+      [variant("cv01", ["a"]), variant("cv02", ["y"]), variant("cv03", ["z"])],
+      parseAlphabet("z a y")
+    );
+
+    expect(sorted.map((v) => v.tag)).toEqual(["cv03", "cv01", "cv02"]);
+  });
+
+  it("interleaves the stylistic sets with the character variants", () => {
+    const sorted = sortVariantsByCharacter(
+      [variant("cv09", ["b"]), variant("ss01", ["a"]), variant("cv02", ["c"])],
+      parseAlphabet("abc")
+    );
+
+    expect(sorted.map((v) => v.tag)).toEqual(["ss01", "cv09", "cv02"]);
+  });
+
+  it("sorts a variant by the earliest alphabet character it affects", () => {
+    const sorted = sortVariantsByCharacter(
+      [variant("cv01", ["c", "a"]), variant("cv02", ["b"])],
+      parseAlphabet("abc")
+    );
+
+    expect(sorted.map((v) => v.tag)).toEqual(["cv01", "cv02"]);
+  });
+
+  it("gives a capital the place of the lower case letter in the alphabet", () => {
+    const sorted = sortVariantsByCharacter(
+      [variant("cv02", ["z"]), variant("cv43", [ENG_UPPER])],
+      parseAlphabet("a " + ENG_LOWER + " z")
+    );
+
+    expect(sorted.map((v) => v.tag)).toEqual(["cv43", "cv02"]);
+  });
+
+  it("puts the variants the alphabet says nothing about last, by code point", () => {
+    const sorted = sortVariantsByCharacter(
+      [variant("cv01", ["7"]), variant("cv02", ["0"]), variant("cv03", ["b"])],
+      parseAlphabet("b")
+    );
+
+    expect(sorted.map((v) => v.tag)).toEqual(["cv03", "cv02", "cv01"]);
+  });
+
+  it("breaks a tie with the label, so the order doesn't wobble", () => {
+    const sorted = sortVariantsByCharacter(
+      [labelled("ss04", ["a"], "Curly a"), labelled("cv01", ["a"], "Barred a")],
+      parseAlphabet("a")
+    );
+
+    expect(sorted.map((v) => v.tag)).toEqual(["cv01", "ss04"]);
+  });
+
+  it("sorts the digit list into counting order", () => {
+    const sorted = variantsFor(
+      [variant("cv01", ["7"]), variant("cv02", ["0"]), variant("ss01", ["3"])],
+      new Set([...DIGITS])
+    );
+
+    expect(sorted.map((v) => v.tag)).toEqual(["cv02", "ss01", "cv01"]);
+  });
+
+  it("falls back to the sample text of a variant that names no characters", () => {
+    const sorted = sortVariantsByCharacter(
+      [variant("cv01", ["c"]), variant("cv02", [], "a")],
+      parseAlphabet("abc")
+    );
+
+    expect(sorted.map((v) => v.tag)).toEqual(["cv02", "cv01"]);
   });
 });
 

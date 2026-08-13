@@ -10,6 +10,7 @@ import {
   CharacterVariantList,
 } from "./CharacterVariantList";
 import { FontChooser } from "./FontChooser";
+import type { ShapeInfo } from "./ShapeInfoLine";
 import { loadLocalFontDataByFamilyWithName } from "./localFonts";
 import { FontDataResult, useFontData } from "./useFontData";
 
@@ -52,6 +53,12 @@ export interface CharacterVariantsProps {
   onChoicesChange?: (choices: CharacterVariantChoices) => void;
   /** Font size, in px, for the glyph samples. */
   sampleSize?: number;
+  /**
+   * Told what the shape tile under the pointer is, and told null when the pointer
+   * leaves, for a host that has somewhere settled to write it. `<ShapeInfoLine>`
+   * is what the font chooser draws it with.
+   */
+  onHoverChange?: (info: ShapeInfo | null) => void;
   className?: string;
 }
 
@@ -72,6 +79,7 @@ export const CharacterVariants: React.FunctionComponent<
   choices,
   onChoicesChange,
   sampleSize,
+  onHoverChange,
   className,
 }) => {
   const theme = useTheme();
@@ -145,6 +153,7 @@ export const CharacterVariants: React.FunctionComponent<
           choices={choices}
           onChoicesChange={onChoicesChange}
           sampleSize={sampleSize}
+          onHoverChange={onHoverChange}
         />
       )}
     </div>

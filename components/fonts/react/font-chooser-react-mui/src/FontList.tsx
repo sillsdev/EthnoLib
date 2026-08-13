@@ -9,6 +9,7 @@ import {
   DownloadNeededIcon,
   UnknownRulesIcon,
 } from "./icons";
+import { scrollbarCss } from "./scrollbarStyle";
 
 export interface FontListProps {
   /** The fonts to offer, in the order they should appear. */
@@ -94,7 +95,7 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
         display: flex;
         flex-direction: column;
         border-right: 1px solid ${theme.palette.divider};
-        background-color: ${theme.palette.grey[100]};
+        background-color: ${theme.palette.common.white};
         overflow: hidden;
       `}
     >
@@ -109,14 +110,17 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
         </div>
       )}
       <div
-        css={css`
-          flex: 1;
-          /* The rows are what scrolls; the prompt above and the closed-fonts
-             disclosure below stay where they are. */
-          min-height: 0;
-          overflow-y: auto;
-          padding: 6px 0;
-        `}
+        css={[
+          css`
+            flex: 1;
+            /* The rows are what scrolls; the prompt above and the closed-fonts
+               disclosure below stay where they are. */
+            min-height: 0;
+            overflow-y: auto;
+            padding: 6px 0;
+          `,
+          scrollbarCss,
+        ]}
       >
         {fonts.map(row)}
       </div>
@@ -150,11 +154,14 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
           </ButtonBase>
           <Collapse in={showClosed}>
             <div
-              css={css`
-                max-height: 180px;
-                overflow-y: auto;
-                padding-bottom: 6px;
-              `}
+              css={[
+                css`
+                  max-height: 180px;
+                  overflow-y: auto;
+                  padding-bottom: 6px;
+                `,
+                scrollbarCss,
+              ]}
             >
               {closedFonts.map(row)}
             </div>

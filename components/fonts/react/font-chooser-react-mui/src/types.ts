@@ -74,8 +74,8 @@ export interface FontChooserScreenProps {
   /** Which font to start on when the choice is left to the component. */
   defaultFont?: string;
   /**
-   * The form chosen for each feature, by tag. The number-shapes toggle rides along
-   * under the key "onum": 0 for lining figures (the font's default), 1 for old-style.
+   * The form chosen for each feature, by tag: 0 (or absent) for the font's own
+   * form, or the 1-based alternate. Covers the digits as well as the letters.
    */
   choices?: CharacterVariantChoices;
   onChoicesChange?: (choices: CharacterVariantChoices) => void;

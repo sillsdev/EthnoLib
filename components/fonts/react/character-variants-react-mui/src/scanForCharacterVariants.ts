@@ -20,6 +20,7 @@
 import { LocalFontFamily, loadLocalFontBlob } from "./localFonts";
 import {
   CharacterVariant,
+  isShapeFeatureTag,
   readCharacterVariants,
   readNameTable,
 } from "./readCharacterVariants";
@@ -31,11 +32,10 @@ import {
 } from "./fontLicense";
 import { readRange, readTableOffsets, tagAt } from "./sfntBlob";
 
-const CV_TAG = /^cv[0-9]{2}$/;
-
 /**
- * Whether a font declares any cvXX feature. Says nothing about whether those
- * features have labels, characters, or anything else worth showing.
+ * Whether a font declares any shape feature — a cvXX or a stylistic set. Says
+ * nothing about whether those features have labels, characters, or anything else
+ * worth showing.
  *
  * `postscriptName` picks the font within a collection (.ttc); see sfntBlob.ts for
  * why that matters.
@@ -54,7 +54,7 @@ export async function fontBlobHasCharacterVariants(
 
   const records = await readRange(blob, featureList + 2, count * 6);
   for (let i = 0; i < count; i++) {
-    if (CV_TAG.test(tagAt(records, i * 6))) return true;
+    if (isShapeFeatureTag(tagAt(records, i * 6))) return true;
   }
   return false;
 }
@@ -64,8 +64,11 @@ export async function fontBlobHasCharacterVariants(
  * the `name` and OS/2 tables only, a few KB rather than the whole file. Both
  * tables carry offsets relative to their own start, so a slice of one parses on
  * its own.
+ *
+ * Must find everything `readLicenseHints` finds in the whole file, since the two
+ * are the same question asked of the same font; a test holds them to that.
  */
-async function readLicenseHintsFromBlob(
+export async function readLicenseHintsFromBlob(
   blob: Blob,
   postscriptName?: string
 ): Promise<FontLicenseHints> {
@@ -81,6 +84,12 @@ async function readLicenseHintsFromBlob(
   return {
     description: names.get(13),
     url: names.get(14),
+    // ID 0 as well as 13. Plenty of fonts put the only licence wording they have
+    // in the copyright — it is half the rules in fontLicense.ts — and leaving it
+    // out here meant the sweep and the whole-bytes reader could answer differently
+    // about the same font. Alef, for one: "All rights reserved" read whole, and
+    // read here a guess off the embedding bits.
+    copyright: names.get(0),
     // OS/2: uint16 version, int16 xAvgCharWidth, uint16 usWeightClass,
     // uint16 usWidthClass, then uint16 fsType.
     fsType: os2

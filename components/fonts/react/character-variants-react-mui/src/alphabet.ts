@@ -47,43 +47,112 @@ export function representativeSample(variant: CharacterVariant): string {
 export const DIGITS = "0123456789";
 
 /** The characters a variant is about: the ones it names, or its sample text. */
-function affectedCharacters(variant: CharacterVariant): string[] {
+export function affectedCharacters(variant: CharacterVariant): string[] {
   return variant.characters.length > 0
     ? variant.characters
     : [...(usableSampleText(variant) ?? "")];
 }
 
 /**
- * Drop the variants that affect none of the given characters. Used to show the
- * digits on their own: a variant that only redraws figures belongs in the digit
- * list, and one that redraws letters belongs in the letter list.
+ * Whether a variant belongs to the list about `characters` (in practice, the
+ * digits) rather than to the list of everything else.
+ *
+ * It has to touch them at all, and it has to be at least as much about them as it
+ * is about letters. That second half matters now that a feature's characters are
+ * read from the substitutions themselves rather than from a sample string: a
+ * stylistic set can legitimately redraw a dozen letters and one digit, and such a
+ * set belongs with the letters. A tie goes to the digits, which keeps a feature
+ * described as "7₇⁷" — one digit, and sub- and superscripts that are no letters —
+ * where it has always been.
+ */
+function belongsWith(
+  variant: CharacterVariant,
+  characters: Set<string>
+): boolean {
+  const affected = affectedCharacters(variant);
+  const mine = affected.filter((character) => characters.has(character)).length;
+  if (mine === 0) return false;
+  const letters = affected.filter(
+    (character) => !characters.has(character) && /\p{L}/u.test(character)
+  ).length;
+  return mine >= letters;
+}
+
+/**
+ * Put the variants in the order the characters they affect are in.
+ *
+ * `order` is the user's alphabet, and an alphabet is a list somebody wrote down in
+ * a particular order — for many languages not the order the code points happen to
+ * be in — so it decides. A variant sorts by the first of its characters that
+ * appears in the alphabet; one whose characters are all outside it (the digits,
+ * against a letter alphabet) sorts after those, by code point. Labels break the
+ * remaining ties so that the order doesn't wobble between reads.
+ *
+ * The point is that the user sees one list ordered by what it is about. Which
+ * feature family an entry came from — a cvXX or a stylistic set — is an encoding
+ * detail they have no reason to know, so the two are interleaved.
+ */
+export function sortVariantsByCharacter(
+  variants: CharacterVariant[],
+  order: Set<string>
+): CharacterVariant[] {
+  const positions = new Map([...order].map((entry, i) => [entry, i]));
+
+  const keyOf = (variant: CharacterVariant) => {
+    let place = Number.MAX_SAFE_INTEGER;
+    let codePoint = Number.MAX_SAFE_INTEGER;
+    for (const character of affectedCharacters(variant)) {
+      const entry = matchingAlphabetEntry(order, character);
+      const at = entry === undefined ? undefined : positions.get(entry);
+      if (at !== undefined) place = Math.min(place, at);
+      codePoint = Math.min(codePoint, character.codePointAt(0) ?? codePoint);
+    }
+    return { place, codePoint, label: variant.label ?? variant.tag };
+  };
+
+  return [...variants]
+    .map((variant) => ({ variant, key: keyOf(variant) }))
+    .sort(
+      (a, b) =>
+        a.key.place - b.key.place ||
+        a.key.codePoint - b.key.codePoint ||
+        a.key.label.localeCompare(b.key.label)
+    )
+    .map(({ variant }) => variant);
+}
+
+/**
+ * Drop the variants that affect none of the given characters, in the order those
+ * characters are in. Used to show the digits on their own: a variant that only
+ * redraws figures belongs in the digit list, and one that redraws letters belongs
+ * in the letter list.
  */
 export function variantsFor(
   variants: CharacterVariant[],
   characters: Set<string>
 ): CharacterVariant[] {
-  return variants.filter((variant) =>
-    affectedCharacters(variant).some((character) => characters.has(character))
+  return sortVariantsByCharacter(
+    variants.filter((variant) => belongsWith(variant, characters)),
+    characters
   );
 }
 
 /**
  * Everything `variantsFor` leaves behind, so that the two lists together hold each
- * variant exactly once. A variant that touches a digit at all belongs to the digit
- * list: fonts describe their figure features with sample text like "7₇⁷", whose
- * subscript and superscript figures are not themselves digits, and showing such a
- * feature under the letters as well would offer the same choice twice.
+ * variant exactly once. Showing one feature in both lists would offer the same
+ * choice twice, and the two copies would have to agree about which form is
+ * chosen, so a feature that spans both goes to whichever list it is more about;
+ * see `belongsWith`.
+ *
+ * The order it was given in is kept, since the caller has usually just had
+ * `filterVariantsForAlphabet` put these in the alphabet's own order and the
+ * characters being excluded here are no basis for reordering what's left.
  */
 export function variantsBeyond(
   variants: CharacterVariant[],
   characters: Set<string>
 ): CharacterVariant[] {
-  return variants.filter(
-    (variant) =>
-      !affectedCharacters(variant).some((character) =>
-        characters.has(character)
-      )
-  );
+  return variants.filter((variant) => !belongsWith(variant, characters));
 }
 
 /**
@@ -115,6 +184,9 @@ function matchingAlphabetEntry(
  * means "no filtering". A character counts as being in the alphabet when its
  * upper- or lower-case counterpart is; see matchingAlphabetEntry.
  *
+ * What comes back is in the alphabet's own order rather than the font's; see
+ * sortVariantsByCharacter.
+ *
  * Fonts often leave the cvXX character list empty (Andika, for one, declares none
  * at all), so when a font doesn't say which characters a feature affects we fall
  * back to the sample text it supplies. A variant with neither is dropped: there is
@@ -127,7 +199,7 @@ export function filterVariantsForAlphabet(
   const showable = variants.filter(
     (variant) => variant.characters.length > 0 || usableSampleText(variant)
   );
-  if (alphabet.size === 0) return showable;
+  if (alphabet.size === 0) return sortVariantsByCharacter(showable, alphabet);
 
   const kept: CharacterVariant[] = [];
   for (const variant of showable) {
@@ -156,7 +228,7 @@ export function filterVariantsForAlphabet(
       kept.push(variant);
     }
   }
-  return kept;
+  return sortVariantsByCharacter(kept, alphabet);
 }
 
 /**

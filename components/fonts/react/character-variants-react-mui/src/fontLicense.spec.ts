@@ -12,6 +12,7 @@ import {
   describeLicense,
   readLicenseHints,
 } from "./fontLicense";
+import { readLicenseHintsFromBlob } from "./scanForCharacterVariants";
 import { buildNameTable, buildOs2Table, buildSfnt } from "./testFontBuilder";
 
 describe("classifyLicense, from the licence text", () => {
@@ -71,6 +72,39 @@ describe("classifyLicense, from the licence text", () => {
     expect(
       describeLicense({ description: "Released under the MIT licence" }).notes
     ).toEqual("MIT License");
+  });
+
+  it("does not let an MIT component make a refusing licence open", () => {
+    // Arial's own strings, cut to the sentences that matter. Its licence refuses
+    // permission and then reproduces the MIT licence covering the Biblical Hebrew
+    // layout logic contributed to it, and its copyright says the same in one line.
+    // Read MIT-first, that component's grant made Arial an open font.
+    const arial = {
+      description:
+        "Microsoft supplied font. You may use this font to create, display, " +
+        "and print content as permitted by the license terms or terms of use, " +
+        "of the Microsoft product, service, or content in which this font was " +
+        "included. Any other use is prohibited.\r\rThe following license, " +
+        "based on the MIT license (http://en.wikipedia.org/wiki/MIT_License), " +
+        "applies to the OpenType Layout logic for Biblical Hebrew as jointly " +
+        "developed by Ralph Hancock and John Hudson.",
+      copyright:
+        "© 2026 The Monotype Corporation. All Rights Reserved. \r\r" +
+        "Hebrew OpenType Layout logic copyright © 2003 & 2007, Ralph " +
+        "Hancock & John Hudson. This layout logic for Biblical Hebrew is open " +
+        "source software under the MIT License; see embedded license " +
+        "description for details.",
+    };
+    expect(describeLicense(arial)).toEqual({
+      category: "limits-apply",
+      notes: "Microsoft font",
+    });
+    // And the copyright half says no on its own too: "All Rights Reserved" and
+    // an MIT grant in one string means the grant is about a part, not the whole.
+    expect(describeLicense({ copyright: arial.copyright })).toEqual({
+      category: "limits-apply",
+      notes: "All rights reserved",
+    });
   });
 
   it("does not read a bare MIT as the licence", () => {
@@ -276,5 +310,29 @@ describe("readLicenseHints", () => {
 
   it("throws on bytes that are not a font", () => {
     expect(() => readLicenseHints(new ArrayBuffer(64))).toThrow(/font/i);
+  });
+
+  it("reads the same fields off a Blob as out of the whole file", async () => {
+    // The sweep reads a few KB per font rather than the file, and the two readers
+    // have to agree: while the ranged one skipped name ID 0, a font whose only
+    // licence wording is in its copyright — half the rules in fontLicense.ts —
+    // came back from the sweep unclassified and from the file classified.
+    const font = buildSfnt([
+      { tag: "OS/2", data: buildOs2Table(0x0008) },
+      {
+        tag: "name",
+        data: buildNameTable([
+          { nameId: 0, text: "Copyright 2020 Some Foundry. All rights reserved." },
+          { nameId: 1, text: "Test Family" },
+        ]),
+      },
+    ]);
+
+    const ranged = await readLicenseHintsFromBlob(new Blob([font]));
+    expect(ranged).toEqual(readLicenseHints(font));
+    expect(describeLicense(ranged)).toEqual({
+      category: "limits-apply",
+      notes: "All rights reserved",
+    });
   });
 });

@@ -1,103 +1,63 @@
-/** @jsxImportSource @emotion/react */
-import { css } from "@emotion/react";
-import { ButtonBase, Collapse, useTheme } from "@mui/material";
-import React, { useState } from "react";
+import React from "react";
 import {
   CharacterVariantChoices,
   CharacterVariantList,
   DIGITS,
+  ShapeInfo,
 } from "@ethnolib/character-variants-react-mui";
-import { ChevronIcon } from "./icons";
-import { NumberShapes, OLD_STYLE_NUMERALS_TAG } from "./NumberShapes";
+import { SectionHeading } from "./SectionHeading";
 
 export interface DigitShapesProps {
   fontFamily: string;
   fontData?: ArrayBuffer;
   postscriptName?: string;
-  /** Whether the font has any cvXX feature that redraws a digit. */
+  /**
+   * Whether the font has any cvXX feature that redraws a digit. Nothing else
+   * counts: a font that merely offers old-style figures is offering another way to
+   * set its numbers, not another shape to draw them in.
+   */
   hasDigitVariants: boolean;
-  /** Whether it offers old-style figures, which is a choice of its own. */
-  hasOldStyleNumerals: boolean;
   choices: CharacterVariantChoices;
   onChoicesChange: (choices: CharacterVariantChoices) => void;
   sampleSize?: number;
+  /** Told what the tile under the pointer is, and told null when it leaves. */
+  onHoverChange?: (info: ShapeInfo | null) => void;
   className?: string;
 }
 
 /**
- * The ways a font can draw the digits, the same choices as the letter shapes but
- * for 0-9. Folded away by default: a book's numbers matter less than its letters,
- * and the section says what is inside it without being opened.
+ * The ways a font can draw the digits: the same choices as the letter shapes, for
+ * 0-9. Shown outright, like the letter shapes, and only when the font has some —
+ * a section that is only ever there when it has something in it has nothing to
+ * gain from being foldable.
  */
 export const DigitShapes: React.FunctionComponent<DigitShapesProps> = ({
   fontFamily,
   fontData,
   postscriptName,
   hasDigitVariants,
-  hasOldStyleNumerals,
   choices,
   onChoicesChange,
   sampleSize,
+  onHoverChange,
   className,
 }) => {
-  const theme = useTheme();
-  const [open, setOpen] = useState(false);
-
-  if (!hasDigitVariants && !hasOldStyleNumerals) return null;
+  if (!hasDigitVariants) return null;
 
   return (
     <div className={className}>
-      <ButtonBase
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        css={css`
-          gap: 4px;
-          padding: 4px 0;
-          font-size: 14px;
-          font-weight: 500;
-          color: ${theme.palette.text.primary};
-        `}
-      >
-        <ChevronIcon size={16} open={open} />
-        Digit Shape Choices
-      </ButtonBase>
+      <SectionHeading>Digit Shape Choices</SectionHeading>
 
-      <Collapse in={open}>
-        <div
-          css={css`
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            padding-top: 10px;
-          `}
-        >
-          {hasOldStyleNumerals && (
-            <NumberShapes
-              fontFamily={fontFamily}
-              choice={choices[OLD_STYLE_NUMERALS_TAG] ?? 0}
-              onChoose={(choice) =>
-                onChoicesChange({
-                  ...choices,
-                  [OLD_STYLE_NUMERALS_TAG]: choice,
-                })
-              }
-              sampleSize={sampleSize}
-            />
-          )}
-
-          {hasDigitVariants && (
-            <CharacterVariantList
-              fontFamily={fontFamily}
-              fontData={fontData}
-              postscriptName={postscriptName}
-              alphabet={DIGITS}
-              choices={choices}
-              onChoicesChange={onChoicesChange}
-              sampleSize={sampleSize}
-            />
-          )}
-        </div>
-      </Collapse>
+      <CharacterVariantList
+        fontFamily={fontFamily}
+        fontData={fontData}
+        postscriptName={postscriptName}
+        alphabet={DIGITS}
+        choices={choices}
+        onChoicesChange={onChoicesChange}
+        sampleSize={sampleSize}
+        onHoverChange={onHoverChange}
+      />
     </div>
   );
 };

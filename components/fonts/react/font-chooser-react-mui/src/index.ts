@@ -1,4 +1,5 @@
 export { FontChooserScreen } from "./FontChooserScreen";
+export { FONT_LIST_SCROLLBAR_COLOR } from "./scrollbarStyle";
 export type {
   FontInfo,
   FontChooserScreenProps,
@@ -12,7 +13,6 @@ export {
   writesTheAlphabet,
 } from "./mergeFonts";
 export type { MergeFontsInput, MergedFonts } from "./mergeFonts";
-export { OLD_STYLE_NUMERALS_TAG } from "./NumberShapes";
 export {
   fetchGoogleFontsCatalog,
   guessSubsetsForAlphabet,

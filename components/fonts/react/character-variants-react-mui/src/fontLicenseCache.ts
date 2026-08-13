@@ -16,6 +16,9 @@
  * a font under the same name with the same faces will read from the cache; that is
  * the one case we accept getting wrong until the rules version moves.
  *
+ * Only answers are kept. A font we failed to read is left out, so that a bad run
+ * costs a re-read rather than a permanent blank; see `writeCachedLicense`.
+ *
  * Storage is injectable so this can be tested without a browser, and every call is
  * wrapped: localStorage throws when it is full, and in Safari's private mode it
  * throws on write even when it exists. A cache that can't be written is not a
@@ -85,6 +88,10 @@ export function readCachedLicense(
     // Anything that isn't the shape we wrote is treated as a miss rather than
     // trusted; a hand-edited or half-written entry shouldn't reach the UI.
     if (typeof parsed !== "object" || parsed === null) return undefined;
+    // An entry with no verdict in it is a miss too, so that a cache written by an
+    // older version of this file — which did store failures — heals itself on the
+    // next visit instead of having to be cleared by hand.
+    if (parsed.license === undefined) return undefined;
     return {
       license: parsed.license,
       licenseUrl: parsed.licenseUrl,
@@ -95,15 +102,23 @@ export function readCachedLicense(
 }
 
 /**
- * Remember a verdict, including the verdict "we couldn't read this font", which is
- * every bit as worth not repeating.
+ * Remember a verdict. A failure is not a verdict and is not stored.
+ *
+ * This used to keep "we couldn't read this font" as well, on the grounds that it
+ * saved repeating the work. It did, permanently: reading a font can fail for
+ * reasons that have nothing to do with the font — the permission not granted yet,
+ * a file locked, a sweep torn down mid-flight — and one such run wrote an empty
+ * entry for every family on the machine. Nothing ever looked at those fonts again,
+ * so every font in the chooser had no licence, the list's open and closed sections
+ * both emptied out, and no amount of reloading fixed it. Re-reading a few KB is the
+ * cheaper mistake.
  */
 export function writeCachedLicense(
   family: LocalFontFamily,
   value: CachedFontLicense,
   storage: LicenseCacheStorage | undefined = defaultLicenseCacheStorage()
 ): void {
-  if (!storage) return;
+  if (!storage || value.license === undefined) return;
   try {
     storage.setItem(
       licenseCacheKey(family),

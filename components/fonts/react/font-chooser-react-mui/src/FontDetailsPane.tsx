@@ -7,17 +7,23 @@ import {
   CharacterVariantList,
   DIGITS,
   filterVariantsForAlphabet,
-  hasOldStyleNumerals,
+  groupVariants,
   parseAlphabet,
   readCharacterVariants,
   readCoverageRanges,
+  ShapeInfo,
+  ShapeInfoLine,
   variantsBeyond,
   variantsFor,
 } from "@ethnolib/character-variants-react-mui";
 import { Callout } from "./Callout";
 import { DigitShapes } from "./DigitShapes";
+import { SectionHeading } from "./SectionHeading";
+import { generateExampleText } from "./exampleText";
+import { featureSettingsFor } from "./featureSettings";
 import { DownloadNeededIcon } from "./icons";
 import { missingFromAlphabet } from "./missingCharacters";
+import { scrollbarCss } from "./scrollbarStyle";
 import type { FontInfo } from "./types";
 
 /** The digits, as a set, for telling digit shapes from letter shapes. */
@@ -67,6 +73,10 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   sampleSize,
 }) => {
   const installed = font.installed !== false;
+  // What the pointer is on, wherever it is: one line at the foot of the pane
+  // serves both shape sections, so that reading about a shape never puts a label
+  // over the shapes themselves.
+  const [hovered, setHovered] = useState<ShapeInfo | null>(null);
   const coverage = useCoverage(fontData, scannedCoverage, postscriptName);
   const alphabetSet = useMemo(() => parseAlphabet(alphabet), [alphabet]);
 
@@ -101,12 +111,42 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
     () => variants && variantsFor(variants, DIGIT_SET),
     [variants]
   );
-  // Reading this means walking the font's feature list, so it happens once per
-  // font rather than once per render.
-  const showsNumberShapes = useMemo(
-    () => !!fontData && safeHasOldStyleNumerals(fontData, postscriptName),
-    [fontData, postscriptName]
+
+  // What the user picks from is rows, not features: several features can be
+  // different ways of drawing one letter, and those share a row. So the count that
+  // stands for "how many choices are in here" is the rows'.
+  const shapeRowCount = useMemo(
+    () => shownVariants && groupVariants(shownVariants).length,
+    [shownVariants]
   );
+
+  // A licence that isn't a plain yes belongs at the head of the pane, before the
+  // user spends any time on a font they may not be allowed to use: limits, a
+  // restriction, or nothing we could make sense of. An open one is the opposite
+  // sort of news, so it waits at the very foot, where it confirms rather than
+  // warns.
+  //
+  // No `?? "unknown"` here. An unset `license` is a font whose tables nobody has
+  // read yet — the sweep runs over every installed family and takes seconds — and
+  // reading that as "unknown" put "We don't know the rules for this font" at the
+  // top of the pane for a font we were in the middle of finding out about. Say
+  // nothing until there is something to say. `classifyLicense` returns "unknown"
+  // in its own right, so the two cases stay apart.
+  const licenseAtTop = font.license !== undefined && font.license !== "open";
+  const licenseAtFoot = font.license === "open";
+
+  // A font with nothing to choose between says nothing at all: no headings, and
+  // no line announcing the absence. The one exception is a font we don't have
+  // yet, where the ghosted section is part of explaining the download.
+  const showsGhost = !installed && shapeRowCount !== 0;
+  // The example needs the font on the machine to draw with and an alphabet to
+  // write in; without either there is nothing to show.
+  const showsExample = installed && !!fontData && alphabetSet.size > 0;
+  const showsShapes = installed
+    ? !!shapeRowCount || !!digitVariants?.length || showsExample
+    : showsGhost;
+  // Only what the user has to know before looking at the font at all.
+  const showsPreamble = licenseAtTop || !installed;
 
   return (
     <div
@@ -124,104 +164,150 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
         bottom of the screen.
       */}
       <div
-        css={css`
-          flex: 1;
-          min-height: 0;
-          overflow-y: auto;
-        `}
+        css={[
+          css`
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+          `,
+          scrollbarCss,
+        ]}
       >
         {/*
           No font name here: the sidebar row the user just clicked already says
           which font this is, and the pane is short of room.
         */}
-        <div
-          css={css`
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-          `}
-        >
-          {alphabetSet.size > 0 && missing && (
-            <Callout variant={missing.length === 0 ? "ok" : "warn"}>
-              <b>
-                {missing.length === 0
-                  ? "Includes the letters of your alphabet"
-                  : "Missing some of your letters"}
-              </b>
-              {missing.length > 0 && `: ${missing.join(" ")}`}
-              <br />
-              <span
-                css={css`
-                  font-family: "${font.family}";
-                  font-size: 20px;
-                  letter-spacing: 0.8px;
-                `}
+        {showsPreamble && (
+          <div
+            css={css`
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            `}
+          >
+            {licenseAtTop && <LicenseCallout font={font} />}
+
+            {!installed && (
+              <Callout
+                variant="download"
+                action={
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    size="small"
+                    startIcon={<DownloadNeededIcon size={14} />}
+                    onClick={() => onDownloadFont?.(font)}
+                  >
+                    Download this font
+                  </Button>
+                }
               >
-                {alphabet}
-              </span>
-            </Callout>
-          )}
+                This font is not on this computer yet.
+                {font.downloadSizeBytes !== undefined &&
+                  ` This font is ${(font.downloadSizeBytes / 1_000_000).toFixed(
+                    1
+                  )} MB.`}
+              </Callout>
+            )}
+          </div>
+        )}
 
-          <LicenseCallout font={font} />
-
-          {!installed && (
-            <Callout
-              variant="download"
-              action={
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  size="small"
-                  startIcon={<DownloadNeededIcon size={14} />}
-                  onClick={() => onDownloadFont?.(font)}
-                >
-                  Download this font
-                </Button>
-              }
-            >
-              This font is not on this computer yet.
-              {font.downloadSizeBytes !== undefined &&
-                ` This font is ${(font.downloadSizeBytes / 1_000_000).toFixed(
-                  1
-                )} MB.`}
-            </Callout>
-          )}
-        </div>
-
-        <Divider
-          css={css`
-            margin: 18px 0 14px;
-          `}
-        />
+        {/* No rule unless there is something on both sides of it. */}
+        {showsPreamble && showsShapes && (
+          <Divider
+            css={css`
+              margin: 18px 0 14px;
+            `}
+          />
+        )}
 
         {installed ? (
-          <>
+          // A section that has nothing to say renders nothing, and the gap goes
+          // with it, so the spacing needs no arithmetic about what is present.
+          <div
+            css={css`
+              display: flex;
+              flex-direction: column;
+              gap: 18px;
+            `}
+          >
+            {/* First, because it is the font doing the user's own writing;
+                the shape choices below it are adjustments to what it shows. */}
+            {showsExample && (
+              <ExampleParagraph
+                fontFamily={font.family}
+                alphabet={alphabet}
+                choices={choices}
+              />
+            )}
             <LetterShapes
               font={font}
               fontData={fontData}
               postscriptName={postscriptName}
               alphabet={alphabet}
-              shownVariantCount={shownVariants?.length}
+              shapeRowCount={shapeRowCount}
               choices={choices}
               onChoicesChange={onChoicesChange}
               sampleSize={sampleSize}
+              onHoverChange={setHovered}
             />
             <DigitShapes
               fontFamily={font.family}
               fontData={fontData}
               postscriptName={postscriptName}
               hasDigitVariants={!!digitVariants?.length}
-              hasOldStyleNumerals={showsNumberShapes}
               choices={choices}
               onChoicesChange={onChoicesChange}
               sampleSize={sampleSize}
-              css={css`
-                margin-top: 18px;
-              `}
+              onHoverChange={setHovered}
             />
-          </>
+          </div>
         ) : (
-          <GhostedLetterShapes shapeCount={shownVariants?.length} />
+          showsGhost && <GhostedLetterShapes shapeCount={shapeRowCount} />
+        )}
+
+        {/*
+          Whether the font can write the user's alphabet, at the foot of what it
+          can do rather than at the head of it. The shapes above are the reason
+          they opened this font; this is the check they make on the way out, and
+          it reads next to the licence, which is the other one.
+        */}
+        {alphabetSet.size > 0 && missing && (
+          <Callout
+            variant={missing.length === 0 ? "ok" : "warn"}
+            css={css`
+              margin-top: 18px;
+            `}
+          >
+            <b>
+              {missing.length === 0
+                ? "Includes the letters of your alphabet"
+                : "Missing some of your letters"}
+            </b>
+            {missing.length > 0 && `: ${missing.join(" ")}`}
+            <br />
+            <span
+              css={css`
+                font-family: "${font.family}";
+                font-size: 20px;
+                letter-spacing: 0.8px;
+              `}
+            >
+              {alphabet}
+            </span>
+          </Callout>
+        )}
+
+        {/* The open case: a licence that says yes is worth confirming but not
+            worth interrupting for, so it sits at the very end, under the alphabet
+            check. Everything else has already had its say at the top. */}
+        {licenseAtFoot && (
+          <LicenseCallout
+            font={font}
+            css={css`
+              margin-top: 18px;
+            `}
+          />
         )}
       </div>
 
@@ -230,10 +316,24 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
           flex: none;
           padding-top: 22px;
           display: flex;
-          justify-content: flex-end;
+          align-items: center;
           gap: 10px;
         `}
       >
+        {/*
+          The hovered shape is written here and nowhere else. It takes the room
+          left over beside the buttons, and takes it whether or not it has
+          anything to say, so that a shape coming under the pointer never moves
+          the buttons. Two short lines fit inside the buttons' own height, so the
+          footer doesn't change height either.
+        */}
+        <ShapeInfoLine
+          info={hovered}
+          css={css`
+            flex: 1;
+            min-width: 0;
+          `}
+        />
         <Button variant="text" onClick={() => onCancel?.()}>
           Cancel
         </Button>
@@ -254,59 +354,87 @@ const LetterShapes: React.FunctionComponent<{
   fontData?: ArrayBuffer;
   postscriptName?: string;
   alphabet: string;
-  shownVariantCount?: number;
+  /** How many rows of letter shapes there are to pick from. */
+  shapeRowCount?: number;
   choices: CharacterVariantChoices;
   onChoicesChange: (choices: CharacterVariantChoices) => void;
   sampleSize?: number;
+  onHoverChange?: (info: ShapeInfo | null) => void;
 }> = ({
   font,
   fontData,
   postscriptName,
   alphabet,
-  shownVariantCount,
+  shapeRowCount,
   choices,
   onChoicesChange,
   sampleSize,
+  onHoverChange,
 }) => {
-  const theme = useTheme();
-  const hasShapes = !!shownVariantCount;
+  // Nothing to choose between, or nothing read yet: the section stays away
+  // entirely rather than heading an empty space or announcing its own emptiness.
+  if (!shapeRowCount) return null;
 
   return (
     <div>
-      <Typography
+      <SectionHeading>Letter Shape Choices</SectionHeading>
+
+      <CharacterVariantList
+        fontFamily={font.family}
+        fontData={fontData}
+        postscriptName={postscriptName}
+        alphabet={alphabet}
+        excludeCharacters={DIGITS}
+        choices={choices}
+        onChoicesChange={onChoicesChange}
+        sampleSize={sampleSize}
+        onHoverChange={onHoverChange}
+      />
+    </div>
+  );
+};
+
+/**
+ * A few sentences of nothing, in the user's own alphabet and the font's own
+ * shapes. Lorem ipsum is no use for judging a font you are going to set Nateni or
+ * Yoruba in: what matters is how the letters you actually use look next to each
+ * other, and how the shapes you just picked look in running text rather than
+ * alone on a tile.
+ */
+const ExampleParagraph: React.FunctionComponent<{
+  fontFamily: string;
+  alphabet: string;
+  choices: CharacterVariantChoices;
+  className?: string;
+}> = ({ fontFamily, alphabet, choices, className }) => {
+  const text = useMemo(() => generateExampleText(alphabet), [alphabet]);
+  const settings = useMemo(() => featureSettingsFor(choices), [choices]);
+  if (!text) return null;
+
+  // The figures go on the end, in running text rather than alone on a tile, since
+  // a digit shape picked above is a choice about the numbers in the user's books.
+  // They are not part of the pseudo-text itself: an alphabet is letters, and a
+  // generator that wrote digits into its nonsense words would be inventing a
+  // numeral system for the language.
+  const example = `${text} ${DIGITS}`;
+
+  return (
+    <div className={className}>
+      <SectionHeading>Example</SectionHeading>
+      <p
+        // Nonsense words: worth seeing, not worth reading out.
+        aria-hidden
         css={css`
-          font-size: 14px;
-          font-weight: 500;
-          margin-bottom: 10px;
+          margin: 0;
+          font-family: "${fontFamily}";
+          font-size: 17px;
+          line-height: 1.65;
+          // The picked shapes, so that choosing one changes the example under it.
+          font-feature-settings: ${settings};
         `}
       >
-        Letter Shape Choices
-      </Typography>
-
-      {hasShapes ? (
-        <CharacterVariantList
-          fontFamily={font.family}
-          fontData={fontData}
-          postscriptName={postscriptName}
-          alphabet={alphabet}
-          excludeCharacters={DIGITS}
-          choices={choices}
-          onChoicesChange={onChoicesChange}
-          sampleSize={sampleSize}
-        />
-      ) : (
-        <Typography
-          variant="body2"
-          css={css`
-            font-size: 12.5px;
-            color: ${theme.palette.text.secondary};
-          `}
-        >
-          {fontData
-            ? "No letter-shape options for your alphabet in this font."
-            : "Reading this font…"}
-        </Typography>
-      )}
+        {example}
+      </p>
     </div>
   );
 };
@@ -315,7 +443,8 @@ const LetterShapes: React.FunctionComponent<{
  * The shape of the letter-shape area for a font we don't have yet: the shapes
  * can't be picked until the font is on the machine, but leaving a blank would hide
  * what the downloading is for. Where we have managed to read the font's file we
- * can at least say how many shape choices are waiting inside it.
+ * can at least say how many shape choices are waiting inside it. A font we have
+ * read and found nothing in doesn't come here at all; the caller leaves it out.
  */
 const GhostedLetterShapes: React.FunctionComponent<{
   shapeCount?: number;
@@ -332,15 +461,7 @@ const GhostedLetterShapes: React.FunctionComponent<{
         pointer-events: none;
       `}
     >
-      <Typography
-        css={css`
-          font-size: 14px;
-          font-weight: 500;
-          margin-bottom: 10px;
-        `}
-      >
-        Letter Shape Choices
-      </Typography>
+      <SectionHeading>Letter Shape Choices</SectionHeading>
       {shapeCount !== undefined && (
         <Typography
           variant="body2"
@@ -350,9 +471,7 @@ const GhostedLetterShapes: React.FunctionComponent<{
             margin-bottom: 10px;
           `}
         >
-          {shapeCount > 0
-            ? `${shapeCount} of your letters can be drawn more than one way in this font. Download it to pick between them.`
-            : "No letter-shape options for your alphabet in this font."}
+          {`${shapeCount} of your letters can be drawn more than one way in this font. Download it to pick between them.`}
         </Typography>
       )}
       <div
@@ -385,9 +504,10 @@ const GhostedLetterShapes: React.FunctionComponent<{
   );
 };
 
-const LicenseCallout: React.FunctionComponent<{ font: FontInfo }> = ({
-  font,
-}) => {
+const LicenseCallout: React.FunctionComponent<{
+  font: FontInfo;
+  className?: string;
+}> = ({ font, className }) => {
   const license = font.license ?? "unknown";
   const link = font.licenseUrl && (
     <>
@@ -401,7 +521,7 @@ const LicenseCallout: React.FunctionComponent<{ font: FontInfo }> = ({
 
   if (license === "open") {
     return (
-      <Callout variant="ok">
+      <Callout variant="ok" className={className}>
         This font&apos;s{" "}
         {font.licenseUrl ? (
           <Link href={font.licenseUrl} target="_blank" rel="noreferrer">
@@ -417,7 +537,7 @@ const LicenseCallout: React.FunctionComponent<{ font: FontInfo }> = ({
 
   if (license === "limits-apply") {
     return (
-      <Callout variant="warn">
+      <Callout variant="warn" className={className}>
         Limits apply to this font&apos;s license.
         {link}
         {font.licenseNotes && (
@@ -432,7 +552,7 @@ const LicenseCallout: React.FunctionComponent<{ font: FontInfo }> = ({
 
   if (license === "system-restricted") {
     return (
-      <Callout variant="error">
+      <Callout variant="error" className={className}>
         This font came with your computer and may not be shared. It may work on
         this computer only.
       </Callout>
@@ -440,7 +560,7 @@ const LicenseCallout: React.FunctionComponent<{ font: FontInfo }> = ({
   }
 
   return (
-    <Callout variant="unknown">
+    <Callout variant="unknown" className={className}>
       We don&apos;t know the rules for this font. You can print with it, but
       check its license before publishing.
       {link}
@@ -461,8 +581,13 @@ function useCoverage(
   const [read, setRead] = useState<Uint32Array | undefined>();
 
   useEffect(() => {
-    setRead(undefined);
-    if (scanned || !fontData) return;
+    if (scanned || !fontData) {
+      // Only here, where there is nothing on the way to replace it. Clearing it
+      // at the top of every run took the alphabet callout away and put it back a
+      // frame later, for every font the user clicked past.
+      setRead(undefined);
+      return;
+    }
     let stale = false;
     readCoverageRanges(new Blob([fontData]), postscriptName)
       .then((ranges) => {
@@ -477,15 +602,4 @@ function useCoverage(
   }, [fontData, scanned, postscriptName]);
 
   return scanned ?? read;
-}
-
-function safeHasOldStyleNumerals(
-  fontData: ArrayBuffer,
-  postscriptName: string | undefined
-): boolean {
-  try {
-    return hasOldStyleNumerals(fontData, postscriptName);
-  } catch {
-    return false;
-  }
 }

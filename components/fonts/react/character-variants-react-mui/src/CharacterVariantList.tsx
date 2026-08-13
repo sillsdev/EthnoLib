@@ -2,16 +2,23 @@
 import { css } from "@emotion/react";
 import { Alert } from "@mui/material";
 import React, { useMemo, useState } from "react";
-import {
-  CharacterVariant,
-  readCharacterVariants,
-} from "./readCharacterVariants";
+import { readCharacterVariants } from "./readCharacterVariants";
 import { CharacterVariantCard } from "./CharacterVariantCard";
+import { DEFAULT_SAMPLE_SIZE, scaledPx } from "./FormTile";
+import type { ShapeInfo } from "./ShapeInfoLine";
 import {
   filterVariantsForAlphabet,
   parseAlphabet,
   variantsBeyond,
 } from "./alphabet";
+import {
+  chooseForm,
+  chosenForm,
+  groupVariants,
+  type CharacterVariantChoices,
+  type VariantForm,
+  type VariantGroup,
+} from "./variantGroups";
 
 export interface CharacterVariantListProps {
   /**
@@ -45,13 +52,19 @@ export interface CharacterVariantListProps {
    */
   choices?: CharacterVariantChoices;
   onChoicesChange?: (choices: CharacterVariantChoices) => void;
-  /** Font size, in px, for the glyph samples. */
+  /** Font size, in px, for the glyph samples. `<FormTile>` sets the default. */
   sampleSize?: number;
+  /**
+   * Told what the shape tile under the pointer is — its name and the CSS that
+   * produces it — and told null when the pointer leaves. Nothing is written next
+   * to the tiles; a caller with somewhere settled to put it, such as the foot of a
+   * pane, shows it with `<ShapeInfoLine>`.
+   */
+  onHoverChange?: (info: ShapeInfo | null) => void;
   className?: string;
 }
 
-/** Which form of each cvXX feature is chosen, keyed by tag ("cv07"). */
-export type CharacterVariantChoices = Record<string, number>;
+export type { CharacterVariantChoices };
 
 /**
  * The character variants of one font, given both its name and its bytes. Split out
@@ -67,14 +80,18 @@ export const CharacterVariantList: React.FunctionComponent<
   excludeCharacters,
   choices,
   onChoicesChange,
-  sampleSize = 32,
+  // No default here. It used to be 32, which quietly beat the one in FormTile and
+  // made that one dead code — so changing the size in the obvious place did
+  // nothing. The tile owns its own size; everything above it only passes a size on.
+  sampleSize,
+  onHoverChange,
   className,
 }) => {
   const [ownChoices, setOwnChoices] = useState<CharacterVariantChoices>({});
   const chosen = choices ?? ownChoices;
 
-  const choose = (tag: string, choice: number) => {
-    const next = { ...chosen, [tag]: choice };
+  const choose = (group: VariantGroup, form?: VariantForm) => {
+    const next = chooseForm(chosen, group, form);
     if (!choices) setOwnChoices(next);
     onChoicesChange?.(next);
   };
@@ -102,6 +119,10 @@ export const CharacterVariantList: React.FunctionComponent<
       : forAlphabet;
   }, [variants, alphabet, excludeCharacters]);
 
+  // Several features can be different answers to one question — "how should Ŋ be
+  // drawn?" — and belong in one row; see variantGroups.ts.
+  const groups = useMemo(() => shown && groupVariants(shown), [shown]);
+
   if (error) {
     return (
       <Alert severity="error" className={className}>
@@ -110,7 +131,7 @@ export const CharacterVariantList: React.FunctionComponent<
     );
   }
 
-  if (!variants || !shown) return null;
+  if (!variants || !shown || !groups) return null;
 
   // Either the font has no cvXX features at all or none that touch this alphabet.
   // The difference doesn't matter to someone who just wants to see their letters.
@@ -126,21 +147,26 @@ export const CharacterVariantList: React.FunctionComponent<
     <div className={className}>
       <div
         css={css`
+          // Groups run across and wrap, rather than one to a line: most hold two
+          // or three narrow tiles, and stacking them wasted most of the pane.
           display: flex;
-          flex-direction: column;
-          // Enough that a row of tiles reads as one set of choices, now that no
-          // heading separates one feature from the next.
-          gap: 18px;
+          flex-wrap: wrap;
+          align-items: flex-start;
+          // Wide enough that two rows side by side don't read as one row. In
+          // multiples of the sample size like everything else, so the whole
+          // control scales off that one number.
+          gap: ${scaledPx(sampleSize ?? DEFAULT_SAMPLE_SIZE, 0.94)};
         `}
       >
-        {shown.map((variant: CharacterVariant) => (
+        {groups.map((group) => (
           <CharacterVariantCard
-            key={variant.tag}
-            variant={variant}
+            key={group.key}
+            group={group}
             fontFamily={fontFamily}
             sampleSize={sampleSize}
-            choice={chosen[variant.tag] ?? 0}
-            onChoose={(choice) => choose(variant.tag, choice)}
+            chosen={chosenForm(group, chosen)}
+            onChoose={(form) => choose(group, form)}
+            onHoverChange={onHoverChange}
           />
         ))}
       </div>

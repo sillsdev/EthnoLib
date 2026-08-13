@@ -1,7 +1,17 @@
 /**
- * A small OpenType reader that pulls the "character variant" features (cv01..cv99)
- * out of a font's GSUB table, together with whatever UI strings the font supplies
- * for them in its `name` table.
+ * A small OpenType reader that pulls a font's shape features out of its GSUB
+ * table, together with whatever UI strings the font supplies for them in its
+ * `name` table.
+ *
+ * Two families of feature say "here is another way to draw this", and to a user
+ * they are the same offer differently encoded, so we read both:
+ *
+ * - cv01..cv99, character variants, which may name the characters they affect,
+ *   supply a sample, and name each alternate.
+ * - ss01..ss20, stylistic sets, which carry nothing but a name for the set.
+ *
+ * Whichever family it is, a feature that doesn't name its characters gets them
+ * worked out from the substitutions it performs; see gsubCoverage.ts.
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/features_ae#tag-cv01---cv99
  * Format of the cvXX FeatureParams table:
@@ -15,11 +25,14 @@
  * collection). WOFF/WOFF2 would have to be decompressed first.
  */
 
-/** One cvXX feature as the font itself describes it. */
+import { Substitutions, readFeatureSubstitutions } from "./gsubCoverage";
+import { buildReverseCmap } from "./reverseCmap";
+
+/** One shape feature as the font describes it: a cvXX or a stylistic set. */
 export interface CharacterVariant {
-  /** e.g. "cv07" */
+  /** e.g. "cv07" or "ss01" */
   tag: string;
-  /** 1..99, parsed out of the tag, for sorting and display */
+  /** The number in the tag (1..99 for cvXX, 1..20 for ssXX), for sorting and display */
   number: number;
   /** The font's own name for this feature, e.g. "Alternate a" */
   label?: string;
@@ -32,7 +45,11 @@ export interface CharacterVariant {
    * named parameters can be set to 1..parameterLabels.length rather than just on/off.
    */
   parameterLabels: string[];
-  /** The characters this feature affects, as single-character strings */
+  /**
+   * The characters this feature affects, as single-character strings. Taken from
+   * the font's own cvXX character list when it declares one, and otherwise worked
+   * out from the substitutions the feature performs; see gsubCoverage.ts.
+   */
   characters: string[];
   /** Code points of `characters` */
   codePoints: number[];
@@ -44,6 +61,13 @@ export interface TableEntry {
 }
 
 const CV_TAG = /^cv([0-9]{2})$/;
+// Stylistic sets run ss01..ss20 and no further.
+const SS_TAG = /^ss(0[1-9]|1[0-9]|20)$/;
+
+/** Whether a feature tag is one of the shape features we show the user. */
+export function isShapeFeatureTag(tag: string): boolean {
+  return CV_TAG.test(tag) || SS_TAG.test(tag);
+}
 
 /**
  * Every feature tag the font's GSUB table declares, e.g. "liga", "onum", "cv01".
@@ -129,9 +153,20 @@ export function readCharacterVariants(
   const variants: CharacterVariant[] = [];
   const seen = new Set<string>();
 
+  // Built only if some feature turns out to need it, and then shared by all of
+  // them: running the cmap backwards costs a pass over every character the font
+  // has, and a font's lookups are routinely shared between features.
+  let reverseCmap: Map<number, number> | undefined;
+  const substitutionsOfLookup = new Map<number, Substitutions>();
+  const substitutionsOfTag = new Map<string, Substitutions>();
+  const charactersOf = (substitutions: Substitutions) => {
+    if (!tables["cmap"]) return { characters: [], codePoints: [] };
+    reverseCmap ??= buildReverseCmap(view, tables["cmap"].offset);
+    return derivedCharacters(substitutions, reverseCmap);
+  };
+
   for (const { tag, featureOffset } of featureRecords(view, gsub.offset)) {
-    const match = CV_TAG.exec(tag);
-    if (!match) continue;
+    if (!isShapeFeatureTag(tag)) continue;
     if (seen.has(tag)) continue;
     seen.add(tag);
 
@@ -140,18 +175,218 @@ export function readCharacterVariants(
     // (Some old fonts, and the 'size' feature in particular, measure it from the
     // start of the FeatureList instead; we don't try to cope with that here.)
     const paramsOffset = view.getUint16(featureOffset);
+    const params = paramsOffset ? featureOffset + paramsOffset : 0;
+    const cv = CV_TAG.exec(tag);
+    const number = parseInt(tag.slice(2), 10);
+
+    const described = cv
+      ? params
+        ? readFeatureParams(view, params, names)
+        : { parameterLabels: [], characters: [], codePoints: [] }
+      : readStylisticSetParams(view, params, names, number);
+
+    const substitutions = readFeatureSubstitutions(
+      view,
+      gsub.offset,
+      featureLookupIndices(view, featureOffset),
+      substitutionsOfLookup
+    );
+    substitutionsOfTag.set(tag, substitutions);
 
     variants.push({
       tag,
-      number: parseInt(match[1], 10),
-      ...(paramsOffset
-        ? readFeatureParams(view, featureOffset + paramsOffset, names)
-        : { parameterLabels: [], characters: [], codePoints: [] }),
+      number,
+      ...described,
+      // The font's own character list is authoritative, and cheaper. Only when it
+      // declares none — which is most fonts, and every stylistic set — do we go
+      // and ask the substitutions themselves.
+      ...(described.characters.length > 0 ? {} : charactersOf(substitutions)),
     });
   }
 
-  variants.sort((a, b) => a.number - b.number);
-  return variants;
+  // cvXX first, then the stylistic sets, each in numeric order. Both families
+  // number from 1, so the tag has to break the tie. Callers showing these to
+  // someone sort them by the characters they affect instead; see alphabet.ts.
+  variants.sort(
+    (a, b) =>
+      a.tag.slice(0, 2).localeCompare(b.tag.slice(0, 2)) || a.number - b.number
+  );
+  return dropRedundantSets(variants, substitutionsOfTag);
+}
+
+/** The lookups a Feature table applies, as indices into the LookupList. */
+function featureLookupIndices(view: DataView, featureOffset: number): number[] {
+  // Feature table: Offset16 featureParamsOffset, uint16 lookupIndexCount, then
+  // a uint16 index into the LookupList per lookup.
+  const count = view.getUint16(featureOffset + 2);
+  const indices: number[] = [];
+  for (let i = 0; i < count; i++) {
+    indices.push(view.getUint16(featureOffset + 4 + i * 2));
+  }
+  return indices;
+}
+
+/**
+ * Leave out the stylistic sets that offer nothing the font's finer-grained
+ * features don't already offer.
+ *
+ * Fonts built for a particular audience ship bundles. Andika has three sets over
+ * the same two letters: "Double-story a", "Double-story g", and a "Double-story a
+ * and g" that is exactly the two of them together. Inter's "Open digits" is its
+ * cv02, cv03, cv04 and cv09 in one switch. Offering both the bundle and its parts
+ * puts the same choice in front of the user twice, and the two copies have no way
+ * to agree with each other about which form is chosen.
+ *
+ * The test is the substitutions themselves rather than the labels or the
+ * character lists, since those agree only by luck: a feature is redundant when
+ * every (glyph → glyph) pair it performs is one that other features already
+ * perform. Perform even one substitution nothing else offers and it stays, because
+ * turning it on then does something the smaller features can't — and redrawing the
+ * same character a different way counts, since that is a different pair.
+ *
+ * Only stylistic sets are candidates, and the comparison always favours the finer
+ * offer: every cvXX counts against a set, since a cvXX is about one shape and
+ * carries the font's own name for it, while another set counts only if it performs
+ * fewer substitutions, so that a bundle gives way to its parts and never the parts
+ * to the bundle. Two sets that perform exactly the same substitutions both stay,
+ * there being no principled way to pick between them.
+ *
+ * A set whose substitutions we couldn't read at all — contextual lookups, say — is
+ * kept. An empty set of pairs is trivially a subset of anything, and dropping a
+ * feature on the strength of what we failed to read would hide a real choice.
+ */
+function dropRedundantSets(
+  variants: CharacterVariant[],
+  substitutionsOfTag: Map<string, Substitutions>
+): CharacterVariant[] {
+  const pairsOfTag = new Map(
+    variants.map(({ tag }) => [tag, pairsOf(substitutionsOfTag.get(tag))])
+  );
+  const size = (tag: string) => pairsOfTag.get(tag)?.length ?? 0;
+
+  const redundant = new Set<string>();
+  // Largest first, so that a bundle is judged against its parts and never the
+  // other way about. A bundle already dropped offers nothing to the next one,
+  // since it is only ever compared with features smaller than itself.
+  const sets = variants
+    .map(({ tag }) => tag)
+    .filter((tag) => !CV_TAG.test(tag))
+    .sort((a, b) => size(b) - size(a));
+
+  for (const tag of sets) {
+    const pairs = pairsOfTag.get(tag) ?? [];
+    if (pairs.length === 0) continue;
+
+    const offeredElsewhere = new Set<string>();
+    for (const other of variants) {
+      if (other.tag === tag) continue;
+      // Every cvXX counts, whatever its size, because a cvXX is the finer offer
+      // by construction: it is about one shape and carries the font's name for
+      // it. Another set counts only if it does less, so that a bundle gives way
+      // to its parts rather than the parts to the bundle.
+      const finer = CV_TAG.test(other.tag) || size(other.tag) < pairs.length;
+      if (!finer) continue;
+      for (const pair of pairsOfTag.get(other.tag) ?? []) {
+        offeredElsewhere.add(pair);
+      }
+    }
+
+    if (pairs.every((pair) => offeredElsewhere.has(pair))) redundant.add(tag);
+  }
+
+  return redundant.size === 0
+    ? variants
+    : variants.filter(({ tag }) => !redundant.has(tag));
+}
+
+/** One feature's substitutions as comparable "input>output" strings. */
+function pairsOf(substitutions: Substitutions | undefined): string[] {
+  const pairs: string[] = [];
+  for (const [input, outputs] of substitutions ?? []) {
+    for (const output of outputs) pairs.push(`${input}>${output}`);
+  }
+  return pairs;
+}
+
+/**
+ * A stylistic set's FeatureParams, which say far less than a cvXX's: a version
+ * and one name id for the whole set, with no character list and no sample text.
+ *
+ * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2#featureparams-table-for-ssxx-features
+ */
+function readStylisticSetParams(
+  view: DataView,
+  offset: number,
+  names: Map<number, string>,
+  number: number
+): Omit<CharacterVariant, "tag" | "number"> {
+  // StylisticSetParams: uint16 version, uint16 UINameID.
+  const uiNameId = offset ? view.getUint16(offset + 2) : 0;
+  return {
+    // Fonts that name their sets say things like "Open digits" or "Single-storey
+    // a". The ones that don't leave us nothing but the number.
+    label: uiName(names, uiNameId) ?? `Alternate style ${number}`,
+    // A set is on or off; there is no list of named alternates to choose among.
+    parameterLabels: [],
+    characters: [],
+    codePoints: [],
+  };
+}
+
+/**
+ * A UI string a feature points at, if it points at one.
+ *
+ * The spec puts every name id a feature may cite above 255, leaving 0-255 to the
+ * font's own metadata, and 0 in particular means "no string here". Carlito's
+ * stylistic sets carry no parameters at all, so every one of them asks for name id
+ * 0 — and looking that up unguarded named all four of them after the font's
+ * copyright notice.
+ */
+function uiName(
+  names: Map<number, string>,
+  nameId: number
+): string | undefined {
+  return nameId > 255 ? names.get(nameId) : undefined;
+}
+
+/**
+ * Whether a code point is one nobody types: the Private Use Area, where fonts park
+ * their own extra shapes. Inter, for one, encodes several alternates there and then
+ * builds features over them, so its cv01 covers "1", "¹", "₁", "①" and four private
+ * code points that would show the user tofu or a shape belonging to whichever other
+ * font claimed the same slot.
+ */
+function isPrivateUse(codePoint: number): boolean {
+  return (
+    (codePoint >= 0xe000 && codePoint <= 0xf8ff) ||
+    (codePoint >= 0xf0000 && codePoint <= 0x10fffd)
+  );
+}
+
+/**
+ * The characters a feature affects, worked out from the glyphs its lookups
+ * redraw. Empty when the feature substitutes nothing we can follow, or when none
+ * of its glyphs correspond to a character in the cmap.
+ */
+function derivedCharacters(
+  substitutions: Substitutions,
+  reverseCmap: Map<number, number>
+): { characters: string[]; codePoints: number[] } {
+  const codePoints = [
+    ...new Set(
+      [...substitutions.keys()]
+        .map((glyph) => reverseCmap.get(glyph))
+        .filter(
+          (codePoint): codePoint is number =>
+            codePoint !== undefined && !isPrivateUse(codePoint)
+        )
+    ),
+  ].sort((a, b) => a - b);
+
+  return {
+    codePoints,
+    characters: codePoints.map((c) => String.fromCodePoint(c)),
+  };
 }
 
 function readFeatureParams(
@@ -174,7 +409,7 @@ function readFeatureParams(
 
   const parameterLabels: string[] = [];
   for (let i = 0; i < numNamedParameters; i++) {
-    parameterLabels.push(names.get(firstParamNameId + i) ?? `${i + 1}`);
+    parameterLabels.push(uiName(names, firstParamNameId + i) ?? `${i + 1}`);
   }
 
   const codePoints: number[] = [];
@@ -184,9 +419,9 @@ function readFeatureParams(
   }
 
   return {
-    label: names.get(labelNameId),
-    tooltip: names.get(tooltipNameId),
-    sampleText: names.get(sampleTextNameId),
+    label: uiName(names, labelNameId),
+    tooltip: uiName(names, tooltipNameId),
+    sampleText: uiName(names, sampleTextNameId),
     parameterLabels,
     codePoints,
     characters: codePoints.map((c) => String.fromCodePoint(c)),

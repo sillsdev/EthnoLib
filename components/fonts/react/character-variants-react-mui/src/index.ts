@@ -9,14 +9,24 @@ export {
   representativeSample,
   variantsFor,
   variantsBeyond,
+  sortVariantsByCharacter,
   DIGITS,
 } from "./alphabet";
+export { groupVariants, chosenForm, chooseForm } from "./variantGroups";
+export type {
+  CharacterVariantChoices,
+  VariantForm,
+  VariantGroup,
+} from "./variantGroups";
 export { FormTile } from "./FormTile";
 export type { FormTileProps } from "./FormTile";
+export { ShapeInfoLine } from "./ShapeInfoLine";
+export type { ShapeInfo, ShapeInfoLineProps } from "./ShapeInfoLine";
 export {
   readCharacterVariants,
   readGsubFeatureTags,
   hasOldStyleNumerals,
+  isShapeFeatureTag,
 } from "./readCharacterVariants";
 export type { CharacterVariant } from "./readCharacterVariants";
 export {

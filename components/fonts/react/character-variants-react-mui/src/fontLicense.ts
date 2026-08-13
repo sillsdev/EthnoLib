@@ -53,6 +53,14 @@
  * disagree; keep it that way, and if Bloom gains an MIT rule, delete this note
  * rather than the code.
  *
+ * Because it is ours, the MIT rule is also the one rule that runs LAST in each
+ * block, after everything that says no. A font's licence text is not always about
+ * the whole font: Arial's says "Microsoft supplied font ... Any other use is
+ * prohibited" and then reproduces the MIT licence covering the Biblical Hebrew
+ * layout logic that Ralph Hancock and John Hudson contributed to it. Tested first,
+ * the MIT rule read that component's grant as the font's own and called Arial open.
+ * A font that says no anywhere in its licence has said no.
+ *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/os2#fstype
  */
 
@@ -62,7 +70,7 @@ import { readNameTable, readTableDirectory } from "./readCharacterVariants";
  * Bumped whenever the rules below change, so anything caching a verdict can throw
  * away what an older set of rules decided. See fontLicenseCache.ts.
  */
-export const LICENSE_CLASSIFICATION_VERSION = 3;
+export const LICENSE_CLASSIFICATION_VERSION = 4;
 
 /** How freely a font can probably be used, as far as the font itself admits. */
 export type FontLicenseCategory =
@@ -164,8 +172,6 @@ export function describeLicense(hints: FontLicenseHints): FontLicenseVerdict {
     if (apache) return open("Apache License");
     if (lesserGpl) return open("GNU LGPL");
     if (gpl) return open("GNU GPL");
-    // Ours, not Bloom's; see the note at the top of the file.
-    if (namesTheMitLicense(license)) return open("MIT License");
 
     if (
       license.replace(/\n/g, " ").includes("free of charge") &&
@@ -193,6 +199,10 @@ export function describeLicense(hints: FontLicenseHints): FontLicenseVerdict {
     ) {
       return open("Allow to reproduce and distribute");
     }
+    // Ours, not Bloom's, and last for the reason given at the top of the file:
+    // an MIT paragraph inside a licence that has already refused permission
+    // belongs to some component of the font, not to the font.
+    if (namesTheMitLicense(license)) return open("MIT License");
   }
 
   if (hints.url === "http://dejavu-fonts.org/wiki/License") {
@@ -216,8 +226,6 @@ export function describeLicense(hints: FontLicenseHints): FontLicenseVerdict {
     if (copyright.includes("SIL Open Font License")) {
       return open("Open Font License");
     }
-    // Ours, not Bloom's; see the note at the top of the file.
-    if (namesTheMitLicense(copyright)) return open("MIT License");
     // British spelling, which is how Ubuntu writes it.
     if (copyright.includes("Ubuntu Font Licence")) {
       return open("Ubuntu Font Licence");
@@ -235,6 +243,12 @@ export function describeLicense(hints: FontLicenseHints): FontLicenseVerdict {
     if (copyright.toLowerCase().includes("all rights reserved") && !license) {
       return limited("All rights reserved");
     }
+    // Ours, not Bloom's, and last for the reason given at the top of the file.
+    // "All rights reserved" outranks it: the MIT licence's own notice is a
+    // copyright line and a grant of rights, and never that phrase, so a copyright
+    // carrying both is one where the MIT half is about something in the font
+    // rather than the font — which is exactly what Arial's says.
+    if (namesTheMitLicense(copyright)) return open("MIT License");
   }
 
   const embedding = embeddingPermission(hints.fsType);

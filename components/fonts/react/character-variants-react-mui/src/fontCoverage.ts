@@ -14,8 +14,13 @@
 
 import { readRange, readTableOffsets } from "./sfntBlob";
 
-/** How much we prefer a cmap subtable: full Unicode beats BMP beats anything. */
-function encodingScore(platform: number, encoding: number): number {
+/**
+ * How much we prefer a cmap subtable: full Unicode beats BMP beats anything.
+ * Exported so that reverseCmap.ts reads the same subtable this does — a feature's
+ * characters and a font's coverage disagreeing about which cmap to believe would
+ * be a bug nobody could see.
+ */
+export function cmapEncodingScore(platform: number, encoding: number): number {
   if (platform === 3 && encoding === 10) return 4; // Windows, full Unicode
   if (platform === 3 && encoding === 1) return 3; // Windows, BMP
   if (platform === 0) return 2; // Unicode platform
@@ -61,7 +66,7 @@ export async function readCoverageRanges(
   let best = 0;
   let chosen = 0;
   for (let i = 0; i < subtableCount; i++) {
-    const score = encodingScore(
+    const score = cmapEncodingScore(
       records.getUint16(i * 8),
       records.getUint16(i * 8 + 2)
     );

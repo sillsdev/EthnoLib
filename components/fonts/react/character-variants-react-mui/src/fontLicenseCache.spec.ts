@@ -85,14 +85,23 @@ describe("reading and writing", () => {
     });
   });
 
-  it("remembers a font it could not read, which is worth not repeating", () => {
+  it("does not remember a font it could not read", () => {
     writeCachedLicense(andika, {}, storage);
 
-    // Present, and empty: a hit, not a miss.
-    expect(readCachedLicense(andika, storage)).toEqual({
-      license: undefined,
-      licenseUrl: undefined,
-    });
+    // Nothing written, so the next visit asks the font again. Storing the failure
+    // is what made one bad sweep — a permission not yet granted, a locked file —
+    // blank out every font's licence for good.
+    expect(readCachedLicense(andika, storage)).toBeUndefined();
+    expect(storage.length).toEqual(0);
+  });
+
+  it("treats an entry with no verdict in it as a miss", () => {
+    // What an older version of this file wrote for a font it could not read. Such
+    // a cache heals on the next visit rather than needing to be cleared by hand.
+    storage.setItem(licenseCacheKey(andika), "{}");
+
+    expect(readCachedLicense(andika, storage)).toBeUndefined();
+    expect(readCachedLicenses([andika], storage)).toEqual({});
   });
 
   it("misses on a font it has not seen", () => {

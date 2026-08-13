@@ -1,74 +1,90 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
+import { alpha, useTheme } from "@mui/material";
 import React from "react";
-import { CharacterVariant } from "./readCharacterVariants";
-import { FormTile } from "./FormTile";
-import { representativeSample } from "./alphabet";
+import { DEFAULT_SAMPLE_SIZE, FormTile, scaledPx } from "./FormTile";
+import type { ShapeInfo } from "./ShapeInfoLine";
+import type { VariantForm, VariantGroup } from "./variantGroups";
 
-/** Fonts name their forms inconsistently; the tiles read better all in one style. */
-function capitalized(label: string): string {
-  return label.charAt(0).toUpperCase() + label.slice(1);
-}
+/** The row's spacing, as multiples of the sample glyph's size. See FormTile.tsx. */
+const OF_FONT_SIZE = { gap: 0.25, padding: 0.25, radius: 0.16 };
 
 /**
- * One cvXX feature: a tile per form it offers — the font's default plus each
- * alternate — of which the user picks one. The feature's name is not written out;
- * it reaches the user through the tiles' tooltips.
+ * One row of forms of a character: a tile for the font's default and one for each
+ * alternate on offer, of which the user picks one. Which features those alternates
+ * come from is not on screen — often they come from several, see variantGroups.ts
+ * — because the shapes are what there is to choose between. The names reach a
+ * screen reader through each tile's label, and a caller listening to
+ * `onHoverChange`.
  */
 export const CharacterVariantCard: React.FunctionComponent<{
-  variant: CharacterVariant;
+  group: VariantGroup;
   fontFamily: string;
-  sampleSize: number;
-  /** 0 for the font's default form, or the 1-based alternate. */
-  choice: number;
-  onChoose: (choice: number) => void;
-}> = ({ variant, fontFamily, sampleSize, choice, onChoose }) => {
-  const sample = representativeSample(variant);
+  /** Passed straight to the tiles, which decide the size when nobody says. */
+  sampleSize?: number;
+  /** The form in force, or undefined for the font's own. */
+  chosen?: VariantForm;
+  /** Called with the form picked, or nothing for the font's own. */
+  onChoose: (form?: VariantForm) => void;
+  /** Told what the tile under the pointer is, and told null when it leaves. */
+  onHoverChange?: (info: ShapeInfo | null) => void;
+}> = ({
+  group,
+  fontFamily,
+  sampleSize,
+  chosen,
+  onChoose,
+  onHoverChange,
+}) => {
+  const theme = useTheme();
+  const primary = theme.palette.primary.main;
+  // The row's own spacing is in the same currency as the tiles': multiples of the
+  // sample's size, so one number sizes the whole control.
+  const size = sampleSize ?? DEFAULT_SAMPLE_SIZE;
 
-  // A feature with named parameters offers several alternates; an unnamed one just
-  // has the single "on" form.
-  const alternates =
-    variant.parameterLabels.length > 0
-      ? variant.parameterLabels.map((label, i) => ({
-          value: i + 1,
-          label: capitalized(label),
-        }))
-      : [{ value: 1, label: "Alternate" }];
-
-  if (!sample) return null;
-
-  // Nothing here is written on screen: the font's name for the feature reaches the
-  // user through each tile's tooltip instead, which costs no room in the pane.
-  const groupLabel = variant.label ?? `Character variant ${variant.number}`;
+  if (!group.sample) return null;
 
   return (
     <div
       css={css`
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: ${scaledPx(size, OF_FONT_SIZE.gap)};
+        /* Just enough to hold one row's forms together once rows sit side
+           by side. A hairline and a little air, nothing that competes with the
+           tiles' own borders. Tinted with the theme's primary — Bloom blue in
+           Bloom — so the grouping reads as part of the app rather than as a
+           table rule. */
+        padding: ${scaledPx(size, OF_FONT_SIZE.padding)};
+        border: 1px solid ${alpha(primary, 0.4)};
+        border-radius: ${scaledPx(size, OF_FONT_SIZE.radius)};
+        /* A row wider than the line wraps its own tiles rather than pushing the
+           pane sideways. */
+        max-width: 100%;
       `}
     >
       <FormTile
-        text={sample}
+        text={group.sample}
         fontFamily={fontFamily}
         fontSize={sampleSize}
         label="Default"
-        groupLabel={groupLabel}
-        selected={choice === 0}
-        onClick={() => onChoose(0)}
+        groupLabel={group.label}
+        onHoverChange={onHoverChange}
+        selected={!chosen}
+        onClick={() => onChoose(undefined)}
       />
-      {alternates.map(({ value, label }) => (
+      {group.forms.map((form) => (
         <FormTile
-          key={value}
-          text={sample}
+          key={`${form.tag} ${form.value}`}
+          text={group.sample}
           fontFamily={fontFamily}
           fontSize={sampleSize}
-          featureSetting={`"${variant.tag}" ${value}`}
-          label={label}
-          groupLabel={groupLabel}
-          selected={choice === value}
-          onClick={() => onChoose(value)}
+          featureSetting={`"${form.tag}" ${form.value}`}
+          label={form.label}
+          groupLabel={group.label}
+          onHoverChange={onHoverChange}
+          selected={chosen === form}
+          onClick={() => onChoose(form)}
         />
       ))}
     </div>
