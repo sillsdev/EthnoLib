@@ -281,4 +281,29 @@ describe("mergeFonts", () => {
     });
     expect(main.map((f) => f.family)).toEqual(["Zapfino", "Andika", "Yrsa"]);
   });
+
+  it("puts recommended fonts first among the ones needing downloading", () => {
+    const { main } = mergeFonts({
+      local: [localFamily("Zapfino")],
+      catalog: [
+        { family: "Andika", installed: false },
+        { family: "Yrsa", installed: false, supportsLanguage: true },
+        { family: "Noto Sans Thai", installed: false, supportsLanguage: true },
+      ],
+    });
+    expect(main.map((f) => f.family)).toEqual([
+      "Zapfino",
+      "Noto Sans Thai",
+      "Yrsa",
+      "Andika",
+    ]);
+  });
+
+  it("leaves installed fonts alphabetical whatever is recommended", () => {
+    const { main } = mergeFonts({
+      local: [localFamily("Zapfino"), localFamily("Andika")],
+      catalog: [{ family: "Zapfino", supportsLanguage: true }],
+    });
+    expect(main.map((f) => f.family)).toEqual(["Andika", "Zapfino"]);
+  });
 });

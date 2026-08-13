@@ -52,7 +52,7 @@ afterEach(() => {
 describe("suggestionCacheKey", () => {
   it("carries the schema version, so changing the schema loses the old answers", () => {
     expect(suggestionCacheKey("fontsource", "th")).toEqual(
-      "ethnolib.fontSuggestions.s2.fontsource.th"
+      "ethnolib.fontSuggestions.s3.fontsource.th"
     );
   });
 

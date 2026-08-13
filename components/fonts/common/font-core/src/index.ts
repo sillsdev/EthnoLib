@@ -80,6 +80,7 @@ export type {
   AlphabetProvider,
   FontFeatureDefault,
   FontFeatureDefaultsProvider,
+  SampleText,
   SampleTextProvider,
 } from "./suggestions/types";
 export { createFontsourceSuggester } from "./suggestions/fontsource";

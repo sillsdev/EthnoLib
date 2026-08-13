@@ -45,6 +45,14 @@ const ALPHABET_KEY = "fontChooserDemo.alphabet";
 const LANGUAGE_TAG_KEY = "fontChooserDemo.languageTag";
 
 /**
+ * How small the pretend dialog can be dragged. Not a claim about the smallest
+ * size the chooser should work at — the point of the grip is to find that out —
+ * only a floor low enough to be past it and high enough that the grip itself
+ * doesn't disappear under the pointer.
+ */
+const MIN_CARD = { width: 320, height: 240 };
+
+/**
  * Remembers a string in local storage, so the demo opens where you left off.
  *
  * An empty remembered value counts as nothing remembered: a field the user
@@ -169,6 +177,17 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
     "{}"
   );
   const [lastEvent, setLastEvent] = useState<string | undefined>();
+  // The size of the pretend dialog, which the grip in its corner drags. Starts at
+  // the chooser's own dimensions so the demo opens on what a host gets by default.
+  const [cardSize, setCardSize] = useState({ width: 840, height: 540 });
+  const onCardResize = useCallback(
+    (width: number, height: number) =>
+      setCardSize({
+        width: Math.max(MIN_CARD.width, width),
+        height: Math.max(MIN_CARD.height, height),
+      }),
+    []
+  );
   // Off by default: this demo doubles as the reference host, and a real user
   // gets the plain UI. Remembered so a debugging session survives reloads.
   const [debug, setDebug] = useRememberedBoolean("fontChooserDemo.debug");
@@ -181,13 +200,11 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
     loading,
     sldrAlphabet,
     sldrChecked,
-    sampleText,
     fontFeatureDefaults,
     warning,
   } = useSuggestedFonts({
     alphabet,
     languageTag,
-    languageScript: languageScript || undefined,
   });
 
   const { downloaded, downloadFont, getFontData } = useSessionFontDownloads({
@@ -344,26 +361,74 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
 
           {/* The chooser draws its own white card; lifting it onto an elevated,
               rounded surface and dropping that inner card's edge is what makes
-              one dialog box out of the two rather than a card inside a card. */}
+              one dialog box out of the two rather than a card inside a card.
+
+              The card is a stand-in for whatever dialog a host app puts the
+              chooser in, and those come in sizes we don't get to pick, so this
+              one is draggable from its bottom-right corner. The chooser's own
+              fixed 840×540 is overridden to fill whatever the corner is dragged
+              to, which is the point: what we want to see is how the panes
+              behave at other sizes, not the card sliding about inside a bigger
+              box. */}
           <Paper
             elevation={8}
             css={css`
-              width: fit-content;
+              position: relative;
+              display: flex;
+              flex-direction: column;
+              width: ${cardSize.width}px;
+              height: ${cardSize.height}px;
               max-width: 100%;
               margin: 0 auto;
               border-radius: 8px;
               overflow: hidden;
               & > .MuiPaper-root {
+                flex: 1;
+                min-height: 0;
                 box-shadow: none;
                 border-radius: 0;
+                width: 100%;
+                height: auto;
+                max-height: none;
               }
             `}
           >
+            {/* A host app's dialog says what its dialog is for, and the chooser
+                deliberately doesn't repeat that inside itself, so the demo has
+                to supply one or the card reads as a pane with no head on it. */}
+            <div
+              css={css`
+                flex: none;
+                padding: 10px 20px;
+                background-color: ${theme.palette.primary.main};
+                color: ${theme.palette.primary.contrastText};
+              `}
+            >
+              <Typography
+                variant="h2"
+                css={css`
+                  font-size: 16px;
+                  font-weight: 500;
+                  color: inherit;
+                `}
+              >
+                {/* Named, because choosing a font is a decision about one
+                    language's writing, and a host app knows which. Until a
+                    language is picked there is no name to say, and the title
+                    drops the tail rather than showing a gap. */}
+                {languageName
+                  ? `Font Chooser for ${languageName}`
+                  : "Font Chooser"}
+              </Typography>
+            </div>
+
             <FontChooserScreen
               alphabet={alphabet}
               fonts={offeredFonts}
               getFontData={getFontData}
-              sampleText={sampleText}
+              languageTag={languageTag}
+              languageName={languageName || undefined}
+              languageScript={languageScript || undefined}
               customSampleText={customSample || undefined}
               onCustomSampleTextChange={(text) => setCustomSample(text ?? "")}
               loading={loading}
@@ -383,21 +448,25 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
                 )
               }
             />
+            <ResizeGrip onResize={onCardResize} />
           </Paper>
 
-          {/* Only once there is an event. A line saying nothing has happened yet
-              is a line about the demo harness, and the page is about the
-              component. */}
-          <Typography
-            variant="body2"
-            css={css`
-              margin-top: 12px;
-              min-height: 1.5em;
-              color: ${theme.palette.text.secondary};
-            `}
-          >
-            {lastEvent}
-          </Typography>
+          {/* The running commentary is for whoever is working on the component,
+              not for anyone looking at it: "downloaded X (this session only)"
+              under the card describes the harness, and reads as something the
+              chooser is telling the user. So it goes with the rest of the debug
+              output, and the page below the card stays empty. */}
+          {debug && lastEvent && (
+            <Typography
+              variant="body2"
+              css={css`
+                margin-top: 12px;
+                color: ${theme.palette.text.secondary};
+              `}
+            >
+              {lastEvent}
+            </Typography>
+          )}
 
           {choosingLanguage && (
             <LanguageChooserDemoDialog
@@ -427,6 +496,70 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
     if (sldrAlphabet) return "Alphabet from SLDR — edit to adjust";
     return `No alphabet data for ${languageTag} — type one`;
   }
+};
+
+/**
+ * A grip in the bottom-right corner of the pretend dialog, for dragging it to
+ * whatever size you want to see the chooser at.
+ *
+ * Not the CSS `resize` property, which draws its grip under the element's own
+ * children: the chooser fills the card edge to edge and opaquely, so the native
+ * one would be both invisible and unclickable. This one sits above it.
+ *
+ * The width and height go to the caller rather than being applied here, since it
+ * is the caller's card being resized; the pointer is captured so a fast drag that
+ * outruns the grip keeps resizing rather than stopping wherever the pointer left.
+ */
+const ResizeGrip: React.FunctionComponent<{
+  onResize: (width: number, height: number) => void;
+}> = ({ onResize }) => {
+  // The card's own corner at the moment the drag started, so every move is
+  // measured against that rather than accumulating rounding as it goes.
+  const from = useRef<{ x: number; y: number } | undefined>(undefined);
+  return (
+    <div
+      role="separator"
+      aria-label="Resize"
+      title="Drag to resize"
+      onPointerDown={(e) => {
+        const card = e.currentTarget.parentElement?.getBoundingClientRect();
+        if (!card) return;
+        from.current = { x: card.left, y: card.top };
+        e.currentTarget.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      }}
+      onPointerMove={(e) => {
+        if (!from.current) return;
+        onResize(e.clientX - from.current.x, e.clientY - from.current.y);
+      }}
+      onPointerUp={() => {
+        from.current = undefined;
+      }}
+      css={css`
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 18px;
+        height: 18px;
+        cursor: nwse-resize;
+        touch-action: none;
+        /* Two short rules across the corner, the shorthand everything from a
+           window corner to a text area uses for "drag me". */
+        background-image: linear-gradient(
+          -45deg,
+          transparent 0 3px,
+          ${theme.palette.text.secondary} 3px 4px,
+          transparent 4px 7px,
+          ${theme.palette.text.secondary} 7px 8px,
+          transparent 8px
+        );
+        opacity: 0.5;
+        &:hover {
+          opacity: 1;
+        }
+      `}
+    />
+  );
 };
 
 /**

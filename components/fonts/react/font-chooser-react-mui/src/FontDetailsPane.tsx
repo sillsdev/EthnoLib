@@ -19,6 +19,7 @@ import {
   readCoverageRanges,
   variantsBeyond,
   variantsFor,
+  type SampleText,
 } from "@ethnolib/font-core";
 import { Callout } from "./Callout";
 import { DigitShapes } from "./DigitShapes";
@@ -49,6 +50,8 @@ export interface FontDetailsPaneProps {
   /** What the background sweep found this font covers, if it has got that far. */
   scannedCoverage?: Uint32Array;
   alphabet: string;
+  /** What to call the user's language on screen; see FontChooserScreenProps. */
+  languageName?: string;
   choices: CharacterVariantChoices;
   onChoicesChange: (choices: CharacterVariantChoices) => void;
   onDownloadFont?: (font: FontInfo) => void;
@@ -58,10 +61,11 @@ export interface FontDetailsPaneProps {
   loading?: boolean;
   sampleSize?: number;
   /**
-   * Real writing in the user's own language, for the sample paragraph. Without it
-   * the sample is made up out of the alphabet, and says so.
+   * Real writing in the user's own language, with the name of the data set it
+   * came from — the heading says which. Without it the sample is made up out of
+   * the alphabet, and says so.
    */
-  sampleText?: string;
+  languageSample?: SampleText;
   /** What the user has typed over the sample, if they have. */
   customSampleText?: string;
   onCustomSampleTextChange?: (text: string | undefined) => void;
@@ -94,6 +98,7 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   postscriptName,
   scannedCoverage,
   alphabet,
+  languageName,
   choices,
   onChoicesChange,
   onDownloadFont,
@@ -101,7 +106,7 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   onUse,
   loading,
   sampleSize,
-  sampleText,
+  languageSample,
   customSampleText,
   onCustomSampleTextChange,
   onShapeChoiceChange,
@@ -177,10 +182,6 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   // letters nobody asked about, so instead it gives way to a line saying what the
   // alphabet would buy.
   const showsShapeHint = alphabetSet.size === 0;
-  // A font with nothing to choose between says nothing at all: no headings, and
-  // no line announcing the absence. The one exception is a font we don't have
-  // yet, where the ghosted section is part of explaining the download.
-  const showsGhost = !installed && !showsShapeHint && shapeRowCount !== 0;
 
   // The figures go on the end of the made-up text, in running text rather than
   // alone on a tile, since a digit shape picked below is a choice about the
@@ -198,13 +199,19 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   const showsExample =
     installed &&
     !!fontData &&
-    (!!sampleText || !!customSampleText || !!invented);
+    (!!languageSample || !!customSampleText || !!invented);
   const vouchedFor = saysSupportsLanguage(font.supportsLanguage, missing);
+  // A font with nothing to choose between says nothing at all: no headings, and
+  // no line announcing the absence. Nor does a font we don't have yet: none of
+  // this can be shown, let alone picked, until the bytes are on the machine, and
+  // a greyed-out outline of what is coming is furniture the user has to read
+  // past to reach the one thing they can act on, which is the download.
   const showsShapes =
-    showsShapeHint ||
-    (installed
-      ? !!shapeRowCount || !!digitVariants?.length || showsExample
-      : showsGhost);
+    installed &&
+    (showsShapeHint ||
+      !!shapeRowCount ||
+      !!digitVariants?.length ||
+      showsExample);
   // Only what the user has to know before looking at the font at all.
   const showsPreamble = licenseAtTop || !installed;
 
@@ -281,7 +288,7 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
           />
         )}
 
-        {installed ? (
+        {installed && (
           // A section that has nothing to say renders nothing, and the gap goes
           // with it, so the spacing needs no arithmetic about what is present.
           <div
@@ -296,7 +303,7 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
             {showsExample && (
               <SampleTextSection
                 fontFamily={font.family}
-                languageText={sampleText}
+                languageSample={languageSample}
                 inventedText={invented}
                 customText={customSampleText}
                 onCustomTextChange={onCustomSampleTextChange}
@@ -304,7 +311,7 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
               />
             )}
             {showsShapeHint ? (
-              <AlphabetWantedHint />
+              <AlphabetWantedHint languageName={languageName} />
             ) : (
               <LetterShapes
                 font={font}
@@ -333,10 +340,6 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
               onHoverChange={setHovered}
             />
           </div>
-        ) : showsShapeHint ? (
-          <AlphabetWantedHint />
-        ) : (
-          showsGhost && <GhostedLetterShapes shapeCount={shapeRowCount} />
         )}
 
         {/*
@@ -355,18 +358,18 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
         */}
         {vouchedFor ? (
           <Callout
-            variant="ok"
+            variant="vouched"
             css={css`
               margin-top: 18px;
             `}
           >
-            <b>Supports your language</b>
+            <b>Supports {languageName || "your language"}</b>
           </Callout>
         ) : (
           alphabetSet.size > 0 &&
           missing && (
             <Callout
-              variant={missing.length === 0 ? "ok" : "warn"}
+              variant={missing.length === 0 ? "info" : "warn"}
               css={css`
                 margin-top: 18px;
               `}
@@ -377,16 +380,26 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
                   : "Missing some of your letters"}
               </b>
               {missing.length > 0 && `: ${missing.join(" ")}`}
-              <br />
-              <span
-                css={css`
-                  font-family: "${font.family}";
-                  font-size: 20px;
-                  letter-spacing: 0.8px;
-                `}
-              >
-                {alphabet}
-              </span>
+              {/*
+                The alphabet is shown so the user can judge the font's own
+                rendering of it. Until the font is on the machine there is
+                nothing to judge — the browser would set it in whatever it
+                falls back to — so the letters stay out of the way.
+              */}
+              {installed && (
+                <>
+                  <br />
+                  <span
+                    css={css`
+                      font-family: "${font.family}";
+                      font-size: 20px;
+                      letter-spacing: 0.8px;
+                    `}
+                  >
+                    {alphabet}
+                  </span>
+                </>
+              )}
             </Callout>
           )
         )}
@@ -524,7 +537,9 @@ const LetterShapes: React.FunctionComponent<{
  * belongs looks like a font with nothing to offer rather than a question waiting
  * to be answered.
  */
-const AlphabetWantedHint: React.FunctionComponent = () => {
+const AlphabetWantedHint: React.FunctionComponent<{
+  languageName?: string;
+}> = ({ languageName }) => {
   const theme = useTheme();
   return (
     <Typography
@@ -534,74 +549,10 @@ const AlphabetWantedHint: React.FunctionComponent = () => {
         color: ${theme.palette.text.secondary};
       `}
     >
-      Enter your language&apos;s alphabet to see the letter-shape choices that
-      matter for it.
+      {`Enter the alphabet for ${
+        languageName || "your language"
+      } to see the letter-shape choices that matter for it.`}
     </Typography>
-  );
-};
-
-/**
- * The shape of the letter-shape area for a font we don't have yet: the shapes
- * can't be picked until the font is on the machine, but leaving a blank would hide
- * what the downloading is for. Where we have managed to read the font's file we
- * can at least say how many shape choices are waiting inside it. A font we have
- * read and found nothing in doesn't come here at all; the caller leaves it out.
- */
-const GhostedLetterShapes: React.FunctionComponent<{
-  shapeCount?: number;
-}> = ({ shapeCount }) => {
-  const theme = useTheme();
-  // Without the font's bytes we don't know how many choices it holds, so we draw a
-  // token two; with them, we draw what it has, up to a rowful.
-  const tiles = shapeCount === undefined ? 2 : Math.min(shapeCount, 3);
-  return (
-    <div
-      aria-hidden
-      css={css`
-        opacity: 0.45;
-        pointer-events: none;
-      `}
-    >
-      <SectionHeading>Letter Shape Choices</SectionHeading>
-      {shapeCount !== undefined && (
-        <Typography
-          variant="body2"
-          css={css`
-            font-size: 12.5px;
-            color: ${theme.palette.text.secondary};
-            margin-bottom: 10px;
-          `}
-        >
-          {`${shapeCount} of your letters can be drawn more than one way in this font. Download it to pick between them.`}
-        </Typography>
-      )}
-      <div
-        css={css`
-          display: flex;
-          gap: 12px;
-        `}
-      >
-        {Array.from({ length: tiles }, (_, index) => index).map((i) => (
-          <div
-            key={i}
-            css={css`
-              width: 150px;
-              height: 76px;
-              display: flex;
-              align-items: flex-end;
-              justify-content: center;
-              padding-bottom: 6px;
-              border: 1px dashed ${theme.palette.divider};
-              border-radius: 6px;
-              font-size: 11px;
-              color: ${theme.palette.text.secondary};
-            `}
-          >
-            letter shapes
-          </div>
-        ))}
-      </div>
-    </div>
   );
 };
 
@@ -622,7 +573,7 @@ const LicenseCallout: React.FunctionComponent<{
 
   if (license === "open") {
     return (
-      <Callout variant="ok" className={className}>
+      <Callout variant="open-license" className={className}>
         This font&apos;s{" "}
         {font.licenseUrl ? (
           <Link href={font.licenseUrl} target="_blank" rel="noreferrer">

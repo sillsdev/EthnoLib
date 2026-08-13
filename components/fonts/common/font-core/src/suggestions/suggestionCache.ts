@@ -39,8 +39,10 @@ interface CacheEntry<T> {
 
 /** The schema of the stored value. Bump it and the old entries stop being read.
  * s2: LFF file URLs are rewritten to raw.githubusercontent.com; s1 entries could
- * hold CORS-blocked github.com URLs cached before that rewrite existed. */
-const SCHEMA_VERSION = 2;
+ * hold CORS-blocked github.com URLs cached before that rewrite existed.
+ * s3: gflanguages sample entries became {text, source, sourceUrl} objects; s2
+ * entries were bare strings. */
+const SCHEMA_VERSION = 3;
 const PREFIX = "ethnolib.fontSuggestions";
 const CURRENT_PREFIX = `${PREFIX}.s${SCHEMA_VERSION}.`;
 

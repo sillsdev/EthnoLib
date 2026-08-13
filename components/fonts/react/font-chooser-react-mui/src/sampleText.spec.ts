@@ -5,12 +5,18 @@ import {
   sampleTextSourceLabel,
 } from "./sampleText";
 
+const GFLANGUAGES = {
+  text: "real writing",
+  source: "Google Fonts language data",
+  sourceUrl: "https://github.com/googlefonts/lang",
+};
+
 describe("chooseSampleText", () => {
   it("prefers what the user typed over everything else", () => {
     expect(
       chooseSampleText({
         custom: "my own words",
-        languageText: "real writing",
+        languageSample: GFLANGUAGES,
         inventedText: "nonsense",
       })
     ).toEqual({ text: "my own words", source: "custom" });
@@ -24,14 +30,30 @@ describe("chooseSampleText", () => {
 
   it("treats a whitespace-only custom text as no custom text", () => {
     expect(
-      chooseSampleText({ custom: "   \n  ", languageText: "real writing" })
-    ).toEqual({ text: "real writing", source: "language" });
+      chooseSampleText({ custom: "   \n  ", languageSample: GFLANGUAGES })
+    ).toEqual({
+      text: "real writing",
+      source: "language",
+      sourceName: "Google Fonts language data",
+      sourceUrl: "https://github.com/googlefonts/lang",
+    });
   });
 
   it("takes the first non-empty line of the language's writing", () => {
     expect(
-      chooseSampleText({ languageText: "\n   \n  first line  \nsecond line" })
-    ).toEqual({ text: "first line", source: "language" });
+      chooseSampleText({
+        languageSample: {
+          ...GFLANGUAGES,
+          text: "\n   \n  first line  \nsecond line",
+        },
+      })?.text
+    ).toBe("first line");
+  });
+
+  it("carries the data set's name through to the choice", () => {
+    expect(chooseSampleText({ languageSample: GFLANGUAGES })?.sourceName).toBe(
+      "Google Fonts language data"
+    );
   });
 
   it("falls back to the made-up text", () => {
@@ -44,7 +66,11 @@ describe("chooseSampleText", () => {
   it("has nothing to show when every source is empty", () => {
     expect(chooseSampleText({})).toBeUndefined();
     expect(
-      chooseSampleText({ custom: "", languageText: "\n \n", inventedText: "" })
+      chooseSampleText({
+        custom: "",
+        languageSample: { ...GFLANGUAGES, text: "\n \n" },
+        inventedText: "",
+      })
     ).toBeUndefined();
   });
 });
@@ -63,16 +89,27 @@ describe("editedSampleText", () => {
 
   it("round-trips a cleared box back to the default", () => {
     const custom = editedSampleText("");
-    expect(
-      chooseSampleText({ custom, languageText: "real writing" })
-    ).toEqual({ text: "real writing", source: "language" });
+    const chosen = chooseSampleText({ custom, languageSample: GFLANGUAGES });
+    expect(chosen?.text).toBe("real writing");
+    expect(chosen?.source).toBe("language");
   });
 });
 
 describe("sampleTextSourceLabel", () => {
   it("names each source", () => {
-    expect(sampleTextSourceLabel("custom")).toBe("(Custom)");
-    expect(sampleTextSourceLabel("language")).toBe("(in your language)");
-    expect(sampleTextSourceLabel("invented")).toBe("(Lorem Ipsum style)");
+    expect(sampleTextSourceLabel({ text: "x", source: "custom" })).toBe(
+      "(Custom)"
+    );
+    expect(sampleTextSourceLabel({ text: "x", source: "invented" })).toBe(
+      "(Lorem Ipsum style)"
+    );
+  });
+
+  it("names the data set real writing came from", () => {
+    // The whole point of the stage: the heading tells the user where the words
+    // they are looking at came from, not merely that they are "in your language".
+    expect(
+      sampleTextSourceLabel(chooseSampleText({ languageSample: GFLANGUAGES })!)
+    ).toBe("(Google Fonts language data)");
   });
 });

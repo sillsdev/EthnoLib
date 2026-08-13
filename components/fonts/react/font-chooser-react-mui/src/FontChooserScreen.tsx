@@ -26,6 +26,7 @@ import {
   FamilyScan,
   LocalFontFamily,
   coversAlphabet,
+  createGflanguagesSampleTextProvider,
   isLocalFontAccessSupported,
   loadLocalFontDataByFamilyWithName,
   parseAlphabet,
@@ -37,6 +38,7 @@ import {
   scanFamiliesForLicense,
   useFontData,
   writeCachedLicense,
+  type SampleText,
 } from "@ethnolib/font-core";
 import { FontDetailsPane } from "./FontDetailsPane";
 import { FontList } from "./FontList";
@@ -74,7 +76,9 @@ export const FontChooserScreen: React.FunctionComponent<
   onCancel,
   onFontSelected,
   sampleSize,
-  sampleText,
+  languageTag,
+  languageName,
+  languageScript,
   customSampleText,
   onCustomSampleTextChange,
   loading: hostBusy,
@@ -125,6 +129,60 @@ export const FontChooserScreen: React.FunctionComponent<
     setOwnSample(next);
     onCustomSampleTextChange?.(next);
   };
+
+  // Real writing in the user's language, fetched here rather than handed in: a
+  // host asked for a font chooser, and where the words to draw the fonts over
+  // come from is this component's business, not something every host should have
+  // to know how to answer.
+  //
+  // The provider is made once, so the script reaches it through a ref that can
+  // change under it.
+  const scriptRef = useRef(languageScript);
+  scriptRef.current = languageScript;
+  const sampleTextProvider = useMemo(
+    () =>
+      createGflanguagesSampleTextProvider({
+        scriptFor: () => scriptRef.current,
+      }),
+    []
+  );
+
+  // The answer carries the tag it is about, and is only shown while that is
+  // still the tag we are on. Two pieces of state — "have we heard" and "what did
+  // it say" — go out of step the moment the user picks a second language, and
+  // the passage of the language before it would sit under the new one's name.
+  const [fetchedSample, setFetchedSample] = useState<{
+    tag: string;
+    sample?: SampleText;
+  }>();
+  useEffect(() => {
+    const tag = languageTag?.trim();
+    if (!tag) return;
+
+    const controller = new AbortController();
+    sampleTextProvider
+      .getSampleText(tag, { signal: controller.signal })
+      .then((found) => {
+        if (!controller.signal.aborted)
+          setFetchedSample({ tag, sample: found });
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        if (error instanceof Error && error.name === "AbortError") return;
+        // A language the data set doesn't cover, or a request that didn't land:
+        // the sample falls back to text made up out of the alphabet, and says
+        // it is made up, which is a complete answer on its own.
+        setFetchedSample({ tag, sample: undefined });
+      });
+    return () => controller.abort();
+    // The script isn't read here — the provider reaches it through the ref — but
+    // a change to it is a different file to fetch.
+  }, [languageTag, languageScript, sampleTextProvider]);
+
+  const languageSample =
+    fetchedSample && fetchedSample.tag === languageTag?.trim()
+      ? fetchedSample.sample
+      : undefined;
 
   const alphabetSet = useMemo(() => parseAlphabet(alphabet), [alphabet]);
 
@@ -272,7 +330,10 @@ export const FontChooserScreen: React.FunctionComponent<
   // provenance: the reported set says "your pick" without waiting for anything.
   const handleShapeChoice = (groupKey: string, choice: ShapeChoice) => {
     rememberShape(choice);
-    setProvenance((previous) => ({ ...previous, [groupKey]: { kind: "user" } }));
+    setProvenance((previous) => ({
+      ...previous,
+      [groupKey]: { kind: "user" },
+    }));
   };
 
   // Bytes we fetched for the pane answer the coverage question too, and the answer
@@ -521,6 +582,7 @@ export const FontChooserScreen: React.FunctionComponent<
           <FontList
             fonts={merged.main}
             closedFonts={merged.closed}
+            languageName={languageName}
             selectedFont={selection}
             onSelect={select}
             onClosedFontsOpenChange={(open) => {
@@ -572,6 +634,7 @@ export const FontChooserScreen: React.FunctionComponent<
                 // announce that it can't write a single one of the user's letters.
                 scannedCoverage={coverage[selectedInfo.family]}
                 alphabet={alphabet}
+                languageName={languageName}
                 choices={chosen}
                 onChoicesChange={changeChoices}
                 onDownloadFont={onDownloadFont}
@@ -579,7 +642,7 @@ export const FontChooserScreen: React.FunctionComponent<
                 onUse={() => onFontSelected(selection, chosen)}
                 loading={loading}
                 sampleSize={sampleSize}
-                sampleText={sampleText}
+                languageSample={languageSample}
                 customSampleText={sample}
                 onCustomSampleTextChange={changeSample}
                 onShapeChoiceChange={handleShapeChoice}

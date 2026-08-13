@@ -61,13 +61,19 @@ describe("createGflanguagesSampleTextProvider", () => {
     }).getSampleText("th-Thai", { fetchImpl: impl });
 
     expect(urls).toEqual([`${BASE}/th_Thai.textproto`]);
-    expect(sample).toContain("โดยที่การยอมรับศักดิ์ศรีแต่กำเนิด");
+    expect(sample?.text).toContain("โดยที่การยอมรับศักดิ์ศรีแต่กำเนิด");
+    // Named, and named in a form the chooser can put in front of a user, since
+    // sample words nobody can trace are words nobody can check.
+    expect(sample?.source).toBe("Google Fonts language data");
+    expect(sample?.sourceUrl).toBe("https://github.com/googlefonts/lang");
     // specimen_21 and not the shorter masthead or the longer specimen_16: the
     // first of the preferred fields the file has.
-    expect(sample).not.toContain("โดยที่เป็นการจำเป็นที่สิทธิมนุษยชนควรได้รับความคุ้มครอง");
+    expect(sample?.text).not.toContain(
+      "โดยที่เป็นการจำเป็นที่สิทธิมนุษยชนควรได้รับความคุ้มครอง"
+    );
     // Its escaped newline is a newline, not a backslash and an n.
-    expect(sample).toContain("\n");
-    expect(sample).not.toContain("\\n");
+    expect(sample?.text).toContain("\n");
+    expect(sample?.text).not.toContain("\\n");
   });
 
   it("takes the fields in order, and one field's value only", async () => {
@@ -82,7 +88,7 @@ sample_text {
       storage: memoryStorage(),
     }).getSampleText("qq", { fetchImpl: impl });
 
-    expect(sample).toBe("The tester passage.");
+    expect(sample?.text).toBe("The tester passage.");
   });
 
   it("unescapes quotes and backslashes as well as newlines", async () => {
@@ -93,7 +99,7 @@ sample_text {
       storage: memoryStorage(),
     }).getSampleText("qq", { fetchImpl: impl });
 
-    expect(sample).toBe('He said "stop",\nthen wrote C:\\path');
+    expect(sample?.text).toBe('He said "stop",\nthen wrote C:\\path');
   });
 
   it("stops at the end of the sample_text block", async () => {
@@ -108,7 +114,7 @@ note {
       storage: memoryStorage(),
     }).getSampleText("qq", { fetchImpl: impl });
 
-    expect(sample).toBe("The passage.");
+    expect(sample?.text).toBe("The passage.");
   });
 
   it("has nothing for a file with an empty sample_text block", async () => {
@@ -162,8 +168,12 @@ note {
     const storage = memoryStorage();
     const provider = createGflanguagesSampleTextProvider({ storage });
 
-    expect(await provider.getSampleText("zz", { fetchImpl: impl })).toBeUndefined();
-    expect(await provider.getSampleText("zz", { fetchImpl: impl })).toBeUndefined();
+    expect(
+      await provider.getSampleText("zz", { fetchImpl: impl })
+    ).toBeUndefined();
+    expect(
+      await provider.getSampleText("zz", { fetchImpl: impl })
+    ).toBeUndefined();
     expect(urls.length).toBe(1);
     expect(
       storage.getItem(suggestionCacheKey("gflanguages", "sample.zz_Latn"))
@@ -178,13 +188,20 @@ note {
     const first = await provider.getSampleText("th-Thai", { fetchImpl: impl });
     // The same file under another spelling of the same tag, so the second call
     // reads the entry the first one wrote.
-    const second = await provider.getSampleText(" TH-thai ", { fetchImpl: impl });
+    const second = await provider.getSampleText(" TH-thai ", {
+      fetchImpl: impl,
+    });
 
     expect(urls.length).toBe(1);
-    expect(second).toBe(first);
+    // Equal, not identical: the second answer was rebuilt out of storage.
+    expect(second).toEqual(first);
+    // The point of caching the whole object rather than the passage: a sample
+    // read back a week later can still say who wrote it.
+    expect(second?.source).toBe("Google Fonts language data");
+    expect(second?.sourceUrl).toBe("https://github.com/googlefonts/lang");
     expect(
       storage.getItem(suggestionCacheKey("gflanguages", "sample.th_Thai"))
-    ).toBeTruthy();
+    ).toContain("Google Fonts language data");
   });
 
   it("goes through the fetch it was given and forwards the signal", async () => {

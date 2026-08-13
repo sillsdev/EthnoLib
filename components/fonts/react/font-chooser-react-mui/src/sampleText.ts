@@ -2,9 +2,11 @@
  * Which words the sample paragraph shows, and where they came from.
  *
  * Three sources, in order of how much they are worth: what the user typed
- * themselves, real writing in their language that the host supplied, and — failing
- * both — nonsense built out of their alphabet. The pane says which of the three it
- * is showing, because a font judged on lorem ipsum has not been judged at all.
+ * themselves, real writing in their language fetched from a language data set, and
+ * — failing both — nonsense built out of their alphabet. The pane says which of the
+ * three it is showing, and for the middle one it names the data set by name,
+ * because a font judged on lorem ipsum has not been judged at all and a passage
+ * whose origin is unstated cannot be checked.
  *
  * Kept free of React so the precedence and the emptied-box rule can be tested on
  * their own.
@@ -15,13 +17,23 @@ export type SampleTextSource = "custom" | "language" | "invented";
 export interface SampleTextChoice {
   text: string;
   source: SampleTextSource;
+  /**
+   * Who supplied the words, for the "language" case only — the name the heading
+   * shows, e.g. "Google Fonts language data".
+   */
+  sourceName?: string;
+  /** A page a person could visit to see that source, where there is one. */
+  sourceUrl?: string;
 }
 
 export interface SampleTextInput {
   /** What the user has typed over the sample, if they have typed anything. */
   custom?: string;
-  /** Real writing in the language, as the host supplied it. May be several lines. */
-  languageText?: string;
+  /**
+   * Real writing in the language and the name of whoever supplied it. May be
+   * several lines.
+   */
+  languageSample?: { text: string; source: string; sourceUrl?: string };
   /** Nonsense made out of the alphabet, for when there is nothing real to show. */
   inventedText?: string;
 }
@@ -29,7 +41,7 @@ export interface SampleTextInput {
 /** What to show, and what to call it. Nothing at all when there are no words to show. */
 export function chooseSampleText({
   custom,
-  languageText,
+  languageSample,
   inventedText,
 }: SampleTextInput): SampleTextChoice | undefined {
   // The user's own text goes through as they typed it, whitespace and all; only
@@ -39,11 +51,18 @@ export function chooseSampleText({
   }
   // One paragraph. The passages these come from run to several, and the pane has
   // room for a taste rather than a page.
-  const paragraph = languageText
-    ?.split("\n")
+  const paragraph = languageSample?.text
+    .split("\n")
     .map((line) => line.trim())
     .find((line) => line.length > 0);
-  if (paragraph) return { text: paragraph, source: "language" };
+  if (paragraph && languageSample) {
+    return {
+      text: paragraph,
+      source: "language",
+      sourceName: languageSample.source,
+      sourceUrl: languageSample.sourceUrl,
+    };
+  }
   if (inventedText && inventedText.trim().length > 0) {
     return { text: inventedText, source: "invented" };
   }
@@ -61,16 +80,19 @@ export function editedSampleText(typed: string): string | undefined {
   return typed.trim().length > 0 ? typed : undefined;
 }
 
-/** What the heading says after "Sample Text". */
-export function sampleTextSourceLabel(source: SampleTextSource): string {
-  switch (source) {
+/**
+ * What the heading says after "Sample Text".
+ *
+ * Real writing is named by its data set rather than described as "in your
+ * language": somebody looking at an unfamiliar paragraph needs to know where it
+ * came from before they can say whether it is right.
+ */
+export function sampleTextSourceLabel(choice: SampleTextChoice): string {
+  switch (choice.source) {
     case "custom":
       return "(Custom)";
     case "language":
-      // Generic on purpose: the component only knows the host supplied real
-      // writing in the language, not which service it came from (the demo's
-      // comes from Google's gflanguages data, not the SLDR).
-      return "(in your language)";
+      return `(${choice.sourceName})`;
     case "invented":
       return "(Lorem Ipsum style)";
   }

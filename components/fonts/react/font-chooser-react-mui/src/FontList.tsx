@@ -5,10 +5,10 @@ import React, { useEffect, useRef, useState } from "react";
 import type { FontInfo } from "./types";
 import {
   AlertCircleIcon,
-  CheckCircleIcon,
   ChevronIcon,
   DownloadNeededIcon,
   UnknownRulesIcon,
+  VouchedForIcon,
 } from "./icons";
 import { scrollbarCss } from "./scrollbarStyle";
 
@@ -22,6 +22,8 @@ export interface FontListProps {
   closedFonts?: FontInfo[];
   selectedFont: string;
   onSelect: (font: string) => void;
+  /** What to call the user's language in the tooltips; see FontChooserScreenProps. */
+  languageName?: string;
   /**
    * Called as the closed-fonts disclosure opens and closes. The chooser puts off
    * reading those fonts until the user asks to see them, so this is the moment it
@@ -44,6 +46,7 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
   closedFonts = [],
   selectedFont,
   onSelect,
+  languageName,
   onClosedFontsOpenChange,
   header,
   className,
@@ -84,6 +87,7 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
       font={font}
       selected={font.family === selectedFont}
       onSelect={onSelect}
+      languageName={languageName}
     />
   );
 
@@ -177,7 +181,8 @@ const FontRow: React.FunctionComponent<{
   font: FontInfo;
   selected: boolean;
   onSelect: (font: string) => void;
-}> = ({ font, selected, onSelect }) => {
+  languageName?: string;
+}> = ({ font, selected, onSelect, languageName }) => {
   const theme = useTheme();
   const installed = font.installed !== false;
 
@@ -212,9 +217,11 @@ const FontRow: React.FunctionComponent<{
         }
       `}
     >
-      <StatusIcons font={font} />
+      <StatusIcons font={font} languageName={languageName} />
       <span
         css={css`
+          flex: 1;
+          min-width: 0;
           font-size: 15px;
           // A font that isn't here yet can't draw its own name, so it borrows the
           // interface font rather than falling back to something arbitrary.
@@ -228,11 +235,27 @@ const FontRow: React.FunctionComponent<{
       >
         {font.family}
       </span>
+      {/* Alone on the right, away from the marks that qualify the font itself.
+          This one is about getting the font rather than about what it is, and a
+          column of them down the edge reads as one answer to "which of these do
+          I not have yet" instead of a detail per row. */}
+      {!installed && (
+        <DownloadNeededIcon
+          color={theme.palette.secondary.main}
+          title="Needs downloading from the internet"
+          css={css`
+            flex: none;
+          `}
+        />
+      )}
     </div>
   );
 };
 
-const StatusIcons: React.FunctionComponent<{ font: FontInfo }> = ({ font }) => {
+const StatusIcons: React.FunctionComponent<{
+  font: FontInfo;
+  languageName?: string;
+}> = ({ font, languageName }) => {
   const theme = useTheme();
   return (
     <span
@@ -247,15 +270,9 @@ const StatusIcons: React.FunctionComponent<{ font: FontInfo }> = ({ font }) => {
           the same distinction the details pane draws. See
           FontInfo.supportsLanguage. */}
       {font.supportsLanguage && (
-        <CheckCircleIcon
+        <VouchedForIcon
           color={theme.palette.primary.main}
-          title="Recommended for your language"
-        />
-      )}
-      {font.installed === false && (
-        <DownloadNeededIcon
-          color={theme.palette.secondary.main}
-          title="Needs downloading from the internet"
+          title={`Recommended for ${languageName || "your language"}`}
         />
       )}
       {font.license === "limits-apply" && (

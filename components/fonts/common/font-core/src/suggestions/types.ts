@@ -102,6 +102,15 @@ export interface FontFeatureDefaultsProvider {
   ): Promise<FontFeatureDefault[]>;
 }
 
+/** Words plus where they came from — the provenance survives caching. */
+export interface SampleText {
+  text: string;
+  /** Human-readable name of the data source, e.g. "Google Fonts language data". */
+  source: string;
+  /** A page a person could visit to see the source. */
+  sourceUrl?: string;
+}
+
 /**
  * A source of words to draw the samples with, so the chooser can show a font
  * writing the user's own language rather than a canned pangram. Implemented here
@@ -110,13 +119,14 @@ export interface FontFeatureDefaultsProvider {
  */
 export interface SampleTextProvider {
   /**
-   * A sentence in the language, for drawing samples with, or undefined when the
-   * source has nothing for the tag.
+   * A sentence in the language, for drawing samples with, and the name of
+   * whoever supplied it — the UI says so, since a sample nobody can trace is a
+   * sample nobody can check. Undefined when the source has nothing for the tag.
    *
    * @throws on network failure, and rethrows an abort untouched.
    */
   getSampleText(
     languageTag: string,
     options?: SuggestOptions
-  ): Promise<string | undefined>;
+  ): Promise<SampleText | undefined>;
 }

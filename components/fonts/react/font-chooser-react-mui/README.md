@@ -30,7 +30,11 @@ durable, font-independent facts flow through two newer props:
 fetch them with `createSldrFontFeaturesProvider` from `@ethnolib/font-core`. They apply
 wherever the user hasn't decided otherwise; an SLDR entry for one SIL LCG font (Charis,
 Doulos, Gentium, Andika) also serves its siblings, whose `cvNN` numbering is verified
-identical. Fonts the SLDR names get a "recommended for your language" mark in the list.
+identical. Fonts the SLDR names get a "recommended for this language" mark in the list.
+
+Pass `languageName` and the chooser names the language wherever it would otherwise say
+"your language" — "Supports Fulfulde", "Recommended for Fulfulde". Without it those lines
+keep the old wording, so it is optional for a host that only has a tag.
 
 Switching fonts now derives each row afresh (remembered fact, else SLDR default, else
 font default) instead of carrying raw tags over — which also fixes the bug where a

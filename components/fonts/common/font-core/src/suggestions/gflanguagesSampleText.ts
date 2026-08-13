@@ -24,12 +24,15 @@ import {
   writeCachedSuggestion,
   type SuggestionCacheStorage,
 } from "./suggestionCache";
-import type { SampleTextProvider, SuggestOptions } from "./types";
+import type { SampleText, SampleTextProvider, SuggestOptions } from "./types";
 
 const GFLANGUAGES_DATA =
   "https://raw.githubusercontent.com/googlefonts/lang/main/Lib/gflanguages/data/languages";
 
 const SOURCE = "gflanguages";
+/** What the chooser tells the user about where their sample paragraph came from. */
+const SOURCE_NAME = "Google Fonts language data";
+const SOURCE_URL = "https://github.com/googlefonts/lang";
 /** The passages change when somebody corrects a translation, which is rare. */
 const FOUND_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 /** A shorter life for "no such file": the data set gains languages. */
@@ -81,23 +84,25 @@ export function createGflanguagesSampleTextProvider(
     async getSampleText(
       languageTag: string,
       options: SuggestOptions = {}
-    ): Promise<string | undefined> {
+    ): Promise<SampleText | undefined> {
       const id = fileId(languageTag, scriptFor);
       if (!id) return undefined;
       const key = `sample.${id}`;
       // Two reads of the one entry, because the two answers are worth keeping for
       // different lengths of time: a passage stays good for a week, a "no such
       // file" only for a day.
-      const cached = readCachedSuggestion<string | MissingLanguage>(
+      const cached = readCachedSuggestion<SampleText | MissingLanguage>(
         SOURCE,
         key,
         FOUND_TTL_MS,
         storage
       );
-      if (typeof cached === "string") return cached;
+      // The whole SampleText goes into the cache, provenance included, so a
+      // sample read back from storage can still say where it came from.
+      if (isSampleText(cached)) return cached;
       if (
         cached &&
-        readCachedSuggestion<string | MissingLanguage>(
+        readCachedSuggestion<SampleText | MissingLanguage>(
           SOURCE,
           key,
           MISSING_TTL_MS,
@@ -124,10 +129,10 @@ export function createGflanguagesSampleTextProvider(
         throw new Error(`gflanguages request failed: ${status}`);
       }
 
-      const sample = readSampleText(await response.text());
+      const text = readSampleText(await response.text());
       // A file with no usable passage is the same to the caller as no file: there
       // is nothing to draw the samples with.
-      if (!sample) {
+      if (!text) {
         writeCachedSuggestion<MissingLanguage>(
           SOURCE,
           key,
@@ -136,10 +141,22 @@ export function createGflanguagesSampleTextProvider(
         );
         return undefined;
       }
-      writeCachedSuggestion(SOURCE, key, sample, storage);
+      const sample: SampleText = {
+        text,
+        source: SOURCE_NAME,
+        sourceUrl: SOURCE_URL,
+      };
+      writeCachedSuggestion<SampleText>(SOURCE, key, sample, storage);
       return sample;
     },
   };
+}
+
+/** Which of the two things we cache under a key this one is. */
+function isSampleText(
+  cached: SampleText | MissingLanguage | undefined
+): cached is SampleText {
+  return !!cached && typeof (cached as SampleText).text === "string";
 }
 
 /**

@@ -4,12 +4,22 @@ import { alpha, useTheme } from "@mui/material";
 import React from "react";
 import {
   AlertCircleIcon,
-  CheckCircleIcon,
-  DownloadNeededIcon,
+  InfoCircleIcon,
+  OpenSourceIcon,
   UnknownRulesIcon,
+  VouchedForIcon,
 } from "./icons";
 
-export type CalloutVariant = "ok" | "warn" | "error" | "unknown" | "download";
+export type CalloutVariant =
+  /** Somebody who knows the language says this font writes it. */
+  | "vouched"
+  /** Something we worked out about the font ourselves, and nothing more. */
+  | "info"
+  | "open-license"
+  | "warn"
+  | "error"
+  | "unknown"
+  | "download";
 
 export interface CalloutProps {
   variant: CalloutVariant;
@@ -50,16 +60,18 @@ export const Callout: React.FunctionComponent<CalloutProps> = ({
         color: ${theme.palette.text.primary};
       `}
     >
-      <span
-        css={css`
-          display: flex;
-          flex: none;
-          // Sit the icon on the first line of text rather than above it.
-          padding-top: 1px;
-        `}
-      >
-        {icon}
-      </span>
+      {icon && (
+        <span
+          css={css`
+            display: flex;
+            flex: none;
+            // Sit the icon on the first line of text rather than above it.
+            padding-top: 1px;
+          `}
+        >
+          {icon}
+        </span>
+      )}
       <div
         css={css`
           flex: 1;
@@ -86,10 +98,22 @@ function useCalloutLook(variant: CalloutVariant): {
 } {
   const theme = useTheme();
   switch (variant) {
-    case "ok":
+    case "vouched":
       return {
         background: alpha(theme.palette.primary.main, 0.09),
-        icon: <CheckCircleIcon color={theme.palette.primary.main} />,
+        icon: <VouchedForIcon color={theme.palette.primary.main} />,
+      };
+    case "info":
+      return {
+        background: alpha(theme.palette.primary.main, 0.09),
+        icon: <InfoCircleIcon color={theme.palette.primary.main} />,
+      };
+    // The same tint as the two above, said with the open-source mark, since that
+    // is what the line is actually about.
+    case "open-license":
+      return {
+        background: alpha(theme.palette.primary.main, 0.09),
+        icon: <OpenSourceIcon color={theme.palette.primary.main} />,
       };
     case "warn":
       return {
@@ -107,11 +131,11 @@ function useCalloutLook(variant: CalloutVariant): {
         icon: <UnknownRulesIcon />,
       };
     case "download":
+      // No icon: the button at the other end of the row is a download button
+      // with the same arrow on it, and two of them in one line is one too many.
       return {
         background: alpha(theme.palette.secondary.main, 0.1),
-        icon: (
-          <DownloadNeededIcon size={16} color={theme.palette.secondary.main} />
-        ),
+        icon: undefined,
       };
   }
 }

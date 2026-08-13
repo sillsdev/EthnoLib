@@ -89,16 +89,35 @@ export interface FontChooserScreenProps {
   /** Font size, in px, for the letter-shape samples. */
   sampleSize?: number;
   /**
-   * Real writing in the language being worked in, for the sample paragraph. Only
-   * the host knows where to get this — `createGflanguagesSampleTextProvider` in
-   * `@ethnolib/font-core` is one place. Without it the sample is made up out of
-   * the alphabet, and is labelled as made up.
+   * BCP-47 tag of the user's language; lets the chooser fetch real sample text
+   * itself. It goes to Google Fonts language data for a passage in the language,
+   * names that source in the sample heading, and falls back to text made up out
+   * of the alphabet — labelled as made up — for a language the data set hasn't
+   * got. The host supplies the tag, not the words.
    */
-  sampleText?: string;
+  languageTag?: string;
+  /**
+   * What to call the language in front of the user, in their own words for it —
+   * "Fulfulde", not "fuv". The chooser says it where it would otherwise have to
+   * write "your language", which is vaguer than the host needs to be: the host
+   * knows which language the user is setting a font for, and naming it is what
+   * makes "Supports Fulfulde" a claim rather than a slogan.
+   *
+   * Left out, those lines fall back to "your language", so a host that has only a
+   * tag is no worse off than before.
+   */
+  languageName?: string;
+  /**
+   * ISO 15924 script code (e.g. "Thai") when the tag alone doesn't say. The
+   * sample passages are filed by language *and* script, and most tags carry no
+   * script subtag; without this a script-less tag is read as Latin.
+   */
+  languageScript?: string;
   /**
    * The sample paragraph as the user has rewritten it, for a host that keeps their
    * version. Pass back whatever `onCustomSampleTextChange` last gave you and the
-   * chooser opens on their own words; leave it out and it opens on `sampleText`.
+   * chooser opens on their own words; leave it out and it opens on the passage
+   * fetched for `languageTag`.
    */
   customSampleText?: string;
   /**

@@ -102,11 +102,19 @@ function byFamily(a: FontInfo, b: FontInfo): number {
  * alphabetical within each. A font the user can use right now is worth more to them
  * than one they would have to wait for, and interleaving the two by name buries the
  * usable ones among downloads.
+ *
+ * Within the download group, the ones somebody recommended for this language come
+ * first. Deciding to wait for a font is a decision the user makes on what we can
+ * tell them about it beforehand, and "recommended for your language" is the
+ * strongest thing we have to say. Installed fonts are left plainly alphabetical:
+ * they are all available at no cost, and the user knows their own machine's list.
  */
 function byReadinessThenFamily(a: FontInfo, b: FontInfo): number {
   const aReady = a.installed !== false;
   const bReady = b.installed !== false;
   if (aReady !== bReady) return aReady ? -1 : 1;
+  if (!aReady && !!a.supportsLanguage !== !!b.supportsLanguage)
+    return a.supportsLanguage ? -1 : 1;
   return byFamily(a, b);
 }
 

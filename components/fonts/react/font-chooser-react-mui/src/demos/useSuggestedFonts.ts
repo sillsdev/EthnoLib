@@ -11,10 +11,9 @@
  * this is one plausible shape for it rather than the one we ship.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   createFontsourceSuggester,
-  createGflanguagesSampleTextProvider,
   createLanguageFontFinderSuggester,
   createSldrAlphabetProvider,
   createSldrFontFeaturesProvider,
@@ -28,11 +27,6 @@ export interface SuggestedFontsInput {
   alphabet: string;
   /** The chosen language. */
   languageTag: string;
-  /**
-   * The script that language was chosen in, as an ISO 15924 code (`"Thai"`). The
-   * sample text is filed by language *and* script, and most tags don't carry one.
-   */
-  languageScript?: string;
 }
 
 export interface SuggestedFonts {
@@ -54,8 +48,6 @@ export interface SuggestedFonts {
    * UI can't tell "still asking" from "asked, and there is no alphabet".
    */
   sldrChecked: boolean;
-  /** Real writing in the chosen language, where gflanguages has some. */
-  sampleText?: string;
   /**
    * The SLDR's recommended feature settings for the language, keyed by font
    * name — the chooser's `fontFeatureDefaults` prop. Empty when the repository
@@ -121,13 +113,7 @@ function sldrFallbackTagsFor(languageTag: string): string[] {
 export function useSuggestedFonts({
   alphabet,
   languageTag,
-  languageScript,
 }: SuggestedFontsInput): SuggestedFonts {
-  // The providers are made once, so the script has to reach the sample-text one
-  // through something that can change under it.
-  const script = useRef(languageScript);
-  script.current = languageScript;
-
   // One set of providers for the life of the demo, so their in-memory work and
   // their local storage caches are shared across every question we ask.
   const providers = useMemo(
@@ -139,9 +125,6 @@ export function useSuggestedFonts({
       }),
       sldrFontFeatures: createSldrFontFeaturesProvider({
         fallbackTagsFor: sldrFallbackTagsFor,
-      }),
-      sampleText: createGflanguagesSampleTextProvider({
-        scriptFor: () => script.current,
       }),
     }),
     []
@@ -180,28 +163,6 @@ export function useSuggestedFonts({
       });
     return () => controller.abort();
   }, [tag, providers]);
-
-  // Something real to draw the fonts over. Nothing is said when it fails: the pane
-  // falls back to text made up out of the alphabet, and labels it as made up, which
-  // is a complete answer on its own.
-  const [sampleText, setSampleText] = useState<string | undefined>();
-  useEffect(() => {
-    setSampleText(undefined);
-    if (!tag) return;
-
-    const controller = new AbortController();
-    providers.sampleText
-      .getSampleText(tag, { signal: controller.signal })
-      .then((found) => {
-        if (!controller.signal.aborted) setSampleText(found);
-      })
-      .catch(() => {
-        // A language the data set doesn't cover, or a request that didn't land.
-      });
-    return () => controller.abort();
-    // The script isn't read here — the provider reaches it through a ref — but a
-    // change to it is a different file to fetch.
-  }, [tag, languageScript, providers]);
 
   // Which shapes the language's writing wants from which fonts, per the SLDR.
   // Nothing is said when it fails: the shapes fall back to the fonts' own
@@ -296,7 +257,6 @@ export function useSuggestedFonts({
     loading: !!tag && fonts === undefined,
     sldrAlphabet,
     sldrChecked,
-    sampleText,
     fontFeatureDefaults,
     warning,
   };
