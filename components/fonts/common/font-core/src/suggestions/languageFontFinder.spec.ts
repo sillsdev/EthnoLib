@@ -101,9 +101,12 @@ describe("createLanguageFontFinderSuggester", () => {
         license: "open",
         fileUrl:
           "https://raw.githubusercontent.com/notofonts/notofonts.github.io/main/fonts/NotoSansThai/full/ttf/NotoSansThai-Regular.ttf",
-        licenseUrl:
-          "https://github.com/notofonts/thai/releases/tag/NotoSansThai-v2.002",
+        licenseUrl: "https://openfontlicense.org/",
         supportsLanguage: true,
+        supportsLanguageSource: {
+          name: "the SIL Global Language Font Finder",
+          url: "https://lff.api.languagetechnology.org/lang/th",
+        },
       },
       {
         family: "Noto Serif Thai",
@@ -111,9 +114,12 @@ describe("createLanguageFontFinderSuggester", () => {
         license: "open",
         fileUrl:
           "https://raw.githubusercontent.com/notofonts/notofonts.github.io/main/fonts/NotoSerifThai/full/ttf/NotoSerifThai-Regular.ttf",
-        licenseUrl:
-          "https://github.com/notofonts/thai/releases/tag/NotoSerifThai-v2.002",
+        licenseUrl: "https://openfontlicense.org/",
         supportsLanguage: true,
+        supportsLanguageSource: {
+          name: "the SIL Global Language Font Finder",
+          url: "https://lff.api.languagetechnology.org/lang/th",
+        },
       },
     ]);
   });
@@ -192,10 +198,8 @@ describe("createLanguageFontFinderSuggester", () => {
     expect(fonts[1].fileUrl).toBe(
       "https://raw.githubusercontent.com/notofonts/notofonts.github.io/refs/heads/main/fonts/NotoSerifThai/full/ttf/NotoSerifThai-Regular.ttf"
     );
-    // The licence link is a page for a person to read, and stays where it is.
-    expect(fonts[1].licenseUrl).toBe(
-      "https://github.com/notofonts/thai/releases/tag/NotoSerifThai-v2.002"
-    );
+    // The licence link goes to the licence itself, not the font's release page.
+    expect(fonts[1].licenseUrl).toBe("https://openfontlicense.org/");
   });
 
   it("leaves a download somewhere else exactly as it came", async () => {
@@ -316,7 +320,7 @@ describe("createLanguageFontFinderSuggester", () => {
     expect(second).toEqual(first);
   });
 
-  it("goes through the fetch it was given and forwards the signal", async () => {
+  it("goes through the fetch it was given with a live signal on the request", async () => {
     const { impl, signals } = lffFetch(THAI);
     const controller = new AbortController();
     await createLanguageFontFinderSuggester({
@@ -326,7 +330,10 @@ describe("createLanguageFontFinderSuggester", () => {
       signal: controller.signal,
     });
 
-    expect(signals).toEqual([controller.signal]);
+    // Not the caller's signal itself — the request gets one composed with the
+    // timeout — but a signal must be there and must not have fired.
+    expect(signals).toHaveLength(1);
+    expect(signals[0] && !signals[0].aborted).toBe(true);
   });
 
   it("rethrows an abort rather than answering with nothing", async () => {

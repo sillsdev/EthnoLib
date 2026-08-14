@@ -16,7 +16,9 @@ export interface AlphabetFieldProps {
   marked?: Set<string>;
   /** Called when the field loses focus, which is when marking is worth redoing. */
   onBlur?: () => void;
-  label?: string;
+  /** The field's floating label. Pass null for none, where the caller draws its
+   * own label above the field. */
+  label?: React.ReactNode;
   className?: string;
 }
 

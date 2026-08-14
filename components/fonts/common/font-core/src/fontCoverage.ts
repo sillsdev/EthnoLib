@@ -132,6 +132,35 @@ export async function readCoverageRanges(
   return ranges.done();
 }
 
+/**
+ * The union of several coverages, as one set of sorted packed [start, end]
+ * pairs. This is what a font that ships as several subset files covers *as a
+ * family on this machine*: each file answers for its own characters, and the
+ * question the chooser asks — can these registered faces write the alphabet? —
+ * is about all of them together.
+ */
+export function mergeCoverageRanges(coverages: Uint32Array[]): Uint32Array {
+  const pairs: [number, number][] = [];
+  for (const ranges of coverages) {
+    for (let i = 0; i + 1 < ranges.length; i += 2) {
+      pairs.push([ranges[i], ranges[i + 1]]);
+    }
+  }
+  pairs.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+  const merged: number[] = [];
+  for (const [start, end] of pairs) {
+    const lastEnd = merged.length - 1;
+    // Adjacent ranges fuse too: [65,90] and [91,120] are one run of coverage.
+    if (merged.length > 0 && start <= merged[lastEnd] + 1) {
+      merged[lastEnd] = Math.max(merged[lastEnd], end);
+    } else {
+      merged.push(start, end);
+    }
+  }
+  return new Uint32Array(merged);
+}
+
 /** Whether packed coverage ranges include a code point. */
 export function coversCodePoint(
   ranges: Uint32Array,

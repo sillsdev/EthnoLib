@@ -108,12 +108,12 @@ function useCalloutLook(variant: CalloutVariant): {
         background: alpha(theme.palette.primary.main, 0.09),
         icon: <InfoCircleIcon color={theme.palette.primary.main} />,
       };
-    // The same tint as the two above, said with the open-source mark, since that
-    // is what the line is actually about.
+    // Said with the open-source mark in its own greens, on a pale green to
+    // match, since that is what the line is actually about.
     case "open-license":
       return {
-        background: alpha(theme.palette.primary.main, 0.09),
-        icon: <OpenSourceIcon color={theme.palette.primary.main} />,
+        background: "#EAF3EA",
+        icon: <OpenSourceIcon />,
       };
     case "warn":
       return {

@@ -2,10 +2,11 @@
  * Remembers what we decided about a font's licence, so a second visit to the font
  * chooser doesn't read every installed font's `name` and OS/2 tables again.
  *
- * Only the licence verdict is kept. It is cheap to store, and it is stable: a font
- * file on this machine is not going to change its mind about the OFL. Coverage and
- * cvXX features are deliberately NOT cached — they are big, and they are the part
- * we would rather recompute than get subtly wrong.
+ * Only the licence verdict is kept here. It is cheap to store, and it is stable: a
+ * font file on this machine is not going to change its mind about the OFL.
+ * Coverage has a cache of its own (fontCoverageCache.ts) with the same keying;
+ * cvXX features are deliberately NOT cached — they are read only for the selected
+ * font, whose bytes are in hand anyway.
  *
  * Each font gets its own key, so two tabs writing at once can't lose each other's
  * work the way a single shared blob would. The key carries three things that make

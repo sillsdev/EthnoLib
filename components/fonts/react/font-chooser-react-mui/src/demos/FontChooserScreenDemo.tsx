@@ -15,20 +15,30 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { FormControlLabel, Switch } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  FormControlLabel,
+  Switch,
+} from "@mui/material";
+import { SourceInfo } from "../SourceInfo";
 import {
   AlphabetField,
   CharacterVariantChoices,
   type ShapeMemory,
 } from "@ethnolib/character-variants-react-mui";
 import {
-  loadLocalFontDataByFamilyWithName,
+  createGoogleFontsFullFontUrlResolver,
   normalizeFontName,
+  type FontInfo,
 } from "@ethnolib/font-core";
 import { FontChooserScreen } from "../FontChooserScreen";
-import type { FontInfo } from "../types";
 import { LanguageChooserDemoDialog } from "./LanguageChooserDemoDialog";
-import { useSuggestedFonts } from "./useSuggestedFonts";
+import {
+  useSuggestedFonts,
+  type SuggestionTimings,
+} from "./useSuggestedFonts";
 
 /**
  * Where the demo starts before anyone has chosen anything: a language with an
@@ -95,6 +105,49 @@ function useRememberedBoolean(
   return [value, remember];
 }
 
+/** How many past choices are worth feeding back; older ones fall off the end. */
+const RECENT_FONTS_KEPT = 8;
+
+/**
+ * The fonts the user has settled on before, kept the way a host app would keep
+ * them: per language (a font chosen for Thai says nothing about Fulfulde),
+ * newest first, each with the catalog entry it was chosen from so a
+ * not-installed one can still be offered — and fetched — next visit. This is
+ * what the chooser's `recentFonts` prop wants fed back: choosing is the one
+ * act that promotes a font out of the wider-search section, so only
+ * `remember` (called from `onFontSelected`) ever writes here.
+ */
+function useRecentFonts(
+  languageTag: string
+): [FontInfo[], (font: FontInfo) => void] {
+  const key = `fontChooserDemo.recentFonts.${languageTag}`;
+  const [recent, setRecent] = useState<FontInfo[]>([]);
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(key) ?? "[]");
+      setRecent(Array.isArray(stored) ? stored : []);
+    } catch {
+      setRecent([]);
+    }
+  }, [key]);
+  const remember = useCallback(
+    (font: FontInfo) => {
+      setRecent((previous) => {
+        const kept = [
+          font,
+          ...previous.filter(
+            (entry) => entry.family.toLowerCase() !== font.family.toLowerCase()
+          ),
+        ].slice(0, RECENT_FONTS_KEPT);
+        localStorage.setItem(key, JSON.stringify(kept));
+        return kept;
+      });
+    },
+    [key]
+  );
+  return [recent, remember];
+}
+
 /**
  * The durable shape facts for one language, kept the way a host app would keep
  * them: per language, since "Ŋ: capital form" is a fact about writing Mazatec,
@@ -141,6 +194,14 @@ const theme = createTheme({
   shape: { borderRadius: 4 },
 });
 
+/** The harness's own switches: present, and quieter than anything in the dialog. */
+const switchLabelCss = css`
+  .MuiFormControlLabel-label {
+    font-size: 12px;
+    color: ${theme.palette.text.secondary};
+  }
+`;
+
 /**
  * The demo harness. It stands in for the host app, which owns the language, the
  * alphabet, the chosen font and the letter shapes picked for it.
@@ -151,6 +212,12 @@ const theme = createTheme({
  * need no API key, so there is nothing to set up.
  */
 export const FontChooserScreenDemo: React.FunctionComponent = () => {
+  // Where the whole font lives, for a font whose preview file was a subset:
+  // the google/fonts repository, keyless like everything else here.
+  const resolveFullFontUrl = useMemo(
+    () => createGoogleFontsFullFontUrlResolver(),
+    []
+  );
   const [alphabet, setAlphabet] = useRememberedString(ALPHABET_KEY);
   const [languageTag, setLanguageTag] = useRememberedString(
     LANGUAGE_TAG_KEY,
@@ -176,7 +243,7 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
     "fontChooserDemo.choices",
     "{}"
   );
-  const [lastEvent, setLastEvent] = useState<string | undefined>();
+  const [log, logLine] = useEventLog();
   // The size of the pretend dialog, which the grip in its corner drags. Starts at
   // the chooser's own dimensions so the demo opens on what a host gets by default.
   const [cardSize, setCardSize] = useState({ width: 840, height: 540 });
@@ -188,51 +255,62 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
       }),
     []
   );
-  // Off by default: this demo doubles as the reference host, and a real user
-  // gets the plain UI. Remembered so a debugging session survives reloads.
-  const [debug, setDebug] = useRememberedBoolean("fontChooserDemo.debug");
+  // Standing in for a phone on a metered connection, which is the case the
+  // chooser's held-back download exists for and the one hardest to get at from a
+  // desk. Remembered, since seeing what it does takes a reload.
+  const [metered, setMetered] = useRememberedBoolean("fontChooserDemo.metered");
+  // Whether the host asks Fontsource for everything that covers the alphabet,
+  // or offers only the curated list plus the machine's own fonts. Remembered,
+  // since comparing the two takes a reload each way.
+  const [broadSearch, setBroadSearch] = useRememberedBoolean(
+    "fontChooserDemo.broadSearch",
+    true
+  );
   // The durable facts the chooser reports, per language. This — not the raw
   // tag choices below — is what carries a pick from one font to another.
   const [shapeMemory, setShapeMemory] = useShapeMemory(languageTag);
+  // What the user has chosen before, fed back so those fonts sit in the main
+  // list rather than needing the wider search to be run again to find them.
+  const [recentFonts, rememberRecentFont] = useRecentFonts(languageTag);
 
   const {
     fonts,
+    moreFonts,
     loading,
     sldrAlphabet,
     sldrChecked,
     fontFeatureDefaults,
     warning,
+    timings,
+    searchBroadly,
+    broadSearchState,
   } = useSuggestedFonts({
     alphabet,
     languageTag,
+    broadSearch,
   });
 
-  const { downloaded, downloadFont, getFontData } = useSessionFontDownloads({
-    onEvent: setLastEvent,
-  });
-
-  // A font this session has fetched is, as far as anything drawing text is
-  // concerned, installed: the browser has the face and will render with it. Saying
-  // so is what fills the details pane in — the example, the letter shapes, and the
-  // list row in its own face — without a reload.
-  //
-  // And a font the SLDR names for the language is a recommendation from
-  // somebody who knows it — the same claim the Language Font Finder makes for
-  // its fonts — so it gets the same `supportsLanguage` mark.
+  // A font the SLDR names for the language is a recommendation from somebody who
+  // knows it — the same claim the Language Font Finder makes for its fonts — so
+  // it gets the same `supportsLanguage` mark. A font already marked by its own
+  // suggester keeps that suggester's word for where the claim came from.
   const offeredFonts = useMemo(() => {
     const sldrNames = new Set(
       (fontFeatureDefaults ?? []).map((d) => normalizeFontName(d.fontName))
     );
-    return fonts?.map((font) => ({
-      ...font,
-      ...(downloaded.has(font.family.toLowerCase())
-        ? { installed: true }
-        : undefined),
-      ...(sldrNames.has(normalizeFontName(font.family))
-        ? { supportsLanguage: true }
-        : undefined),
-    }));
-  }, [fonts, downloaded, fontFeatureDefaults]);
+    return fonts?.map((font) =>
+      !font.supportsLanguage && sldrNames.has(normalizeFontName(font.family))
+        ? {
+            ...font,
+            supportsLanguage: true,
+            supportsLanguageSource: {
+              name: "the SIL Locale Data Repository (SLDR)",
+              url: sldrPageUrl(languageTag),
+            },
+          }
+        : font
+    );
+  }, [fonts, fontFeatureDefaults, languageTag]);
 
   // The tag whose SLDR answer, when it arrives, is still wanted in the field.
   // Only a freshly chosen language gets to overwrite what is there, so that edits
@@ -253,12 +331,16 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
     if (sldrAlphabet) setAlphabet(sldrAlphabet);
   }, [sldrChecked, sldrAlphabet, languageTag, setAlphabet]);
 
-  let choices: CharacterVariantChoices = {};
-  try {
-    choices = JSON.parse(choicesJson) as CharacterVariantChoices;
-  } catch {
-    // A hand-edited local storage value shouldn't take the demo down with it.
-  }
+  // One object per stored value, not per render: the chooser watches `choices`
+  // for changes, and a fresh parse every render says "changed" every render.
+  const choices = useMemo<CharacterVariantChoices>(() => {
+    try {
+      return JSON.parse(choicesJson) as CharacterVariantChoices;
+    } catch {
+      // A hand-edited local storage value shouldn't take the demo down with it.
+      return {};
+    }
+  }, [choicesJson]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -281,83 +363,211 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
             margin: 0 auto;
           `}
         >
-          <Typography
-            variant="caption"
+          {/* Everything the harness owns lives inside one drawn box, so that
+              what is under test is unmistakable: the component is the card
+              below this, and nothing in here is part of it. Before, the
+              language row and the running commentary floated on the same grey
+              as the dialog, and read as chrome the chooser had put there. */}
+          <Paper
+            variant="outlined"
             css={css`
-              display: block;
-              margin-bottom: 16px;
-              color: ${theme.palette.text.secondary};
-            `}
-          >
-            Host app supplies the language and alphabet; the dialog below is the
-            @ethnolib/font-chooser-react-mui component.
-          </Typography>
-
-          <div
-            css={css`
-              display: flex;
-              align-items: center;
-              gap: 12px;
-              margin-bottom: 12px;
-            `}
-          >
-            <Typography variant="body1">
-              {languageName || "No language chosen"}
-            </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setChoosingLanguage(true)}
-            >
-              Choose…
-            </Button>
-            <FormControlLabel
-              css={css`
-                margin-left: auto;
-                .MuiFormControlLabel-label {
-                  font-size: 12px;
-                  color: ${theme.palette.text.secondary};
-                }
-              `}
-              control={
-                <Switch
-                  size="small"
-                  checked={debug}
-                  onChange={(_, next) => setDebug(next)}
-                />
-              }
-              label="Debug info"
-            />
-          </div>
-
-          <AlphabetField
-            value={alphabet}
-            onChange={setAlphabet}
-            fontFamily={font || undefined}
-          />
-          <Typography
-            variant="caption"
-            css={css`
-              display: block;
+              padding: 14px 16px 16px;
               margin-bottom: 24px;
-              min-height: 1.4em;
-              color: ${theme.palette.text.secondary};
+              background-color: ${theme.palette.background.default};
             `}
           >
-            {alphabetCaption()}
-          </Typography>
+            <Typography
+              variant="h2"
+              css={css`
+                font-size: 13px;
+                font-weight: 600;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: ${theme.palette.text.secondary};
+              `}
+            >
+              Component Test Harness
+            </Typography>
+            <Typography
+              variant="caption"
+              css={css`
+                display: block;
+                margin-bottom: 16px;
+                color: ${theme.palette.text.secondary};
+              `}
+            >
+              Host app supplies the language and (optionally) the alphabet; the
+              dialog below is the @ethnolib/font-chooser-react-mui component.
+            </Typography>
 
-          {warning && (
+            <div
+              css={css`
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 12px;
+              `}
+            >
+              <Typography variant="body1">
+                {languageName || "No language chosen"}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setChoosingLanguage(true)}
+              >
+                Choose…
+              </Button>
+            </div>
+
             <Typography
               variant="body2"
               css={css`
-                margin-bottom: 16px;
-                color: ${theme.palette.warning.dark};
+                margin-bottom: 4px;
               `}
             >
-              {warning}
+              Alphabet
+              {/* Where the letters were filled in for the user, the quiet "i"
+                  answers, on hover or by a visit, where they came from. */}
+              {sldrAlphabet && (
+                <>
+                  {" "}
+                  <SourceInfo
+                    tooltip={`This alphabet comes from the SIL Locale Data Repository (SLDR) entry for ${languageTag}. Click to see the data.`}
+                    ariaLabel="Alphabet source: SIL Locale Data Repository"
+                    url={sldrPageUrl(languageTag)}
+                    size={13}
+                  />
+                </>
+              )}
             </Typography>
-          )}
+            <AlphabetField
+              value={alphabet}
+              onChange={setAlphabet}
+              fontFamily={font || undefined}
+              label={null}
+            />
+            <Typography
+              variant="caption"
+              css={css`
+                display: block;
+                margin-bottom: 16px;
+                min-height: 1.4em;
+                color: ${theme.palette.text.secondary};
+              `}
+            >
+              {!sldrAlphabet && alphabetCaption()}
+            </Typography>
+
+            {warning && (
+              <Typography
+                variant="body2"
+                css={css`
+                  margin-bottom: 16px;
+                  color: ${theme.palette.warning.dark};
+                `}
+              >
+                {warning}
+              </Typography>
+            )}
+
+            <div
+              css={css`
+                display: flex;
+                align-items: center;
+                gap: 16px;
+              `}
+            >
+              <FormControlLabel
+                css={switchLabelCss}
+                control={
+                  <Switch
+                    size="small"
+                    checked={metered}
+                    onChange={(_, next) => setMetered(next)}
+                  />
+                }
+                label="Simulate metered connection"
+              />
+              <FormControlLabel
+                css={switchLabelCss}
+                control={
+                  <Switch
+                    size="small"
+                    checked={broadSearch}
+                    onChange={(_, next) => setBroadSearch(next)}
+                  />
+                }
+                label="Offer search beyond curated &amp; local fonts"
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  // Everything remembered on the component's behalf: the
+                  // suggestion caches (SLDR, Language Font Finder, Fontsource,
+                  // sample texts) and the licence sweep's results, all filed
+                  // under one prefix. The reload then drops the in-memory
+                  // layer — session font downloads, measured file sizes, the
+                  // providers' own state — so the next question is asked from
+                  // nothing. The demo's own settings (language, alphabet, the
+                  // switch above) are not caches and survive.
+                  for (const key of Object.keys(localStorage)) {
+                    if (key.startsWith("ethnolib.")) {
+                      localStorage.removeItem(key);
+                    }
+                  }
+                  location.reload();
+                }}
+              >
+                Clear caches &amp; reload
+              </Button>
+            </div>
+
+            <LoadTimings timings={timings} broadSearchState={broadSearchState} />
+
+            <Accordion
+              disableGutters
+              elevation={0}
+              css={css`
+                background-color: transparent;
+                &::before {
+                  display: none;
+                }
+              `}
+            >
+              <AccordionSummary
+                expandIcon={<span aria-hidden>▾</span>}
+                css={css`
+                  min-height: 0;
+                  padding: 0;
+                  flex-direction: row-reverse;
+                  gap: 6px;
+                  justify-content: flex-start;
+                  & .MuiAccordionSummary-content {
+                    flex-grow: 0;
+                    margin: 6px 0;
+                  }
+                `}
+              >
+                <Typography
+                  variant="caption"
+                  css={css`
+                    color: ${theme.palette.text.secondary};
+                  `}
+                >
+                  Log
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails
+                css={css`
+                  padding: 0 0 2px;
+                `}
+              >
+                <EventLog lines={log} />
+              </AccordionDetails>
+            </Accordion>
+          </Paper>
 
           {/* The chooser draws its own white card; lifting it onto an elevated,
               rounded surface and dropping that inner card's edge is what makes
@@ -424,8 +634,23 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
 
             <FontChooserScreen
               alphabet={alphabet}
+              // With nothing typed, an SLDR answer may be about to fill the
+              // field; until it has said its piece the chooser can't tell "no
+              // alphabet" from "alphabet on its way".
+              alphabetPending={!!languageTag && !sldrChecked && !alphabet.trim()}
               fonts={offeredFonts}
-              getFontData={getFontData}
+              recentFonts={recentFonts}
+              moreFonts={moreFonts}
+              onSearchMoreFonts={
+                broadSearchState === "available" || broadSearchState === "searching"
+                  ? searchBroadly
+                  : undefined
+              }
+              // The Fontsource catalog plus a small request per candidate;
+              // the popularity ranking itself ships inside the package.
+              searchMoreFontsCost="0.5 MB"
+              searchingMoreFonts={broadSearchState === "searching"}
+              moreFontsExplanation="The list comes from the most popular fonts on Google Fonts, filtered down to fonts that probably support the alphabet of this language."
               languageTag={languageTag}
               languageName={languageName || undefined}
               languageScript={languageScript || undefined}
@@ -439,34 +664,32 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
               shapeMemory={shapeMemory}
               onShapeMemoryChange={setShapeMemory}
               fontFeatureDefaults={fontFeatureDefaults}
-              debug={debug}
-              onDownloadFont={(chosen) => void downloadFont(chosen)}
-              onCancel={() => setLastEvent("cancelled")}
-              onFontSelected={(chosenFont, chosenShapes) =>
-                setLastEvent(
-                  `chose ${chosenFont} with ${JSON.stringify(chosenShapes)}`
-                )
+              constrainedNetwork={metered}
+              onDiagnostic={logLine}
+              getFullFontUrl={(fontInfo, options) =>
+                resolveFullFontUrl(fontInfo.family, options)
               }
+              onCancel={() => logLine("cancelled")}
+              onFontSelected={(chosenFont, chosenShapes, downloadedFile) => {
+                // Choosing — not browsing — is what earns a fetched font a
+                // place in next visit's main list. An installed font needs no
+                // remembering: being installed already seats it there.
+                if (downloadedFile) rememberRecentFont(downloadedFile.info);
+                logLine(
+                  `chose ${chosenFont}`,
+                  // A host that really installs fonts writes these bytes
+                  // somewhere; the demo only proves they arrived.
+                  {
+                    choices: chosenShapes,
+                    ...(downloadedFile
+                      ? { receivedBytes: downloadedFile.data.byteLength }
+                      : undefined),
+                  }
+                );
+              }}
             />
             <ResizeGrip onResize={onCardResize} />
           </Paper>
-
-          {/* The running commentary is for whoever is working on the component,
-              not for anyone looking at it: "downloaded X (this session only)"
-              under the card describes the harness, and reads as something the
-              chooser is telling the user. So it goes with the rest of the debug
-              output, and the page below the card stays empty. */}
-          {debug && lastEvent && (
-            <Typography
-              variant="body2"
-              css={css`
-                margin-top: 12px;
-                color: ${theme.palette.text.secondary};
-              `}
-            >
-              {lastEvent}
-            </Typography>
-          )}
 
           {choosingLanguage && (
             <LanguageChooserDemoDialog
@@ -490,13 +713,27 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
     </ThemeProvider>
   );
 
+  // The found-an-alphabet case says nothing here — the field's own label carries
+  // the source behind an info icon; these are the states with nothing to
+  // attribute.
   function alphabetCaption(): string {
     if (!languageTag) return "Choose a language to look up its alphabet.";
     if (!sldrChecked) return `Looking up the alphabet for ${languageTag}…`;
-    if (sldrAlphabet) return "Alphabet from SLDR — edit to adjust";
     return `No alphabet data for ${languageTag} — type one`;
   }
 };
+
+/**
+ * The SLDR entry as a page a person can read. The data service itself
+ * (ldml.api.sil.org) answers with `content-disposition: attachment`, so a click
+ * there saves a file instead of showing anything; GitHub's view of the same XML
+ * is a page. SLDR filenames write the tag's hyphens as underscores and shelve it
+ * under its first letter: `aa-Arab` lives at `sldr/a/aa_Arab.xml`.
+ */
+function sldrPageUrl(languageTag: string): string {
+  const file = languageTag.replace(/-/g, "_");
+  return `https://github.com/silnrsi/sldr/blob/master/sldr/${file[0].toLowerCase()}/${encodeURIComponent(file)}.xml`;
+}
 
 /**
  * A grip in the bottom-right corner of the pretend dialog, for dragging it to
@@ -563,69 +800,191 @@ const ResizeGrip: React.FunctionComponent<{
 };
 
 /**
- * The demo's answer to "download this font", and what the chooser is told
- * afterwards.
+ * One glanceable line of how the current language's load went: how quickly there
+ * was anything to offer, when each source answered, and when the offering was
+ * final. Times run from the language being set — a page reload counts, since
+ * the remembered language is set as the page opens.
  *
- * The chooser never touches storage itself — where a font goes and whether it
- * survives the session are the host app's business, and a browser page has no say
- * in what is installed on the machine anyway. What a page *can* do is fetch the
- * file and hand it to the browser as a `FontFace`, which makes the family real for
- * everything on this page until it is reloaded. Nothing is installed; the user's
- * machine is untouched.
- *
- * The bytes are kept as well as registered, because the chooser reads fonts rather
- * than only drawing with them: coverage, letter shapes and the digit forms all come
- * out of the file, and the Local Font Access API — where it answers at all — knows
- * nothing about a face that only exists in this page's memory.
+ * Note these are the host's suggestion stages only. The chooser's own work —
+ * listing the machine's fonts, reading their coverage — goes on after "final",
+ * and shows in the list rather than here.
  */
-function useSessionFontDownloads({
-  onEvent,
-}: {
-  onEvent: (line: string) => void;
-}) {
-  const [downloaded, setDownloaded] = useState<ReadonlySet<string>>(new Set());
-  // Keyed by family, folded, since that is how the chooser matches families.
-  const bytes = useRef(new Map<string, ArrayBuffer>());
-  const started = useRef(new Set<string>());
-
-  const downloadFont = useCallback(
-    async (font: FontInfo) => {
-      const key = font.family.toLowerCase();
-      // Asking twice is asking once: the second click lands while the first fetch
-      // is still in the air, and `started` is what remembers that.
-      if (started.current.has(key)) return;
-      if (!font.fileUrl) {
-        onEvent(`no download url for ${font.family}`);
-        return;
-      }
-      started.current.add(key);
-      onEvent(`downloading ${font.family}…`);
-      try {
-        const response = await fetch(font.fileUrl);
-        if (!response.ok) {
-          throw new Error(`${response.status} ${response.statusText}`.trim());
-        }
-        const file = await response.arrayBuffer();
-        const face = new FontFace(font.family, file);
-        await face.load();
-        document.fonts.add(face);
-        bytes.current.set(key, file);
-        setDownloaded((previous) => new Set(previous).add(key));
-        onEvent(`downloaded ${font.family} (this session only)`);
-      } catch (error) {
-        started.current.delete(key);
-        const said = error instanceof Error ? error.message : String(error);
-        onEvent(`could not download ${font.family}: ${said}`);
-      }
-    },
-    [onEvent]
+const LoadTimings: React.FunctionComponent<{
+  timings: SuggestionTimings;
+  broadSearchState: "off" | "available" | "searching" | "done";
+}> = ({ timings, broadSearchState }) => {
+  const stage = (label: string, ms: number | undefined) =>
+    `${label} ${ms === undefined ? "…" : `${(ms / 1000).toFixed(2)}s`}`;
+  // The broad search waits for a click, so an unasked one isn't "…" — nothing
+  // is coming until somebody asks. Its time is from the click, not the load.
+  const broad =
+    broadSearchState === "off"
+      ? "broad search off"
+      : broadSearchState === "available"
+        ? "broad search not asked"
+        : stage("broad search", timings.coveringMs);
+  return (
+    <Typography
+      variant="caption"
+      css={css`
+        display: block;
+        margin-top: 8px;
+        font-family: Consolas, "Courier New", monospace;
+        color: ${theme.palette.text.secondary};
+      `}
+    >
+      {[
+        stage("first offering", timings.firstFontsMs),
+        stage("curated", timings.curatedMs),
+        stage("alphabet", timings.sldrMs),
+        broad,
+        stage("final offering", timings.settledMs),
+      ].join(" · ")}
+    </Typography>
   );
+};
 
-  const getFontData = useCallback(async (family: string) => {
-    const file = bytes.current.get(family.toLowerCase());
-    if (file) return file;
-    return loadLocalFontDataByFamilyWithName(family);
-  }, []);
+/** How many lines of commentary the box keeps before dropping the oldest. */
+const LOG_LINES_KEPT = 50;
 
-  return { downloaded, downloadFont, getFontData };
+/**
+ * One line of what the chooser has said, as the harness stores it.
+ *
+ * The detail arrives as whatever the component chose to pass — shape choices,
+ * an SLDR entry, a byte count — so it is rendered as JSON rather than
+ * interpreted. Keeping it apart from the message is what lets the message stay
+ * readable at a glance with the bulk after it.
+ */
+interface LogLine {
+  at: string;
+  message: string;
+  detail?: string;
 }
+
+/**
+ * The harness's running commentary, and the one way anything gets into it.
+ *
+ * A host app would not keep this; it stands in for wherever a real one sends
+ * `onDiagnostic` — a console, a log file, a support bundle. Bounded, because a
+ * page left open while somebody clicks down a font list would otherwise grow
+ * without end.
+ */
+function useEventLog(): [
+  LogLine[],
+  (message: string, detail?: unknown) => void,
+] {
+  const [lines, setLines] = useState<LogLine[]>([]);
+  const add = useCallback((message: string, detail?: unknown) => {
+    const line: LogLine = {
+      at: new Date().toLocaleTimeString(),
+      message,
+      detail: detail === undefined ? undefined : safeJson(detail),
+    };
+    setLines((previous) => [...previous, line].slice(-LOG_LINES_KEPT));
+  }, []);
+  return [lines, add];
+}
+
+/**
+ * How much of one detail object the box will show.
+ *
+ * The effective shape set for a font with twenty rows runs to thousands of
+ * characters, and printed whole it filled the box on its own and pushed every
+ * other line out of sight — the log then said less than the single line it
+ * replaced. The callback still hands a host the entire object; this is only what
+ * the harness draws, and the rest is a hover away.
+ */
+const DETAIL_SHOWN = 220;
+
+function safeJson(detail: unknown): string {
+  try {
+    return JSON.stringify(detail) ?? String(detail);
+  } catch {
+    // Something circular, or a value JSON has no word for. The harness saying so
+    // is better than the harness falling over.
+    return String(detail);
+  }
+}
+
+/**
+ * The commentary itself: monospace, scrolled, kept behind the "Log" expander.
+ *
+ * It used to be one line, shown only with a switch on, which meant the
+ * interesting thing was usually the thing that had just been overwritten. It
+ * holds its height whether or not there is anything in it, so the card below
+ * doesn't jump every time the chooser says something.
+ */
+const EventLog: React.FunctionComponent<{ lines: LogLine[] }> = ({ lines }) => {
+  const box = useRef<HTMLDivElement>(null);
+  // Newest at the bottom, in reading order, which means following it takes a
+  // scroll unless we do it for them.
+  useEffect(() => {
+    const element = box.current;
+    if (element) element.scrollTop = element.scrollHeight;
+  }, [lines]);
+
+  return (
+    <div
+      ref={box}
+      css={css`
+        /* Fixed, not a maximum: a box that grows line by line walks the rest of
+           the page downward while the user is trying to read it. */
+        height: 160px;
+        overflow-y: auto;
+        padding: 8px 10px;
+        border: 1px solid ${theme.palette.divider};
+        border-radius: ${theme.shape.borderRadius}px;
+        background-color: ${theme.palette.grey[50]};
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 11.5px;
+        line-height: 1.5;
+        color: ${theme.palette.text.secondary};
+      `}
+    >
+      {lines.length === 0 ? (
+        <span
+          css={css`
+            opacity: 0.7;
+          `}
+        >
+          Diagnostics from the component appear here.
+        </span>
+      ) : (
+        lines.map((line, index) => (
+          <div
+            key={`${line.at}-${index}`}
+            css={css`
+              white-space: pre-wrap;
+              word-break: break-word;
+            `}
+          >
+            <span
+              css={css`
+                opacity: 0.6;
+              `}
+            >
+              {line.at}{" "}
+            </span>
+            <span
+              css={css`
+                color: ${theme.palette.text.primary};
+              `}
+            >
+              {line.message}
+            </span>
+            {line.detail && (
+              <span title={line.detail}>
+                {" "}
+                {line.detail.length > DETAIL_SHOWN
+                  ? `${line.detail.slice(0, DETAIL_SHOWN)}… (${
+                      line.detail.length
+                    } chars)`
+                  : line.detail}
+              </span>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  );
+};

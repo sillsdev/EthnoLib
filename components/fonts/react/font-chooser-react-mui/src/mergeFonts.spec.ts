@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FamilyScan, LocalFontFamily } from "@ethnolib/font-core";
-import { mergeFonts } from "./mergeFonts";
+import { mergeFonts, sectionForMoreFonts } from "./mergeFonts";
 import type { FontInfo } from "./types";
 
 function localFamily(family: string): LocalFontFamily {
@@ -207,16 +207,56 @@ describe("mergeFonts", () => {
     expect(closed.map((f) => f.family)).toEqual(["Mystery Sans"]);
   });
 
-  it("keeps a font whose coverage we have not read", () => {
-    // Unknown is not the same as missing: a font the sweep hasn't reached, or a
-    // downloadable one whose bytes we never fetched, stays on offer.
+  it("keeps a suggested font whose coverage we have not read", () => {
+    // Unknown is not the same as missing: a catalog font whose bytes we never
+    // fetched was suggested for this language, and stays on that word.
     const { main } = mergeFonts({
-      local: [localFamily("Andika")],
       catalog: [{ family: "Noto Sans", installed: false, license: "open" }],
       alphabet: new Set(["ñ"]),
       coverage: {},
     });
-    expect(main.map((f) => f.family)).toEqual(["Andika", "Noto Sans"]);
+    expect(main.map((f) => f.family)).toEqual(["Noto Sans"]);
+  });
+
+  it("holds a machine-only font back until its coverage is read", () => {
+    // Nobody suggested it for this alphabet, so it doesn't show until its own
+    // bytes say it belongs — showing it and then taking it away when the sweep
+    // caught up was the list visibly changing its mind.
+    const unread = mergeFonts({
+      local: [localFamily("Andika")],
+      alphabet: new Set(["ñ"]),
+      coverage: {},
+    });
+    expect(unread.main).toEqual([]);
+
+    const read = mergeFonts({
+      local: [localFamily("Andika")],
+      alphabet: new Set(["ñ"]),
+      coverage: { Andika: covers("ñ") },
+    });
+    expect(read.main.map((f) => f.family)).toEqual(["Andika"]);
+  });
+
+  it("holds every machine-only font back while the alphabet is being looked up", () => {
+    const { main } = mergeFonts({
+      local: [localFamily("Andika")],
+      catalog: [{ family: "Noto Sans", installed: false, license: "open" }],
+      alphabetPending: true,
+      coverage: { Andika: covers("a") },
+    });
+    expect(main.map((f) => f.family)).toEqual(["Noto Sans"]);
+  });
+
+  it("keeps a machine-only closed font on offer while unread", () => {
+    // Closed fonts aren't read until the user opens the disclosure, so waiting
+    // on their coverage would keep the group empty forever.
+    const { closed } = mergeFonts({
+      local: [localFamily("Mystery Sans")],
+      scanned: { "Mystery Sans": scan({ license: "unknown" }) },
+      alphabet: new Set(["ñ"]),
+      coverage: {},
+    });
+    expect(closed.map((f) => f.family)).toEqual(["Mystery Sans"]);
   });
 
   it("filters nothing when there is no alphabet to check against", () => {
@@ -299,11 +339,138 @@ describe("mergeFonts", () => {
     ]);
   });
 
+  it("counts a font fetched this session as installed", () => {
+    const { main } = mergeFonts({
+      catalog: [
+        {
+          family: "Noto Sans",
+          installed: false,
+          fileUrl: "https://fonts.gstatic.com/noto-sans-regular.ttf",
+        },
+      ],
+      sessionDownloaded: new Set(["noto sans"]),
+    });
+    expect(main[0]).toMatchObject({ family: "Noto Sans", installed: true });
+  });
+
+  it("matches a fetched family however the catalog capitalized it", () => {
+    const { main } = mergeFonts({
+      catalog: [{ family: "Gentium Plus", installed: false }],
+      sessionDownloaded: new Set(["gentium plus"]),
+    });
+    expect(main[0].installed).toBe(true);
+  });
+
+  it("leaves alone a font nobody fetched", () => {
+    const { main } = mergeFonts({
+      catalog: [
+        { family: "Andika", installed: false },
+        { family: "Yrsa", installed: false },
+      ],
+      sessionDownloaded: new Set(["andika"]),
+    });
+    expect(main.map((f) => [f.family, f.installed])).toEqual([
+      ["Andika", true],
+      ["Yrsa", false],
+    ]);
+  });
+
+  it("sorts a fetched font up among the ready ones", () => {
+    // The list's first group is "fonts you can use right now", and once the
+    // browser has the face that is what this is.
+    const { main } = mergeFonts({
+      local: [localFamily("Zapfino")],
+      catalog: [
+        { family: "Andika", installed: false },
+        { family: "Yrsa", installed: false },
+      ],
+      sessionDownloaded: new Set(["yrsa"]),
+    });
+    expect(main.map((f) => f.family)).toEqual(["Yrsa", "Zapfino", "Andika"]);
+  });
+
   it("leaves installed fonts alphabetical whatever is recommended", () => {
     const { main } = mergeFonts({
       local: [localFamily("Zapfino"), localFamily("Andika")],
       catalog: [{ family: "Zapfino", supportsLanguage: true }],
     });
     expect(main.map((f) => f.family)).toEqual(["Andika", "Zapfino"]);
+  });
+});
+
+describe("sectionForMoreFonts", () => {
+  const found = (family: string): FontInfo => ({
+    family,
+    installed: false,
+    license: "open",
+    fileUrl: `https://cdn.example/${family.toLowerCase()}.ttf`,
+  });
+
+  it("keeps the search's own order rather than re-sorting", () => {
+    const section = sectionForMoreFonts(
+      [found("Roboto"), found("Open Sans"), found("Inter"), found("Arimo")],
+      {}
+    );
+    expect(section.map((font) => font.family)).toEqual([
+      "Roboto",
+      "Open Sans",
+      "Inter",
+      "Arimo",
+    ]);
+  });
+
+  it("leaves out families already offered above the divider", () => {
+    const section = sectionForMoreFonts(
+      [found("Roboto"), found("Andika"), found("Noto Sans")],
+      {
+        local: [localFamily("Andika")],
+        catalog: [{ family: "Noto Sans", license: "open" }],
+      }
+    );
+    expect(section.map((font) => font.family)).toEqual(["Roboto"]);
+  });
+
+  it("matches those families however they are capitalized", () => {
+    const section = sectionForMoreFonts([found("ANDIKA")], {
+      local: [localFamily("Andika")],
+    });
+    expect(section).toEqual([]);
+  });
+
+  it("says each family once however often the search names it", () => {
+    const section = sectionForMoreFonts([found("Roboto"), found("roboto")], {});
+    expect(section.map((font) => font.family)).toEqual(["Roboto"]);
+  });
+
+  it("counts a session download as installed", () => {
+    const section = sectionForMoreFonts([found("Roboto")], {
+      sessionDownloaded: new Set(["roboto"]),
+    });
+    expect(section[0].installed).toBe(true);
+  });
+
+  it("drops a font whose read coverage misses the alphabet, keeps the unread", () => {
+    const section = sectionForMoreFonts([found("Roboto"), found("Inter")], {
+      alphabet: new Set(["ŋ"]),
+      coverage: { Roboto: covers("abc") },
+    });
+    expect(section.map((font) => font.family)).toEqual(["Inter"]);
+  });
+
+  it("never holds its fonts back for a pending alphabet — the search vouched for them", () => {
+    const section = sectionForMoreFonts([found("Roboto")], {
+      alphabetPending: true,
+      alphabet: new Set(),
+    });
+    expect(section.map((font) => font.family)).toEqual(["Roboto"]);
+  });
+
+  it("keeps the selected font whatever its coverage turned out to be", () => {
+    const section = sectionForMoreFonts([found("Roboto")], {
+      alphabet: new Set(["ŋ"]),
+      coverage: { Roboto: covers("abc") },
+      alwaysInclude: "Roboto",
+    });
+    expect(section.map((font) => font.family)).toEqual(["Roboto"]);
   });
 });

@@ -10,7 +10,13 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   CharacterVariantChoices,
   allVariantGroups,
@@ -26,25 +32,37 @@ import {
   FamilyScan,
   LocalFontFamily,
   coversAlphabet,
+  fetchFontFileSize,
+  mergeCoverageRanges,
   createGflanguagesSampleTextProvider,
   isLocalFontAccessSupported,
   loadLocalFontDataByFamilyWithName,
   parseAlphabet,
+  pruneCoverageCache,
   pruneLicenseCache,
+  pruneLocalFontListCache,
   queryLocalFontFamilies,
+  readCachedCoverages,
   readCachedLicenses,
+  readCachedLocalFontList,
   readCoverageRanges,
   scanFamiliesForCharacterVariants,
   scanFamiliesForLicense,
   useFontData,
+  writeCachedCoverage,
   writeCachedLicense,
+  writeCachedLocalFontList,
   type SampleText,
 } from "@ethnolib/font-core";
 import { FontDetailsPane } from "./FontDetailsPane";
 import { FontList } from "./FontList";
-import { findFont, mergeFonts } from "./mergeFonts";
+import { featureSettingsFor } from "./featureSettings";
+import { findFont, mergeFonts, sectionForMoreFonts } from "./mergeFonts";
 import { shouldOfferLocalFontListing } from "./localFontListing";
-import type { FontChooserScreenProps } from "./types";
+import { useConstrainedNetwork } from "./constrainedNetwork";
+import { customSampleSurvivesLanguageChange } from "./sampleText";
+import { useFontDownloads } from "./useFontDownloads";
+import type { FontChooserScreenProps, ReportDiagnostic } from "./types";
 
 /**
  * The whole font-choosing screen: the fonts on one side, and on the other what the
@@ -59,6 +77,7 @@ export const FontChooserScreen: React.FunctionComponent<
   FontChooserScreenProps
 > = ({
   alphabet = "",
+  alphabetPending,
   fonts,
   getLocalFonts,
   getFontData = loadLocalFontDataByFamilyWithName,
@@ -71,9 +90,16 @@ export const FontChooserScreen: React.FunctionComponent<
   onShapeMemoryChange,
   fontFeatureDefaults,
   onEffectiveShapesChange,
-  debug,
-  onDownloadFont,
+  onDiagnostic,
+  constrainedNetwork,
+  recentFonts,
+  moreFonts,
+  onSearchMoreFonts,
+  searchMoreFontsCost,
+  searchingMoreFonts,
+  moreFontsExplanation,
   onCancel,
+  getFullFontUrl,
   onFontSelected,
   sampleSize,
   languageTag,
@@ -84,6 +110,17 @@ export const FontChooserScreen: React.FunctionComponent<
   loading: hostBusy,
   className,
 }) => {
+  // The host's ear, through a ref: it is usually an inline arrow, and an effect
+  // that took it as a dependency would re-run on every render of the host.
+  // Nothing here calls the detail thunk unless somebody is on the other end.
+  const diagnosticRef = useRef(onDiagnostic);
+  diagnosticRef.current = onDiagnostic;
+  const diagnose = useCallback<ReportDiagnostic>((message, detail) => {
+    const report = diagnosticRef.current;
+    if (!report) return;
+    report(message, detail?.());
+  }, []);
+
   const [local, setLocal] = useState<LocalFontFamily[]>([]);
   const [listing, setListing] = useState(false);
   const [listError, setListError] = useState<string | undefined>();
@@ -111,9 +148,10 @@ export const FontChooserScreen: React.FunctionComponent<
     onShapeMemoryChange?.(next);
   };
 
-  // Why each row's current form is in force, keyed by row. Always maintained —
-  // it feeds onEffectiveShapesChange — whether or not `debug` shows it. A font
-  // switch replaces the whole map; a pick overwrites its own row's entry.
+  // Why each row's current form is in force, keyed by row. Always maintained: it
+  // feeds onEffectiveShapesChange, and the chooser cannot say where a setting
+  // came from without it. A font switch replaces the whole map; a pick
+  // overwrites its own row's entry.
   const [provenance, setProvenance] = useState<Record<string, ChoiceSource>>(
     {}
   );
@@ -129,6 +167,24 @@ export const FontChooserScreen: React.FunctionComponent<
     setOwnSample(next);
     onCustomSampleTextChange?.(next);
   };
+
+  // A change of language hands the sample back to whoever supplies it, exactly as
+  // emptying the box does — see customSampleSurvivesLanguageChange for why their
+  // text cannot be allowed to outlive the language it was written for. The host is
+  // told, not merely bypassed: one that keeps the text across sessions would
+  // otherwise restore it over the new language on the next visit, and no host
+  // should have to work this rule out for itself.
+  const languageWas = useRef(languageTag);
+  useEffect(() => {
+    const before = languageWas.current;
+    languageWas.current = languageTag;
+    if (customSampleSurvivesLanguageChange(before, languageTag)) return;
+    if (sample === undefined) return;
+    changeSample(undefined);
+    // Only a change of language is grounds for this. changeSample is a fresh
+    // closure every render and would restart the effect on all of them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [languageTag]);
 
   // Real writing in the user's language, fetched here rather than handed in: a
   // host asked for a font chooser, and where the words to draw the fonts over
@@ -213,26 +269,84 @@ export const FontChooserScreen: React.FunctionComponent<
   const [readOnSelection, setReadOnSelection] = useState<
     Record<string, Uint32Array>
   >({});
+  // What an earlier visit read out of the installed fonts' cmaps. Lowest
+  // precedence, so a fresh read this visit corrects it — but it is what lets the
+  // machine's fonts pass the coverage gate before this visit's sweep has reached
+  // them, which is most of a warm start.
+  const [cachedCoverage, setCachedCoverage] = useState<
+    Record<string, Uint32Array>
+  >({});
   const coverage = useMemo(() => {
-    const known: Record<string, Uint32Array | undefined> = {};
+    const known: Record<string, Uint32Array | undefined> = {
+      ...cachedCoverage,
+    };
     for (const [family, scan] of Object.entries(scanned)) {
       if (scan.detailsRead) known[family] = scan.coverage;
     }
     return { ...known, ...readOnSelection };
-  }, [scanned, readOnSelection]);
+  }, [cachedCoverage, scanned, readOnSelection]);
+
+  // Fetching a font is how the pane learns anything about it, so it happens on
+  // selection — unless the connection is one where a megabyte spent unasked is a
+  // real cost, in which case the pane offers the download instead and this set
+  // remembers which fonts the user said yes to. It doubles as the way back in
+  // after a fetch that failed.
+  const constrained = useConstrainedNetwork(constrainedNetwork);
+  const { downloaded, bytesFor, extraBytesFor, download } =
+    useFontDownloads(diagnose);
+  const [downloadRequested, setDownloadRequested] = useState<
+    ReadonlySet<string>
+  >(new Set());
+
+  // Fonts chosen on earlier visits count as suggestions of the host's own —
+  // ahead of the catalog in the array so that where both name a family, the
+  // catalog's fields (its reasons, its urls) win the merge.
+  const catalog = useMemo(
+    () =>
+      recentFonts?.length ? [...recentFonts, ...(fonts ?? [])] : fonts,
+    [recentFonts, fonts]
+  );
 
   const merged = useMemo(
     () =>
       mergeFonts({
         local,
-        catalog: fonts,
+        catalog,
         scanned,
+        alphabet: alphabetSet,
+        alphabetPending,
+        coverage,
+        alwaysInclude: selection,
+        sessionDownloaded: downloaded,
+      }),
+    [
+      local,
+      catalog,
+      scanned,
+      alphabetSet,
+      alphabetPending,
+      coverage,
+      selection,
+      downloaded,
+    ]
+  );
+  // The wider search's section, deduplicated against everything above the
+  // divider and filtered by the same coverage rules, but never re-sorted: the
+  // host ranked these, and the ranking is the section's point.
+  const moreSection = useMemo(
+    () =>
+      moreFonts &&
+      sectionForMoreFonts(moreFonts, {
+        local,
+        catalog,
         alphabet: alphabetSet,
         coverage,
         alwaysInclude: selection,
+        sessionDownloaded: downloaded,
       }),
-    [local, fonts, scanned, alphabetSet, coverage, selection]
+    [moreFonts, local, catalog, alphabetSet, coverage, selection, downloaded]
   );
+
   // Which fonts are closed decides what the background reads are allowed to touch,
   // and those reads are set off by effects that must not restart every time a
   // result lands. So they ask the ref for the list as it stands rather than taking
@@ -242,37 +356,190 @@ export const FontChooserScreen: React.FunctionComponent<
   const scannedNow = useRef(scanned);
   scannedNow.current = scanned;
 
-  const selectedInfo = findFont(merged, selection);
+  const selectedInfo =
+    findFont(merged, selection) ??
+    moreSection?.find(
+      (font) => font.family.toLowerCase() === selection.toLowerCase()
+    );
   const installed = selectedInfo ? selectedInfo.installed !== false : false;
 
   // A font we don't have yet still has bytes to read, as long as the catalog says
-  // where they live: we fetch the file and read coverage and letter shapes out of
-  // it, which is what makes the download offer worth anything.
-  const downloadUrl = installed ? undefined : selectedInfo?.fileUrl;
-  const downloads = useRef(new Map<string, Promise<ArrayBuffer>>());
-  const fetchFontFile = (url: string) => {
-    const already = downloads.current.get(url);
-    if (already) return already;
-    const started = fetch(url).then(async (response) => {
-      if (!response.ok) {
-        throw new Error(`Could not fetch the font: ${response.status}`);
-      }
-      return response.arrayBuffer();
-    });
-    // A failed fetch shouldn't poison the cache for a font the user comes back to.
-    started.catch(() => downloads.current.delete(url));
-    downloads.current.set(url, started);
-    return started;
-  };
-  const loadBytes = (font: string) =>
-    downloadUrl ? fetchFontFile(downloadUrl) : getFontData(font);
+  // where they live: fetching the file is what lets the pane show the sample, the
+  // letter shapes and the coverage — which is to say, everything the user opened
+  // the font to see. So a selection is a download, and the browser is handed the
+  // face as it arrives.
+  //
+  // Where the connection says otherwise the fetch waits for a click. Until then
+  // this font is one we could read and haven't, which is what the empty url says
+  // to everything below.
+  const fileUrl = installed ? undefined : selectedInfo?.fileUrl;
+  const downloadUrl =
+    fileUrl && (!constrained || downloadRequested.has(selection.toLowerCase()))
+      ? fileUrl
+      : undefined;
 
-  // Nothing to read for a font that is neither here nor fetchable; the details
-  // pane shows the download offer on its own.
-  const { fontData, postscriptName, loading, retry } = useFontData(
+  const loadBytes = (font: string) => {
+    // The session cache first, and before anything else: once a fetched font is
+    // registered it counts as installed, so `downloadUrl` has gone undefined and
+    // Local Font Access — which knows nothing of a face that lives only in this
+    // page — would be asked for a font it cannot find.
+    const already = bytesFor(font);
+    if (already) return Promise.resolve(already);
+    if (downloadUrl && selectedInfo) return download(selectedInfo);
+    return getFontData(font);
+  };
+
+  // Nothing to read for a font that is neither here nor allowed to be fetched;
+  // the details pane makes the offer on its own.
+  const { fontData, postscriptName, loading, error, retry } = useFontData(
     !installed && !downloadUrl ? "" : selection,
     loadBytes
   );
+
+  const requestDownload = () => {
+    setDownloadRequested((previous) =>
+      new Set(previous).add(selection.toLowerCase())
+    );
+    // A first click changes the url as well, which would set off the load on its
+    // own; a second one, after a failure, changes nothing, and this is the whole
+    // of what makes it happen.
+    retry();
+  };
+
+  // What we preview with, for a font from a per-subset source, is a slice of
+  // the family (fileIsSubset); the file the user should walk away with is the
+  // whole font. When the host says where whole fonts live, the selected font's
+  // is looked up as soon as it is selected — two small requests — so that
+  // "Use this font" can carry the real cost of the click before it is clicked,
+  // and the click itself can await the same lookup rather than racing it.
+  // Only a font this session fetched needs any of this: one that was on the
+  // machine all along is already whole.
+  const getFullFontUrlRef = useRef(getFullFontUrl);
+  getFullFontUrlRef.current = getFullFontUrl;
+  const selectedInfoNow = useRef(selectedInfo);
+  selectedInfoNow.current = selectedInfo;
+  const fullFontLookup = useRef<
+    | {
+        family: string;
+        promise: Promise<{ url?: string; sizeBytes?: number }>;
+      }
+    | undefined
+  >(undefined);
+  const [fullFontSize, setFullFontSize] = useState<number | undefined>();
+  const [choosing, setChoosing] = useState(false);
+  const [chooseError, setChooseError] = useState<string | undefined>();
+  const wantsFullFont =
+    !!getFullFontUrl &&
+    !!selectedInfo?.fileIsSubset &&
+    (selectedInfo.installed === false ||
+      downloaded.has(selection.toLowerCase()));
+
+  useEffect(() => {
+    setChooseError(undefined);
+    setFullFontSize(undefined);
+    if (!wantsFullFont) {
+      fullFontLookup.current = undefined;
+      return;
+    }
+    const info = selectedInfoNow.current;
+    const resolve = getFullFontUrlRef.current;
+    if (!info || !resolve) return;
+    const controller = new AbortController();
+    const promise = (async (): Promise<{
+      url?: string;
+      sizeBytes?: number;
+    }> => {
+      try {
+        const url = await resolve(info, { signal: controller.signal });
+        if (!url) {
+          diagnose(
+            `no full font found for ${info.family}; its subset file will have to do`
+          );
+          return {};
+        }
+        const sizeBytes = await fetchFontFileSize(url, {
+          signal: controller.signal,
+        });
+        diagnose(`full font found for ${info.family}`, () => ({
+          url,
+          sizeBytes,
+        }));
+        return { url, sizeBytes };
+      } catch (error) {
+        // A lookup that failed leaves us where we were: handing over the
+        // subset file beats failing the whole choice.
+        if (!controller.signal.aborted) {
+          diagnose(
+            `full font lookup failed for ${info.family}: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+        return {};
+      }
+    })();
+    fullFontLookup.current = { family: info.family, promise };
+    void promise.then((full) => {
+      if (!controller.signal.aborted && full.url) {
+        setFullFontSize(full.sizeBytes);
+      }
+    });
+    return () => controller.abort();
+  }, [wantsFullFont, selection, diagnose]);
+
+  const handleUse = async () => {
+    // The bytes go with the choice for a font we fetched: the host may want to
+    // keep it, and it is already in memory. A font that was on the machine all
+    // along has none to hand over.
+    const data = bytesFor(selection);
+    if (!data || !selectedInfo?.fileUrl) {
+      onFontSelected(selection, chosen, undefined);
+      return;
+    }
+    const lookup = fullFontLookup.current;
+    if (lookup && lookup.family.toLowerCase() === selection.toLowerCase()) {
+      // We previewed with a subset; the user has chosen the font, and this is
+      // the moment the whole file is worth its download.
+      setChoosing(true);
+      setChooseError(undefined);
+      try {
+        const { url } = await lookup.promise;
+        if (url) {
+          diagnose(`fetching the full ${selection}`, () => ({ fileUrl: url }));
+          const response = await fetch(url);
+          if (!response.ok) {
+            const status =
+              `${response.status} ${response.statusText ?? ""}`.trim();
+            throw new Error(`Could not fetch the font: ${status}`);
+          }
+          const whole = await response.arrayBuffer();
+          diagnose(`fetched the full ${selection}`, () => ({
+            receivedBytes: whole.byteLength,
+          }));
+          onFontSelected(selection, chosen, {
+            data: whole,
+            fileUrl: url,
+            info: selectedInfo,
+          });
+          return;
+        }
+      } catch (error) {
+        // The choice didn't take. The dialog stays up wearing the reason, and
+        // the button still works: a retry is a fresh fetch.
+        setChooseError(
+          error instanceof Error ? error.message : String(error)
+        );
+        return;
+      } finally {
+        setChoosing(false);
+      }
+    }
+    onFontSelected(selection, chosen, {
+      data,
+      fileUrl: selectedInfo.fileUrl,
+      info: selectedInfo,
+    });
+  };
 
   // Every shape row the selected font offers for this alphabet, letters and
   // digits together — the list that shape memory and the language's defaults
@@ -309,6 +576,12 @@ export const FontChooserScreen: React.FunctionComponent<
     );
     changeChoices(derived.choices);
     setProvenance(derived.provenance);
+    diagnose(`derived shapes for ${selection}`, () => ({
+      choices: derived.choices,
+      provenance: derived.provenance,
+      sldrEntry: findSldrEntry(selection, fontFeatureDefaults ?? []),
+      shapeMemory: memory,
+    }));
     // Memory and defaults changing for their own reasons must not re-derive
     // and undo the user's in-progress edits; only a new font does.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -316,13 +589,28 @@ export const FontChooserScreen: React.FunctionComponent<
 
   // The full effective set, told to the host whenever it changes: on the
   // derivation above and on every pick.
+  //
+  // "Changes" is judged by value, not by the identity of `chosen`. A host is
+  // entitled to hand `choices` back as a fresh object every render — one that
+  // parses it out of stored JSON does — and anything said here can cause that
+  // render: a diagnostic appended to a host's log is a host state change.
+  // Repeating the same answer in a new wrapper fed the render that asked for
+  // the next repeat, and the page never came back.
+  const effectiveSaid = useRef<string>();
   useEffect(() => {
-    if (!groups || !onEffectiveShapesChange) return;
-    onEffectiveShapesChange(
-      groups.map((group) => effectiveShapeChoiceFor(group, chosen, provenance))
+    // Working the set out is only worth it for somebody who is going to read it.
+    if (!groups || (!onEffectiveShapesChange && !diagnosticRef.current)) return;
+    const effective = groups.map((group) =>
+      effectiveShapeChoiceFor(group, chosen, provenance)
     );
-    // `chosen` is state (or the host's prop) rather than something recreated
-    // per render, so this fires on real changes only.
+    const saying = JSON.stringify(effective);
+    if (effectiveSaid.current === saying) return;
+    effectiveSaid.current = saying;
+    onEffectiveShapesChange?.(effective);
+    diagnose(`effective shapes for ${selection}`, () => ({
+      effectiveShapes: effective,
+      fontFeatureSettings: featureSettingsFor(chosen),
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups, chosen, provenance]);
 
@@ -334,22 +622,36 @@ export const FontChooserScreen: React.FunctionComponent<
       ...previous,
       [groupKey]: { kind: "user" },
     }));
+    diagnose(
+      `picked ${choice.groupLabel ?? groupKey}: ${
+        choice.formLabel ?? "the font's own form"
+      }`,
+      () => choice
+    );
   };
 
   // Bytes we fetched for the pane answer the coverage question too, and the answer
   // outlives the visit: it is what lets a font the user has looked at drop out of
   // the list if it can't write their alphabet. Installed fonts the sweep has
-  // already read are left alone.
+  // already read are left alone. A font that arrived as several subset files
+  // covers the union of them: each file answers for its own letters.
   useEffect(() => {
     if (!fontData || !selection) return;
     if (scannedNow.current[selection]?.detailsRead) return;
     let stale = false;
-    readCoverageRanges(new Blob([fontData]), postscriptName)
-      .then((ranges) => {
+    const files = [fontData, ...(extraBytesFor(selection) ?? [])];
+    Promise.all(
+      files.map((file, index) =>
+        // The PostScript name picks a face out of a collection, and only the
+        // primary bytes can be one; the extra subset files are single fonts.
+        readCoverageRanges(new Blob([file]), index === 0 ? postscriptName : undefined)
+      )
+    )
+      .then((all) => {
         if (!stale) {
           setReadOnSelection((previous) => ({
             ...previous,
-            [selection]: ranges,
+            [selection]: mergeCoverageRanges(all),
           }));
         }
       })
@@ -359,6 +661,9 @@ export const FontChooserScreen: React.FunctionComponent<
     return () => {
       stale = true;
     };
+    // extraBytesFor is a stable accessor into the same download that delivered
+    // fontData, so fontData arriving is the moment its answer is complete.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fontData, postscriptName, selection]);
 
   // `useFontData` reloads when the font's name changes, which is the whole story
@@ -378,8 +683,19 @@ export const FontChooserScreen: React.FunctionComponent<
   const listFonts = async () => {
     setListing(true);
     setListError(undefined);
+    // Last visit's list first: enumeration costs seconds where the cache costs
+    // nothing, and the list barely changes between visits. The real enumeration
+    // replaces it below — which is when a font uninstalled since then leaves.
+    // This runs only where listing is about to run anyway, so a revoked
+    // permission never has old answers shown under it.
+    if (local.length === 0) {
+      const remembered = readCachedLocalFontList();
+      if (remembered) setLocal(remembered);
+    }
     try {
-      setLocal(await (getLocalFonts ?? queryLocalFontFamilies)());
+      const families = await (getLocalFonts ?? queryLocalFontFamilies)();
+      setLocal(families);
+      writeCachedLocalFontList(families);
       // Listing the fonts is also the moment the page gains permission to read
       // their bytes, so a load that failed before this is worth another try.
       if (!fontData) retry();
@@ -438,6 +754,9 @@ export const FontChooserScreen: React.FunctionComponent<
   useEffect(() => {
     detailsAsked.current.clear();
     if (local.length === 0) return;
+    // Coverage an earlier visit read; see `cachedCoverage`. Replaced wholesale,
+    // so a change of list drops entries for fonts no longer on it.
+    setCachedCoverage(readCachedCoverages(local));
     if (!isLocalFontAccessSupported()) {
       setLicensesFor(local);
       return;
@@ -445,6 +764,8 @@ export const FontChooserScreen: React.FunctionComponent<
     // What an earlier visit worked out. A font's licence doesn't change under us,
     // so this is the whole answer for anything we have seen before.
     pruneLicenseCache();
+    pruneCoverageCache();
+    pruneLocalFontListCache();
     const cached = readCachedLicenses(local);
     if (Object.keys(cached).length > 0) {
       setScanned((previous) => mergeScans(previous, cached));
@@ -538,7 +859,12 @@ export const FontChooserScreen: React.FunctionComponent<
         overflow: hidden;
       `}
     >
-      {hostBusy ? (
+      {/* The placeholder stands in only while there is nothing real to put up.
+          The machine's own fonts don't wait for the host's catalog — they are
+          already listed by now wherever permission survives from an earlier
+          visit — so a busy host hides them only when there are none, and the
+          catalog's fonts join the list when it answers. */}
+      {hostBusy && nothingToShow ? (
         <ChooserPlaceholder />
       ) : nothingToShow ? (
         <div
@@ -589,6 +915,11 @@ export const FontChooserScreen: React.FunctionComponent<
               // One way only: having read those fonts, we don't unread them.
               if (open) setClosedRevealed(true);
             }}
+            moreFonts={moreSection}
+            onSearchMoreFonts={onSearchMoreFonts}
+            searchMoreFontsCost={searchMoreFontsCost}
+            searchingMoreFonts={searchingMoreFonts}
+            moreFontsExplanation={moreFontsExplanation}
             header={
               offerListing && (
                 <LocalFontsPrompt
@@ -610,7 +941,7 @@ export const FontChooserScreen: React.FunctionComponent<
               min-height: 0;
             `}
           >
-            <LoadingBar active={listing || loading} />
+            <LoadingBar active={listing || loading || !!hostBusy} />
             {/* When the sidebar is asking for permission it reports its own
                 failures; saying it twice would be worse than saying it once. */}
             {listError && !offerListing && (
@@ -627,6 +958,7 @@ export const FontChooserScreen: React.FunctionComponent<
               <FontDetailsPane
                 font={selectedInfo}
                 fontData={fontData}
+                supplementaryFontData={extraBytesFor(selectedInfo.family)}
                 postscriptName={postscriptName}
                 // Only coverage we have actually read. A font the licence pass has
                 // reached but the details pass hasn't is absent from this map
@@ -637,30 +969,21 @@ export const FontChooserScreen: React.FunctionComponent<
                 languageName={languageName}
                 choices={chosen}
                 onChoicesChange={changeChoices}
-                onDownloadFont={onDownloadFont}
+                constrainedNetwork={constrained}
+                downloading={!installed && loading}
+                downloadError={!installed ? error?.message : undefined}
+                onRequestDownload={requestDownload}
                 onCancel={onCancel}
-                onUse={() => onFontSelected(selection, chosen)}
+                onUse={() => void handleUse()}
+                useDownloadSizeBytes={fullFontSize}
+                choosing={choosing}
+                chooseError={chooseError}
                 loading={loading}
                 sampleSize={sampleSize}
                 languageSample={languageSample}
                 customSampleText={sample}
                 onCustomSampleTextChange={changeSample}
                 onShapeChoiceChange={handleShapeChoice}
-                debugProvenance={debug ? provenance : undefined}
-                debugInfo={
-                  debug
-                    ? {
-                        sldrEntry: findSldrEntry(
-                          selection,
-                          fontFeatureDefaults ?? []
-                        ),
-                        shapeMemory: memory,
-                        effectiveShapes: groups?.map((group) =>
-                          effectiveShapeChoiceFor(group, chosen, provenance)
-                        ),
-                      }
-                    : undefined
-                }
               />
             )}
           </div>
@@ -849,10 +1172,23 @@ function readDetails(
 
   const abort = new AbortController();
   const batch = batched(apply);
-  scanFamiliesForCharacterVariants(wanted, batch.collect, {
-    signal: abort.signal,
-    readLicense: false,
-  }).finally(batch.flush);
+  const byName = new Map(wanted.map((family) => [family.family, family]));
+  scanFamiliesForCharacterVariants(
+    wanted,
+    (family, found) => {
+      batch.collect(family, found);
+      // Coverage keeps between visits. Empty is what a failed read looks like
+      // too, and remembering a failure would hide the font for good.
+      if (found.coverage.length > 0) {
+        const listed = byName.get(family);
+        if (listed) writeCachedCoverage(listed, found.coverage);
+      }
+    },
+    {
+      signal: abort.signal,
+      readLicense: false,
+    }
+  ).finally(batch.flush);
 
   return () => {
     abort.abort();

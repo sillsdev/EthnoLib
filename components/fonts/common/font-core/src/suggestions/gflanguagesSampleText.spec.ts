@@ -204,14 +204,17 @@ note {
     ).toContain("Google Fonts language data");
   });
 
-  it("goes through the fetch it was given and forwards the signal", async () => {
+  it("goes through the fetch it was given with a live signal on the request", async () => {
     const { impl, signals } = gflanguagesFetch(thaiTextproto);
     const controller = new AbortController();
     await createGflanguagesSampleTextProvider({
       storage: memoryStorage(),
     }).getSampleText("th", { fetchImpl: impl, signal: controller.signal });
 
-    expect(signals).toEqual([controller.signal]);
+    // Not the caller's signal itself — the request gets one composed with the
+    // timeout — but a signal must be there and must not have fired.
+    expect(signals).toHaveLength(1);
+    expect(signals[0] && !signals[0].aborted).toBe(true);
   });
 
   it("rethrows an abort rather than answering with nothing", async () => {

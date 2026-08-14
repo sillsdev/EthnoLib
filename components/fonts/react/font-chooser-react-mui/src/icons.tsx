@@ -164,13 +164,13 @@ export const VouchedForIcon: React.FunctionComponent<IconProps> = ({
 );
 
 /**
- * The open-source mark — the ring with the gap at the top, as on opensource.org —
- * for a font whose licence lets the user do what they like with it. A tick would
- * say only "this is fine"; this says which kind of fine it is, and readers who
- * know the mark know the rest without reading the line.
+ * The same tick drawn hollow — an outlined circle rather than a filled one — for
+ * saying "recommended for your language" beside every such font in the list.
+ * There it sits on row after row, and the filled mark at that repetition stops
+ * reading as an endorsement and starts reading as decoration.
  */
-export const OpenSourceIcon: React.FunctionComponent<IconProps> = ({
-  size = 15,
+export const VouchedForOutlineIcon: React.FunctionComponent<IconProps> = ({
+  size = 16,
   color = "currentColor",
   title,
   className,
@@ -179,15 +179,60 @@ export const OpenSourceIcon: React.FunctionComponent<IconProps> = ({
     className={className}
     width={size}
     height={size}
-    viewBox="0 0 15 15"
+    viewBox="0 0 24 24"
+    fill="none"
+    role={title ? "img" : "presentation"}
+    aria-hidden={title ? undefined : true}
+  >
+    {title && <title>{title}</title>}
+    <circle
+      cx="12"
+      cy="12"
+      r="9"
+      stroke={color}
+      strokeWidth={1.8}
+      fill="none"
+    />
+    <path
+      d="m8 12 3 3 5-6"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+    />
+  </svg>
+);
+
+/**
+ * The open-source mark — the keyhole ring, as on opensource.org — for a font
+ * whose licence lets the user do what they like with it. A tick would say only
+ * "this is fine"; this says which kind of fine it is, and readers who know the
+ * mark know the rest without reading the line.
+ *
+ * The artwork keeps its own greens: the mark is a mark, drawn in its own colors,
+ * not tinted to match a theme. So unlike the other icons here it takes no color.
+ */
+export const OpenSourceIcon: React.FunctionComponent<
+  Omit<IconProps, "color">
+> = ({ size = 16, title, className }) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
     fill="none"
     role={title ? "img" : "presentation"}
     aria-hidden={title ? undefined : true}
   >
     {title && <title>{title}</title>}
     <path
-      d="M7.455 0.000999987C3.344 0.000999987 0 3.346 0 7.456C0 10.5875 1.94 13.2735 4.68 14.376L6.5 9.838C5.94666 9.61638 5.48776 9.20899 5.20213 8.68582C4.91649 8.16264 4.82194 7.55633 4.93471 6.97103C5.04749 6.38572 5.36055 5.85796 5.82014 5.47837C6.27972 5.09879 6.85713 4.89108 7.4532 4.89092C8.04927 4.89077 8.6268 5.09817 9.08658 5.47752C9.54636 5.85686 9.8597 6.38446 9.97278 6.96971C10.0859 7.55496 9.99163 8.16131 9.70627 8.68464C9.42091 9.20796 8.96222 9.61559 8.409 9.8375L10.229 14.375C12.969 13.272 14.909 10.586 14.909 7.455C14.91 3.345 11.5655 0 7.455 0V0.000999987Z"
-      fill={color}
+      d="M8.92803 10.8374C10.0374 10.4249 10.6155 9.63115 10.6155 8.26553C10.6155 6.8999 9.4624 5.69678 8.0249 5.69365C6.50615 5.69053 5.35928 6.89365 5.38115 8.26553C5.3999 9.6374 6.05303 10.5468 7.0999 10.878L5.24365 15.4405C2.76865 14.7999 0.243652 11.8749 0.243652 8.27178C0.243652 3.9999 3.6749 0.540527 7.97178 0.540527C12.2687 0.540527 15.7562 3.9999 15.7562 8.27178C15.7562 11.9343 13.2562 14.8218 10.7218 15.4593L8.92803 10.8374Z"
+      fill="#3DA638"
+    />
+    <path
+      d="M10.7219 15.7031C10.625 15.7031 10.5312 15.6437 10.4969 15.5469L8.70312 10.925C8.67812 10.8656 8.68125 10.7969 8.70938 10.7375C8.7375 10.6781 8.78438 10.6312 8.84688 10.6094C9.90625 10.2156 10.3781 9.49062 10.3781 8.2625C10.3781 7.00312 9.30312 5.93438 8.02812 5.93125H8.02188C7.35625 5.93125 6.74062 6.18438 6.2875 6.64375C5.85312 7.08438 5.61875 7.65625 5.625 8.25625C5.64062 9.48438 6.19063 10.3313 7.17188 10.6406C7.2375 10.6625 7.29062 10.7063 7.31875 10.7688C7.34687 10.8313 7.35 10.9 7.325 10.9625L5.46875 15.5312C5.42188 15.6437 5.3 15.7063 5.18437 15.675C3.88437 15.3375 2.5875 14.4031 1.62188 13.1125C0.575 11.7094 0 9.99063 0 8.27188C0 6.1375 0.825 4.1375 2.325 2.63438C3.825 1.12813 5.83125 0.296875 7.97188 0.296875C10.1156 0.296875 12.1313 1.125 13.6469 2.63125C15.1625 4.1375 15.9969 6.14063 15.9969 8.26875C15.9969 10.0188 15.4219 11.75 14.3813 13.1406C13.4188 14.4281 12.1062 15.3563 10.7781 15.6906C10.7625 15.7 10.7406 15.7031 10.7219 15.7031ZM9.24063 10.9719L10.8687 15.1656C13.1875 14.4625 15.5156 11.7563 15.5156 8.27188C15.5156 4.14375 12.1312 0.784375 7.975 0.784375C3.84375 0.784375 0.484375 4.14375 0.484375 8.27188C0.484375 9.8875 1.025 11.5031 2.00938 12.8219C2.85625 13.9594 3.975 14.7969 5.1 15.1469L6.77812 11.0188C5.75 10.5844 5.15625 9.59688 5.1375 8.26875C5.12812 7.5375 5.4125 6.84063 5.94063 6.30625C6.4875 5.75313 7.225 5.45 8.02188 5.45H8.02812C8.78125 5.45312 9.49688 5.75313 10.0344 6.29688C10.5594 6.825 10.8594 7.54375 10.8594 8.26562C10.8625 9.59687 10.3313 10.4844 9.24063 10.9719Z"
+      fill="#1C511C"
     />
   </svg>
 );

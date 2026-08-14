@@ -81,6 +81,33 @@ export function editedSampleText(typed: string): string | undefined {
 }
 
 /**
+ * Whether a sample the user rewrote should still be shown now that the language
+ * has changed from `before` to `after`.
+ *
+ * It should not. Their text takes precedence over everything, so left in place it
+ * becomes the only sample they can ever see again: words in the old language's
+ * letters, sitting under the new language's name, with the passage fetched for
+ * the new one hidden behind them. A rewritten sample belongs to the language it
+ * was typed for.
+ *
+ * Two changes that look like a switch and are not:
+ *  - the same tag written differently, or with space around it, is one language;
+ *  - a host that works its language out asynchronously goes from nothing to a
+ *    tag on a later render, and does that while restoring the text the user typed
+ *    for that very language. Nothing-to-a-tag is the language arriving, so only a
+ *    move between two named languages counts.
+ */
+export function customSampleSurvivesLanguageChange(
+  before: string | undefined,
+  after: string | undefined
+): boolean {
+  const was = before?.trim().toLowerCase();
+  const now = after?.trim().toLowerCase();
+  if (!was || !now) return true;
+  return was === now;
+}
+
+/**
  * What the heading says after "Sample Text".
  *
  * Real writing is named by its data set rather than described as "in your

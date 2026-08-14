@@ -41,8 +41,12 @@ interface CacheEntry<T> {
  * s2: LFF file URLs are rewritten to raw.githubusercontent.com; s1 entries could
  * hold CORS-blocked github.com URLs cached before that rewrite existed.
  * s3: gflanguages sample entries became {text, source, sourceUrl} objects; s2
- * entries were bare strings. */
-const SCHEMA_VERSION = 3;
+ * entries were bare strings.
+ * s4: LFF entries carry supportsLanguageSource; s3 entries lack it.
+ * s5: LFF licenseUrl points at the licence's own page; s4 entries held the
+ * font's release page.
+ * s6: the LFF source is named "the SIL Global Language Font Finder". */
+const SCHEMA_VERSION = 6;
 const PREFIX = "ethnolib.fontSuggestions";
 const CURRENT_PREFIX = `${PREFIX}.s${SCHEMA_VERSION}.`;
 

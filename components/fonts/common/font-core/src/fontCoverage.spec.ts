@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   coversAlphabet,
   coversCodePoint,
+  mergeCoverageRanges,
   readCoverageRanges,
 } from "./fontCoverage";
 import { parseAlphabet } from "./alphabet";
@@ -96,5 +97,32 @@ describe("coversAlphabet", () => {
 
   it("treats an empty alphabet as covered by anything", () => {
     expect(coversAlphabet(new Uint32Array(), new Set())).toBe(true);
+  });
+});
+
+describe("mergeCoverageRanges", () => {
+  it("unions two subset files' coverage into one sorted set", () => {
+    // The Tongan shape: a latin file and a latin-ext file, each with letters
+    // the other hasn't, answering as one family.
+    const latin = ranges([0x20, 0x7e], [0xe0, 0xff]);
+    const latinExt = ranges([0x100, 0x17f]);
+
+    const merged = mergeCoverageRanges([latinExt, latin]);
+    expect(coversCodePoint(merged, 0x61)).toBe(true); // a
+    expect(coversCodePoint(merged, 0xe1)).toBe(true); // á
+    expect(coversCodePoint(merged, 0x101)).toBe(true); // ā
+    expect(coversCodePoint(merged, 0x1e00)).toBe(false);
+  });
+
+  it("fuses overlapping and adjacent ranges", () => {
+    expect([
+      ...mergeCoverageRanges([ranges([10, 20], [40, 50]), ranges([15, 21], [22, 30])]),
+    ]).toEqual([10, 30, 40, 50]);
+  });
+
+  it("keeps a lone coverage as it is, and nothing from nothing", () => {
+    expect([...mergeCoverageRanges([ranges([1, 2])])]).toEqual([1, 2]);
+    expect([...mergeCoverageRanges([])]).toEqual([]);
+    expect([...mergeCoverageRanges([new Uint32Array()])]).toEqual([]);
   });
 });

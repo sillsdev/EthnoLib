@@ -19,6 +19,7 @@
  * strings one to a line. Anything else in the file is left alone.
  */
 
+import { fetchWithTimeout } from "./abort";
 import {
   readCachedSuggestion,
   writeCachedSuggestion,
@@ -114,7 +115,7 @@ export function createGflanguagesSampleTextProvider(
 
       const fetchImpl = options.fetchImpl ?? fetch;
       const url = `${baseUrl}/${id}.textproto`;
-      const response = await fetchImpl(url, { signal: options.signal });
+      const response = await fetchWithTimeout(fetchImpl, url, options.signal);
       if (response.status === 404) {
         writeCachedSuggestion<MissingLanguage>(
           SOURCE,

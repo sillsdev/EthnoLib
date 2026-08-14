@@ -20,6 +20,7 @@
  * package hasn't got — that a tag belongs to a macrolanguage, say — belongs.
  */
 
+import { fetchWithTimeout } from "./abort";
 import {
   readCachedSuggestion,
   writeCachedSuggestion,
@@ -135,7 +136,7 @@ async function alphabetForTag(
 
   const fetchImpl = options.fetchImpl ?? fetch;
   const url = `${baseUrl}/${encodeURIComponent(tag)}?inc[]=characters`;
-  const response = await fetchImpl(url, { signal: options.signal });
+  const response = await fetchWithTimeout(fetchImpl, url, options.signal);
   if (response.status === 404) {
     writeCachedSuggestion<MissingLanguage>(SOURCE, key, { missing: true }, storage);
     return undefined;

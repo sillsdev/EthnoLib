@@ -137,7 +137,7 @@ describe("createFontsourceSuggester", () => {
     expect(fonts.map((font) => font.family)).toEqual(["Noto Sans Thai"]);
   });
 
-  it("goes through every request with the fetch it was given, and forwards the signal", async () => {
+  it("goes through every request with the fetch it was given, and the caller's cancel reaches them", async () => {
     const { impl, signals, urls } = fontsourceFetch(CATALOG, allFontMetadata());
     const controller = new AbortController();
     await createFontsourceSuggester({
@@ -150,7 +150,29 @@ describe("createFontsourceSuggester", () => {
 
     expect(urls.length).toBe(3); // the catalog, then two families
     expect(signals.length).toBe(3);
-    expect(signals.every((signal) => signal === controller.signal)).toBe(true);
+    // Not the caller's signal itself — each request gets one composed with the
+    // timeout — but the caller's cancellation must still flow through it.
+    expect(signals.every((signal) => signal && !signal.aborted)).toBe(true);
+  });
+
+  it("cancelling mid-request aborts the fetch that is out", async () => {
+    const controller = new AbortController();
+    let seen: AbortSignal | undefined;
+    const impl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      seen = init?.signal ?? undefined;
+      controller.abort();
+      throw Object.assign(new Error("aborted"), { name: "AbortError" });
+    }) as unknown as typeof fetch;
+
+    await expect(
+      createFontsourceSuggester({
+        storage: memoryStorage(),
+      }).suggestFontsForAlphabet("a b", {
+        fetchImpl: impl,
+        signal: controller.signal,
+      })
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(seen?.aborted).toBe(true);
   });
 
   it("rethrows an abort rather than answering with nothing", async () => {
@@ -207,6 +229,51 @@ describe("createFontsourceSuggester", () => {
     }).suggestFontsForAlphabet("漢", { fetchImpl: impl });
 
     expect(fontIds()).toEqual(["andika", "noto-sans"]);
+  });
+
+  it("shortlists the most popular families when there are too many", async () => {
+    const { impl, fontIds } = fontsourceFetch(CATALOG, allFontMetadata());
+    const getPopularity = vi.fn(async () =>
+      new Map([
+        ["ubuntu", 1],
+        ["noto sans", 2],
+      ])
+    );
+    await createFontsourceSuggester({
+      storage: memoryStorage(),
+      maxCandidates: 2,
+      getPopularity,
+    }).suggestFontsForAlphabet("漢", { fetchImpl: impl });
+
+    // Not Andika and Aclonica, the alphabetical first two: the ranked pair, in
+    // rank order, with everything unranked behind them.
+    expect(fontIds()).toEqual(["ubuntu", "noto-sans"]);
+    expect(getPopularity).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps catalog order when the ranking can't be had", async () => {
+    const { impl, fontIds } = fontsourceFetch(CATALOG, allFontMetadata());
+    await createFontsourceSuggester({
+      storage: memoryStorage(),
+      maxCandidates: 2,
+      getPopularity: async () => {
+        throw new Error("metadata down");
+      },
+    }).suggestFontsForAlphabet("漢", { fetchImpl: impl });
+
+    expect(fontIds()).toEqual(["andika", "noto-sans"]);
+  });
+
+  it("doesn't ask for the ranking when the shortlist fits everyone", async () => {
+    const { impl } = fontsourceFetch(CATALOG, allFontMetadata());
+    const getPopularity = vi.fn(async () => new Map<string, number>());
+    await createFontsourceSuggester({
+      storage: memoryStorage(),
+      maxCandidates: 50,
+      getPopularity,
+    }).suggestFontsForAlphabet("ก ข ค", { fetchImpl: impl });
+
+    expect(getPopularity).not.toHaveBeenCalled();
   });
 
   it("tries again without the subset filter when it leaves nothing", async () => {
@@ -308,9 +375,74 @@ describe("createFontsourceSuggester", () => {
         // Latin.
         fileUrl:
           "https://cdn.jsdelivr.net/fontsource/fonts/heavy-only@latest/latin-500-normal.ttf",
+        // Andika's ranges stand in here, and they have five subsets: this one
+        // file is a piece of the family, and says so.
+        fileIsSubset: true,
+        fileUnicodeRange: andikaFixture.unicodeRange.latin,
       },
     ]);
     expect(fonts[0].fileUrl?.endsWith(".ttf")).toBe(true);
+  });
+
+  it("offers every subset file the alphabet needs, ranges and all", async () => {
+    const { impl } = fontsourceFetch(CATALOG, allFontMetadata());
+    // á lives in Andika's latin subset, ā in latin-ext: writing both takes both
+    // files. This is the Tongan case — offering only the bigger half had the
+    // details pane warning about letters the family perfectly well covers.
+    const fonts = await createFontsourceSuggester({
+      storage: memoryStorage(),
+      maxCandidates: 1,
+    }).suggestFontsForAlphabet("a á ā", { fetchImpl: impl });
+
+    expect(fonts[0].fileUrl).toBe(
+      "https://cdn.jsdelivr.net/fontsource/fonts/andika@latest/latin-400-normal.ttf"
+    );
+    expect(fonts[0].fileIsSubset).toBe(true);
+    expect(fonts[0].fileUnicodeRange).toBe(andikaFixture.unicodeRange.latin);
+    expect(fonts[0].additionalFiles).toEqual([
+      {
+        url: "https://cdn.jsdelivr.net/fontsource/fonts/andika@latest/latin-ext-400-normal.ttf",
+        unicodeRange: andikaFixture.unicodeRange["latin-ext"],
+      },
+    ]);
+  });
+
+  it("offers one file, marked as a subset, when one subset holds the alphabet", async () => {
+    const { impl } = fontsourceFetch(CATALOG, allFontMetadata());
+    const fonts = await createFontsourceSuggester({
+      storage: memoryStorage(),
+      maxCandidates: 1,
+    }).suggestFontsForAlphabet("a b", { fetchImpl: impl });
+
+    expect(fonts[0].additionalFiles).toBeUndefined();
+    // Still one subset out of Andika's five: not the whole font.
+    expect(fonts[0].fileIsSubset).toBe(true);
+  });
+
+  it("doesn't call a single-subset family's file a subset", async () => {
+    const whole = {
+      ...CATALOG[0],
+      id: "whole",
+      family: "Whole",
+      subsets: ["latin"],
+      weights: [400],
+      defSubset: "latin",
+    };
+    const { impl } = fontsourceFetch([whole], {
+      whole: {
+        id: "whole",
+        weights: [400],
+        defSubset: "latin",
+        unicodeRange: { latin: "U+0000-00FF" },
+      },
+    });
+    const fonts = await createFontsourceSuggester({
+      storage: memoryStorage(),
+    }).suggestFontsForAlphabet("a b", { fetchImpl: impl });
+
+    expect(fonts[0].fileIsSubset).toBeUndefined();
+    expect(fonts[0].fileUnicodeRange).toBeUndefined();
+    expect(fonts[0].additionalFiles).toBeUndefined();
   });
 
   it("offers the regular weight where the family has one", async () => {

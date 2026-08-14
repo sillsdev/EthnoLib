@@ -38,6 +38,28 @@ export interface FontInfo {
    */
   fileUrl?: string;
   /**
+   * That `fileUrl` holds one subset of the family rather than the whole font —
+   * the way Fontsource ships families, one file per subset. The subset files
+   * are the right thing to preview with, and the wrong thing to hand somebody
+   * as "the font": a host that installs fonts should look for the complete
+   * family first (see `createGoogleFontsFullFontUrlResolver`).
+   */
+  fileIsSubset?: boolean;
+  /**
+   * The `unicode-range` the `fileUrl` subset declares, where the source
+   * publishes one. When `additionalFiles` are present, registering each face
+   * with its own range is what lets the browser compose them into one family:
+   * two faces both claiming everything would simply shadow one another.
+   */
+  fileUnicodeRange?: string;
+  /**
+   * Subset files beyond `fileUrl` that the alphabet needs — an alphabet
+   * straddling `latin` and `latin-ext`, say, from a source that ships those as
+   * separate files. The chooser fetches these alongside `fileUrl`, registers
+   * each with its range, and reads coverage from all of them together.
+   */
+  additionalFiles?: { url: string; unicodeRange?: string }[];
+  /**
    * A cut-down font holding only the characters of the family's name, as Google
    * Fonts serves for menus. Carried through for hosts that want to draw a list
    * entry in its own face without fetching the whole font.
@@ -54,4 +76,11 @@ export interface FontInfo {
    * user is actually asking.
    */
   supportsLanguage?: boolean;
+  /**
+   * Who made that recommendation, for the user who wants to weigh it. `name` is a
+   * phrase that finishes "This recommendation comes from …" — "the Language Font
+   * Finder", say — and `url` is a page a person can read, where there is one, not
+   * an API endpoint that would download.
+   */
+  supportsLanguageSource?: { name: string; url?: string };
 }

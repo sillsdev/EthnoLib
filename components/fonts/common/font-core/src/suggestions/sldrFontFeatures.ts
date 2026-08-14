@@ -18,6 +18,7 @@
  * Same tag-fallback walk, cache and network contract as sldrAlphabet.ts.
  */
 
+import { fetchWithTimeout } from "./abort";
 import {
   readCachedSuggestion,
   writeCachedSuggestion,
@@ -123,7 +124,7 @@ async function defaultsForTag(
 
   const fetchImpl = options.fetchImpl ?? fetch;
   const url = `${baseUrl}/${encodeURIComponent(tag)}?inc[]=special`;
-  const response = await fetchImpl(url, { signal: options.signal });
+  const response = await fetchWithTimeout(fetchImpl, url, options.signal);
   if (response.status === 404) {
     writeCachedSuggestion<MissingLanguage>(SOURCE, key, { missing: true }, storage);
     return undefined;

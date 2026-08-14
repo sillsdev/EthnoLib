@@ -15,6 +15,7 @@
  */
 
 import type { FontInfo } from "../fontInfo";
+import { fetchWithTimeout } from "./abort";
 import {
   readCachedSuggestion,
   writeCachedSuggestion,
@@ -107,7 +108,7 @@ export function createLanguageFontFinderSuggester(
 
       const fetchImpl = options.fetchImpl ?? fetch;
       const url = `${baseUrl}/lang/${encodeURIComponent(tag)}`;
-      const response = await fetchImpl(url, { signal: options.signal });
+      const response = await fetchWithTimeout(fetchImpl, url, options.signal);
       if (response.status === 404) {
         writeCachedSuggestion<MissingLanguage>(
           SOURCE,
@@ -123,18 +124,22 @@ export function createLanguageFontFinderSuggester(
       }
 
       const body = (await response.json()) as LffResponse;
-      const fonts = toFontInfos(body, defaultsOnly);
+      const fonts = toFontInfos(body, defaultsOnly, url);
       writeCachedSuggestion(SOURCE, key, fonts, storage);
       return fonts;
     },
   };
 }
 
-function toFontInfos(body: LffResponse, defaultsOnly: boolean): FontInfo[] {
+function toFontInfos(
+  body: LffResponse,
+  defaultsOnly: boolean,
+  sourceUrl: string
+): FontInfo[] {
   const families = body.families ?? {};
   const fonts: FontInfo[] = [];
   for (const id of orderedIds(body, defaultsOnly)) {
-    const font = toFontInfo(families[id]);
+    const font = toFontInfo(families[id], sourceUrl);
     if (font) fonts.push(font);
   }
   return fonts;
@@ -161,7 +166,10 @@ function orderedIds(body: LffResponse, defaultsOnly: boolean): string[] {
   return ordered;
 }
 
-function toFontInfo(family: LffFamily | undefined): FontInfo | undefined {
+function toFontInfo(
+  family: LffFamily | undefined,
+  sourceUrl: string
+): FontInfo | undefined {
   if (!family) return undefined;
   // Not everything the service knows about may be passed on; a font we are told
   // not to redistribute is one the chooser must not offer to download.
@@ -173,16 +181,23 @@ function toFontInfo(family: LffFamily | undefined): FontInfo | undefined {
   const name = family.family ?? family.familyid;
   if (!name) return undefined;
 
+  const { category, url } = classify(family.license);
   const info: FontInfo = {
     family: name,
     installed: false,
-    license: classify(family.license),
+    license: category,
     fileUrl,
     // Everything this service returns for a language is a recommendation for that
-    // language — that is the whole of what it holds.
+    // language — that is the whole of what it holds. The source URL is the
+    // service's own answer for the tag, which a browser shows as a page of JSON
+    // rather than downloading.
     supportsLanguage: true,
+    supportsLanguageSource: {
+      name: "the SIL Global Language Font Finder",
+      url: sourceUrl,
+    },
   };
-  if (family.siteurl) info.licenseUrl = family.siteurl;
+  if (url) info.licenseUrl = url;
   return info;
 }
 
@@ -191,11 +206,25 @@ function toFontInfo(family: LffFamily | undefined): FontInfo | undefined {
  * Apache, which is nearly everything here. Anything else is "unknown" rather than
  * a guess: the chooser can say it doesn't know, and saying "open" wrongly is the
  * one mistake that matters.
+ *
+ * The URL is where a reader who clicks "read the license" should land: the
+ * licence's own page. The service's `siteurl` is not that — it is the font's
+ * home page or release page, which once stood in here and sent people asking a
+ * licensing question to a page of release notes.
  */
-function classify(license: string | undefined): FontInfo["license"] {
+function classify(license: string | undefined): {
+  category: FontInfo["license"];
+  url?: string;
+} {
   const name = (license ?? "").trim().toUpperCase();
-  if (name.startsWith("OFL") || name.startsWith("APACHE")) return "open";
-  return "unknown";
+  if (name.startsWith("OFL"))
+    return { category: "open", url: "https://openfontlicense.org/" };
+  if (name.startsWith("APACHE"))
+    return {
+      category: "open",
+      url: "https://www.apache.org/licenses/LICENSE-2.0",
+    };
+  return { category: "unknown" };
 }
 
 /**

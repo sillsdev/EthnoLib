@@ -40,6 +40,17 @@ export type {
   CachedFontLicense,
   LicenseCacheStorage,
 } from "./fontLicenseCache";
+export {
+  readCachedCoverage,
+  readCachedCoverages,
+  writeCachedCoverage,
+  pruneCoverageCache,
+} from "./fontCoverageCache";
+export {
+  readCachedLocalFontList,
+  writeCachedLocalFontList,
+  pruneLocalFontListCache,
+} from "./localFontListCache";
 export { useFontData, normalizeFontDataResult } from "./useFontData";
 export type { FontDataResult } from "./useFontData";
 export {
@@ -65,6 +76,7 @@ export {
   readCoverageRanges,
   coversCodePoint,
   coversAlphabet,
+  mergeCoverageRanges,
 } from "./fontCoverage";
 export type { FontInfo } from "./fontInfo";
 export {
@@ -73,6 +85,8 @@ export {
   notoOnly,
 } from "./googleFonts";
 export type { GoogleFontsOptions } from "./googleFonts";
+export { fetchFontFileSize } from "./fontFileSize";
+export type { FontFileSizeOptions } from "./fontFileSize";
 export type {
   SuggestOptions,
   AlphabetFontSuggester,
@@ -85,6 +99,12 @@ export type {
 } from "./suggestions/types";
 export { createFontsourceSuggester } from "./suggestions/fontsource";
 export type { FontsourceSuggesterConfig } from "./suggestions/fontsource";
+export { bundledFontPopularity } from "./suggestions/popularFonts";
+export { createGoogleFontsFullFontUrlResolver } from "./suggestions/googleFontsRepo";
+export type {
+  FullFontUrlResolver,
+  GoogleFontsFullFontResolverConfig,
+} from "./suggestions/googleFontsRepo";
 export { createLanguageFontFinderSuggester } from "./suggestions/languageFontFinder";
 export type { LanguageFontFinderConfig } from "./suggestions/languageFontFinder";
 export { createSldrAlphabetProvider } from "./suggestions/sldrAlphabet";

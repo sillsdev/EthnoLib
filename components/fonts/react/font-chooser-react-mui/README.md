@@ -8,10 +8,10 @@ a detail pane for the selected font: license information, alphabet coverage for
 the language being worked in, and the character variant (cvXX) picker, which is
 embedded from [`@ethnolib/character-variants-react-mui`](../character-variants-react-mui/README.md).
 
-The download button is a callback: the component reports that the user asked for a
-font, and the host application decides what that means. It stays storage-agnostic
-on purpose — see [Running the demo](#running-the-demo) for one implementation of
-the host's half, using `FontFace` for the length of a session.
+Fonts that aren't on the machine are fetched by the component itself, so the pane
+can show what they do; see [Fonts that aren't installed yet](#fonts-that-arent-installed-yet).
+Nothing is installed, and where the host wants to keep the file, `onFontSelected`
+hands it over.
 
 ## Shape memory and language defaults
 
@@ -40,18 +40,37 @@ Switching fonts now derives each row afresh (remembered fact, else SLDR default,
 font default) instead of carrying raw tags over — which also fixes the bug where a
 `cvNN` picked on one font silently applied to an unrelated feature of the next.
 
-`debug` shows where every setting came from: captions on the shape rows and a collapsed
-JSON block at the pane's foot. The demo has a "Debug info" switch for it, remembered in
-local storage and off by default.
+`onDiagnostic(message, detail?)` is how the chooser says what it is doing and why: where
+each row's setting came from as a font is derived, what it is about to report through
+`onEffectiveShapesChange`, each shape the user picks, and the fetch of a font that isn't
+on the machine (started, finished with a byte count, or failed). The component renders
+none of it — a host puts the lines wherever its own diagnostics go, and one that passes
+nothing pays nothing, since the bulky `detail` is only assembled when somebody is
+listening. The demo's harness box shows them in a scrolling log.
 
 ## Fonts that aren't installed yet
 
-A catalog entry with `installed: false` and a `fileUrl` is a font the chooser can
-read without the font being on the machine: it fetches the file and reads coverage,
-license hints and the letter shapes out of it, so the detail pane says what the
-download would actually get you. The letter-shape pickers stay ghosted and "Use
-this font" stays disabled until the font is really installed, which is the host
-app's job.
+A catalog entry with `installed: false` and a `fileUrl` is a font the chooser
+fetches as soon as the user selects it. It registers the file with the browser as
+a `FontFace` and keeps the bytes, which is enough for the pane to fill in exactly
+as it does for an installed font: the sample paragraph in the real face, the
+letter shapes, the coverage check. Nothing is written to the machine and nothing
+survives a reload — this is a preview, not an install.
+
+When the user settles on such a font, `onFontSelected` is called with a third
+argument, a `DownloadedFontFile` carrying the bytes, the URL they came from and
+the catalog entry. A host that really installs fonts, or bundles them into a
+document, takes it from there without fetching the same megabyte twice. The
+argument is absent for a font that was already on the machine.
+
+**Metered connections.** Fetching a megabyte the moment a name is clicked is the
+wrong default for a phone on a paid connection, so the chooser holds off where it
+has reason to think the connection is expensive: the `constrainedNetwork` prop,
+OR'd with the Network Information API's `saveData` and a slow `effectiveType`.
+The pane then offers a **Preview this font** button with the download's size under
+it (a HEAD request reads `Content-Length`; a host that already knows the size
+passes `downloadSizeBytes` and no request is made). A fetch that fails turns the
+button into **Try again** whichever mode is in force.
 
 ## Google Fonts
 
@@ -126,13 +145,18 @@ Google's gflanguages data. For a language that data set doesn't cover, the examp
 is made up out of the alphabet and headed "Made up example (lorem-ipsum style)" so
 nobody mistakes it for their own language.
 
-**Downloading.** "Download this font" in the demo fetches the file and registers it
-with the browser as a `FontFace`. Nothing is installed on the machine and nothing
-survives a reload: for the rest of the session the family draws text and the demo
-keeps its bytes to hand back for coverage and letter-shape reading, which is enough
-for the details pane to fill in as though the font were installed. A host app that
-really installs fonts does something else here; the component only reports that the
-user asked.
+The host's own controls sit inside a box headed **Component Test Harness**, so that
+what is under test is unmistakably the card below it. The log at the foot of that box
+is the demo's `onDiagnostic` sink, with the cancel and font-chosen events in the same
+stream.
+
+**Downloading.** Clicking a font that isn't on the machine fetches it and the pane
+fills in — the chooser does this itself now, so the demo has no download plumbing of
+its own. Choosing such a font logs the byte count the host was handed, which is what
+`onFontSelected`'s third argument is for. The **Simulate metered connection** switch
+feeds `constrainedNetwork`, so the held-back "Preview this font" button can be seen
+from a desk; Chrome DevTools' 3G throttling reaches the same behaviour through the
+browser's own signals.
 
 For hosts that want the Google Fonts catalog instead, `fetchGoogleFontsCatalog` in
 `@ethnolib/font-core` is still there; see [Google Fonts](#google-fonts) above for

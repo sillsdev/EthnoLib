@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   chooseSampleText,
+  customSampleSurvivesLanguageChange,
   editedSampleText,
   sampleTextSourceLabel,
 } from "./sampleText";
@@ -111,5 +112,34 @@ describe("sampleTextSourceLabel", () => {
     expect(
       sampleTextSourceLabel(chooseSampleText({ languageSample: GFLANGUAGES })!)
     ).toBe("(Google Fonts language data)");
+  });
+});
+
+describe("customSampleSurvivesLanguageChange", () => {
+  it("drops text typed for another language", () => {
+    // The bug this exists for: text rewritten for one language wins over every
+    // other source, so left alone it is the only sample the user ever sees again.
+    expect(customSampleSurvivesLanguageChange("fuv", "th")).toBe(false);
+  });
+
+  it("keeps text typed for the language still being set", () => {
+    expect(customSampleSurvivesLanguageChange("fuv", "fuv")).toBe(true);
+  });
+
+  it("reads the same tag written differently as the same language", () => {
+    expect(customSampleSurvivesLanguageChange("fuv", " fuv ")).toBe(true);
+    expect(customSampleSurvivesLanguageChange("th-Thai", "th-thai")).toBe(true);
+  });
+
+  it("treats a language arriving as no change at all", () => {
+    // A host that works the tag out asynchronously restores the user's text
+    // alongside it; wiping it here would throw away the very thing the prop is
+    // for.
+    expect(customSampleSurvivesLanguageChange(undefined, "fuv")).toBe(true);
+    expect(customSampleSurvivesLanguageChange("", "fuv")).toBe(true);
+  });
+
+  it("keeps their text when the language goes away", () => {
+    expect(customSampleSurvivesLanguageChange("fuv", undefined)).toBe(true);
   });
 });

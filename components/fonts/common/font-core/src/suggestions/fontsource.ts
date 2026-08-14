@@ -28,7 +28,7 @@ import {
   guessSubsetsForAlphabet,
   isIgnorableAlphabetCodePoint,
 } from "../googleFonts";
-import { isAbortError, throwIfAborted } from "./abort";
+import { fetchWithTimeout, isAbortError, throwIfAborted } from "./abort";
 import {
   readCachedSuggestion,
   writeCachedSuggestion,
@@ -67,6 +67,18 @@ export interface FontsourceSuggesterConfig {
   storage?: SuggestionCacheStorage;
   /** Narrow the candidates further, for anything the catalog can't express. */
   familyFilter?: (family: string) => boolean;
+  /**
+   * How popular each family is, by lower-cased name, smaller meaning more
+   * popular — `bundledFontPopularity`, usually. With this the
+   * shortlist is the most-used families that might cover the alphabet; without
+   * it, the first `maxCandidates` in catalog order, which for a broad script
+   * like Latin means an alphabetical page. Asked only when there are more
+   * candidates than the shortlist holds, and a provider that fails costs only
+   * the ordering, never the answer.
+   */
+  getPopularity?: (
+    options?: SuggestOptions
+  ) => Promise<ReadonlyMap<string, number>>;
 }
 
 /** A catalog entry, cut down to the fields we cache and decide on. */
@@ -103,6 +115,7 @@ export function createFontsourceSuggester(
     concurrency = 6,
     storage,
     familyFilter,
+    getPopularity,
   } = config;
 
   return {
@@ -127,6 +140,19 @@ export function createFontsourceSuggester(
       // list without any of it being true. Coverage is the real test, so fall
       // back to running it over everything.
       if (candidates.length === 0 && guessed.length > 0) candidates = open;
+
+      // Only when the slice would actually cut something: a list that fits the
+      // shortlist whole gets checked whole, and the ranking's megabytes stay
+      // unfetched.
+      if (getPopularity && candidates.length > maxCandidates) {
+        try {
+          const popularity = await getPopularity(options);
+          candidates = rankByPopularity(candidates, popularity);
+        } catch (error) {
+          if (isAbortError(error)) throw error;
+          // No ranking, no harm: catalog order is where we started.
+        }
+      }
 
       const shortlist = candidates.slice(0, maxCandidates);
       const suggestions = await mapWithConcurrency(
@@ -182,6 +208,21 @@ function isOpenLicense(license: string | undefined): boolean {
   );
 }
 
+/**
+ * The candidates most-popular first, ties and unranked families keeping their
+ * catalog order (the sort is stable). A family the ranking has never heard of
+ * goes after every family it has: being absent from Google Fonts' list says
+ * "niche" more often than it says "new".
+ */
+function rankByPopularity(
+  candidates: CatalogEntry[],
+  popularity: ReadonlyMap<string, number>
+): CatalogEntry[] {
+  const rank = (entry: CatalogEntry) =>
+    popularity.get(entry.family.toLowerCase()) ?? Number.POSITIVE_INFINITY;
+  return [...candidates].sort((a, b) => rank(a) - rank(b));
+}
+
 /** Whether an entry claims every subset the alphabet was guessed to need. */
 function hasSubsets(entry: CatalogEntry, guessed: string[]): boolean {
   if (guessed.length === 0) return true;
@@ -205,20 +246,86 @@ function toFontInfo(
   cdnBaseUrl: string
 ): FontInfo {
   const weights = metadata.weights?.length ? metadata.weights : entry.weights;
-  const subset = bestSubset(entry, metadata, codePoints);
+  const weight = nearestWeight(weights);
   const cdn = cdnBaseUrl.replace(/\/+$/, "");
-  return {
+  // Fontsource's file names are laid out {subset}-{weight}-{style}, and we want
+  // the TTF rather than the woff2 the web would use: the chooser reads the
+  // font's own tables, and woff2 is compressed past reading that way.
+  const fileFor = (subset: string) =>
+    `${cdn}/${entry.id}@latest/${subset}-${weight}-normal.ttf`;
+
+  const ranges = metadata.unicodeRange ?? {};
+  const [primary, ...extras] = subsetsCovering(entry, metadata, codePoints);
+  const info: FontInfo = {
     family: entry.family,
     installed: false,
     license: "open",
     licenseUrl: `https://fontsource.org/fonts/${entry.id}`,
-    // Fontsource's file names are laid out {subset}-{weight}-{style}, and we want
-    // the TTF rather than the woff2 the web would use: the chooser reads the
-    // font's own tables, and woff2 is compressed past reading that way.
-    fileUrl: `${cdn}/${entry.id}@latest/${subset}-${nearestWeight(
-      weights
-    )}-normal.ttf`,
+    fileUrl: fileFor(primary),
   };
+  // One subset out of several is a piece of the family, even when it happens to
+  // hold this whole alphabet: the complete font has letters these files don't,
+  // and a host installing "the font" deserves to know this isn't all of it.
+  const familySubsets = new Set([...entry.subsets, ...Object.keys(ranges)]);
+  if (familySubsets.size > 1) {
+    info.fileIsSubset = true;
+    if (ranges[primary]) info.fileUnicodeRange = ranges[primary];
+  }
+  if (extras.length > 0) {
+    info.additionalFiles = extras.map((subset) => ({
+      url: fileFor(subset),
+      unicodeRange: ranges[subset] || undefined,
+    }));
+  }
+  return info;
+}
+
+/**
+ * The subset files it takes to write this alphabet, the one holding the most of
+ * it first. One is usually enough, but not always: a Latin alphabet with macron
+ * vowels needs `latin` *and* `latin-ext`, and handing over only the bigger half
+ * had the chooser suggesting a family as covering and then downloading a file
+ * that couldn't write ā — contradicting itself in front of the user.
+ *
+ * Greedy over the declared ranges: after the best single subset, whichever
+ * remaining subset covers the most of what is still missing, until nothing is
+ * missing or no subset helps. `covers()` has already said the union holds every
+ * character, so in practice this terminates with the alphabet fully covered.
+ */
+function subsetsCovering(
+  entry: CatalogEntry,
+  metadata: FontMetadata,
+  codePoints: number[]
+): string[] {
+  const ranges = metadata.unicodeRange ?? {};
+  const chosen = [bestSubset(entry, metadata, codePoints)];
+  let missing = uncoveredBy(ranges[chosen[0]], codePoints);
+  while (missing.length > 0) {
+    let best: string | undefined;
+    let bestCovered = 0;
+    for (const [subset, range] of Object.entries(ranges)) {
+      if (chosen.includes(subset)) continue;
+      const covered = countCovered(range, missing);
+      if (covered > bestCovered) {
+        best = subset;
+        bestCovered = covered;
+      }
+    }
+    if (!best) break;
+    chosen.push(best);
+    missing = uncoveredBy(ranges[best], missing);
+  }
+  return chosen;
+}
+
+/** The code points a subset's declared ranges leave unaccounted for. */
+function uncoveredBy(
+  range: string | undefined,
+  codePoints: number[]
+): number[] {
+  if (!range) return codePoints;
+  const parsed = parseUnicodeRanges(range);
+  return codePoints.filter((codePoint) => !coversCodePoint(parsed, codePoint));
 }
 
 /**
@@ -352,7 +459,7 @@ async function loadFontMetadata(
 /** A GET that insists on a usable answer, through the caller's own fetch. */
 async function getJson(url: string, options: SuggestOptions): Promise<unknown> {
   const fetchImpl = options.fetchImpl ?? fetch;
-  const response = await fetchImpl(url, { signal: options.signal });
+  const response = await fetchWithTimeout(fetchImpl, url, options.signal);
   if (!response.ok) {
     const status = `${response.status} ${response.statusText ?? ""}`.trim();
     throw new Error(`Fontsource request failed: ${status} for ${url}`);

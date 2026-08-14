@@ -27,3 +27,5 @@ playwright-report
 
 
 *.playwright-report
+
+.vercel

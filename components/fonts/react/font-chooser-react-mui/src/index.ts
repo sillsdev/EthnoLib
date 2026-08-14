@@ -5,6 +5,7 @@ export type {
   FontChooserScreenProps,
   FontDataResult,
   FontLicenseCategory,
+  DownloadedFontFile,
 } from "./types";
 export {
   mergeFonts,
