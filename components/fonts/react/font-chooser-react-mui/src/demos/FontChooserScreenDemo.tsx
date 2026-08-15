@@ -688,48 +688,80 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
                 gap: 16px;
               `}
             >
-              {/* All three states side by side, "Normal" among them rather than
-                  implied by everything else being off: the simulated connection
-                  is one setting with three values, and a switch plus a hidden
-                  pair made you work out which of two controls to touch. */}
-              <Typography
-                variant="body2"
+              {/* The connection is one setting, so it is one block: the label
+                  and its three states on a line, and what the simulation has
+                  done to the page's traffic on the line under them. Out beside
+                  the other switches that count read as a fact about the harness
+                  at large; under the control it reads as what that control is
+                  doing, which is what it is. */}
+              <div
                 css={css`
-                  color: ${theme.palette.text.secondary};
-                  /* Pulls the label onto its own group, so the row's gap reads
-                     as the space between settings rather than inside one. */
-                  margin-right: -10px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 2px;
                 `}
               >
-                Connection:
-              </Typography>
-              <ToggleButtonGroup
-                size="small"
-                exclusive
-                value={network}
-                onChange={(_, next: NetworkAvailability | null) =>
-                  next && setNetwork(next)
-                }
-                css={css`
-                  .MuiToggleButton-root {
-                    padding: 1px 10px;
-                    font-size: 11px;
-                    text-transform: none;
-                  }
-                `}
-              >
-                <ToggleButton value="offline">Offline</ToggleButton>
-                <ToggleButton value="metered">Metered/Mobile</ToggleButton>
-                <ToggleButton value="open">Normal</ToggleButton>
-              </ToggleButtonGroup>
-              {network === "offline" && (
-                <WifiOffIcon
-                  size={15}
-                  color={theme.palette.warning.dark}
-                  title="Requests from this page are being blocked"
-                />
-              )}
-              <InterferenceIndicator tally={interference} />
+                <div
+                  css={css`
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                  `}
+                >
+                  {/* All three states side by side, "Normal" among them rather
+                      than implied by everything else being off: a switch plus a
+                      hidden pair made you work out which of two controls to
+                      touch. */}
+                  <Typography
+                    variant="body2"
+                    css={css`
+                      color: ${theme.palette.text.secondary};
+                    `}
+                  >
+                    Connection:
+                  </Typography>
+                  <ToggleButtonGroup
+                    size="small"
+                    exclusive
+                    value={network}
+                    onChange={(_, next: NetworkAvailability | null) =>
+                      next && setNetwork(next)
+                    }
+                    css={css`
+                      .MuiToggleButton-root {
+                        padding: 1px 10px;
+                        font-size: 11px;
+                        text-transform: none;
+                      }
+                    `}
+                  >
+                    <ToggleButton value="offline">Offline</ToggleButton>
+                    <ToggleButton value="metered">Metered/Mobile</ToggleButton>
+                    <ToggleButton value="open">Normal</ToggleButton>
+                  </ToggleButtonGroup>
+                </div>
+                {/* The line is always here, empty or not: appearing, it would
+                    grow the block and shift the buttons up out from under the
+                    pointer that had just clicked one. */}
+                <div
+                  css={css`
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    min-height: 17px;
+                    line-height: 1.2;
+                  `}
+                >
+                  {network === "offline" && (
+                    <WifiOffIcon
+                      size={14}
+                      color={theme.palette.warning.dark}
+                      title="Requests from this page are being blocked"
+                    />
+                  )}
+                  <InterferenceIndicator tally={interference} />
+                </div>
+              </div>
               <FormControlLabel
                 css={switchLabelCss}
                 control={
