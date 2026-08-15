@@ -26,9 +26,19 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
     lib: {
-      entry: "src/index.ts",
+      // Two entries, because `bundled` carries about 1.5MB of snapshot JSON and
+      // a host that imports only the package root must not be given it. Rollup
+      // keeps what they share in its own chunk; the JSON, imported from nothing
+      // else, stays inside bundled's.
+      entry: {
+        index: "src/index.ts",
+        bundled: "src/bundled.ts",
+      },
       name: "@ethnolib/font-core",
-      fileName: "index",
+      // The names the package.json exports point at, kept as they were when
+      // this built one entry: `.mjs` for the ES build, `.js` for CommonJS.
+      fileName: (format, entryName) =>
+        `${entryName}.${format === "es" ? "mjs" : "js"}`,
       formats: ["es", "cjs"],
     },
     rollupOptions: {

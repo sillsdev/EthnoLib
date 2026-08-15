@@ -41,6 +41,10 @@ import { licenseExplanation } from "./licenseExplanation";
 import { missingFromAlphabet, saysSupportsLanguage } from "./missingCharacters";
 import { scrollbarCss } from "./scrollbarStyle";
 import { useFontFileSize } from "./useFontFileSize";
+import {
+  downloadPolicy,
+  type NetworkAvailability,
+} from "./constrainedNetwork";
 import type { FontInfo } from "./types";
 
 /** The digits, as a set, for telling digit shapes from letter shapes. */
@@ -94,11 +98,12 @@ export interface FontDetailsPaneProps {
   choices: CharacterVariantChoices;
   onChoicesChange: (choices: CharacterVariantChoices) => void;
   /**
-   * That the connection is one to ask before spending. The pane then offers the
-   * download as a button with its size on it, rather than the font simply
-   * appearing. See FontChooserScreenProps.constrainedNetwork.
+   * How much of the network there is. Metered, the pane offers the download as a
+   * button with its size on it rather than the font simply appearing; offline it
+   * offers nothing and says the font isn't available. See
+   * FontChooserScreenProps.network.
    */
-  constrainedNetwork?: boolean;
+  network?: NetworkAvailability;
   /** True while the font's file is on its way. */
   downloading?: boolean;
   /** What went wrong fetching it, if something did. */
@@ -121,6 +126,11 @@ export interface FontDetailsPaneProps {
   chooseError?: string;
   /** True while the font's bytes are still on their way. */
   loading?: boolean;
+  /**
+   * How to fetch, for the one request the pane makes on its own: the HEAD that
+   * asks what a held-back download would cost. See FontChooserScreenProps.fetchImpl.
+   */
+  fetchImpl?: typeof fetch;
   sampleSize?: number;
   /**
    * Real writing in the user's own language, with the name of the data set it
@@ -152,7 +162,7 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   languageName,
   choices,
   onChoicesChange,
-  constrainedNetwork,
+  network = "open",
   downloading,
   downloadError,
   onRequestDownload,
@@ -162,6 +172,7 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   choosing,
   chooseError,
   loading,
+  fetchImpl,
   sampleSize,
   languageSample,
   customSampleText,
@@ -278,13 +289,13 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   // and is the only way back to the font.
   // A font with nowhere to fetch it from gets no button whatever the connection
   // is doing; the callout saying it isn't here is the whole of what we can offer.
-  const offersDownload =
-    !installed && !!font.fileUrl && (!!constrainedNetwork || !!downloadError);
+  const offersDownload = downloadPolicy(network, font, !!downloadError) === "offer";
   // Asked for only when it is about to be shown, and never when the host has
   // already told us. See useFontFileSize.
   const measured = useFontFileSize(
     font.fileUrl,
-    offersDownload && font.downloadSizeBytes === undefined
+    offersDownload && font.downloadSizeBytes === undefined,
+    fetchImpl
   );
   const downloadSize = font.downloadSizeBytes ?? measured.bytes;
   const sizeSettled = font.downloadSizeBytes !== undefined || measured.settled;
@@ -311,7 +322,12 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
   const longDownload = useHasLasted(!!downloading, DOWNLOAD_PATIENCE_MS);
   const showsDownloadCallout =
     !installed &&
-    (!!downloadError ||
+    // Offline it is the only thing the pane can say. Everything a font's pane is
+    // made of comes out of its file, so for a font the machine hasn't got there
+    // is nothing else to draw — and an empty pane that never fills reads as the
+    // chooser having hung rather than as an answer.
+    (network === "offline" ||
+      !!downloadError ||
       (offersDownload && !trivial) ||
       (!!downloading && longDownload));
   // Only what the user has to know before looking at the font at all.
@@ -412,8 +428,10 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
               >
                 {downloading
                   ? "Downloading this font…"
-                  : "This font is not on this computer yet."}
-                {downloadError && ` ${downloadError}`}
+                  : network === "offline"
+                    ? "This font is not on this computer, and there is no internet connection to get it."
+                    : "This font is not on this computer yet."}
+                {downloadError && network !== "offline" && ` ${downloadError}`}
               </Callout>
             )}
           </div>

@@ -30,6 +30,20 @@ export interface SuggestOptions {
   fetchImpl?: typeof fetch;
 }
 
+/** What an alphabet suggester takes on top of the usual: a way to answer early. */
+export interface AlphabetSuggestOptions extends SuggestOptions {
+  /**
+   * The answer so far, called each time it grows. Checking a family's coverage
+   * costs a font file, so a shortlist of fifty takes seconds; this is what lets
+   * the caller show the first fonts while the rest are still being checked.
+   *
+   * The list only ever grows at its end — a family is published once every
+   * family ahead of it has been decided — so a font on screen never moves. The
+   * final list is the resolved value, and is what the last call passes too.
+   */
+  onProgress?: (fontsSoFar: FontInfo[]) => void;
+}
+
 /** A source that can say which fonts can write a given alphabet. */
 export interface AlphabetFontSuggester {
   /**
@@ -40,7 +54,7 @@ export interface AlphabetFontSuggester {
    */
   suggestFontsForAlphabet(
     alphabet: string,
-    options?: SuggestOptions
+    options?: AlphabetSuggestOptions
   ): Promise<FontInfo[]>;
 }
 

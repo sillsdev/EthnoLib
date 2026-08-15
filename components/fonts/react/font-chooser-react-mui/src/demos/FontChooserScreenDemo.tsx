@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { css } from "@emotion/react";
+import { css, keyframes } from "@emotion/react";
 import {
   Button,
   createTheme,
@@ -21,6 +21,8 @@ import {
   AccordionSummary,
   FormControlLabel,
   Switch,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import { SourceInfo } from "../SourceInfo";
 import {
@@ -33,12 +35,30 @@ import {
   normalizeFontName,
   type FontInfo,
 } from "@ethnolib/font-core";
+import { createBundledSampleTextProvider } from "@ethnolib/font-core/bundled";
 import { FontChooserScreen } from "../FontChooserScreen";
+import type { NetworkAvailability } from "../types";
 import { LanguageChooserDemoDialog } from "./LanguageChooserDemoDialog";
 import {
   useSuggestedFonts,
   type SuggestionTimings,
 } from "./useSuggestedFonts";
+import {
+  installNetworkSimulation,
+  onInterference,
+  setSimulatedNetwork,
+  METERED_DELAY_MS,
+  type InterferenceEvent,
+} from "./networkSimulation";
+import { WifiOffIcon } from "../icons";
+import {
+  forgetKeptFonts,
+  hostFontAccess,
+  installHostFontAccess,
+  keepFont,
+  listKeptFonts,
+  type KeptFont,
+} from "./hostFontLibrary";
 
 /**
  * Where the demo starts before anyone has chosen anything: a language with an
@@ -85,6 +105,123 @@ function useRememberedString(
   );
   return [value, remember];
 }
+
+/**
+ * The simulated network state, remembered. Kept as its own hook because the
+ * value is a union rather than a flag, and because it has to read the boolean
+ * this replaced: a developer with "metered" switched on from an earlier session
+ * should find it still on, not silently back to a full connection.
+ */
+function useRememberedNetwork(): [
+  NetworkAvailability,
+  (value: NetworkAvailability) => void,
+] {
+  const [stored, remember] = useRememberedString(
+    "fontChooserDemo.network",
+    localStorage.getItem("fontChooserDemo.metered") === "1" ? "metered" : "open"
+  );
+  const value: NetworkAvailability =
+    stored === "metered" || stored === "offline" ? stored : "open";
+  return [value, remember];
+}
+
+/** What the simulation has done to the page's traffic, for the indicator. */
+interface InterferenceTally {
+  blocked: number;
+  delayed: number;
+  /** The most recent one, whose URL the indicator shows on hover. */
+  last?: InterferenceEvent;
+}
+
+/**
+ * Runs the simulated connection, and counts what it gets in the way of.
+ *
+ * The counting is the point of doing it here rather than in an effect of its
+ * own: a simulation that silently eats requests turns every one of its own
+ * effects into a suspected bug in the chooser, so the harness has to be able to
+ * say "that failure was me". Each event also goes to the log, which has room
+ * for the URL.
+ *
+ * The tally is per state: switching the connection starts it again, because
+ * "12 blocked" left over from an earlier stretch of being offline says nothing
+ * about what the page is doing now.
+ */
+function useNetworkSimulation(
+  network: NetworkAvailability,
+  logLine: (message: string, detail?: unknown) => void
+): InterferenceTally {
+  const [tally, setTally] = useState<InterferenceTally>({
+    blocked: 0,
+    delayed: 0,
+  });
+
+  useEffect(() => installNetworkSimulation(), []);
+
+  useEffect(() => {
+    setSimulatedNetwork(network);
+    setTally({ blocked: 0, delayed: 0 });
+  }, [network]);
+
+  useEffect(
+    () =>
+      onInterference((event) => {
+        setTally((previous) => ({
+          blocked: previous.blocked + (event.kind === "blocked" ? 1 : 0),
+          delayed: previous.delayed + (event.kind === "delayed" ? 1 : 0),
+          last: event,
+        }));
+        logLine(
+          `simulated connection ${event.kind} a request (${event.via})`,
+          event.ms === undefined
+            ? { url: event.url }
+            : { url: event.url, heldMs: event.ms }
+        );
+      }),
+    [logLine]
+  );
+
+  return tally;
+}
+
+/** A quick pulse, so a request caught while you are looking catches the eye. */
+const interferencePulse = keyframes`
+  from { background-color: rgba(237, 108, 2, 0.35); }
+  to { background-color: transparent; }
+`;
+
+/**
+ * What the simulated connection has done to this page's traffic — nothing until
+ * it has done something, and then a count that goes up as it happens.
+ */
+const InterferenceIndicator: React.FunctionComponent<{
+  tally: InterferenceTally;
+}> = ({ tally }) => {
+  const total = tally.blocked + tally.delayed;
+  if (total === 0) return null;
+  const parts = [
+    tally.blocked > 0 ? `${tally.blocked} blocked` : undefined,
+    tally.delayed > 0
+      ? `${tally.delayed} held ${(METERED_DELAY_MS / 1000).toFixed(1)}s`
+      : undefined,
+  ].filter(Boolean);
+  return (
+    <Typography
+      variant="caption"
+      // Re-mounting on every event is what re-runs the pulse.
+      key={total}
+      title={tally.last ? `Last: ${tally.last.url}` : undefined}
+      css={css`
+        padding: 1px 6px;
+        border-radius: 3px;
+        white-space: nowrap;
+        color: ${theme.palette.warning.dark};
+        animation: ${interferencePulse} 700ms ease-out;
+      `}
+    >
+      {parts.join(" · ")}
+    </Typography>
+  );
+};
 
 /** Remembers a switch in local storage. An absent key is the initial state. */
 function useRememberedBoolean(
@@ -134,7 +271,12 @@ function useRecentFonts(
     (font: FontInfo) => {
       setRecent((previous) => {
         const kept = [
-          font,
+          // Without `installed`: it was true when the font was chosen because
+          // the bytes were in hand, and saying so again next visit would claim
+          // a font is ready when the app may no longer have the file. Whether
+          // it is here is decided each time by what the app's font folder and
+          // the machine actually hold; this entry is only the catalog facts.
+          { ...font, installed: undefined, location: undefined },
           ...previous.filter(
             (entry) => entry.family.toLowerCase() !== font.family.toLowerCase()
           ),
@@ -208,14 +350,27 @@ const switchLabelCss = css`
  *
  * The page is laid out to show that division: the language and the alphabet sit
  * on the host's own grey chrome, and the chooser below them is drawn as the
- * dialog box a host app would pop up. The suggestions come from services that
- * need no API key, so there is nothing to set up.
+ * dialog box a host app would pop up. The suggestions are read out of the data
+ * bundled into @ethnolib/font-core, so there is nothing to set up and nothing to
+ * wait for.
  */
 export const FontChooserScreenDemo: React.FunctionComponent = () => {
   // Where the whole font lives, for a font whose preview file was a subset:
   // the google/fonts repository, keyless like everything else here.
   const resolveFullFontUrl = useMemo(
     () => createGoogleFontsFullFontUrlResolver(),
+    []
+  );
+  // Where the sample passage comes from. Left to itself the chooser fetches
+  // Google Fonts' language data, which is no answer at all to a machine that has
+  // never been online — and a request whose answer changes about as often as our
+  // releases do. So the host supplies the passages bundled into
+  // @ethnolib/font-core instead. The script reaches the provider through a ref,
+  // since it is made once and the language changes under it; that is what the
+  // chooser's own default did with `languageScript`.
+  const scriptRef = useRef<string>();
+  const sampleTextProvider = useMemo(
+    () => createBundledSampleTextProvider({ scriptFor: () => scriptRef.current }),
     []
   );
   const [alphabet, setAlphabet] = useRememberedString(ALPHABET_KEY);
@@ -231,6 +386,7 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
     "fontChooserDemo.languageScript",
     OPENING_LANGUAGE.script
   );
+  scriptRef.current = languageScript || undefined;
   const [choosingLanguage, setChoosingLanguage] = useState(false);
   const [font, setFont] = useRememberedString("fontChooserDemo.font");
   // The user's own version of the sample paragraph, kept the way a host app would
@@ -255,10 +411,16 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
       }),
     []
   );
-  // Standing in for a phone on a metered connection, which is the case the
-  // chooser's held-back download exists for and the one hardest to get at from a
-  // desk. Remembered, since seeing what it does takes a reload.
-  const [metered, setMetered] = useRememberedBoolean("fontChooserDemo.metered");
+  // Standing in for a phone on a metered connection, or for one with no signal
+  // at all — the two cases the chooser's held-back download and its offline mode
+  // exist for, and the two hardest to get at from a desk. Remembered, since
+  // seeing what either does takes a reload.
+  //
+  // The setting does more than tell the chooser what to believe: it also blocks
+  // or holds the page's real requests, and shadows `navigator.onLine`, so the
+  // failure paths get exercised rather than merely described. See
+  // networkSimulation.ts.
+  const [network, setNetwork] = useRememberedNetwork();
   // Whether the host asks Fontsource for everything that covers the alphabet,
   // or offers only the curated list plus the machine's own fonts. Remembered,
   // since comparing the two takes a reload each way.
@@ -266,6 +428,40 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
     "fontChooserDemo.broadSearch",
     true
   );
+  // Whether the pretend host app ships font files of its own. See
+  // hostBundledFonts.ts for what the toggle actually does; the short of it is
+  // that the chooser is told about two families the demo serves from its own
+  // origin, which the connection simulator leaves alone, so they behave like
+  // fonts on a machine's disk rather than fonts on the internet. Remembered,
+  // like the other harness switches.
+  const [hostBundledFonts, setHostBundledFonts] = useRememberedBoolean(
+    "fontChooserDemo.hostBundledFonts",
+    false
+  );
+  // The fonts this pretend app has been handed and has written down, read once
+  // at startup the way a host app reads its own font folder. A font kept here is
+  // one the demo can offer with the network switched off — which is the whole
+  // reason `onFontSelected` hands over the bytes.
+  const [keptFonts, setKeptFonts] = useState<KeptFont[]>([]);
+  const rereadKeptFonts = useCallback(
+    () => listKeptFonts().then(setKeptFonts),
+    []
+  );
+  useEffect(() => {
+    void rereadKeptFonts();
+  }, [rereadKeptFonts]);
+  useEffect(
+    () => installHostFontAccess(hostBundledFonts, keptFonts),
+    [hostBundledFonts, keptFonts]
+  );
+  const fontAccess = useMemo(
+    () => hostFontAccess(hostBundledFonts, keptFonts),
+    [hostBundledFonts, keptFonts]
+  );
+  // The connection setting, made real: requests are blocked offline and held on
+  // a metered connection, so what the page does when a fetch fails is something
+  // the harness can actually show.
+  const interference = useNetworkSimulation(network, logLine);
   // The durable facts the chooser reports, per language. This — not the raw
   // tag choices below — is what carries a pick from one font to another.
   const [shapeMemory, setShapeMemory] = useShapeMemory(languageTag);
@@ -287,8 +483,21 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
   } = useSuggestedFonts({
     alphabet,
     languageTag,
+    // What the bundled data needs to make sense of a tag with no script in it:
+    // `th` is Thai only if somebody says so.
+    languageScript: languageScript || undefined,
+    // Offered offline as well, so that the chooser gets the invitation and can
+    // show it disabled with its reason on it. Nothing runs until the button is
+    // clicked, and offline it can't be, so an offer the network couldn't
+    // currently answer costs nothing.
     broadSearch,
+    offline: network === "offline",
   });
+
+  // With nothing typed, an SLDR answer may be about to fill the field; until it
+  // has said its piece, neither the chooser nor the field can tell "no alphabet"
+  // from "alphabet on its way".
+  const alphabetPending = !!languageTag && !sldrChecked && !alphabet.trim();
 
   // A font the SLDR names for the language is a recommendation from somebody who
   // knows it — the same claim the Language Font Finder makes for its fonts — so
@@ -446,6 +655,7 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
               onChange={setAlphabet}
               fontFamily={font || undefined}
               label={null}
+              placeholder={alphabetPending ? "Loading…" : undefined}
             />
             <Typography
               variant="caption"
@@ -478,17 +688,48 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
                 gap: 16px;
               `}
             >
-              <FormControlLabel
-                css={switchLabelCss}
-                control={
-                  <Switch
-                    size="small"
-                    checked={metered}
-                    onChange={(_, next) => setMetered(next)}
-                  />
+              {/* All three states side by side, "Normal" among them rather than
+                  implied by everything else being off: the simulated connection
+                  is one setting with three values, and a switch plus a hidden
+                  pair made you work out which of two controls to touch. */}
+              <Typography
+                variant="body2"
+                css={css`
+                  color: ${theme.palette.text.secondary};
+                  /* Pulls the label onto its own group, so the row's gap reads
+                     as the space between settings rather than inside one. */
+                  margin-right: -10px;
+                `}
+              >
+                Connection:
+              </Typography>
+              <ToggleButtonGroup
+                size="small"
+                exclusive
+                value={network}
+                onChange={(_, next: NetworkAvailability | null) =>
+                  next && setNetwork(next)
                 }
-                label="Simulate metered connection"
-              />
+                css={css`
+                  .MuiToggleButton-root {
+                    padding: 1px 10px;
+                    font-size: 11px;
+                    text-transform: none;
+                  }
+                `}
+              >
+                <ToggleButton value="offline">Offline</ToggleButton>
+                <ToggleButton value="metered">Metered/Mobile</ToggleButton>
+                <ToggleButton value="open">Normal</ToggleButton>
+              </ToggleButtonGroup>
+              {network === "offline" && (
+                <WifiOffIcon
+                  size={15}
+                  color={theme.palette.warning.dark}
+                  title="Requests from this page are being blocked"
+                />
+              )}
+              <InterferenceIndicator tally={interference} />
               <FormControlLabel
                 css={switchLabelCss}
                 control={
@@ -500,14 +741,45 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
                 }
                 label="Offer search beyond curated &amp; local fonts"
               />
+              <FormControlLabel
+                css={switchLabelCss}
+                control={
+                  <Switch
+                    size="small"
+                    checked={hostBundledFonts}
+                    onChange={(_, next) => setHostBundledFonts(next)}
+                  />
+                }
+                label="Host ships Andika &amp; Noto Sans Thai"
+              />
+              {/* What the app has kept from earlier visits, and the way back to
+                  a host that has kept nothing. Shown only when there is
+                  something to say, and worth saying: a font in the list marked
+                  as being on disk is otherwise unexplained — nothing on the
+                  page says the app was given it and wrote it down. */}
+              {keptFonts.length > 0 && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  title={keptFonts.map((font) => font.family).join(", ")}
+                  onClick={() => {
+                    void forgetKeptFonts()
+                      .then(rereadKeptFonts)
+                      .then(() => logLine("forgot the app's kept fonts"));
+                  }}
+                >
+                  Forget {keptFonts.length} saved font
+                  {keptFonts.length === 1 ? "" : "s"}
+                </Button>
+              )}
               <Button
                 variant="outlined"
                 size="small"
                 onClick={() => {
                   // Everything remembered on the component's behalf: the
-                  // suggestion caches (SLDR, Language Font Finder, Fontsource,
-                  // sample texts) and the licence sweep's results, all filed
-                  // under one prefix. The reload then drops the in-memory
+                  // Fontsource broad search's cache and the licence sweep's
+                  // results, filed under one prefix. The reload then drops the
+                  // in-memory
                   // layer — session font downloads, measured file sizes, the
                   // providers' own state — so the next question is asked from
                   // nothing. The demo's own settings (language, alphabet, the
@@ -524,7 +796,11 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
               </Button>
             </div>
 
-            <LoadTimings timings={timings} broadSearchState={broadSearchState} />
+            <LoadTimings
+              timings={timings}
+              broadSearchState={broadSearchState}
+              network={network}
+            />
 
             <Accordion
               disableGutters
@@ -634,10 +910,7 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
 
             <FontChooserScreen
               alphabet={alphabet}
-              // With nothing typed, an SLDR answer may be about to fill the
-              // field; until it has said its piece the chooser can't tell "no
-              // alphabet" from "alphabet on its way".
-              alphabetPending={!!languageTag && !sldrChecked && !alphabet.trim()}
+              alphabetPending={alphabetPending}
               fonts={offeredFonts}
               recentFonts={recentFonts}
               moreFonts={moreFonts}
@@ -648,12 +921,19 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
               }
               // The Fontsource catalog plus a small request per candidate;
               // the popularity ranking itself ships inside the package.
-              searchMoreFontsCost="0.5 MB"
+              // The catalog, then a metadata request and a font file or two for
+              // each of the fifty candidates it checks.
+              searchMoreFontsCost="1.5 MB"
               searchingMoreFonts={broadSearchState === "searching"}
-              moreFontsExplanation="The list comes from the most popular fonts on Google Fonts, filtered down to fonts that probably support the alphabet of this language."
+              moreFontsExplanation="The list comes from the most popular fonts on Google Fonts, kept only where the font file itself was found to have every letter of this alphabet."
               languageTag={languageTag}
               languageName={languageName || undefined}
               languageScript={languageScript || undefined}
+              sampleTextProvider={sampleTextProvider}
+              // Both undefined while the app has no files of its own, which
+              // leaves the component on the Local Font Access API.
+              getLocalFonts={fontAccess.getLocalFonts}
+              getFontData={fontAccess.getFontData}
               customSampleText={customSample || undefined}
               onCustomSampleTextChange={(text) => setCustomSample(text ?? "")}
               loading={loading}
@@ -664,7 +944,7 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
               shapeMemory={shapeMemory}
               onShapeMemoryChange={setShapeMemory}
               fontFeatureDefaults={fontFeatureDefaults}
-              constrainedNetwork={metered}
+              network={network}
               onDiagnostic={logLine}
               getFullFontUrl={(fontInfo, options) =>
                 resolveFullFontUrl(fontInfo.family, options)
@@ -674,11 +954,23 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
                 // Choosing — not browsing — is what earns a fetched font a
                 // place in next visit's main list. An installed font needs no
                 // remembering: being installed already seats it there.
-                if (downloadedFile) rememberRecentFont(downloadedFile.info);
+                if (downloadedFile) {
+                  rememberRecentFont(downloadedFile.info);
+                  // What a host app does with the bytes: writes them where it
+                  // can find them again, and reads its folder afresh so the
+                  // font is one of its own from this moment rather than after
+                  // a reload.
+                  void keepFont(downloadedFile)
+                    .then(rereadKeptFonts)
+                    .then(() =>
+                      logLine(`kept ${chosenFont} in the app's font folder`)
+                    )
+                    .catch((error) =>
+                      logLine(`could not keep ${chosenFont}`, String(error))
+                    );
+                }
                 logLine(
                   `chose ${chosenFont}`,
-                  // A host that really installs fonts writes these bytes
-                  // somewhere; the demo only proves they arrived.
                   {
                     choices: chosenShapes,
                     ...(downloadedFile
@@ -812,7 +1104,9 @@ const ResizeGrip: React.FunctionComponent<{
 const LoadTimings: React.FunctionComponent<{
   timings: SuggestionTimings;
   broadSearchState: "off" | "available" | "searching" | "done";
-}> = ({ timings, broadSearchState }) => {
+  /** The simulated network state; see the note beside `network` above. */
+  network: NetworkAvailability;
+}> = ({ timings, broadSearchState, network }) => {
   const stage = (label: string, ms: number | undefined) =>
     `${label} ${ms === undefined ? "…" : `${(ms / 1000).toFixed(2)}s`}`;
   // The broad search waits for a click, so an unasked one isn't "…" — nothing
@@ -824,23 +1118,55 @@ const LoadTimings: React.FunctionComponent<{
         ? "broad search not asked"
         : stage("broad search", timings.coveringMs);
   return (
-    <Typography
-      variant="caption"
+    // Named and boxed, because a bare monospace strip under the controls reads
+    // as something the page is telling you about itself right now; the label
+    // says it is one kind of fact — how long the load took — and where it ends.
+    <fieldset
       css={css`
-        display: block;
-        margin-top: 8px;
-        font-family: Consolas, "Courier New", monospace;
-        color: ${theme.palette.text.secondary};
+        margin-top: 12px;
+        padding: 2px 10px 8px;
+        border: 1px solid ${theme.palette.divider};
+        border-radius: 4px;
       `}
     >
-      {[
-        stage("first offering", timings.firstFontsMs),
-        stage("curated", timings.curatedMs),
-        stage("alphabet", timings.sldrMs),
-        broad,
-        stage("final offering", timings.settledMs),
-      ].join(" · ")}
-    </Typography>
+      <legend
+        css={css`
+          padding: 0 4px;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          color: ${theme.palette.text.secondary};
+        `}
+      >
+        Timing
+      </legend>
+      <Typography
+        variant="caption"
+        css={css`
+          display: block;
+          font-family: Consolas, "Courier New", monospace;
+          color: ${theme.palette.text.secondary};
+        `}
+      >
+        {[
+          stage("first offering", timings.firstFontsMs),
+          stage("curated", timings.curatedMs),
+          stage("alphabet", timings.sldrMs),
+          broad,
+          stage("final offering", timings.settledMs),
+          // A limited connection changes what the chooser will spend without
+          // being asked, and the first visible effect is an absence: the names
+          // stop being drawn in their own fonts. Left to the toggle alone that
+          // has read as a bug more than once, so the state it puts the page in
+          // is said here among the other facts about this load.
+          ...(network === "metered" ? ["metered: names stay plain"] : []),
+          ...(network === "offline"
+            ? ["offline: names stay plain, nothing is fetched"]
+            : []),
+        ].join(" · ")}
+      </Typography>
+    </fieldset>
   );
 };
 

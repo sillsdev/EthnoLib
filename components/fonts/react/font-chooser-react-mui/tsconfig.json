@@ -19,6 +19,10 @@
         "components/fonts/react/character-variants-react-mui/src/index.ts"
       ],
       "@ethnolib/font-core": ["components/fonts/common/font-core/src/index.ts"],
+      // The demo's offline fallbacks; see the note in tsconfig.base.json.
+      "@ethnolib/font-core/bundled": [
+        "components/fonts/common/font-core/src/bundled.ts"
+      ],
       "@ethnolib/find-language": [
         "components/fonts/react/font-chooser-react-mui/src/demos/findLanguage"
       ]

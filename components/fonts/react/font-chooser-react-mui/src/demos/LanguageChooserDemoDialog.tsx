@@ -148,6 +148,10 @@ export const LanguageChooserDemoDialog: React.FunctionComponent<{
         <LanguageChooser
           searchResultModifier={defaultSearchResultModifier}
           initialSelectionLanguageTag={initialLanguageTag}
+          // The font chooser only needs to know which language the user works
+          // in; it never shows a display name, so don't ask the user for one.
+          hideDisplayNameEditor
+
           onSelectionChange={(orthography, languageTag) => {
             setSelection(orthography);
             setTag(languageTag ?? "");

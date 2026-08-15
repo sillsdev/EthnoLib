@@ -6,6 +6,7 @@ export type {
   FontDataResult,
   FontLicenseCategory,
   DownloadedFontFile,
+  NetworkAvailability,
 } from "./types";
 export {
   mergeFonts,

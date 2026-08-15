@@ -48,8 +48,15 @@ export interface FontDownloads {
  * from in here rather than from the caller because this is where the dedup is:
  * a second ask that joins a fetch already in the air is not a second download,
  * and saying so twice would make the log lie about what crossed the wire.
+ * @param fetchImpl how the files are fetched, for a host whose font urls want
+ * credentials, a proxy or a timeout — or which serves them off local disk. Give
+ * a stable function: a fresh one each render would rebuild `download` and set
+ * off the effects that watch it.
  */
-export function useFontDownloads(diagnose: ReportDiagnostic): FontDownloads {
+export function useFontDownloads(
+  diagnose: ReportDiagnostic,
+  fetchImpl?: typeof fetch
+): FontDownloads {
   const [downloaded, setDownloaded] = useState<ReadonlySet<string>>(new Set());
   const bytes = useRef(new Map<string, ArrayBuffer>());
   const extras = useRef(new Map<string, ArrayBuffer[]>());
@@ -80,7 +87,7 @@ export function useFontDownloads(diagnose: ReportDiagnostic): FontDownloads {
         fileUrl,
         additionalFiles: font.additionalFiles?.map((file) => file.url),
       }));
-      const started = fetchAndRegister(font, fileUrl).then(
+      const started = fetchAndRegister(font, fileUrl, fetchImpl ?? fetch).then(
         ({ primary, additional }) => {
           bytes.current.set(key, primary);
           if (additional.length > 0) extras.current.set(key, additional);
@@ -105,7 +112,7 @@ export function useFontDownloads(diagnose: ReportDiagnostic): FontDownloads {
       inFlight.current.set(key, started);
       return started;
     },
-    [diagnose]
+    [diagnose, fetchImpl]
   );
 
   return { downloaded, bytesFor, extraBytesFor, download };
@@ -119,12 +126,13 @@ export function useFontDownloads(diagnose: ReportDiagnostic): FontDownloads {
  */
 async function fetchAndRegister(
   font: FontInfo,
-  fileUrl: string
+  fileUrl: string,
+  fetchImpl: typeof fetch
 ): Promise<{ primary: ArrayBuffer; additional: ArrayBuffer[] }> {
   const additionalFiles = font.additionalFiles ?? [];
   const [primary, ...additional] = await Promise.all([
-    fetchBytes(fileUrl),
-    ...additionalFiles.map((file) => fetchBytes(file.url)),
+    fetchBytes(fileUrl, fetchImpl),
+    ...additionalFiles.map((file) => fetchBytes(file.url, fetchImpl)),
   ]);
 
   // Each face carries the range its file covers, where the source declared one.
@@ -142,8 +150,11 @@ async function fetchAndRegister(
   return { primary, additional };
 }
 
-async function fetchBytes(fileUrl: string): Promise<ArrayBuffer> {
-  const response = await fetch(fileUrl);
+async function fetchBytes(
+  fileUrl: string,
+  fetchImpl: typeof fetch
+): Promise<ArrayBuffer> {
+  const response = await fetchImpl(fileUrl);
   if (!response.ok) {
     throw new Error(
       `Could not fetch the font: ${response.status} ${

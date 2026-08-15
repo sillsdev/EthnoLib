@@ -237,6 +237,129 @@ export const OpenSourceIcon: React.FunctionComponent<
   </svg>
 );
 
+/*
+ * Where a font's bytes are — the three marks the list shows on the row under the
+ * pointer. Drawn in one line weight and one size so that running an eye down the
+ * list, they read as three answers to one question rather than three unrelated
+ * symbols.
+ */
+
+/** A monitor: the operating system has this font, so every app here can use it. */
+export const InstalledFontIcon: React.FunctionComponent<IconProps> = ({
+  size = 15,
+  color = "currentColor",
+  title,
+  className,
+}) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    role={title ? "img" : "presentation"}
+    aria-hidden={title ? undefined : true}
+  >
+    {title && <title>{title}</title>}
+    <rect x="2.5" y="4" width="19" height="12.5" rx="1.5" />
+    <path d="M8.5 20.5h7" />
+    <path d="M12 16.5v4" />
+  </svg>
+);
+
+/** A folder: a font file that is here to read, but not installed. */
+export const OnDiskFontIcon: React.FunctionComponent<IconProps> = ({
+  size = 15,
+  color = "currentColor",
+  title,
+  className,
+}) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    role={title ? "img" : "presentation"}
+    aria-hidden={title ? undefined : true}
+  >
+    {title && <title>{title}</title>}
+    <path d="M3 19.5V5.5a1 1 0 0 1 1-1h5l2 2.5h8a1 1 0 0 1 1 1v11.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
+  </svg>
+);
+
+/** A globe: the font is out on the internet, not on this machine. */
+export const NetworkFontIcon: React.FunctionComponent<IconProps> = ({
+  size = 15,
+  color = "currentColor",
+  title,
+  className,
+}) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    role={title ? "img" : "presentation"}
+    aria-hidden={title ? undefined : true}
+  >
+    {title && <title>{title}</title>}
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3.2 9.5h17.6M3.2 14.5h17.6" />
+    {/* The meridians: the same ellipse mirrored, which is what makes a circle
+        read as a globe rather than as a target. */}
+    <path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z" />
+  </svg>
+);
+
+/**
+ * Wifi arcs with a stroke through them: there is no connection, so whatever this
+ * sits on cannot run. Used beside controls that stay in place while offline, so
+ * that a greyed-out button says why it is greyed out.
+ */
+export const WifiOffIcon: React.FunctionComponent<IconProps> = ({
+  size = 16,
+  color = "currentColor",
+  title,
+  className,
+}) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    role={title ? "img" : "presentation"}
+    aria-hidden={title ? undefined : true}
+  >
+    {title && <title>{title}</title>}
+    <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
+    <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" />
+    <path d="M10.71 5.05A16 16 0 0 1 22.58 9" />
+    <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" />
+    <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+    <path d="M12 20h.01" />
+    <path d="M1 1l22 22" />
+  </svg>
+);
+
 /** The disclosure chevron; it points right when closed and down when open. */
 export const ChevronIcon: React.FunctionComponent<
   IconProps & { open?: boolean }

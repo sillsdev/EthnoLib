@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FamilyScan, LocalFontFamily } from "@ethnolib/font-core";
+import { downloadPolicy } from "./constrainedNetwork";
 import { mergeFonts, sectionForMoreFonts } from "./mergeFonts";
 import type { FontInfo } from "./types";
 
@@ -27,14 +28,21 @@ function covers(characters: string): Uint32Array {
 describe("mergeFonts", () => {
   it("marks fonts found on the machine as installed", () => {
     const { main } = mergeFonts({ local: [localFamily("Andika")] });
-    expect(main).toEqual([{ family: "Andika", installed: true }]);
+    expect(main).toEqual([
+      { family: "Andika", installed: true, location: "installed" },
+    ]);
   });
 
   it("keeps catalog-only fonts, not installed by default", () => {
     const catalog: FontInfo[] = [{ family: "Gentium Plus", license: "open" }];
     const { main } = mergeFonts({ catalog });
     expect(main).toEqual([
-      { family: "Gentium Plus", license: "open", installed: false },
+      {
+        family: "Gentium Plus",
+        license: "open",
+        installed: false,
+        location: "network",
+      },
     ]);
   });
 
@@ -124,6 +132,33 @@ describe("mergeFonts", () => {
       licenseUrl: "https://ofl.example",
       licenseNotes: "A note.",
     });
+  });
+
+  it("leaves a suggested font the machine also has usable with no network", () => {
+    // The offline case worth checking end to end, because it needs the two
+    // rules to agree: the merge has to notice that the suggestion is already on
+    // the machine, and the download rules then have nothing to do — no offer,
+    // no fetch, and the font read off disk like any other installed one. Get
+    // the first half wrong and a font the user has sits in the list marked
+    // unavailable.
+    const { main } = mergeFonts({
+      local: [localFamily("Andika")],
+      catalog: [
+        {
+          family: "andika",
+          installed: false,
+          supportsLanguage: true,
+          fileUrl: "https://cdn.example/andika.ttf",
+        },
+      ],
+      alphabet: new Set(["ŋ"]),
+      coverage: { Andika: covers("ŋ") },
+    });
+
+    // The machine's spelling, since that is what CSS has to resolve.
+    expect(main.map((font) => font.family)).toEqual(["Andika"]);
+    expect(main[0].installed).toBe(true);
+    expect(downloadPolicy("offline", main[0])).toBe("none");
   });
 
   it("counts an installed font as installed even when the catalog assumed otherwise", () => {
@@ -472,5 +507,60 @@ describe("sectionForMoreFonts", () => {
       alwaysInclude: "Roboto",
     });
     expect(section.map((font) => font.family)).toEqual(["Roboto"]);
+  });
+});
+
+/**
+ * Where each font ended up, which the list's hover mark reads. Kept apart from
+ * `installed` on purpose: the two answer different questions, and a font can be
+ * usable right now without being anywhere on the machine.
+ */
+describe("mergeFonts location", () => {
+  it("calls a font from the machine's list installed", () => {
+    const { main } = mergeFonts({ local: [localFamily("Andika")] });
+    expect(main[0].location).toBe("installed");
+  });
+
+  it("keeps a host's word that its local font is a file it ships", () => {
+    const { main } = mergeFonts({
+      local: [{ ...localFamily("Andika"), location: "disk" }],
+    });
+    expect(main[0]).toMatchObject({ installed: true, location: "disk" });
+  });
+
+  it("puts a catalog font nobody has placed on the network", () => {
+    const { main } = mergeFonts({ catalog: [{ family: "Roboto" }] });
+    expect(main[0].location).toBe("network");
+  });
+
+  it("lets the catalog say a font of its own is on disk", () => {
+    const { main } = mergeFonts({
+      catalog: [{ family: "Andika", installed: true, location: "disk" }],
+    });
+    expect(main[0].location).toBe("disk");
+  });
+
+  it("believes the machine over a catalog that assumed a download", () => {
+    const { main } = mergeFonts({
+      local: [localFamily("Andika")],
+      catalog: [{ family: "andika", installed: false }],
+    });
+    expect(main[0]).toMatchObject({ installed: true, location: "installed" });
+  });
+
+  it("still says network for a font fetched this session, since nothing was saved", () => {
+    const { main } = mergeFonts({
+      catalog: [{ family: "Roboto", installed: false }],
+      sessionDownloaded: new Set(["roboto"]),
+    });
+    expect(main[0]).toMatchObject({ installed: true, location: "network" });
+  });
+
+  it("marks the wider search's finds as network", () => {
+    const section = sectionForMoreFonts(
+      [{ family: "Roboto", installed: false, license: "open" }],
+      { sessionDownloaded: new Set(["roboto"]) }
+    );
+    expect(section[0].location).toBe("network");
   });
 });

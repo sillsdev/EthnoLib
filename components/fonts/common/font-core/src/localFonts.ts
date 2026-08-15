@@ -11,6 +11,8 @@
  * this module is just what the demo uses, and a reasonable default for the web.
  */
 
+import type { FontLocation } from "./fontInfo";
+
 interface FontData {
   postscriptName: string;
   fullName: string;
@@ -34,6 +36,13 @@ export interface LocalFontFamily {
   postscriptName: string;
   /** How many faces (styles/weights) the family has installed. */
   faceCount: number;
+  /**
+   * Where this one came from, for a host whose `getLocalFonts` answers with more
+   * than the operating system's list — an app that ships font files of its own
+   * says "disk" for those. Left out means "installed", which is what the Local
+   * Font Access API lists and what a host that doesn't think about it means.
+   */
+  location?: FontLocation;
 }
 
 export function isLocalFontAccessSupported(): boolean {

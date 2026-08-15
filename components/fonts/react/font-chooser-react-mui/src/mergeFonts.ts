@@ -174,11 +174,14 @@ export function mergeFonts(input: MergeFontsInput): MergedFonts {
   const { local = [], catalog = [], scanned = {}, sessionDownloaded } = input;
   const merged = new Map<string, FontInfo>();
 
-  for (const { family } of local) {
+  for (const { family, location } of local) {
     const scan = scanned[family];
     merged.set(family.toLowerCase(), {
       family,
       installed: true,
+      // The Local Font Access API lists what the OS has, so that is what a host
+      // saying nothing means; one that ships its own font files says so itself.
+      location: location ?? "installed",
       license: scan?.license,
       licenseUrl: scan?.licenseUrl,
       licenseReason: scan?.licenseReason,
@@ -197,6 +200,13 @@ export function mergeFonts(input: MergeFontsInput): MergedFonts {
       // whatever the catalog assumed; a font only the catalog knows about takes
       // the catalog's word, and "not here yet" if it says nothing.
       installed: found?.installed ?? entry.installed ?? false,
+      // Same precedence, for the same reason: where the font really is beats
+      // what a catalog written elsewhere assumed about this machine. A catalog
+      // font nobody has placed is one that would have to be fetched.
+      location:
+        found?.location ??
+        entry.location ??
+        (entry.installed ? "installed" : "network"),
     });
   }
 
@@ -254,6 +264,10 @@ export function sectionForMoreFonts(
     const font: FontInfo = {
       ...entry,
       installed: sessionDownloaded?.has(key) || (entry.installed ?? false),
+      // Everything a wider search turns up comes off the network, including the
+      // ones already fetched this session: those are in the browser's hands
+      // until the page reloads, and nowhere on the machine.
+      location: entry.location ?? "network",
     };
     if (!writesTheAlphabet(font, asSuggestions)) continue;
     section.push(font);

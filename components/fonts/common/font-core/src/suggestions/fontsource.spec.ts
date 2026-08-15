@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createFontsourceSuggester } from "./fontsource";
+import { parseUnicodeRanges } from "./unicodeRanges";
+import { buildCmapTable, buildSfnt } from "../testFontBuilder";
 import { suggestionCacheKey, type SuggestionCacheStorage } from "./suggestionCache";
 import catalogFixture from "./fixtures/fontsourceList.json";
 import andikaFixture from "./fixtures/fontsourceAndika.json";
@@ -68,19 +70,44 @@ function jsonResponse(body: unknown): Response {
   } as Response;
 }
 
+/** The characters a synthetic subset file really has, as a font file. */
+function fontFile(range: string | undefined): ArrayBuffer {
+  const packed = parseUnicodeRanges(range ?? "");
+  const ranges: [number, number][] = [];
+  for (let i = 0; i + 1 < packed.length; i += 2) {
+    ranges.push([packed[i], packed[i + 1]]);
+  }
+  return buildSfnt([{ tag: "cmap", data: buildCmapTable(ranges) }]);
+}
+
+/** `{id}@latest/{subset}-{weight}-normal.ttf` → the id and the subset. */
+function subsetFileParts(
+  url: string
+): { id: string; subset: string } | undefined {
+  const match = /\/([^/]+)@latest\/(.+)-\d+-normal\.ttf$/.exec(url);
+  return match ? { id: match[1], subset: match[2] } : undefined;
+}
+
 /**
- * A stand-in for the API: the catalog at /fonts, one family at /fonts/{id}, and a
- * 404 for any family not in `fonts` — which is how the "one candidate fails"
- * cases are set up. Every call is recorded, and so is how many were in flight.
+ * A stand-in for the API and the CDN: the catalog at /fonts, one family at
+ * /fonts/{id}, and a subset's font file on the CDN — built, by default, to hold
+ * exactly what the family declared for that subset. `reallyHas` is how a test
+ * says otherwise, keyed `"{id}/{subset}"`: that is the real case this suggester
+ * exists to catch, a file whose bucket declares letters it hasn't got.
+ *
+ * A family not in `fonts` 404s, which is how the "one candidate fails" cases are
+ * set up. Every call is recorded, and so is how many were in flight.
  */
 function fontsourceFetch(
   catalog: unknown,
-  fonts: Record<string, unknown>
+  fonts: Record<string, unknown>,
+  reallyHas: Record<string, string> = {}
 ): {
   impl: typeof fetch;
   urls: string[];
   signals: (AbortSignal | undefined)[];
   fontIds: () => string[];
+  fontFiles: () => string[];
   peakInFlight: () => number;
 } {
   const urls: string[] = [];
@@ -97,6 +124,19 @@ function fontsourceFetch(
     try {
       // A tick of real waiting, so that overlapping requests actually overlap.
       await new Promise((resolve) => setTimeout(resolve, 2));
+      const file = subsetFileParts(url);
+      if (file) {
+        const declared = (
+          fonts[file.id] as { unicodeRange?: Record<string, string> } | undefined
+        )?.unicodeRange?.[file.subset];
+        const range = reallyHas[`${file.id}/${file.subset}`] ?? declared;
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          blob: async () => new Blob([fontFile(range)]),
+        } as Response;
+      }
       if (url.endsWith("/fonts")) return jsonResponse(catalog);
       const id = url.slice(url.lastIndexOf("/") + 1);
       if (!(id in fonts)) {
@@ -121,6 +161,11 @@ function fontsourceFetch(
       urls
         .filter((url) => /\/fonts\/[^/]+$/.test(url))
         .map((url) => url.slice(url.lastIndexOf("/") + 1)),
+    fontFiles: () =>
+      urls
+        .map(subsetFileParts)
+        .filter((parts): parts is { id: string; subset: string } => !!parts)
+        .map((parts) => `${parts.id}/${parts.subset}`),
     peakInFlight: () => peak,
   };
 }
@@ -148,8 +193,10 @@ describe("createFontsourceSuggester", () => {
       signal: controller.signal,
     });
 
-    expect(urls.length).toBe(3); // the catalog, then two families
-    expect(signals.length).toBe(3);
+    // The catalog, then two families, then the one subset file each takes to
+    // confirm that it really has the alphabet.
+    expect(urls.length).toBe(5);
+    expect(signals.length).toBe(5);
     // Not the caller's signal itself — each request gets one composed with the
     // timeout — but the caller's cancellation must still flow through it.
     expect(signals.every((signal) => signal && !signal.aborted)).toBe(true);
@@ -515,6 +562,127 @@ describe("createFontsourceSuggester", () => {
     }).suggestFontsForAlphabet("a b", { fetchImpl: impl });
 
     expect(suggested.map((font) => font.family)).toEqual(["Andika"]);
+  });
+
+  it("drops a family whose file hasn't the letters its bucket declares", async () => {
+    // The whole reason this suggester reads font files. Fontsource's latin-ext
+    // range is Google's bucket definition, identical for every family cut that
+    // way, and ɓ ɗ ƴ sit inside it — so Fulfulde was offered every Latin family
+    // in the catalog and watched most of them render its letters in a fallback
+    // face. Andika really has them; Smooch Sans really hasn't.
+    const smooch = {
+      ...CATALOG[0],
+      id: "smooch-sans",
+      family: "Smooch Sans",
+      subsets: ["latin", "latin-ext"],
+      weights: [400],
+      defSubset: "latin",
+    };
+    const metadata = {
+      ...allFontMetadata(),
+      "smooch-sans": {
+        ...andikaFixture,
+        id: "smooch-sans",
+        weights: [400],
+        defSubset: "latin",
+      },
+    };
+    const { impl } = fontsourceFetch([smooch, ...CATALOG], metadata, {
+      // Its latin-ext file stops well short of what latin-ext claims.
+      "smooch-sans/latin-ext": "U+0100-017F",
+    });
+
+    const fonts = await createFontsourceSuggester({
+      storage: memoryStorage(),
+      maxCandidates: 2,
+    }).suggestFontsForAlphabet("a ɓ ɗ ƴ", { fetchImpl: impl });
+
+    expect(fonts.map((font) => font.family)).toEqual(["Andika"]);
+  });
+
+  it("opens the next subset that claims a letter the last one turned out to lack", async () => {
+    const split = {
+      ...CATALOG[0],
+      id: "split",
+      family: "Split",
+      subsets: ["latin", "latin-ext", "vietnamese"],
+      weights: [400],
+      defSubset: "latin",
+    };
+    const { impl, fontFiles } = fontsourceFetch(
+      [split],
+      {
+        split: {
+          id: "split",
+          weights: [400],
+          defSubset: "latin",
+          unicodeRange: {
+            latin: "U+0061-007A",
+            // Both claim ɓ; only one of them has it.
+            "latin-ext": "U+0100-02BA",
+            vietnamese: "U+0100-02BA",
+          },
+        },
+      },
+      { "split/latin-ext": "U+0100-017F" }
+    );
+
+    const fonts = await createFontsourceSuggester({
+      storage: memoryStorage(),
+    }).suggestFontsForAlphabet("a ɓ", { fetchImpl: impl });
+
+    // latin-ext is opened first and disappoints, so the letter's other claimant
+    // gets its turn — and only the two files that actually helped are offered.
+    expect(fontFiles()).toEqual([
+      "split/latin",
+      "split/latin-ext",
+      "split/vietnamese",
+    ]);
+    expect(fonts[0].fileUrl).toContain("/latin-400-normal.ttf");
+    expect(fonts[0].additionalFiles).toEqual([
+      {
+        url: "https://cdn.jsdelivr.net/fontsource/fonts/split@latest/vietnamese-400-normal.ttf",
+        unicodeRange: "U+0100-02BA",
+      },
+    ]);
+  });
+
+  it("reads a subset file once, and remembers what it holds", async () => {
+    const { impl, fontFiles } = fontsourceFetch(CATALOG, allFontMetadata());
+    const storage = memoryStorage();
+    const suggester = createFontsourceSuggester({ storage, maxCandidates: 1 });
+
+    await suggester.suggestFontsForAlphabet("a b", { fetchImpl: impl });
+    await suggester.suggestFontsForAlphabet("a b c", { fetchImpl: impl });
+
+    expect(fontFiles()).toEqual(["andika/latin"]);
+    expect(
+      storage.getItem(suggestionCacheKey("fontsource", "coverage.andika.latin"))
+    ).toBeTruthy();
+  });
+
+  it("publishes the fonts settled so far without ever reordering them", async () => {
+    const { impl } = fontsourceFetch(CATALOG, allFontMetadata());
+    const seen: string[][] = [];
+
+    const fonts = await createFontsourceSuggester({
+      storage: memoryStorage(),
+      maxCandidates: 4,
+      concurrency: 4,
+    }).suggestFontsForAlphabet("a b", {
+      fetchImpl: impl,
+      onProgress: (soFar) => seen.push(soFar.map((font) => font.family)),
+    });
+
+    const families = fonts.map((font) => font.family);
+    expect(families.length).toBeGreaterThan(1);
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen[seen.length - 1]).toEqual(families);
+    // Every list published is a prefix of the final one, so nothing on screen
+    // ever moves: the list only grows at its end.
+    for (const soFar of seen) {
+      expect(families.slice(0, soFar.length)).toEqual(soFar);
+    }
   });
 
   it("asks nothing at all for an alphabet of punctuation and spaces", async () => {

@@ -53,13 +53,14 @@ import {
   writeCachedLicense,
   writeCachedLocalFontList,
   type SampleText,
+  type SampleTextProvider,
 } from "@ethnolib/font-core";
 import { FontDetailsPane } from "./FontDetailsPane";
 import { FontList } from "./FontList";
 import { featureSettingsFor } from "./featureSettings";
 import { findFont, mergeFonts, sectionForMoreFonts } from "./mergeFonts";
 import { shouldOfferLocalFontListing } from "./localFontListing";
-import { useConstrainedNetwork } from "./constrainedNetwork";
+import { downloadPolicy, useNetworkAvailability } from "./constrainedNetwork";
 import { customSampleSurvivesLanguageChange } from "./sampleText";
 import { useFontDownloads } from "./useFontDownloads";
 import type { FontChooserScreenProps, ReportDiagnostic } from "./types";
@@ -81,6 +82,7 @@ export const FontChooserScreen: React.FunctionComponent<
   fonts,
   getLocalFonts,
   getFontData = loadLocalFontDataByFamilyWithName,
+  fetchImpl,
   selectedFont,
   onSelectedFontChange,
   defaultFont = "",
@@ -91,7 +93,7 @@ export const FontChooserScreen: React.FunctionComponent<
   fontFeatureDefaults,
   onEffectiveShapesChange,
   onDiagnostic,
-  constrainedNetwork,
+  network: hostNetwork,
   recentFonts,
   moreFonts,
   onSearchMoreFonts,
@@ -105,6 +107,7 @@ export const FontChooserScreen: React.FunctionComponent<
   languageTag,
   languageName,
   languageScript,
+  sampleTextProvider: hostSampleTextProvider,
   customSampleText,
   onCustomSampleTextChange,
   loading: hostBusy,
@@ -120,6 +123,18 @@ export const FontChooserScreen: React.FunctionComponent<
     if (!report) return;
     report(message, detail?.());
   }, []);
+
+  // Every font file this component fetches goes through here, so a host can put
+  // credentials, a proxy, a timeout or its own local-disk protocol in front of
+  // all of them at once. Through a ref, and stable, for the same reason the
+  // diagnostic ear is: an inline arrow from the host must not restart the
+  // effects that download.
+  const fetchImplRef = useRef(fetchImpl);
+  fetchImplRef.current = fetchImpl;
+  const fetchFile = useCallback<typeof fetch>(
+    (input, init) => (fetchImplRef.current ?? fetch)(input, init),
+    []
+  );
 
   const [local, setLocal] = useState<LocalFontFamily[]>([]);
   const [listing, setListing] = useState(false);
@@ -189,19 +204,31 @@ export const FontChooserScreen: React.FunctionComponent<
   // Real writing in the user's language, fetched here rather than handed in: a
   // host asked for a font chooser, and where the words to draw the fonts over
   // come from is this component's business, not something every host should have
-  // to know how to answer.
+  // to know how to answer. A host that *does* have an answer — one shipping the
+  // passages with it, for a machine that may never see the network — says so
+  // with `sampleTextProvider` and is asked instead.
   //
-  // The provider is made once, so the script reaches it through a ref that can
-  // change under it.
+  // The default is made once, so the script reaches it through a ref that can
+  // change under it. It is made whether or not the host supplied one: a hook
+  // cannot be skipped, and building a provider costs an object.
   const scriptRef = useRef(languageScript);
   scriptRef.current = languageScript;
-  const sampleTextProvider = useMemo(
+  const defaultSampleTextProvider = useMemo(
     () =>
       createGflanguagesSampleTextProvider({
         scriptFor: () => scriptRef.current,
       }),
     []
   );
+  // Through a ref, and not an effect dependency: the host's provider is often an
+  // object built in the render that passes it, and an effect that watched it
+  // would fetch the passage again on every render of the host — including the
+  // renders this component's own answers cause.
+  const sampleTextProviderRef = useRef<SampleTextProvider>(
+    defaultSampleTextProvider
+  );
+  sampleTextProviderRef.current =
+    hostSampleTextProvider ?? defaultSampleTextProvider;
 
   // The answer carries the tag it is about, and is only shown while that is
   // still the tag we are on. Two pieces of state — "have we heard" and "what did
@@ -216,7 +243,7 @@ export const FontChooserScreen: React.FunctionComponent<
     if (!tag) return;
 
     const controller = new AbortController();
-    sampleTextProvider
+    sampleTextProviderRef.current
       .getSampleText(tag, { signal: controller.signal })
       .then((found) => {
         if (!controller.signal.aborted)
@@ -231,9 +258,10 @@ export const FontChooserScreen: React.FunctionComponent<
         setFetchedSample({ tag, sample: undefined });
       });
     return () => controller.abort();
-    // The script isn't read here — the provider reaches it through the ref — but
-    // a change to it is a different file to fetch.
-  }, [languageTag, languageScript, sampleTextProvider]);
+    // The script isn't read here — the default provider reaches it through the
+    // ref — but a change to it is a different file to fetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [languageTag, languageScript]);
 
   const languageSample =
     fetchedSample && fetchedSample.tag === languageTag?.trim()
@@ -291,9 +319,11 @@ export const FontChooserScreen: React.FunctionComponent<
   // real cost, in which case the pane offers the download instead and this set
   // remembers which fonts the user said yes to. It doubles as the way back in
   // after a fetch that failed.
-  const constrained = useConstrainedNetwork(constrainedNetwork);
-  const { downloaded, bytesFor, extraBytesFor, download } =
-    useFontDownloads(diagnose);
+  const network = useNetworkAvailability(hostNetwork);
+  const { downloaded, bytesFor, extraBytesFor, download } = useFontDownloads(
+    diagnose,
+    fetchFile
+  );
   const [downloadRequested, setDownloadRequested] = useState<
     ReadonlySet<string>
   >(new Set());
@@ -372,9 +402,18 @@ export const FontChooserScreen: React.FunctionComponent<
   // Where the connection says otherwise the fetch waits for a click. Until then
   // this font is one we could read and haven't, which is what the empty url says
   // to everything below.
+  //
+  // Offline the wait is permanent, and `downloadPolicy` says so: there is no
+  // click that can produce the font, so the pane makes no offer and this stays
+  // empty however many times the user selects it.
+  const policy = selectedInfo ? downloadPolicy(network, selectedInfo) : "none";
   const fileUrl = installed ? undefined : selectedInfo?.fileUrl;
+  // "none" is checked rather than implied, so that a font the user agreed to
+  // download while the network was up isn't still being fetched after it went
+  // away: the agreement is remembered by family, and the connection isn't.
   const downloadUrl =
-    fileUrl && (!constrained || downloadRequested.has(selection.toLowerCase()))
+    policy === "fetch" ||
+    (policy === "offer" && downloadRequested.has(selection.toLowerCase()))
       ? fileUrl
       : undefined;
 
@@ -430,6 +469,12 @@ export const FontChooserScreen: React.FunctionComponent<
   const [chooseError, setChooseError] = useState<string | undefined>();
   const wantsFullFont =
     !!getFullFontUrl &&
+    // Looking the whole font up is two requests over the network, and offline
+    // they are two requests that will fail — for a font the user cannot be
+    // choosing anyway. A font downloaded earlier in the session is the one that
+    // makes this worth checking: it is here, it is selectable, and its whole
+    // family is not.
+    network !== "offline" &&
     !!selectedInfo?.fileIsSubset &&
     (selectedInfo.installed === false ||
       downloaded.has(selection.toLowerCase()));
@@ -458,6 +503,7 @@ export const FontChooserScreen: React.FunctionComponent<
           return {};
         }
         const sizeBytes = await fetchFontFileSize(url, {
+          fetchImpl: fetchFile,
           signal: controller.signal,
         });
         diagnose(`full font found for ${info.family}`, () => ({
@@ -485,7 +531,7 @@ export const FontChooserScreen: React.FunctionComponent<
       }
     });
     return () => controller.abort();
-  }, [wantsFullFont, selection, diagnose]);
+  }, [wantsFullFont, selection, diagnose, fetchFile]);
 
   const handleUse = async () => {
     // The bytes go with the choice for a font we fetched: the host may want to
@@ -506,7 +552,7 @@ export const FontChooserScreen: React.FunctionComponent<
         const { url } = await lookup.promise;
         if (url) {
           diagnose(`fetching the full ${selection}`, () => ({ fileUrl: url }));
-          const response = await fetch(url);
+          const response = await fetchFile(url);
           if (!response.ok) {
             const status =
               `${response.status} ${response.statusText ?? ""}`.trim();
@@ -920,6 +966,7 @@ export const FontChooserScreen: React.FunctionComponent<
             searchMoreFontsCost={searchMoreFontsCost}
             searchingMoreFonts={searchingMoreFonts}
             moreFontsExplanation={moreFontsExplanation}
+            network={network}
             header={
               offerListing && (
                 <LocalFontsPrompt
@@ -969,7 +1016,7 @@ export const FontChooserScreen: React.FunctionComponent<
                 languageName={languageName}
                 choices={chosen}
                 onChoicesChange={changeChoices}
-                constrainedNetwork={constrained}
+                network={network}
                 downloading={!installed && loading}
                 downloadError={!installed ? error?.message : undefined}
                 onRequestDownload={requestDownload}
@@ -979,6 +1026,7 @@ export const FontChooserScreen: React.FunctionComponent<
                 choosing={choosing}
                 chooseError={chooseError}
                 loading={loading}
+                fetchImpl={fetchFile}
                 sampleSize={sampleSize}
                 languageSample={languageSample}
                 customSampleText={sample}

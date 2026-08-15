@@ -86,7 +86,7 @@ export function createGflanguagesSampleTextProvider(
       languageTag: string,
       options: SuggestOptions = {}
     ): Promise<SampleText | undefined> {
-      const id = fileId(languageTag, scriptFor);
+      const id = sampleTextFileId(languageTag, scriptFor);
       if (!id) return undefined;
       const key = `sample.${id}`;
       // Two reads of the one entry, because the two answers are worth keeping for
@@ -163,8 +163,12 @@ function isSampleText(
 /**
  * The `{lang}_{Script}` the data set files itself under, or undefined for a tag
  * with no language in it at all.
+ *
+ * Exported because the bundled snapshot is keyed by exactly this id
+ * (bundledProviders.ts): if the two worked out `sr` differently, the offline
+ * answer would be a different language's passage from the online one.
  */
-function fileId(
+export function sampleTextFileId(
   languageTag: string,
   scriptFor: ((languageTag: string) => string | undefined) | undefined
 ): string | undefined {

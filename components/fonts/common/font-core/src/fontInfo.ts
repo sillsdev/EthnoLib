@@ -1,6 +1,25 @@
 import type { FontLicenseCategory } from "./fontLicense";
 
 /**
+ * Where a font's bytes are, which is a different question from whether they can
+ * be had right now.
+ *
+ * - **"installed"**: the operating system has it, so every app on the machine
+ *   can use it and the user may already know its name.
+ * - **"disk"**: readable without the network but not installed — a file the host
+ *   app ships with itself, or one it has put somewhere of its own. Usable here,
+ *   and not usable in the user's other programs, which is worth being able to
+ *   say.
+ * - **"network"**: not on this machine at all. It has to be fetched, and a font
+ *   fetched for this session alone is still this: the browser is holding it
+ *   until the page reloads, and nothing was saved.
+ *
+ * Absent where nobody has said — an entry that came from a host catalog with no
+ * word on the matter — in which case `installed` is all there is to go on.
+ */
+export type FontLocation = "installed" | "disk" | "network";
+
+/**
  * One font the chooser can offer, as the host app knows it. Everything but the
  * family name is optional: the chooser fills in what it can work out for itself
  * from the fonts installed on the machine, and what the host says wins over that.
@@ -13,6 +32,13 @@ export interface FontInfo {
    * machine's own list. A font the host offers for download passes `false`.
    */
   installed?: boolean;
+  /**
+   * Where the font's bytes are; see `FontLocation`. `installed` says whether the
+   * font can be used now, which is the question the list is sorted on; this says
+   * where it came from, which is what the user needs to know before they lean on
+   * it anywhere else.
+   */
+  location?: FontLocation;
   /** How big the download is, for a font that isn't here yet. */
   downloadSizeBytes?: number;
   /**

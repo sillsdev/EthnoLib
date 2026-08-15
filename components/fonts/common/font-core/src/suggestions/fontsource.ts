@@ -3,25 +3,42 @@
  *
  * Fontsource republishes the open-licensed font catalogs (Google Fonts and more)
  * with two things we need and Google's own API doesn't give us: a stable file URL
- * per subset and weight, and a published `unicode-range` per subset. That second
- * one is what makes this a *suggester* rather than a list — we can decide whether
- * a family can write somebody's alphabet without downloading a single font.
+ * per subset and weight, and a published `unicode-range` per subset.
  *
- * It answers in two tiers, because the catalog is one request and the coverage
- * data is one request per family:
+ * It answers in three tiers, cheapest first, because the catalog is one request,
+ * the metadata is one request per family, and the font files are several:
  *
  * 1. The catalog, filtered down to plausible candidates by licence and by the
  *    subsets the alphabet probably needs (`guessSubsetsForAlphabet`).
- * 2. Per-family metadata for the first `maxCandidates` of those, a few at a time,
- *    keeping only the families whose ranges actually contain every character.
+ * 2. Per-family metadata for the first `maxCandidates` of those, dropping any
+ *    family whose declared ranges don't even claim the alphabet.
+ * 3. The subset files themselves, read for the characters they really have.
+ *
+ * That third tier is not optional, however much it costs. A published
+ * `unicode-range` is Google's *subset bucket definition*, not a statement about
+ * the font: every latin-ext family declares the identical `U+0100-02BA, …`
+ * whatever is inside it. So ɓ ɗ ɲ ƴ read as covered by every Latin family in the
+ * catalog, and Fulfulde was offered a page of fonts that each rendered four of
+ * its letters in a fallback face — the declared test, for a Latin alphabet, was
+ * approving everyone. Reading the cmap of the very files this returns is the
+ * only honest answer, and it is the same answer the chooser will reach itself
+ * once it has downloaded them.
+ *
+ * A ranged read would have made it cheap, and the CDN rules it out: jsDelivr
+ * answers `Range` with 206 and the bytes of the *brotli* representation, so byte
+ * 0 of a font comes back `1b cf 6c 75` rather than `00 01 00 00`. Whole files,
+ * then — about 15 KB on the wire each, one or two per family, and the answer is
+ * cached as a few hundred bytes of packed ranges.
  *
  * The subset guess is only a guess, so a guess that leaves nothing is retried
- * without it: a wrong shortcut must not be able to answer "no fonts". Both tiers
- * cache (see suggestionCache.ts), the catalog for a day and a family for a week,
- * which is what keeps the second visit to the chooser instant.
+ * without it: a wrong shortcut must not be able to answer "no fonts". Every tier
+ * caches (see suggestionCache.ts), the catalog for a day and anything about a
+ * font for a week, which is what keeps the second visit to the chooser instant.
+ * Since the third tier is what makes a cold search slow, `onProgress` publishes
+ * the fonts settled so far as they settle.
  */
 
-import { coversCodePoint } from "../fontCoverage";
+import { coversCodePoint, readCoverageRanges } from "../fontCoverage";
 import { parseAlphabet } from "../alphabet";
 import type { FontInfo } from "../fontInfo";
 import {
@@ -34,7 +51,11 @@ import {
   writeCachedSuggestion,
   type SuggestionCacheStorage,
 } from "./suggestionCache";
-import type { AlphabetFontSuggester, SuggestOptions } from "./types";
+import type {
+  AlphabetFontSuggester,
+  AlphabetSuggestOptions,
+  SuggestOptions,
+} from "./types";
 import { parseUnicodeRanges } from "./unicodeRanges";
 
 const FONTSOURCE_API = "https://api.fontsource.org/v1";
@@ -121,7 +142,7 @@ export function createFontsourceSuggester(
   return {
     async suggestFontsForAlphabet(
       alphabet: string,
-      options: SuggestOptions = {}
+      options: AlphabetSuggestOptions = {}
     ): Promise<FontInfo[]> {
       const codePoints = charactersThatMatter(alphabet);
       // Nothing but spaces and punctuation: every font in the world qualifies, so
@@ -155,6 +176,7 @@ export function createFontsourceSuggester(
       }
 
       const shortlist = candidates.slice(0, maxCandidates);
+      const { onProgress } = options;
       const suggestions = await mapWithConcurrency(
         shortlist,
         concurrency,
@@ -170,9 +192,28 @@ export function createFontsourceSuggester(
             if (isAbortError(error)) throw error;
             return undefined;
           }
-          if (!covers(metadata, codePoints)) return undefined;
-          return toFontInfo(entry, metadata, codePoints, cdnBaseUrl);
-        }
+          // The declared ranges can't confirm a family, but they can rule one
+          // out for free — and that saves the font file that confirming costs.
+          if (!declares(metadata, codePoints)) return undefined;
+
+          const weight = nearestWeight(
+            metadata.weights?.length ? metadata.weights : entry.weights
+          );
+          const files = fileNamer(cdnBaseUrl, entry.id, weight);
+          const subsets = await coveringSubsets(
+            entry,
+            metadata,
+            codePoints,
+            files,
+            storage,
+            options
+          );
+          if (!subsets) return undefined;
+          return toFontInfo(entry, metadata, subsets, files);
+        },
+        onProgress &&
+          ((settled) =>
+            onProgress(settled.filter((font): font is FontInfo => !!font)))
       );
 
       return suggestions.filter((font): font is FontInfo => font !== undefined);
@@ -229,39 +270,177 @@ function hasSubsets(entry: CatalogEntry, guessed: string[]): boolean {
   return guessed.every((subset) => entry.subsets.includes(subset));
 }
 
-/** Whether a family's declared ranges hold every character of the alphabet. */
-function covers(metadata: FontMetadata, codePoints: number[]): boolean {
-  // The whole family, not one subset: the alphabet may well need letters from two
-  // of them, and the chooser downloads the subset that has the most of it.
+/**
+ * Whether a family's declared ranges even claim the alphabet — a filter, never a
+ * confirmation.
+ *
+ * The claim is worth almost nothing: `unicode-range` names the *bucket* a subset
+ * file was cut from, identically for every family cut the same way, so a Latin
+ * alphabet passes this everywhere. What it does do is rule out the families that
+ * ship no bucket the letters could even be in, for free, before
+ * `coveringSubsets` spends a font file finding out. See the file's header.
+ */
+function declares(metadata: FontMetadata, codePoints: number[]): boolean {
+  // The whole family, not one subset: the alphabet may well need letters from
+  // two of them.
   const ranges = parseUnicodeRanges(
     Object.values(metadata.unicodeRange ?? {}).join(",")
   );
   return codePoints.every((codePoint) => coversCodePoint(ranges, codePoint));
 }
 
-function toFontInfo(
+/** Where a family's subset files live, for the one weight we would fetch. */
+type FileNamer = (subset: string) => string;
+
+/**
+ * Fontsource's file names are laid out {subset}-{weight}-{style}, and we want
+ * the TTF rather than the woff2 the web would use: both this file and the
+ * chooser read the font's own tables, and woff2 is compressed past reading that
+ * way.
+ */
+function fileNamer(
+  cdnBaseUrl: string,
+  id: string,
+  weight: number
+): FileNamer {
+  const cdn = cdnBaseUrl.replace(/\/+$/, "");
+  return (subset) => `${cdn}/${id}@latest/${subset}-${weight}-normal.ttf`;
+}
+
+/**
+ * The subset files it really takes to write this alphabet, the one carrying most
+ * of it first — or undefined when the family can't write it after all, which for
+ * an alphabet with African Latin letters in it is most of them.
+ *
+ * Greedy, and greedy over the files rather than over the promises: the declared
+ * ranges only say which file is worth opening next, and what it turns out to
+ * hold is what counts against the alphabet. So a subset that declared ɓ and
+ * hasn't got it costs one request and then stands aside for the next subset that
+ * declares it — and when no subset is left declaring a missing letter, the
+ * family is out.
+ *
+ * A file that can't be fetched contributes nothing, which is the same shape of
+ * answer as a file without the letters in it: unverified is not covered.
+ */
+async function coveringSubsets(
   entry: CatalogEntry,
   metadata: FontMetadata,
   codePoints: number[],
-  cdnBaseUrl: string
-): FontInfo {
-  const weights = metadata.weights?.length ? metadata.weights : entry.weights;
-  const weight = nearestWeight(weights);
-  const cdn = cdnBaseUrl.replace(/\/+$/, "");
-  // Fontsource's file names are laid out {subset}-{weight}-{style}, and we want
-  // the TTF rather than the woff2 the web would use: the chooser reads the
-  // font's own tables, and woff2 is compressed past reading that way.
-  const fileFor = (subset: string) =>
-    `${cdn}/${entry.id}@latest/${subset}-${weight}-normal.ttf`;
+  files: FileNamer,
+  storage: SuggestionCacheStorage | undefined,
+  options: SuggestOptions
+): Promise<string[] | undefined> {
+  const declared = metadata.unicodeRange ?? {};
+  const preferred = metadata.defSubset || entry.defSubset;
+  const chosen: string[] = [];
+  const opened = new Set<string>();
+  let missing = codePoints;
 
+  while (missing.length > 0) {
+    const next = mostPromising(declared, opened, preferred, missing);
+    if (!next) return undefined;
+    opened.add(next);
+    const real = await realCoverage(entry.id, next, files, storage, options);
+    const left = missing.filter((codePoint) => !coversCodePoint(real, codePoint));
+    // A file that helped with nothing is a file the caller has no reason to
+    // download.
+    if (left.length < missing.length) chosen.push(next);
+    missing = left;
+  }
+  return chosen;
+}
+
+/**
+ * Which subset file to open next: whichever untried one claims the most of what
+ * is still missing, the family's own default subset winning a tie. Undefined
+ * when nothing left even claims a missing character.
+ */
+function mostPromising(
+  declared: Record<string, string>,
+  opened: Set<string>,
+  preferred: string,
+  missing: number[]
+): string | undefined {
+  let best: string | undefined;
+  let bestClaimed = 0;
+  for (const [subset, range] of Object.entries(declared)) {
+    if (opened.has(subset)) continue;
+    const claimed = countCovered(range, missing);
+    if (claimed === 0) continue;
+    // Strictly more, so the first subset to claim a count keeps it — except that
+    // the default subset takes a tie, as it is the family's own answer to "which
+    // file is the font".
+    if (claimed > bestClaimed || (claimed === bestClaimed && subset === preferred)) {
+      best = subset;
+      bestClaimed = claimed;
+    }
+  }
+  return best;
+}
+
+/**
+ * What a subset file really has, as packed coverage ranges — from the cache
+ * where it is fresh, and otherwise by fetching the file and reading its cmap.
+ *
+ * A font's coverage packs down to a few hundred bytes, so this is cheap to keep
+ * and it is what makes the second visit to the chooser instant. A request that
+ * failed is not cached: it told us nothing about the font. A 404 did tell us
+ * something — there is no such file — and caches as the empty coverage it is.
+ */
+async function realCoverage(
+  id: string,
+  subset: string,
+  files: FileNamer,
+  storage: SuggestionCacheStorage | undefined,
+  options: SuggestOptions
+): Promise<Uint32Array> {
+  const key = `coverage.${id}.${subset}`;
+  const cached = readCachedSuggestion<number[]>(
+    SOURCE,
+    key,
+    FONT_TTL_MS,
+    storage
+  );
+  if (cached) return new Uint32Array(cached);
+
+  const fetchImpl = options.fetchImpl ?? fetch;
+  let ranges: Uint32Array;
+  try {
+    const response = await fetchWithTimeout(
+      fetchImpl,
+      files(subset),
+      options.signal
+    );
+    if (!response.ok && response.status !== 404) {
+      // Not an answer about the font, so nothing is remembered and nothing is
+      // covered; another subset may still carry the letters.
+      return new Uint32Array();
+    }
+    ranges = response.ok
+      ? await readCoverageRanges(await response.blob())
+      : new Uint32Array();
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+    return new Uint32Array();
+  }
+  writeCachedSuggestion(SOURCE, key, Array.from(ranges), storage);
+  return ranges;
+}
+
+function toFontInfo(
+  entry: CatalogEntry,
+  metadata: FontMetadata,
+  subsets: string[],
+  files: FileNamer
+): FontInfo {
   const ranges = metadata.unicodeRange ?? {};
-  const [primary, ...extras] = subsetsCovering(entry, metadata, codePoints);
+  const [primary, ...extras] = subsets;
   const info: FontInfo = {
     family: entry.family,
     installed: false,
     license: "open",
     licenseUrl: `https://fontsource.org/fonts/${entry.id}`,
-    fileUrl: fileFor(primary),
+    fileUrl: files(primary),
   };
   // One subset out of several is a piece of the family, even when it happens to
   // hold this whole alphabet: the complete font has letters these files don't,
@@ -273,93 +452,11 @@ function toFontInfo(
   }
   if (extras.length > 0) {
     info.additionalFiles = extras.map((subset) => ({
-      url: fileFor(subset),
+      url: files(subset),
       unicodeRange: ranges[subset] || undefined,
     }));
   }
   return info;
-}
-
-/**
- * The subset files it takes to write this alphabet, the one holding the most of
- * it first. One is usually enough, but not always: a Latin alphabet with macron
- * vowels needs `latin` *and* `latin-ext`, and handing over only the bigger half
- * had the chooser suggesting a family as covering and then downloading a file
- * that couldn't write ā — contradicting itself in front of the user.
- *
- * Greedy over the declared ranges: after the best single subset, whichever
- * remaining subset covers the most of what is still missing, until nothing is
- * missing or no subset helps. `covers()` has already said the union holds every
- * character, so in practice this terminates with the alphabet fully covered.
- */
-function subsetsCovering(
-  entry: CatalogEntry,
-  metadata: FontMetadata,
-  codePoints: number[]
-): string[] {
-  const ranges = metadata.unicodeRange ?? {};
-  const chosen = [bestSubset(entry, metadata, codePoints)];
-  let missing = uncoveredBy(ranges[chosen[0]], codePoints);
-  while (missing.length > 0) {
-    let best: string | undefined;
-    let bestCovered = 0;
-    for (const [subset, range] of Object.entries(ranges)) {
-      if (chosen.includes(subset)) continue;
-      const covered = countCovered(range, missing);
-      if (covered > bestCovered) {
-        best = subset;
-        bestCovered = covered;
-      }
-    }
-    if (!best) break;
-    chosen.push(best);
-    missing = uncoveredBy(ranges[best], missing);
-  }
-  return chosen;
-}
-
-/** The code points a subset's declared ranges leave unaccounted for. */
-function uncoveredBy(
-  range: string | undefined,
-  codePoints: number[]
-): number[] {
-  if (!range) return codePoints;
-  const parsed = parseUnicodeRanges(range);
-  return codePoints.filter((codePoint) => !coversCodePoint(parsed, codePoint));
-}
-
-/**
- * Which of the family's subset files to fetch: the one holding the most of this
- * alphabet.
- *
- * Fontsource ships a family as one file per subset, and the family's own
- * `defSubset` is almost always `latin` — for a Thai family too. So taking
- * `defSubset` hands the chooser a file that cannot write the language it just
- * suggested a font for, and the chooser reads the file's own cmap, so it would
- * then contradict itself in front of the user. Verified against the real CDN:
- * `anuphan@latest/latin-400-normal.ttf` does not cover ก ข ค ง, and
- * `thai-400-normal.ttf` does.
- *
- * `defSubset` is where we start, so it wins where nothing beats it and where the
- * family published no ranges at all.
- */
-function bestSubset(
-  entry: CatalogEntry,
-  metadata: FontMetadata,
-  codePoints: number[]
-): string {
-  const ranges = metadata.unicodeRange ?? {};
-  let best = metadata.defSubset || entry.defSubset;
-  let bestCovered = countCovered(ranges[best], codePoints);
-  for (const [subset, range] of Object.entries(ranges)) {
-    const covered = countCovered(range, codePoints);
-    // Strictly more, so a tie leaves the default subset in place.
-    if (covered > bestCovered) {
-      best = subset;
-      bestCovered = covered;
-    }
-  }
-  return best;
 }
 
 /** How many of the alphabet's code points one subset's declared ranges hold. */
@@ -470,16 +567,25 @@ async function getJson(url: string, options: SuggestOptions): Promise<unknown> {
 /**
  * `items.map(run)`, but with only `limit` of them in flight — and stopping at the
  * next item once the caller cancels, rather than working through a shortlist
- * nobody is waiting for. Results keep the order of `items`, which is the
- * catalog's order and so the order the chooser shows.
+ * nobody is waiting for. Results keep the order of `items`, which is the ranked
+ * order and so the order the chooser shows.
+ *
+ * `onSettled` hears the results so far each time that prefix grows, and it is a
+ * *prefix* on purpose: with six items in flight the fourth often finishes first,
+ * and publishing it then would put it above three fonts that are about to land
+ * ahead of it. Held back until its predecessors are decided, a font that appears
+ * never moves again.
  */
 async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
   signal: AbortSignal | undefined,
-  run: (item: T) => Promise<R>
+  run: (item: T) => Promise<R>,
+  onSettled?: (settled: R[]) => void
 ): Promise<R[]> {
   const results = new Array<R>(items.length);
+  const done = new Array<boolean>(items.length).fill(false);
+  let published = 0;
   let next = 0;
   const workers = Math.max(1, Math.min(limit, items.length));
   await Promise.all(
@@ -487,6 +593,13 @@ async function mapWithConcurrency<T, R>(
       for (let at = next++; at < items.length; at = next++) {
         throwIfAborted(signal);
         results[at] = await run(items[at]);
+        done[at] = true;
+        if (!onSettled) continue;
+        let grown = published;
+        while (grown < items.length && done[grown]) grown++;
+        if (grown === published) continue;
+        published = grown;
+        onSettled(results.slice(0, published));
       }
     })
   );

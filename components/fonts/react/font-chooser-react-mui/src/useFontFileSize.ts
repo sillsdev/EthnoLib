@@ -28,10 +28,16 @@ export interface MeasuredFileSize {
  * forth between two fonts asks each server once. An unanswerable size — no
  * `Content-Length`, a server that refuses HEAD — settles as `undefined` bytes,
  * and the caller shows the offer without a size on it.
+ *
+ * `fetchImpl` is the host's, where it supplied one: the HEAD goes to the same
+ * place the file itself will, so it has to go the same way — a host serving fonts
+ * through a proxy or off local disk would otherwise measure a url its own fetch
+ * never sees. Give a stable function; it restarts the request.
  */
 export function useFontFileSize(
   url: string | undefined,
-  active: boolean
+  active: boolean,
+  fetchImpl?: typeof fetch
 ): MeasuredFileSize {
   const known = useRef(new Map<string, number | undefined>());
   const [measured, setMeasured] = useState<MeasuredFileSize>({
@@ -52,13 +58,16 @@ export function useFontFileSize(
     // rather than merely ignored.
     const abort = new AbortController();
     setMeasured({ settled: false });
-    void fetchFontFileSize(url, { signal: abort.signal }).then((found) => {
+    void fetchFontFileSize(url, {
+      fetchImpl,
+      signal: abort.signal,
+    }).then((found) => {
       if (abort.signal.aborted) return;
       known.current.set(url, found);
       setMeasured({ bytes: found, settled: true });
     });
     return () => abort.abort();
-  }, [url, active]);
+  }, [url, active, fetchImpl]);
 
   return measured;
 }

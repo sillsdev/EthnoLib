@@ -54,5 +54,6 @@ declare module "@ethnolib/language-chooser-react-mui" {
     ) => void;
     actionButtons?: import("react").ReactNode;
     uiLanguage?: string;
+    hideDisplayNameEditor?: boolean;
   }>;
 }

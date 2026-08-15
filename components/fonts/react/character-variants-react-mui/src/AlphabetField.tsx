@@ -19,6 +19,13 @@ export interface AlphabetFieldProps {
   /** The field's floating label. Pass null for none, where the caller draws its
    * own label above the field. */
   label?: React.ReactNode;
+  /**
+   * Greyed text for an empty field — "Loading…" while the caller is still
+   * looking the alphabet up. An empty box says the language has no alphabet
+   * data; this says the answer hasn't arrived yet, which is a different thing
+   * to sit and wait through.
+   */
+  placeholder?: string;
   className?: string;
 }
 
@@ -41,6 +48,7 @@ export const AlphabetField: React.FunctionComponent<AlphabetFieldProps> = ({
   marked,
   onBlur,
   label = "Alphabet",
+  placeholder,
   className,
 }) => {
   const theme = useTheme();
@@ -78,6 +86,7 @@ export const AlphabetField: React.FunctionComponent<AlphabetFieldProps> = ({
           setFocused(false);
           onBlur?.();
         }}
+        placeholder={placeholder}
         inputProps={{
           // Seeing the alphabet in the font is half the point of typing it here.
           style: {

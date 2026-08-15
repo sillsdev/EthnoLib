@@ -78,7 +78,7 @@ export {
   coversAlphabet,
   mergeCoverageRanges,
 } from "./fontCoverage";
-export type { FontInfo } from "./fontInfo";
+export type { FontInfo, FontLocation } from "./fontInfo";
 export {
   fetchGoogleFontsCatalog,
   guessSubsetsForAlphabet,
@@ -89,6 +89,7 @@ export { fetchFontFileSize } from "./fontFileSize";
 export type { FontFileSizeOptions } from "./fontFileSize";
 export type {
   SuggestOptions,
+  AlphabetSuggestOptions,
   AlphabetFontSuggester,
   LanguageFontSuggester,
   AlphabetProvider,
@@ -111,6 +112,14 @@ export { createSldrAlphabetProvider } from "./suggestions/sldrAlphabet";
 export type { SldrAlphabetProviderConfig } from "./suggestions/sldrAlphabet";
 export { createSldrFontFeaturesProvider } from "./suggestions/sldrFontFeatures";
 export type { SldrFontFeaturesProviderConfig } from "./suggestions/sldrFontFeatures";
+export {
+  withAlphabetProviderFallback,
+  withAlphabetFontSuggesterFallback,
+  withLanguageFontSuggesterFallback,
+  withFontFeatureDefaultsFallback,
+  withSampleTextFallback,
+} from "./suggestions/fallback";
+export type { FallbackOptions } from "./suggestions/fallback";
 export { createGflanguagesSampleTextProvider } from "./suggestions/gflanguagesSampleText";
 export type { GflanguagesSampleTextProviderConfig } from "./suggestions/gflanguagesSampleText";
 export { parseUnicodeRanges } from "./suggestions/unicodeRanges";

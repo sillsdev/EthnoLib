@@ -19,7 +19,14 @@
       "@ethnolib/character-variants-react-mui": [
         "components/fonts/react/character-variants-react-mui/src/index.ts"
       ],
-      "@ethnolib/font-core": ["components/fonts/common/font-core/src/index.ts"]
+      "@ethnolib/font-core": ["components/fonts/common/font-core/src/index.ts"],
+      // The second entry point, whose snapshots let a host answer with no
+      // network. A subpath needs its own mapping: `paths` matches whole
+      // specifiers, and `moduleResolution: node` is too old to read the
+      // package's own `exports` map.
+      "@ethnolib/font-core/bundled": [
+        "components/fonts/common/font-core/src/bundled.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]

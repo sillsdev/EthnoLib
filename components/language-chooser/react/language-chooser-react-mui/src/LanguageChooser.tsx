@@ -110,6 +110,10 @@ export interface ILanguageChooserProps {
   ) => void;
   rightPanelComponent?: React.ReactNode;
   actionButtons?: React.ReactNode;
+  // For hosts that only need a language picked and have no use for a custom
+  // display name (e.g. the font chooser). Hides the "Display this language
+  // this way" editor in the right pane; the tag preview still shows.
+  hideDisplayNameEditor?: boolean;
   languageCardBackgroundColorOverride?: string; // If not provided, will use lighten(primaryColor, 0.7)
   scriptCardBackgroundColorOverride?: string; // If not provided, will use lighten(primaryColor, 0.88)
 }
@@ -669,56 +673,60 @@ export const LanguageChooserInner: React.FunctionComponent<
             <div id="right-pane-language-chooser-section">
               {lp.selectedLanguage && (
                 <div id="right-pane-language-details=section">
-                  <FormFieldLabel
-                    htmlFor="language-name-bar"
-                    label={t`Display this language this way`}
-                    required={
-                      // If submission is prevented only because a display name is still needed, show the red "required" label
-                      !lp.readyToSubmit &&
-                      // We would be ready to submit if we just added a display name
-                      isReadyToSubmit({
-                        language: lp.selectedLanguage,
-                        script: lp.selectedScript,
-                        customDetails: {
-                          ...lp.customizableLanguageDetails,
-                          customDisplayName: "hypotheticalDisplayName",
-                        },
-                      })
-                    }
-                  />
-                  <OutlinedInput
-                    type="text"
-                    inputProps={{
-                      spellCheck: false,
-                    }}
-                    css={css`
-                      background-color: white;
-                      margin-bottom: 10px;
-                      font-size: 1.625rem; // 26px
-                      font-weight: 700;
-                    `}
-                    id="language-name-bar"
-                    size="small"
-                    fullWidth
-                    value={
-                      lp.customizableLanguageDetails.customDisplayName !==
-                      undefined
-                        ? lp.customizableLanguageDetails.customDisplayName
-                        : defaultDisplayName(
-                            lp.selectedLanguage,
+                  {!props.hideDisplayNameEditor && (
+                    <>
+                      <FormFieldLabel
+                        htmlFor="language-name-bar"
+                        label={t`Display this language this way`}
+                        required={
+                          // If submission is prevented only because a display name is still needed, show the red "required" label
+                          !lp.readyToSubmit &&
+                          // We would be ready to submit if we just added a display name
+                          isReadyToSubmit({
+                            language: lp.selectedLanguage,
+                            script: lp.selectedScript,
+                            customDetails: {
+                              ...lp.customizableLanguageDetails,
+                              customDisplayName: "hypotheticalDisplayName",
+                            },
+                          })
+                        }
+                      />
+                      <OutlinedInput
+                        type="text"
+                        inputProps={{
+                          spellCheck: false,
+                        }}
+                        css={css`
+                          background-color: white;
+                          margin-bottom: 10px;
+                          font-size: 1.625rem; // 26px
+                          font-weight: 700;
+                        `}
+                        id="language-name-bar"
+                        size="small"
+                        fullWidth
+                        value={
+                          lp.customizableLanguageDetails.customDisplayName !==
+                          undefined
+                            ? lp.customizableLanguageDetails.customDisplayName
+                            : defaultDisplayName(
+                                lp.selectedLanguage,
+                                lp.selectedScript
+                              )
+                        }
+                        onChange={(e) => {
+                          lp.saveLanguageDetails(
+                            {
+                              ...lp.customizableLanguageDetails,
+                              customDisplayName: e.target.value,
+                            },
                             lp.selectedScript
-                          )
-                    }
-                    onChange={(e) => {
-                      lp.saveLanguageDetails(
-                        {
-                          ...lp.customizableLanguageDetails,
-                          customDisplayName: e.target.value,
-                        },
-                        lp.selectedScript
-                      );
-                    }}
-                  />
+                          );
+                        }}
+                      />
+                    </>
+                  )}
                   <Typography
                     variant="body2"
                     data-testid="right-panel-langtag-preview"

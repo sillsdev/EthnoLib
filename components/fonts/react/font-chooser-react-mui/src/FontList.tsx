@@ -2,6 +2,7 @@
 import { css } from "@emotion/react";
 import {
   alpha,
+  Button,
   ButtonBase,
   CircularProgress,
   ClickAwayListener,
@@ -16,9 +17,15 @@ import {
   ChevronIcon,
   DownloadNeededIcon,
   InfoCircleIcon,
+  InstalledFontIcon,
+  NetworkFontIcon,
+  OnDiskFontIcon,
   UnknownRulesIcon,
+  WifiOffIcon,
 } from "./icons";
 import { scrollbarCss } from "./scrollbarStyle";
+import type { NetworkAvailability } from "./constrainedNetwork";
+import { useNamePreviewFaces } from "./useNamePreviewFaces";
 
 export interface FontListProps {
   /** The fonts to offer, in the order they should appear. */
@@ -51,6 +58,15 @@ export interface FontListProps {
   searchingMoreFonts?: boolean;
   /** See FontChooserScreenProps: what the info icon beside the section says. */
   moreFontsExplanation?: React.ReactNode;
+  /**
+   * How much of the network there is (see FontChooserScreenProps.network).
+   * Anything but "open" and the list stops fetching font files just to draw
+   * names in their own faces, and marks each not-yet-here font — a mark that
+   * matters only where getting the font is something the user has to think
+   * about. Offline it also takes down the invitation to search wider, which
+   * cannot be answered.
+   */
+  network?: NetworkAvailability;
   className?: string;
 }
 
@@ -61,14 +77,15 @@ export interface FontListProps {
  * is using.
  */
 const DEFAULT_MORE_FONTS_EXPLANATION =
-  "The list comes from the most popular fonts in a public catalog, filtered down to " +
-  "fonts that probably support the alphabet of this language.";
+  "The list comes from the most popular fonts in a public catalog, kept only where " +
+  "the font file itself was found to have every letter of this alphabet.";
 
 /**
  * The list of fonts down the left of the screen. Each name is drawn in its own
- * font where we have it, which is most of what someone is choosing on, with small
- * icons for the things that aren't visible in the letters: a font that has to be
- * fetched first, and one whose licence wants reading.
+ * font — which is most of what someone is choosing on — with small icons for
+ * what isn't visible in the letters: a licence that wants reading, and (only
+ * where the connection makes downloads worth weighing) a font that has to be
+ * fetched first.
  */
 export const FontList: React.FunctionComponent<FontListProps> = ({
   fonts,
@@ -83,10 +100,19 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
   searchMoreFontsCost,
   searchingMoreFonts,
   moreFontsExplanation,
+  network = "open",
   className,
 }) => {
   const theme = useTheme();
   const [showClosed, setShowClosed] = useState(false);
+
+  // Every name the list might draw, registered for the browser's lazy loading
+  // so it can appear in its own face; see the hook for why this is cheap and
+  // why a metered connection turns it off.
+  useNamePreviewFaces(
+    [...fonts, ...closedFonts, ...(moreFonts ?? [])],
+    network === "open"
+  );
 
   const notifyOpen = useRef(onClosedFontsOpenChange);
   notifyOpen.current = onClosedFontsOpenChange;
@@ -123,6 +149,7 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
       onSelect={onSelect}
       languageName={languageName}
       hideDownloadIcon={options?.hideDownloadIcon}
+      network={network}
     />
   );
 
@@ -188,60 +215,89 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
             The name stays after the search has run, so the fonts that arrive have
             something above them saying where they came from. */}
         {(onSearchMoreFonts || moreFonts) && (
-          <>
-            <hr
-              css={css`
-                border: none;
-                border-top: 1px solid ${theme.palette.divider};
-                margin: 6px 12px;
-              `}
-            />
-            <div
-              css={css`
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                padding: 2px 12px;
-                font-size: 11px;
-                font-weight: 600;
-                letter-spacing: 0.04em;
-                text-transform: uppercase;
-                color: ${theme.palette.text.secondary};
-              `}
-            >
-              Popular fonts
-              <ExplainerButton
-                label="Where these fonts come from"
-                explanation={moreFontsExplanation ?? DEFAULT_MORE_FONTS_EXPLANATION}
-              />
-            </div>
-          </>
-        )}
-        {onSearchMoreFonts && (
-          <ButtonBase
-            onClick={onSearchMoreFonts}
-            disabled={searchingMoreFonts}
+          <hr
             css={css`
-              width: 100%;
-              justify-content: flex-start;
-              gap: 6px;
-              padding: 8px 12px;
-              font-size: 12px;
-              color: ${theme.palette.primary.main};
-              text-align: left;
+              border: none;
+              border-top: 1px solid ${theme.palette.divider};
+              margin: 6px 12px;
+            `}
+          />
+        )}
+        {/* The section names itself once it has something in it. Before that
+            there is nothing for the name to be about: a heading over an empty
+            stretch of list reads as a section that came back empty, which is
+            exactly what it isn't while the search is still running. */}
+        {!!moreFonts?.length && (
+          <div
+            css={css`
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              padding: 2px 12px;
+              font-size: 11px;
+              font-weight: 600;
+              letter-spacing: 0.04em;
+              text-transform: uppercase;
+              color: ${theme.palette.text.secondary};
             `}
           >
-            {searchingMoreFonts ? (
-              <>
-                <CircularProgress size={12} />
-                Loading…
-              </>
-            ) : (
-              `Find more fonts that may work for this language${
-                searchMoreFontsCost ? ` (${searchMoreFontsCost})` : ""
-              }`
-            )}
-          </ButtonBase>
+            Popular fonts
+            <ExplainerButton
+              label="Where these fonts come from"
+              explanation={moreFontsExplanation ?? DEFAULT_MORE_FONTS_EXPLANATION}
+            />
+          </div>
+        )}
+        {onSearchMoreFonts && (
+          <div
+            css={css`
+              padding: 8px 12px;
+            `}
+          >
+            {/* A button that looks like one: what it starts costs a wait and a
+                download, so it should read as something the user does rather
+                than as another line of the list. The size it costs is only
+                worth the words where the user is paying for it — everywhere
+                else it is a number nobody has a decision to make about.
+
+                Offline it stays where it is, disabled, with the wifi mark and a
+                tooltip saying why: taking it away would leave the user looking
+                for a search they had used before and wondering where it went,
+                and the greyed button says both that there is more to find and
+                that it is out of reach for now. The tooltip needs the wrapping
+                span — a disabled button reports no pointer events of its own. */}
+            <Tooltip
+              title={
+                network === "offline"
+                  ? "No internet connection, so there is no way to look for more fonts."
+                  : ""
+              }
+            >
+              <span>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={onSearchMoreFonts}
+                  disabled={searchingMoreFonts || network === "offline"}
+                  startIcon={
+                    searchingMoreFonts ? (
+                      <CircularProgress size={12} />
+                    ) : network === "offline" ? (
+                      <WifiOffIcon size={14} />
+                    ) : undefined
+                  }
+                >
+                  {searchingMoreFonts
+                    ? "Loading…"
+                    : `Find More${
+                        network === "metered" && searchMoreFontsCost
+                          ? ` (${searchMoreFontsCost})`
+                          : ""
+                      }`}
+                </Button>
+              </span>
+            </Tooltip>
+          </div>
         )}
         {/* Everything the wider search finds has to be fetched, so the section's
             heading already says it; a download mark on every row would only
@@ -397,6 +453,75 @@ const ExplainerButton: React.FunctionComponent<{
   );
 };
 
+/** How the row's hover rule finds the mark it is uncovering. */
+const LOCATION_MARK_CLASS = "font-location-mark";
+
+/**
+ * What the mark says for each place a font can be, in the second person, since
+ * what the user is deciding is whether they can count on this font elsewhere.
+ *
+ * A font fetched for this session is still "on the internet": the browser is
+ * holding a copy until the page reloads, and telling somebody it is on their
+ * computer would be telling them they can use it in another program.
+ */
+function locationMarkFor(font: FontInfo): {
+  Icon: React.FunctionComponent<{
+    size?: number;
+    color?: string;
+    title?: string;
+    className?: string;
+  }>;
+  title: string;
+} {
+  const location =
+    font.location ?? (font.installed === false ? "network" : "installed");
+  switch (location) {
+    case "disk":
+      return {
+        Icon: OnDiskFontIcon,
+        // Deliberately silent on how the app came by the file — shipped with it,
+        // or fetched once and kept. Both are the same fact to the user: it is
+        // here, it works without the network, and it is not a font of theirs.
+        title:
+          "This app has this font. It is on this computer but not installed, so other programs won't offer it.",
+      };
+    case "network":
+      return {
+        Icon: NetworkFontIcon,
+        title: font.installed
+          ? "Fetched from the internet for this visit. It is not saved on this computer."
+          : "This font is on the internet, not on this computer.",
+      };
+    default:
+      return {
+        Icon: InstalledFontIcon,
+        title: "This font is installed on this computer.",
+      };
+  }
+}
+
+const LocationMark: React.FunctionComponent<{
+  font: FontInfo;
+  className?: string;
+}> = ({ font, className }) => {
+  const theme = useTheme();
+  const { Icon, title } = locationMarkFor(font);
+  return (
+    <Tooltip title={title} placement="left">
+      <span
+        className={className}
+        css={css`
+          flex: none;
+          display: inline-flex;
+          color: ${theme.palette.text.secondary};
+        `}
+      >
+        <Icon size={15} title={title} />
+      </span>
+    </Tooltip>
+  );
+};
+
 const FontRow: React.FunctionComponent<{
   font: FontInfo;
   selected: boolean;
@@ -404,9 +529,22 @@ const FontRow: React.FunctionComponent<{
   languageName?: string;
   /** For a section where every font needs fetching and the heading says so. */
   hideDownloadIcon?: boolean;
-}> = ({ font, selected, onSelect, languageName, hideDownloadIcon }) => {
+  /** See FontListProps: what the mark beside a not-yet-here font says, if anything. */
+  network?: NetworkAvailability;
+}> = ({
+  font,
+  selected,
+  onSelect,
+  languageName,
+  hideDownloadIcon,
+  network = "open",
+}) => {
   const theme = useTheme();
   const installed = font.installed !== false;
+  const downloadMarkShows =
+    !installed &&
+    network !== "open" &&
+    (!hideDownloadIcon || network === "offline");
 
   // Only a recommended font has anything to explain, so an ordinary name is
   // handed back untouched rather than given a tooltip repeating itself.
@@ -452,6 +590,17 @@ const FontRow: React.FunctionComponent<{
             ? alpha(theme.palette.primary.main, 0.12)
             : alpha(theme.palette.primary.main, 0.06)};
         }
+
+        /* Held in the layout at all times and only made visible under the
+           pointer, so that arriving at a row doesn't shove its name sideways. */
+        .${LOCATION_MARK_CLASS} {
+          opacity: 0;
+          transition: opacity 120ms;
+        }
+        &:hover .${LOCATION_MARK_CLASS},
+        &:focus-visible .${LOCATION_MARK_CLASS} {
+          opacity: 1;
+        }
       `}
     >
       <StatusIcons font={font} />
@@ -467,11 +616,10 @@ const FontRow: React.FunctionComponent<{
             min-width: 0;
             font-size: 15px;
             font-weight: ${font.supportsLanguage ? 700 : 400};
-            // A font that isn't here yet can't draw its own name, so it borrows the
-            // interface font rather than falling back to something arbitrary.
-            font-family: ${installed
-              ? `"${font.family}"`
-              : theme.typography.fontFamily};
+            // Its own face first — installed, session-downloaded, or the lazy
+            // preview faces useNamePreviewFaces registered — and the interface
+            // font while none of those has it, rather than something arbitrary.
+            font-family: "${font.family}", ${theme.typography.fontFamily};
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -480,14 +628,31 @@ const FontRow: React.FunctionComponent<{
           {font.family}
         </span>
       )}
-      {!installed && !hideDownloadIcon && (
+      {/* The mark matters only where getting the font is something the user has
+          to think about; on an ordinary connection the chooser just fetches, and
+          a symbol on most of the list would be noise. Offline it is not a
+          warning about a cost but about a dead end, so it says so — and it stays
+          on the wider search's rows, where the heading's "these all need
+          fetching" is no longer the point. */}
+      {downloadMarkShows ? (
         <DownloadNeededIcon
           color={theme.palette.secondary.main}
-          title="Needs downloading from the internet"
+          title={
+            network === "offline"
+              ? "Not on this computer, and there is no internet connection to get it"
+              : "Needs downloading from the internet"
+          }
           css={css`
             flex: none;
           `}
         />
+      ) : (
+        /* Where the font's bytes are, on the row under the pointer. Every row
+           has an answer, and answered on every row at once it would be a column
+           of symbols to learn before reading a single name; one at a time it is
+           there for the row you are asking about. Never both marks at once —
+           the download arrow is already saying where this font is. */
+        <LocationMark font={font} className={LOCATION_MARK_CLASS} />
       )}
     </div>
   );

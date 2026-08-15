@@ -9,7 +9,11 @@ import type {
   FontFeatureDefault,
   FontInfo,
   LocalFontFamily,
+  SampleTextProvider,
 } from "@ethnolib/font-core";
+import type { NetworkAvailability } from "./constrainedNetwork";
+
+export type { NetworkAvailability } from "./constrainedNetwork";
 
 export type {
   FontDataResult,
@@ -84,6 +88,19 @@ export interface FontChooserScreenProps {
    * which font inside is the one being asked about.
    */
   getFontData?: (font: string) => Promise<FontDataResult>;
+  /**
+   * How to fetch font files — the preview bytes, the whole font behind "Use this
+   * font", and the HEAD request that asks what a download will cost. Defaults to
+   * the page's own `fetch`.
+   *
+   * A host whose font urls need credentials, a proxy or a timeout supplies its
+   * own here; so does one serving fonts off local disk through a custom protocol,
+   * which is what makes the chooser work with no network at all. Suggestions come
+   * in as props already (`fonts`, `moreFonts`, `fontFeatureDefaults`,
+   * `sampleTextProvider`), so with this set the component fetches nothing the
+   * host hasn't handed it a way to fetch.
+   */
+  fetchImpl?: typeof fetch;
   /** The chosen font family. Pass this to control the choice from outside. */
   selectedFont?: string;
   onSelectedFontChange?: (font: string) => void;
@@ -135,21 +152,28 @@ export interface FontChooserScreenProps {
    */
   onDiagnostic?: (message: string, detail?: unknown) => void;
   /**
-   * That the user's connection is metered, slow, or otherwise not one to spend a
-   * megabyte on unasked.
+   * How much of the network the chooser has, from the host's side.
    *
-   * Normally the chooser fetches a font that isn't on the machine the moment the
-   * user selects it, since the sample, the letter shapes and the coverage all
-   * come out of the file and there is nothing to show without it. Set this and
-   * the fetch waits for an explicit "Preview this font" click instead, with the
-   * download's size beside it.
+   * - **"open"** (the default): a font that isn't on the machine is fetched the
+   *   moment the user selects it, since the sample, the letter shapes and the
+   *   coverage all come out of the file and there is nothing to show without it.
+   * - **"metered"**: the connection is metered, slow, or otherwise not one to
+   *   spend a megabyte on unasked, so that fetch waits for an explicit "Preview
+   *   this font" click with the download's size beside it. Names also stop being
+   *   drawn in their own faces, which is a download of its own.
+   * - **"offline"**: there is no connection. Nothing is fetched and nothing is
+   *   offered — a download button that cannot work is worse than none — so the
+   *   chooser shows what the machine has, marks the rest as unavailable, and
+   *   takes down the wider search.
    *
-   * OR'd with the browser's own signals — the Network Information API's
-   * `saveData` and a slow `effectiveType` — so a host that knows nothing about
-   * the connection still does the right thing for a user with data saver on. It
-   * can turn the behaviour on, not off.
+   * Combined with the browser's own signals (the Network Information API's
+   * `saveData` and a slow `effectiveType`, and `navigator.onLine`) by taking
+   * whichever is more restrictive. So a host that knows nothing about the
+   * connection still does the right thing for a user with data saver on or a
+   * machine that has dropped off the network, and a host that knows better than
+   * the browser is believed. Neither can talk the other into spending more.
    */
-  constrainedNetwork?: boolean;
+  network?: NetworkAvailability;
   /**
    * Fonts the user has settled on before — chosen with "Use this font", kept by
    * the host, and fed back on the next visit. They join the offering above the
@@ -185,9 +209,10 @@ export interface FontChooserScreenProps {
    */
   onSearchMoreFonts?: () => void;
   /**
-   * What the wider search costs before anything arrives — "2.7 MB", usually the
-   * ranking data it has to fetch. Shown on the invitation so a user on a
-   * metered connection can decline it knowingly.
+   * What the wider search costs — "2.7 MB": the catalog it fetches, and the
+   * font files it reads to be sure of what each family really has. Shown on the
+   * invitation only where `constrainedNetwork` says the user is paying for it,
+   * since that is the only place the number is a decision rather than trivia.
    */
   searchMoreFontsCost?: string;
   /** That the wider search is running, so the invitation shows it working. */
@@ -253,6 +278,23 @@ export interface FontChooserScreenProps {
    * script subtag; without this a script-less tag is read as Latin.
    */
   languageScript?: string;
+  /**
+   * Where the sample passage comes from. Left out, the chooser asks Google Fonts
+   * language data over the network (`createGflanguagesSampleTextProvider` in
+   * `@ethnolib/font-core`), which is the right default for a host with a
+   * connection and useless to one without: a machine that has never been online
+   * has nothing to fall back on but text invented from the alphabet.
+   *
+   * So a host that ships sample text with it — a bundled copy of the same data,
+   * its own translations, whatever it has — supplies a provider here and the
+   * chooser asks that instead, network or no network. The contract is
+   * `SampleTextProvider`'s: undefined for a language it definitely has nothing
+   * for, a throw for a lookup that failed, and an abort passed back untouched.
+   *
+   * `languageScript` reaches a provider of the host's only if the host's provider
+   * reads it — the tag is all the chooser passes on.
+   */
+  sampleTextProvider?: SampleTextProvider;
   /**
    * The sample paragraph as the user has rewritten it, for a host that keeps their
    * version. Pass back whatever `onCustomSampleTextChange` last gave you and the
