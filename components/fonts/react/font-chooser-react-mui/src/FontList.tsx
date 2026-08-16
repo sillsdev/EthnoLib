@@ -27,6 +27,7 @@ import {
 import { scrollbarCss } from "./scrollbarStyle";
 import type { NetworkAvailability } from "./constrainedNetwork";
 import { useNamePreviewFaces } from "./useNamePreviewFaces";
+import { AddFontFromUrlDialog } from "./AddFontFromUrlDialog";
 
 export interface FontListProps {
   /** The fonts to offer, in the order they should appear. */
@@ -73,6 +74,13 @@ export interface FontListProps {
    * cannot be answered.
    */
   network?: NetworkAvailability;
+  /**
+   * How to add the font a fonts.google.com address names. While this is set the
+   * foot of the open list carries an "Add from URL…" button; clicking it opens a
+   * small dialog, and this is what its "Add" does. Rejecting shows the reason in
+   * the dialog and leaves it open, so a mistyped address can be corrected.
+   */
+  onAddFontFromUrl?: (url: string) => Promise<void>;
   className?: string;
 }
 
@@ -107,10 +115,12 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
   searchingMoreFonts,
   moreFontsExplanation,
   network = "open",
+  onAddFontFromUrl,
   className,
 }) => {
   const theme = useTheme();
   const [showClosed, setShowClosed] = useState(false);
+  const [addingFromUrl, setAddingFromUrl] = useState(false);
 
   // Every name the list might draw, registered for the browser's lazy loading
   // so it can appear in its own face; see the hook for why this is cheap and
@@ -313,7 +323,53 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
             No further fonts found.
           </div>
         )}
+        {/* Last of all, under everything the chooser thought of by itself: the
+            font the user already has in mind. Offline it stays where it is,
+            disabled and saying why, for the same reason the wider search does —
+            a control that vanishes reads as one the user imagined. */}
+        {onAddFontFromUrl && (
+          <div
+            css={css`
+              padding: 8px 12px;
+            `}
+          >
+            <Tooltip
+              title={
+                network === "offline"
+                  ? "No internet connection, so there is no way to fetch a font from the web."
+                  : ""
+              }
+            >
+              <span>
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => setAddingFromUrl(true)}
+                  disabled={network === "offline"}
+                  startIcon={
+                    network === "offline" ? <WifiOffIcon size={14} /> : undefined
+                  }
+                  css={css`
+                    margin-left: -5px;
+                  `}
+                >
+                  Add from URL…
+                </Button>
+              </span>
+            </Tooltip>
+          </div>
+        )}
       </div>
+      {onAddFontFromUrl && addingFromUrl && (
+        <AddFontFromUrlDialog
+          open
+          onCancel={() => setAddingFromUrl(false)}
+          onAdd={async (url) => {
+            await onAddFontFromUrl(url);
+            setAddingFromUrl(false);
+          }}
+        />
+      )}
 
       {closedFonts.length > 0 && (
         <div

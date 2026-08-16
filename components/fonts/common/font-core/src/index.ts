@@ -96,6 +96,11 @@ export {
   notoOnly,
 } from "./googleFonts";
 export type { GoogleFontsOptions } from "./googleFonts";
+export {
+  TOFU_FONT_FAMILY,
+  ensureTofuFontLoaded,
+  fontFamilyWithTofu,
+} from "./tofuFont";
 export { fetchFontFileSize } from "./fontFileSize";
 export type { FontFileSizeOptions } from "./fontFileSize";
 export type {
@@ -117,6 +122,11 @@ export type {
   FullFontUrlResolver,
   GoogleFontsFullFontResolverConfig,
 } from "./suggestions/googleFontsRepo";
+export {
+  createGoogleFontsUrlFontResolver,
+  parseGoogleFontsFamily,
+} from "./suggestions/googleFontsUrl";
+export type { GoogleFontsUrlConfig } from "./suggestions/googleFontsUrl";
 export { createLanguageFontFinderSuggester } from "./suggestions/languageFontFinder";
 export type { LanguageFontFinderConfig } from "./suggestions/languageFontFinder";
 export { createSldrAlphabetProvider } from "./suggestions/sldrAlphabet";

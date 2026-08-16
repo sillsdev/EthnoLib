@@ -33,10 +33,12 @@ import {
   LocalFontFamily,
   coversAlphabet,
   declaredScanOf,
+  ensureTofuFontLoaded,
   fetchFontFileSize,
   hasDeclaredLicense,
   mergeCoverageRanges,
   createGflanguagesSampleTextProvider,
+  createGoogleFontsUrlFontResolver,
   isLocalFontAccessSupported,
   loadLocalFontDataByFamilyWithName,
   parseAlphabet,
@@ -65,7 +67,11 @@ import { shouldOfferLocalFontListing } from "./localFontListing";
 import { downloadPolicy, useNetworkAvailability } from "./constrainedNetwork";
 import { customSampleSurvivesLanguageChange } from "./sampleText";
 import { useFontDownloads } from "./useFontDownloads";
-import type { FontChooserScreenProps, ReportDiagnostic } from "./types";
+import type {
+  FontChooserScreenProps,
+  FontInfo,
+  ReportDiagnostic,
+} from "./types";
 
 /**
  * The whole font-choosing screen: the fonts on one side, and on the other what the
@@ -102,6 +108,7 @@ export const FontChooserScreen: React.FunctionComponent<
   searchMoreFontsCost,
   searchingMoreFonts,
   moreFontsExplanation,
+  addFontFromUrl,
   onCancel,
   getFullFontUrl,
   onFontSelected,
@@ -137,6 +144,14 @@ export const FontChooserScreen: React.FunctionComponent<
     (input, init) => (fetchImplRef.current ?? fetch)(input, init),
     []
   );
+
+  // The samples and the shape tiles all draw the chosen font backed by tofu, so
+  // that a letter the font hasn't got shows as a box instead of being borrowed
+  // from somewhere else; see fontFamilyWithTofu. This is the face itself
+  // arriving, once for the page.
+  useEffect(() => {
+    void ensureTofuFontLoaded();
+  }, []);
 
   const [local, setLocal] = useState<LocalFontFamily[]>([]);
   const [listing, setListing] = useState(false);
@@ -330,12 +345,40 @@ export const FontChooserScreen: React.FunctionComponent<
     ReadonlySet<string>
   >(new Set());
 
+  // Fonts the user named themselves by pasting an address (see
+  // `addFontFromUrl`). They live for the visit: the chooser is not a place
+  // where a font list is edited, and a host that wants one of these to last
+  // hears about it through `onFontSelected` like any other choice.
+  const [addedFonts, setAddedFonts] = useState<FontInfo[]>([]);
+  const addFromUrl = useMemo(
+    () => addFontFromUrl ?? createGoogleFontsUrlFontResolver(),
+    [addFontFromUrl]
+  );
+  const handleAddFromUrl = async (url: string) => {
+    const found = await addFromUrl(url, { fetchImpl: fetchFile });
+    diagnose(`added ${found.family} from a url`, () => ({ url, font: found }));
+    setAddedFonts((previous) => [
+      ...previous.filter(
+        (font) => font.family.toLowerCase() !== found.family.toLowerCase()
+      ),
+      found,
+    ]);
+    // The whole point of the click: the font the user went and found is the one
+    // they want to look at.
+    select(found.family);
+  };
+
   // Fonts chosen on earlier visits count as suggestions of the host's own —
   // ahead of the catalog in the array so that where both name a family, the
-  // catalog's fields (its reasons, its urls) win the merge.
+  // catalog's fields (its reasons, its urls) win the merge. A font the user
+  // pasted in comes last, and so wins outright: they said this address, and an
+  // older entry's idea of where the file lives must not shadow it.
   const catalog = useMemo(
-    () => (recentFonts?.length ? [...recentFonts, ...(fonts ?? [])] : fonts),
-    [recentFonts, fonts]
+    () =>
+      recentFonts?.length || addedFonts.length
+        ? [...(recentFonts ?? []), ...(fonts ?? []), ...addedFonts]
+        : fonts,
+    [recentFonts, fonts, addedFonts]
   );
 
   const merged = useMemo(
@@ -1001,6 +1044,7 @@ export const FontChooserScreen: React.FunctionComponent<
             searchingMoreFonts={searchingMoreFonts}
             moreFontsExplanation={moreFontsExplanation}
             network={network}
+            onAddFontFromUrl={handleAddFromUrl}
             notice={
               offerListing ? (
                 <LocalFontsPrompt

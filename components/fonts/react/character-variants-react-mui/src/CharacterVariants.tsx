@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { Alert, LinearProgress, useTheme } from "@mui/material";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AlphabetField } from "./AlphabetField";
 import {
   CharacterVariantChoices,
@@ -11,6 +11,7 @@ import { FontChooser } from "./FontChooser";
 import type { ShapeInfo } from "./ShapeInfoLine";
 import {
   charactersWithVariants,
+  ensureTofuFontLoaded,
   FontDataResult,
   loadLocalFontDataByFamilyWithName,
   readCharacterVariants,
@@ -86,6 +87,11 @@ export const CharacterVariants: React.FunctionComponent<
   className,
 }) => {
   const theme = useTheme();
+  // Everything below draws the alphabet in the chosen font backed by tofu, so
+  // the tofu has to be with the browser; see fontFamilyWithTofu.
+  useEffect(() => {
+    void ensureTofuFontLoaded();
+  }, []);
   const { fontData, postscriptName, loading, error, retry } = useFontData(
     font,
     getFontData

@@ -2,6 +2,7 @@
 import { css } from "@emotion/react";
 import { alpha, ButtonBase, useTheme } from "@mui/material";
 import React from "react";
+import { fontFamilyWithTofu } from "@ethnolib/font-core";
 import type { ShapeInfo } from "./ShapeInfoLine";
 
 export interface FormTileProps {
@@ -179,7 +180,7 @@ export const FormTile: React.FunctionComponent<FormTileProps> = ({
           </span>
           <span
             css={css`
-              font-family: "${fontFamily}";
+              font-family: ${fontFamilyWithTofu(fontFamily)};
               font-size: ${fontSize}px;
               line-height: 1.05;
               color: ${theme.palette.text.primary};

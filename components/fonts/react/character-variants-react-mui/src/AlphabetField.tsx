@@ -2,6 +2,7 @@
 import { css } from "@emotion/react";
 import { TextField, useTheme } from "@mui/material";
 import React, { useState } from "react";
+import { fontFamilyWithTofu } from "@ethnolib/font-core";
 
 export interface AlphabetFieldProps {
   value: string;
@@ -60,7 +61,9 @@ export const AlphabetField: React.FunctionComponent<AlphabetFieldProps> = ({
     !focused && !!marked && [...value].some((c) => marked.has(c));
 
   const textStyle = css`
-    font-family: ${fontFamily ? `"${fontFamily}"` : "inherit"};
+    /* The font, then tofu: a letter of their alphabet the font hasn't got must
+       show as a box here of all places. */
+    font-family: ${fontFamilyWithTofu(fontFamily)};
     font-size: 1rem;
     letter-spacing: inherit;
     line-height: ${INPUT_LINE_HEIGHT};
@@ -90,7 +93,7 @@ export const AlphabetField: React.FunctionComponent<AlphabetFieldProps> = ({
         inputProps={{
           // Seeing the alphabet in the font is half the point of typing it here.
           style: {
-            fontFamily: fontFamily ? `"${fontFamily}"` : undefined,
+            fontFamily: fontFamily ? fontFamilyWithTofu(fontFamily) : undefined,
             // Hide the input's own text under the layer that can mark it up, but
             // only once there is something to mark.
             color: anyMarked ? "transparent" : undefined,

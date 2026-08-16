@@ -226,6 +226,22 @@ export interface FontChooserScreenProps {
    * say what the ranking is.
    */
   moreFontsExplanation?: ReactNode;
+  /**
+   * How to turn an address the user pasted into a font to add — the "Add from
+   * URL…" button at the foot of the list. Defaults to reading a
+   * fonts.google.com specimen address and finding that family's file in the
+   * google/fonts repository (`createGoogleFontsUrlFontResolver` in
+   * `@ethnolib/font-core`), which needs no API key.
+   *
+   * A host whose users get their fonts from somewhere else supplies its own,
+   * and throws — with a sentence worth showing — for an address it can't use.
+   * The chooser adds whatever comes back to its own list, above the divider,
+   * and selects it.
+   */
+  addFontFromUrl?: (
+    url: string,
+    options?: { fetchImpl?: typeof fetch; signal?: AbortSignal }
+  ) => Promise<FontInfo>;
   onCancel?: () => void;
   /**
    * Where to find the *complete* font file for a catalog entry whose `fileUrl`

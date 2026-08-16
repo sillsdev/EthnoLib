@@ -21,6 +21,7 @@ import {
 import {
   DIGITS,
   filterVariantsForAlphabet,
+  fontFamilyWithTofu,
   mergeCoverageRanges,
   parseAlphabet,
   readCharacterVariants,
@@ -540,15 +541,15 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
               {/*
                 The alphabet is shown so the user can judge the font's own
                 rendering of it. Until the font is on the machine there is
-                nothing to judge — the browser would set it in whatever it
-                falls back to — so the letters stay out of the way.
+                nothing to judge — with nothing to draw from, every letter
+                would come out as tofu — so they stay out of the way.
               */}
               {installed && (
                 <>
                   <br />
                   <span
                     css={css`
-                      font-family: "${font.family}";
+                      font-family: ${fontFamilyWithTofu(font.family)};
                       font-size: 20px;
                       letter-spacing: 0.8px;
                     `}
