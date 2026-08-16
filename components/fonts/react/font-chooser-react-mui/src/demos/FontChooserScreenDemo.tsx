@@ -543,6 +543,12 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
     "fontChooserDemo.hostBundledFonts",
     true
   );
+  // The load timings and the diagnostic log are for whoever is working on the
+  // chooser, and to anyone else they read as the demo's own noise. Off unless
+  // asked for; remembered, so a developer sets it once.
+  const [developerMode, setDeveloperMode] = useRememberedBoolean(
+    "fontChooserDemo.developerMode"
+  );
   // The bundle itself, read from the manifest the fetch script writes. Empty
   // until it arrives and empty whenever the switch is off, which is what the
   // font access below takes for "this app ships no fonts".
@@ -749,18 +755,7 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
                 color: ${theme.palette.text.secondary};
               `}
             >
-              Component Test Harness
-            </Typography>
-            <Typography
-              variant="caption"
-              css={css`
-                display: block;
-                margin-bottom: 16px;
-                color: ${theme.palette.text.secondary};
-              `}
-            >
-              Host app supplies the language and (optionally) the alphabet; the
-              dialog below is the @ethnolib/font-chooser-react-mui component.
+              Font Chooser Demo
             </Typography>
 
             <div
@@ -768,18 +763,24 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                margin-bottom: 12px;
+                margin: 16px 0 12px;
               `}
             >
-              <Typography variant="body1">
+              <Typography
+                variant="body1"
+                css={css`
+                  font-weight: 600;
+                `}
+              >
                 {languageName || "No language chosen"}
               </Typography>
               <Button
-                variant="outlined"
+                variant="contained"
                 size="small"
+                disableElevation
                 onClick={() => setChoosingLanguage(true)}
               >
-                Choose…
+                Choose Language
               </Button>
             </div>
 
@@ -872,7 +873,7 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
                       color: ${theme.palette.text.secondary};
                     `}
                   >
-                    Connection:
+                    Simulate Connection:
                   </Typography>
                   <ToggleButtonGroup
                     size="small"
@@ -973,6 +974,24 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
                     label="Provide minimum font bundle"
                   />
                 </MenuItem>
+                <MenuItem
+                  disableRipple
+                  onClick={() => setDeveloperMode(!developerMode)}
+                >
+                  <FormControlLabel
+                    css={switchLabelCss}
+                    control={
+                      <Switch
+                        size="small"
+                        checked={developerMode}
+                        onChange={(_, next) => setDeveloperMode(next)}
+                      />
+                    }
+                    onClick={(event) => event.stopPropagation()}
+                    title="Show the load timings and the diagnostic log"
+                    label="Developer mode"
+                  />
+                </MenuItem>
                 <Divider />
                 {/* What the app has kept from earlier visits, and the way back to
                     a host that has kept nothing. Shown only when there is
@@ -1022,53 +1041,58 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
               </Menu>
             </div>
 
-            <LoadTimings
-              timings={timings}
-              broadSearchState={broadSearchState}
-              network={network}
-            />
+            {/* Developer-facing only: see the switch in the options menu. */}
+            {developerMode && (
+              <>
+                <LoadTimings
+                  timings={timings}
+                  broadSearchState={broadSearchState}
+                  network={network}
+                />
 
-            <Accordion
-              disableGutters
-              elevation={0}
-              css={css`
-                background-color: transparent;
-                &::before {
-                  display: none;
-                }
-              `}
-            >
-              <AccordionSummary
-                expandIcon={<span aria-hidden>▾</span>}
-                css={css`
-                  min-height: 0;
-                  padding: 0;
-                  flex-direction: row-reverse;
-                  gap: 6px;
-                  justify-content: flex-start;
-                  & .MuiAccordionSummary-content {
-                    flex-grow: 0;
-                    margin: 6px 0;
-                  }
-                `}
-              >
-                <Typography
-                  variant="caption"
+                <Accordion
+                  disableGutters
+                  elevation={0}
                   css={css`
-                    color: ${theme.palette.text.secondary};
+                    background-color: transparent;
+                    &::before {
+                      display: none;
+                    }
                   `}
                 >
-                  Log
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails
-                css={css`
-                  padding: 0 0 2px;
-                `}
-              >
-                <EventLog lines={log} />
-              </AccordionDetails>
-            </Accordion>
+                  <AccordionSummary
+                    expandIcon={<span aria-hidden>▾</span>}
+                    css={css`
+                      min-height: 0;
+                      padding: 0;
+                      flex-direction: row-reverse;
+                      gap: 6px;
+                      justify-content: flex-start;
+                      & .MuiAccordionSummary-content {
+                        flex-grow: 0;
+                        margin: 6px 0;
+                      }
+                    `}
+                  >
+                    <Typography
+                      variant="caption"
+                      css={css`
+                        color: ${theme.palette.text.secondary};
+                      `}
+                    >
+                      Log
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails
+                    css={css`
+                      padding: 0 0 2px;
+                    `}
+                  >
+                    <EventLog lines={log} />
+                  </AccordionDetails>
+                </Accordion>
+              </>
+            )}
           </Paper>
 
           {/* The chooser draws its own white card; lifting it onto an elevated,

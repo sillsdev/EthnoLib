@@ -158,6 +158,3 @@ locales/*/messages.ts
 # See components/fonts/react/font-chooser-react-mui/public/fonts/README.md
 components/fonts/react/font-chooser-react-mui/public/fonts/*.ttf
 components/fonts/react/font-chooser-react-mui/public/fonts/bundleManifest.json
-# except the original two, tracked since before the bundle was fetched
-!components/fonts/react/font-chooser-react-mui/public/fonts/Andika-Regular.ttf
-!components/fonts/react/font-chooser-react-mui/public/fonts/NotoSansThai-Regular.ttf

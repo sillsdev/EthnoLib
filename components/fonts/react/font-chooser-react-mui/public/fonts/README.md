@@ -28,10 +28,14 @@ reads only that manifest, so the list of families is the script's array and
 nothing else.
 
 The fetched `.ttf` files and `bundleManifest.json` are gitignored, so a fresh
-checkout does not have them: run `npm run fetch-fonts` once before the bundle
-shows up in the demo. Two faces are the exception, `Andika-Regular.ttf` and
-`NotoSansThai-Regular.ttf`, committed from when those two were the whole bundle
-and still tracked so a checkout is not left with nothing.
+checkout has no bundle at all: run `npm run fetch-fonts` once, or the demo's
+bundled-font switch reports that the manifest is missing. It is all 26 families
+or none, never a subset — the demo reads the manifest and nothing else, so a
+font file with no manifest entry beside it is invisible.
+
+That includes deploys, which are built from this working tree rather than from
+git: run the fetch before `vite build --config vite.demo.config.ts`, or the
+published site ships a demo with no fonts in it.
 
 `bundleManifest.json` is generated. Edit the script and re-run it; the result
 stays local.
