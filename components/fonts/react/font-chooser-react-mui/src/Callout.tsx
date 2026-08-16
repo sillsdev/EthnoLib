@@ -4,6 +4,7 @@ import { alpha, useTheme } from "@mui/material";
 import React from "react";
 import {
   AlertCircleIcon,
+  AlertTriangleIcon,
   InfoCircleIcon,
   OpenSourceIcon,
   UnknownRulesIcon,
@@ -115,10 +116,15 @@ function useCalloutLook(variant: CalloutVariant): {
         background: "#EAF3EA",
         icon: <OpenSourceIcon />,
       };
+    // Red, and a triangle. A licence with limits on it is not a shading of
+    // "fine" — the user may not publish what they are about to make — so the
+    // amber it used to wear undersold it. The triangle keeps it apart from
+    // "error" below, which is the same red for a font that may not travel at
+    // all.
     case "warn":
       return {
-        background: alpha(theme.palette.warning.main, 0.14),
-        icon: <AlertCircleIcon color={theme.palette.warning.main} />,
+        background: alpha(theme.palette.error.main, 0.12),
+        icon: <AlertTriangleIcon color={theme.palette.error.main} />,
       };
     case "error":
       return {

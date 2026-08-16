@@ -28,6 +28,8 @@ export type {
   FontLicenseHints,
   FontLicenseVerdict,
 } from "./fontLicense";
+export { readFontCredits, creditsFromNames } from "./fontCredits";
+export type { FontCredits } from "./fontCredits";
 export {
   defaultLicenseCacheStorage,
   licenseCacheKey,
@@ -64,14 +66,23 @@ export {
 export type { LocalFontFamily } from "./localFonts";
 export {
   fontBlobHasCharacterVariants,
+  readLicenseHintsFromBlob,
   scanFamiliesForLicense,
   scanFamiliesForCharacterVariants,
+  hasDeclaredLicense,
+  hasDeclaredDetails,
+  declaredScanOf,
 } from "./scanForCharacterVariants";
 export type {
   FamilyLicense,
   FamilyScan,
   ScanOptions,
 } from "./scanForCharacterVariants";
+export { serializeFamilyFacts, parseFamilyFacts } from "./declaredFamilyFacts";
+export type {
+  DeclaredFamilyFacts,
+  SerializedFamilyFacts,
+} from "./declaredFamilyFacts";
 export {
   readCoverageRanges,
   coversCodePoint,

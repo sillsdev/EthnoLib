@@ -25,11 +25,8 @@ import {
   readNameTable,
 } from "./readCharacterVariants";
 import { readCoverageRanges } from "./fontCoverage";
-import {
-  FontLicenseCategory,
-  FontLicenseHints,
-  describeLicense,
-} from "./fontLicense";
+import type { DeclaredFamilyFacts, FamilyLicense } from "./declaredFamilyFacts";
+import { FontLicenseHints, describeLicense } from "./fontLicense";
 import { readRange, readTableOffsets, tagAt } from "./sfntBlob";
 
 /**
@@ -98,24 +95,7 @@ export async function readLicenseHintsFromBlob(
   };
 }
 
-/** What one font family's own tables say about using it. */
-export interface FamilyLicense {
-  /**
-   * What the font's own tables suggest about using it. A hint only, and absent
-   * when we couldn't read it; see fontLicense.ts. Anything the host app knows
-   * about the font outranks this.
-   */
-  license?: FontLicenseCategory;
-  /** Where the font says its licence lives (`name` ID 14), if it says. */
-  licenseUrl?: string;
-  /**
-   * Which rule in `describeLicense` produced that verdict — "Open Font License",
-   * "Microsoft font", "no reliable information". A short phrase, not the font's
-   * licence text: it is what we can show a user who asks why we said what we
-   * said, and it is small enough to cache, which the licence text is not.
-   */
-  licenseReason?: string;
-}
+export type { FamilyLicense } from "./declaredFamilyFacts";
 
 /** What the sweep found out about one font family. */
 export interface FamilyScan extends FamilyLicense {
@@ -146,13 +126,19 @@ export interface ScanOptions {
  * worth asking the expensive ones about, so a caller that means to defer work runs
  * this over everything first and `scanFamiliesForCharacterVariants` over the subset
  * it settles on.
+ *
+ * A family whose host declared a licence is reported from that and never read.
  */
 export async function scanFamiliesForLicense(
   families: LocalFontFamily[],
   onResult: (family: string, found: FamilyLicense) => void,
   options: ScanOptions = {}
 ): Promise<void> {
-  await eachFamily(families, options, async ({ family, postscriptName }) => {
+  await eachFamily(families, options, async (listed) => {
+    const { family, postscriptName, declared } = listed;
+    if (hasDeclaredLicense(listed)) {
+      return () => onResult(family, declaredLicenseOf(declared));
+    }
     let found: FamilyLicense = {};
     try {
       const blob = await loadLocalFontBlob(postscriptName);
@@ -177,6 +163,11 @@ export async function scanFamiliesForLicense(
  * Pass `readLicense: false` where the licence is already in hand (from
  * `scanFamiliesForLicense`, or from a cache): the results then leave `license` and
  * `licenseUrl` undefined rather than saying the font declares nothing.
+ *
+ * Whatever the host declared about a family is used as it stands, and only what
+ * is left over is read. A family that declared coverage and variants both costs
+ * no file access at all — the point of `declared`, since the host's own bundle is
+ * every font in the list on an app's first run.
  */
 export async function scanFamiliesForCharacterVariants(
   families: LocalFontFamily[],
@@ -185,28 +176,89 @@ export async function scanFamiliesForCharacterVariants(
 ): Promise<void> {
   const { readLicense = true } = options;
 
-  await eachFamily(families, options, async ({ family, postscriptName }) => {
-    let variants: CharacterVariant[] = [];
-    let coverage = new Uint32Array();
-    let license: FamilyLicense = {};
-    try {
-      // The blob is the whole file, which for a collection holds other families
-      // too, so every read of it has to say which face we asked for.
-      const blob = await loadLocalFontBlob(postscriptName);
-      coverage = await readCoverageRanges(blob, postscriptName);
-      if (readLicense) license = await readFamilyLicense(blob, postscriptName);
-      if (await fontBlobHasCharacterVariants(blob, postscriptName)) {
-        variants = readCharacterVariants(
-          await blob.arrayBuffer(),
-          postscriptName
-        );
+  await eachFamily(families, options, async (listed) => {
+    const { family, postscriptName, declared } = listed;
+    const wantLicense = readLicense && !hasDeclaredLicense(listed);
+    const wantCoverage = declared?.coverage === undefined;
+    // An empty declared array says the family offers no letter shapes, which is
+    // an answer; only `undefined` means nobody has looked.
+    const wantVariants = declared?.variants === undefined;
+
+    let variants: CharacterVariant[] = declared?.variants ?? [];
+    let coverage = declared?.coverage ?? new Uint32Array();
+    let license: FamilyLicense = readLicense ? declaredLicenseOf(declared) : {};
+
+    if (wantLicense || wantCoverage || wantVariants) {
+      try {
+        // The blob is the whole file, which for a collection holds other families
+        // too, so every read of it has to say which face we asked for.
+        const blob = await loadLocalFontBlob(postscriptName);
+        if (wantCoverage)
+          coverage = await readCoverageRanges(blob, postscriptName);
+        if (wantLicense)
+          license = await readFamilyLicense(blob, postscriptName);
+        if (
+          wantVariants &&
+          (await fontBlobHasCharacterVariants(blob, postscriptName))
+        ) {
+          variants = readCharacterVariants(
+            await blob.arrayBuffer(),
+            postscriptName
+          );
+        }
+      } catch {
+        // A font we can't read is a font we can't recommend.
       }
-    } catch {
-      // A font we can't read is a font we can't recommend.
     }
+
     return () =>
       onResult(family, { variants, coverage, detailsRead: true, ...license });
   });
+}
+
+/** Whether the host has said what this family's licence is. */
+export function hasDeclaredLicense(family: LocalFontFamily): boolean {
+  return family.declared?.license !== undefined;
+}
+
+/**
+ * Whether the host has said everything the expensive pass would go and read, so
+ * that running it over this family would touch no bytes and change nothing.
+ */
+export function hasDeclaredDetails(family: LocalFontFamily): boolean {
+  return (
+    family.declared?.coverage !== undefined &&
+    family.declared?.variants !== undefined
+  );
+}
+
+/**
+ * What the host declared, as a scan result, for a caller that wants to show it
+ * without waiting for a sweep to hand it back. Undefined where nothing at all
+ * was declared.
+ */
+export function declaredScanOf(
+  family: LocalFontFamily
+): Partial<FamilyScan> | undefined {
+  const declared = family.declared;
+  if (!declared) return undefined;
+  const found: Partial<FamilyScan> = declaredLicenseOf(declared);
+  if (hasDeclaredDetails(family)) {
+    found.coverage = declared.coverage;
+    found.variants = declared.variants;
+    found.detailsRead = true;
+  }
+  return Object.keys(found).length > 0 ? found : undefined;
+}
+
+/** The licence half of a declaration, with nothing invented for what it omits. */
+function declaredLicenseOf(declared?: DeclaredFamilyFacts): FamilyLicense {
+  if (declared?.license === undefined) return {};
+  return {
+    license: declared.license,
+    licenseUrl: declared.licenseUrl,
+    licenseReason: declared.licenseReason,
+  };
 }
 
 /** The licence of one font, or nothing claimed if it won't parse. */

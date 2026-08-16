@@ -33,7 +33,7 @@ Doulos, Gentium, Andika) also serves its siblings, whose `cvNN` numbering is ver
 identical. Fonts the SLDR names get a "recommended for this language" mark in the list.
 
 Pass `languageName` and the chooser names the language wherever it would otherwise say
-"your language" — "Supports Fulfulde", "Recommended for Fulfulde". Without it those lines
+"your language" — "Known to support Fulfulde", "Recommended for Fulfulde". Without it those lines
 keep the old wording, so it is optional for a host that only has a tag.
 
 Switching fonts now derives each row afresh (remembered fact, else SLDR default, else

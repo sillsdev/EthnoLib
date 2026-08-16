@@ -12,6 +12,7 @@
  */
 
 import type { FontLocation } from "./fontInfo";
+import type { DeclaredFamilyFacts } from "./declaredFamilyFacts";
 
 interface FontData {
   postscriptName: string;
@@ -43,6 +44,13 @@ export interface LocalFontFamily {
    * Font Access API lists and what a host that doesn't think about it means.
    */
   location?: FontLocation;
+  /**
+   * What the host already knows about the file it ships under this name, so we
+   * need not read the bytes to find out. Outranks anything read from them; see
+   * declaredFamilyFacts.ts. Absent for a font installed on the machine, where
+   * the file is all there is to go on.
+   */
+  declared?: DeclaredFamilyFacts;
 }
 
 export function isLocalFontAccessSupported(): boolean {

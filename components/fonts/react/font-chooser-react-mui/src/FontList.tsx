@@ -14,6 +14,7 @@ import React, { useEffect, useRef, useState } from "react";
 import type { FontInfo } from "./types";
 import {
   AlertCircleIcon,
+  AlertTriangleIcon,
   ChevronIcon,
   DownloadNeededIcon,
   InfoCircleIcon,
@@ -45,8 +46,13 @@ export interface FontListProps {
    * starts.
    */
   onClosedFontsOpenChange?: (open: boolean) => void;
-  /** Pinned above the list, for anything that has to stay in view as it scrolls. */
-  header?: React.ReactNode;
+  /**
+   * What the list has to say about itself — that fonts are still arriving, that
+   * the machine's own have not been asked for yet. It goes under the fonts, not
+   * over them: the fonts are what the user came for, and a notice above them
+   * pushes the first row down the moment it appears and back up when it goes.
+   */
+  notice?: React.ReactNode;
   /**
    * See FontChooserScreenProps: the wider search's own section, below a
    * divider at the foot of the open list, in the order given.
@@ -94,7 +100,7 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
   onSelect,
   languageName,
   onClosedFontsOpenChange,
-  header,
+  notice,
   moreFonts,
   onSearchMoreFonts,
   searchMoreFontsCost,
@@ -184,23 +190,13 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
         overflow: hidden;
       `}
     >
-      {header && (
-        <div
-          css={css`
-            flex: none;
-            border-bottom: 1px solid ${theme.palette.divider};
-          `}
-        >
-          {header}
-        </div>
-      )}
       <div
         ref={rowsRef}
         css={[
           css`
             flex: 1;
-            /* The rows are what scrolls; the prompt above and the closed-fonts
-               disclosure below stay where they are. */
+            /* The rows are what scrolls; the closed-fonts disclosure below stays
+               where it is. */
             min-height: 0;
             overflow-y: auto;
             padding: 6px 0;
@@ -209,6 +205,7 @@ export const FontList: React.FunctionComponent<FontListProps> = ({
         ]}
       >
         {fonts.map((font) => row(font))}
+        {notice}
         {/* The wider search is the list's second section, reached the way a
             reader reaches the end of what is on offer: a rule, then the section's
             name, then the invitation to fill it, then whatever the search found.
@@ -482,20 +479,26 @@ function locationMarkFor(font: FontInfo): {
         // Deliberately silent on how the app came by the file — shipped with it,
         // or fetched once and kept. Both are the same fact to the user: it is
         // here, it works without the network, and it is not a font of theirs.
-        title:
-          "This app has this font. It is on this computer but not installed, so other programs won't offer it.",
+        //
+        // Silent, too, on the font not being installed, which is where this used
+        // to run to two sentences. That other programs on the machine won't
+        // offer the font is true and is nobody's question at the moment they
+        // hover an icon in a font list.
+        title: "Comes with this app",
       };
     case "network":
       return {
         Icon: NetworkFontIcon,
-        title: font.installed
-          ? "Fetched from the internet for this visit. It is not saved on this computer."
-          : "This font is on the internet, not on this computer.",
+        // One line for both halves of "network". Whether the font has already
+        // been pulled down for this visit or hasn't been touched yet is a
+        // distinction the chooser cares about and the reader doesn't: either
+        // way the font lives on the internet and needs a connection.
+        title: "Available from internet",
       };
     default:
       return {
         Icon: InstalledFontIcon,
-        title: "This font is installed on this computer.",
+        title: "Installed on this computer",
       };
   }
 }
@@ -670,9 +673,9 @@ const StatusIcons: React.FunctionComponent<{ font: FontInfo }> = ({ font }) => {
       `}
     >
       {font.license === "limits-apply" && (
-        <AlertCircleIcon
-          color={theme.palette.warning.main}
-          title="Limits apply — read the license"
+        <AlertTriangleIcon
+          color={theme.palette.error.main}
+          title="You may print with this font, but not publish with it"
         />
       )}
       {font.license === "unknown" && (

@@ -13,8 +13,20 @@ export interface LocalFontListingState {
   supported: boolean;
   /** Whether the host passed a `getLocalFonts` of its own, which needs no permission. */
   hostSupplies: boolean;
-  /** How many families we have listed from the machine so far. */
+  /** How many families we have listed by any route so far. */
   localCount: number;
+  /**
+   * How many of those are the machine's own installed fonts, rather than files
+   * the host app supplied out of its own storage (`location: "disk"`).
+   *
+   * The two are not the same count, and taking them for the same is what hid the
+   * prompt from a host that ships font files: its bundle listed twenty families
+   * the moment the screen opened, the list was no longer empty, and the button
+   * that asks for permission to read the *machine's* fonts never appeared — so
+   * on a profile that had not already granted it, the user's own fonts could
+   * never be listed at all.
+   */
+  machineCount: number;
   /** Whether a listing attempt is in flight. */
   listing: boolean;
 }
@@ -28,8 +40,14 @@ export function shouldOfferLocalFontListing({
   supported,
   hostSupplies,
   localCount,
+  machineCount,
   listing,
 }: LocalFontListingState): boolean {
-  if (localCount > 0 || listing) return false;
-  return supported || hostSupplies;
+  if (listing) return false;
+  // Where the browser can read installed fonts, the prompt is about those and
+  // only those: whatever else is on the list, none of it is the user's fonts.
+  if (supported) return machineCount === 0;
+  // Without the API the host's list is the only list there is, so anything on
+  // it means the question has been answered.
+  return hostSupplies && localCount === 0;
 }

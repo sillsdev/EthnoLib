@@ -16,6 +16,7 @@ import type { NetworkAvailability } from "./constrainedNetwork";
 export type { NetworkAvailability } from "./constrainedNetwork";
 
 export type {
+  FontCredits,
   FontDataResult,
   FontInfo,
   FontLicenseCategory,
@@ -266,7 +267,7 @@ export interface FontChooserScreenProps {
    * "Fulfulde", not "fuv". The chooser says it where it would otherwise have to
    * write "your language", which is vaguer than the host needs to be: the host
    * knows which language the user is setting a font for, and naming it is what
-   * makes "Supports Fulfulde" a claim rather than a slogan.
+   * makes "Known to support Fulfulde" a claim rather than a slogan.
    *
    * Left out, those lines fall back to "your language", so a host that has only a
    * tag is no worse off than before.

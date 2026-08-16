@@ -19,6 +19,7 @@
   },
   "scripts": {
     "dev": "vite --open",
+    "fetch-fonts": "node src/demos/tools/fetchMinimumFontBundle.mjs",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "prebuild": "npm run typecheck",
     "build": "nx vite:build",

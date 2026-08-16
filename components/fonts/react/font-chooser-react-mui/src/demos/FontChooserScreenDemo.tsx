@@ -19,7 +19,10 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Divider,
   FormControlLabel,
+  Menu,
+  MenuItem,
   Switch,
   ToggleButton,
   ToggleButtonGroup,
@@ -54,11 +57,13 @@ import { WifiOffIcon } from "../icons";
 import {
   forgetKeptFonts,
   hostFontAccess,
-  installHostFontAccess,
+  installLocalFontShim,
   keepFont,
   listKeptFonts,
+  registerHostFonts,
   type KeptFont,
 } from "./hostFontLibrary";
+import { loadBundledFonts, type BundledFamily } from "./hostBundledFonts";
 
 /**
  * Where the demo starts before anyone has chosen anything: a language with an
@@ -189,6 +194,11 @@ const interferencePulse = keyframes`
   to { background-color: transparent; }
 `;
 
+/** "1 request", "3 requests". Enough plural for a demo harness. */
+function countOf(n: number, noun: string): string {
+  return `${n} ${noun}${n === 1 ? "" : "s"}`;
+}
+
 /**
  * What the simulated connection has done to this page's traffic — nothing until
  * it has done something, and then a count that goes up as it happens.
@@ -198,10 +208,19 @@ const InterferenceIndicator: React.FunctionComponent<{
 }> = ({ tally }) => {
   const total = tally.blocked + tally.delayed;
   if (total === 0) return null;
+  // Written as things done to requests, with "request" in it. The count-first
+  // shorthand this replaced ("1 held 1.2s") named neither what was held nor who
+  // held it, so it read as a stray number under the connection control. Starting
+  // with the verb also lets the line continue the control above it: the
+  // connection is set to Metered, and it has slowed 1 request by 1.2s.
   const parts = [
-    tally.blocked > 0 ? `${tally.blocked} blocked` : undefined,
+    tally.blocked > 0
+      ? `blocked ${countOf(tally.blocked, "request")}`
+      : undefined,
     tally.delayed > 0
-      ? `${tally.delayed} held ${(METERED_DELAY_MS / 1000).toFixed(1)}s`
+      ? `slowed ${countOf(tally.delayed, "request")} by ${(
+          METERED_DELAY_MS / 1000
+        ).toFixed(1)}s`
       : undefined,
   ].filter(Boolean);
   return (
@@ -242,8 +261,96 @@ function useRememberedBoolean(
   return [value, remember];
 }
 
+/** Nothing bundled, as one value, so the empty case doesn't re-render the world. */
+const NO_BUNDLED_FONTS: BundledFamily[] = [];
+
+/**
+ * The font bundle the pretend host app ships, while the switch says it does.
+ *
+ * Read from `public/fonts/bundleManifest.json` rather than listed here, so that
+ * what the demo ships is whatever `npm run fetch-fonts` last put on disk and
+ * the two cannot drift apart. A checkout that has never run the script has no
+ * manifest; that reads as a host that ships nothing, and says so in the log
+ * rather than leaving the switch looking broken.
+ */
+function useBundledFonts(
+  wanted: boolean,
+  logLine: (message: string, detail?: unknown) => void
+): BundledFamily[] {
+  const [families, setFamilies] = useState<BundledFamily[]>(NO_BUNDLED_FONTS);
+  useEffect(() => {
+    if (!wanted) {
+      setFamilies(NO_BUNDLED_FONTS);
+      return;
+    }
+    let current = true;
+    void loadBundledFonts().then(
+      (loaded) => {
+        if (!current) return;
+        setFamilies(loaded);
+        logLine(
+          `the host app ships ${loaded.length} font families`,
+          {
+            files: loaded.reduce(
+              (total, family) => total + family.styles.length,
+              0
+            ),
+          }
+        );
+      },
+      (error) => {
+        if (!current) return;
+        setFamilies(NO_BUNDLED_FONTS);
+        logLine("could not read the host's font bundle", String(error));
+      }
+    );
+    return () => {
+      current = false;
+    };
+  }, [wanted, logLine]);
+  return families;
+}
+
 /** How many past choices are worth feeding back; older ones fall off the end. */
 const RECENT_FONTS_KEPT = 8;
+
+/**
+ * Where past choices are filed, one key per language.
+ *
+ * Named here rather than inline because the "forget" command has to find these
+ * keys without knowing which languages have been visited. Choosing a font writes
+ * two places — the file into the app's font folder (`keepFont`) and the catalog
+ * entry here — and for a while only the first could be undone, so a font chosen
+ * once went on being offered forever: "Forget saved fonts" dropped its bytes,
+ * "Clear caches" skipped it because these keys aren't under `ethnolib.`, and a
+ * reload read it straight back out of local storage.
+ */
+const RECENT_FONTS_PREFIX = "fontChooserDemo.recentFonts.";
+
+/** Every family the demo remembers being chosen, across all languages. */
+function listRememberedChoices(): string[] {
+  const families = new Map<string, string>();
+  for (const key of Object.keys(localStorage)) {
+    if (!key.startsWith(RECENT_FONTS_PREFIX)) continue;
+    try {
+      const stored: unknown = JSON.parse(localStorage.getItem(key) ?? "[]");
+      if (!Array.isArray(stored)) continue;
+      for (const entry of stored as FontInfo[]) {
+        if (entry?.family) families.set(entry.family.toLowerCase(), entry.family);
+      }
+    } catch {
+      // Unreadable is as good as gone: the forget below drops the key anyway.
+    }
+  }
+  return [...families.values()];
+}
+
+/** Drops those choices, for getting back to a host that has chosen nothing. */
+function forgetRememberedChoices(): void {
+  for (const key of Object.keys(localStorage)) {
+    if (key.startsWith(RECENT_FONTS_PREFIX)) localStorage.removeItem(key);
+  }
+}
 
 /**
  * The fonts the user has settled on before, kept the way a host app would keep
@@ -257,7 +364,7 @@ const RECENT_FONTS_KEPT = 8;
 function useRecentFonts(
   languageTag: string
 ): [FontInfo[], (font: FontInfo) => void] {
-  const key = `fontChooserDemo.recentFonts.${languageTag}`;
+  const key = `${RECENT_FONTS_PREFIX}${languageTag}`;
   const [recent, setRecent] = useState<FontInfo[]>([]);
   useEffect(() => {
     try {
@@ -421,42 +528,94 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
   // failure paths get exercised rather than merely described. See
   // networkSimulation.ts.
   const [network, setNetwork] = useRememberedNetwork();
-  // Whether the host asks Fontsource for everything that covers the alphabet,
-  // or offers only the curated list plus the machine's own fonts. Remembered,
-  // since comparing the two takes a reload each way.
-  const [broadSearch, setBroadSearch] = useRememberedBoolean(
-    "fontChooserDemo.broadSearch",
-    true
-  );
-  // Whether the pretend host app ships font files of its own. See
+  // Whether the pretend host app ships the font files it installs with. See
   // hostBundledFonts.ts for what the toggle actually does; the short of it is
-  // that the chooser is told about two families the demo serves from its own
+  // that the chooser is told about families the demo serves from its own
   // origin, which the connection simulator leaves alone, so they behave like
   // fonts on a machine's disk rather than fonts on the internet. Remembered,
-  // like the other harness switches.
+  // like the harness's other settings.
+  //
+  // On unless it has been switched off, because shipping the bundle is what we
+  // expect a host to do and so is the case worth opening on; a demo that starts
+  // with nothing shipped shows the chooser at its least interesting until
+  // somebody finds the switch.
   const [hostBundledFonts, setHostBundledFonts] = useRememberedBoolean(
     "fontChooserDemo.hostBundledFonts",
-    false
+    true
   );
+  // The bundle itself, read from the manifest the fetch script writes. Empty
+  // until it arrives and empty whenever the switch is off, which is what the
+  // font access below takes for "this app ships no fonts".
+  const bundledFamilies = useBundledFonts(hostBundledFonts, logLine);
   // The fonts this pretend app has been handed and has written down, read once
   // at startup the way a host app reads its own font folder. A font kept here is
   // one the demo can offer with the network switched off — which is the whole
   // reason `onFontSelected` hands over the bytes.
   const [keptFonts, setKeptFonts] = useState<KeptFont[]>([]);
+  // Null while the harness's options menu is shut; the button it hangs off when
+  // it is open.
+  const [optionsAnchor, setOptionsAnchor] = useState<HTMLElement | null>(null);
+  // Read when the menu opens rather than watched: local storage fires no event
+  // for its own tab, and the only reader is the menu item below.
+  const [rememberedChoices, setRememberedChoices] = useState<string[]>([]);
   const rereadKeptFonts = useCallback(
     () => listKeptFonts().then(setKeptFonts),
     []
   );
+  // The two stores as one list, since to the user they are one thing: fonts
+  // this app has taken on. A family usually sits in both — its bytes in the
+  // font folder, its catalog entry in the remembered choices — but either alone
+  // is enough to keep it on screen, so both have to be counted and both cleared.
+  const forgettableFonts = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const font of keptFonts) names.set(font.family.toLowerCase(), font.family);
+    for (const family of rememberedChoices) {
+      names.set(family.toLowerCase(), family);
+    }
+    return [...names.values()].sort((a, b) => a.localeCompare(b));
+  }, [keptFonts, rememberedChoices]);
   useEffect(() => {
     void rereadKeptFonts();
   }, [rereadKeptFonts]);
+  // Drawing the app's files is the one part that needs them in hand, so it is
+  // the one part that waits for the manifest.
   useEffect(
-    () => installHostFontAccess(hostBundledFonts, keptFonts),
-    [hostBundledFonts, keptFonts]
+    () => registerHostFonts(bundledFamilies, keptFonts),
+    [bundledFamilies, keptFonts]
   );
+  // Everything else reads the library through this, which is asked at the
+  // moment of the question rather than at the moment some effect ran. The
+  // bundle is a fetch away, and answering "the app ships nothing" while that
+  // fetch is in flight is what made the chooser list the machine's fonts on one
+  // reload and not the next; see HostFontLibrarySource.
+  const wantsBundleRef = useRef(hostBundledFonts);
+  wantsBundleRef.current = hostBundledFonts;
+  const keptRef = useRef(keptFonts);
+  keptRef.current = keptFonts;
+  const librarySource = useMemo(
+    () => ({
+      bundled: () =>
+        wantsBundleRef.current
+          ? loadBundledFonts().catch(() => NO_BUNDLED_FONTS)
+          : Promise.resolve(NO_BUNDLED_FONTS),
+      kept: () => keptRef.current,
+    }),
+    []
+  );
+  useEffect(() => installLocalFontShim(librarySource), [librarySource]);
+  // Which families the app has, as a value that changes only when the answer
+  // does. The chooser re-lists whenever `getLocalFonts` changes identity, and
+  // that is wanted for exactly two events — the bundle switch being flipped,
+  // and the app keeping a font it was handed — but not for a state update that
+  // merely produced a new array with the same fonts in it.
+  const librarySignature = `${hostBundledFonts ? "bundled" : "none"}:${keptFonts
+    .map((font) => font.family.toLowerCase())
+    .sort()
+    .join(",")}`;
   const fontAccess = useMemo(
-    () => hostFontAccess(hostBundledFonts, keptFonts),
-    [hostBundledFonts, keptFonts]
+    () => hostFontAccess(librarySource),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [librarySource, librarySignature]
   );
   // The connection setting, made real: requests are blocked offline and held on
   // a metered connection, so what the page does when a fetch fails is something
@@ -486,11 +645,6 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
     // What the bundled data needs to make sense of a tag with no script in it:
     // `th` is Thai only if somebody says so.
     languageScript: languageScript || undefined,
-    // Offered offline as well, so that the chooser gets the invitation and can
-    // show it disabled with its reason on it. Nothing runs until the button is
-    // clicked, and offline it can't be, so an offer the network couldn't
-    // currently answer costs nothing.
-    broadSearch,
     offline: network === "offline",
   });
 
@@ -762,70 +916,110 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
                   <InterferenceIndicator tally={interference} />
                 </div>
               </div>
-              <FormControlLabel
-                css={switchLabelCss}
-                control={
-                  <Switch
-                    size="small"
-                    checked={broadSearch}
-                    onChange={(_, next) => setBroadSearch(next)}
+              {/* The rest of the harness is settings you set once and things you
+                  do rarely, so they sit behind one button out of the way of the
+                  page's own content. The connection stays out here: it is the
+                  one you flip while watching what the chooser does with it. */}
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={(event) => {
+                  setRememberedChoices(listRememberedChoices());
+                  setOptionsAnchor(event.currentTarget);
+                }}
+                css={css`
+                  margin-left: auto;
+                  text-transform: none;
+                `}
+              >
+                Options and Caches ▾
+              </Button>
+              <Menu
+                anchorEl={optionsAnchor}
+                open={Boolean(optionsAnchor)}
+                onClose={() => setOptionsAnchor(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+              >
+                {/* The switch keeps the menu open: it is a setting you may want
+                    to look at alongside the rest, and closing the menu on it
+                    would mean opening the menu again to carry on. */}
+                <MenuItem
+                  disableRipple
+                  onClick={() => setHostBundledFonts(!hostBundledFonts)}
+                >
+                  <FormControlLabel
+                    css={switchLabelCss}
+                    control={
+                      <Switch
+                        size="small"
+                        checked={hostBundledFonts}
+                        onChange={(_, next) => setHostBundledFonts(next)}
+                      />
+                    }
+                    // The click is the MenuItem's; letting it through would
+                    // toggle twice and land back where it started.
+                    onClick={(event) => event.stopPropagation()}
+                    title={
+                      bundledFamilies.length === 0
+                        ? "The families the host app ships"
+                        : `${bundledFamilies.length} families, ${bundledFamilies.reduce(
+                            (total, family) => total + family.styles.length,
+                            0
+                          )} files: ${bundledFamilies
+                            .map((family) => family.family)
+                            .join(", ")}`
+                    }
+                    label="Provide minimum font bundle"
                   />
-                }
-                label="Offer search beyond curated &amp; local fonts"
-              />
-              <FormControlLabel
-                css={switchLabelCss}
-                control={
-                  <Switch
-                    size="small"
-                    checked={hostBundledFonts}
-                    onChange={(_, next) => setHostBundledFonts(next)}
-                  />
-                }
-                label="Host ships Andika &amp; Noto Sans Thai"
-              />
-              {/* What the app has kept from earlier visits, and the way back to
-                  a host that has kept nothing. Shown only when there is
-                  something to say, and worth saying: a font in the list marked
-                  as being on disk is otherwise unexplained — nothing on the
-                  page says the app was given it and wrote it down. */}
-              {keptFonts.length > 0 && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  title={keptFonts.map((font) => font.family).join(", ")}
+                </MenuItem>
+                <Divider />
+                {/* What the app has kept from earlier visits, and the way back to
+                    a host that has kept nothing. Shown only when there is
+                    something to say, and worth saying: a font in the list marked
+                    as being on disk is otherwise unexplained — nothing on the
+                    page says the app was given it and wrote it down. */}
+                {forgettableFonts.length > 0 && (
+                  <MenuItem
+                    title={forgettableFonts.join(", ")}
+                    onClick={() => {
+                      setOptionsAnchor(null);
+                      // Both halves, then a reload. The remembered choices are
+                      // read into React state at mount, so clearing the keys
+                      // under a live page would leave the fonts on screen and
+                      // look like the command had done nothing — which is the
+                      // complaint this whole item exists to answer.
+                      forgetRememberedChoices();
+                      void forgetKeptFonts()
+                        .catch(() => undefined)
+                        .then(() => location.reload());
+                    }}
+                  >
+                    Forget {countOf(forgettableFonts.length, "chosen font")} &amp;
+                    reload
+                  </MenuItem>
+                )}
+                <MenuItem
                   onClick={() => {
-                    void forgetKeptFonts()
-                      .then(rereadKeptFonts)
-                      .then(() => logLine("forgot the app's kept fonts"));
+                    // Everything remembered on the component's behalf: the
+                    // Fontsource broad search's cache and the licence sweep's
+                    // results, filed under one prefix. The reload then drops the
+                    // in-memory
+                    // layer — session font downloads, measured file sizes, the
+                    // providers' own state — so the next question is asked from
+                    // nothing. The demo's own settings (language, alphabet, the
+                    // switches above) are not caches and survive.
+                    for (const key of Object.keys(localStorage)) {
+                      if (key.startsWith("ethnolib.")) {
+                        localStorage.removeItem(key);
+                      }
+                    }
+                    location.reload();
                   }}
                 >
-                  Forget {keptFonts.length} saved font
-                  {keptFonts.length === 1 ? "" : "s"}
-                </Button>
-              )}
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => {
-                  // Everything remembered on the component's behalf: the
-                  // Fontsource broad search's cache and the licence sweep's
-                  // results, filed under one prefix. The reload then drops the
-                  // in-memory
-                  // layer — session font downloads, measured file sizes, the
-                  // providers' own state — so the next question is asked from
-                  // nothing. The demo's own settings (language, alphabet, the
-                  // switch above) are not caches and survive.
-                  for (const key of Object.keys(localStorage)) {
-                    if (key.startsWith("ethnolib.")) {
-                      localStorage.removeItem(key);
-                    }
-                  }
-                  location.reload();
-                }}
-              >
-                Clear caches &amp; reload
-              </Button>
+                  Clear caches &amp; reload
+                </MenuItem>
+              </Menu>
             </div>
 
             <LoadTimings
@@ -962,8 +1156,9 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
               languageName={languageName || undefined}
               languageScript={languageScript || undefined}
               sampleTextProvider={sampleTextProvider}
-              // Both undefined while the app has no files of its own, which
-              // leaves the component on the Local Font Access API.
+              // The app's own files and the machine's installed fonts, as one
+              // list and one way to read bytes; with nothing bundled and
+              // nothing kept, that is the Local Font Access API and no more.
               getLocalFonts={fontAccess.getLocalFonts}
               getFontData={fontAccess.getFontData}
               customSampleText={customSample || undefined}

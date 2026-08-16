@@ -1,3 +1,4 @@
+import type { FontCredits } from "./fontCredits";
 import type { FontLicenseCategory } from "./fontLicense";
 
 /**
@@ -56,6 +57,13 @@ export interface FontInfo {
    * them to, which is the common case for fonts installed on a machine.
    */
   licenseReason?: string;
+  /**
+   * Who made the font, for the panel that says where it came from. Set this where
+   * the host knows better than the file does — a catalog entry naming the foundry,
+   * say. Left out, the chooser reads them off the font's own `name` table once it
+   * has the bytes, which is every font it can show anything else about.
+   */
+  credits?: FontCredits;
   /**
    * Where to fetch the font's own bytes from, for a font that isn't installed. The
    * chooser reads it the same way it reads an installed font — for coverage, and

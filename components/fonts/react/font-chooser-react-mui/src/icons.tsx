@@ -73,6 +73,46 @@ export const AlertCircleIcon: React.FunctionComponent<IconProps> = ({
   </svg>
 );
 
+/**
+ * A filled triangle with an exclamation mark: this font's licence says no to
+ * something the user is about to do.
+ *
+ * The triangle rather than the circle because this is the mark Bloom already
+ * puts beside a problem font in its Book Settings fonts table, and a user who
+ * meets the same font in both places should meet the same warning.
+ */
+export const AlertTriangleIcon: React.FunctionComponent<IconProps> = ({
+  size = 16,
+  color = "currentColor",
+  title,
+  className,
+}) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    role={title ? "img" : "presentation"}
+    aria-hidden={title ? undefined : true}
+  >
+    {title && <title>{title}</title>}
+    {/* Rounded corners, so the shape doesn't read as sharper than the circles
+        it sits alongside at this size. */}
+    <path
+      d="M12 2.9c.62 0 1.2.33 1.51.87l8.2 14.2a1.75 1.75 0 0 1-1.51 2.63H3.8a1.75 1.75 0 0 1-1.51-2.63l8.2-14.2c.31-.54.89-.87 1.51-.87Z"
+      fill={color}
+    />
+    <path
+      d="M12 9v4.4"
+      stroke="#fff"
+      strokeWidth={2.2}
+      strokeLinecap="round"
+      fill="none"
+    />
+    <circle cx="12" cy="17.1" r="1.2" fill="#fff" />
+  </svg>
+);
+
 /** A grey circle with a question mark: we can't tell what this font allows. */
 export const UnknownRulesIcon: React.FunctionComponent<IconProps> = ({
   size = 16,

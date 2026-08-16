@@ -25,11 +25,13 @@ import {
   parseAlphabet,
   readCharacterVariants,
   readCoverageRanges,
+  readFontCredits,
   variantsBeyond,
   variantsFor,
   type SampleText,
 } from "@ethnolib/font-core";
 import { Callout } from "./Callout";
+import type { CalloutVariant } from "./Callout";
 import { DigitShapes } from "./DigitShapes";
 import { SampleTextSection } from "./SampleTextSection";
 import { SectionHeading } from "./SectionHeading";
@@ -37,7 +39,7 @@ import { SourceInfo, sourceIconCss } from "./SourceInfo";
 import { generateExampleText } from "./exampleText";
 import { formatDownloadSize } from "./formatFileSize";
 import { DownloadNeededIcon, InfoCircleIcon } from "./icons";
-import { licenseExplanation } from "./licenseExplanation";
+import { NO_LICENSE_PAGE, licenseMessage } from "./licenseMessage";
 import { missingFromAlphabet, saysSupportsLanguage } from "./missingCharacters";
 import { scrollbarCss } from "./scrollbarStyle";
 import { useFontFileSize } from "./useFontFileSize";
@@ -45,7 +47,7 @@ import {
   downloadPolicy,
   type NetworkAvailability,
 } from "./constrainedNetwork";
-import type { FontInfo } from "./types";
+import type { FontCredits, FontInfo, FontLicenseCategory } from "./types";
 
 /** The digits, as a set, for telling digit shapes from letter shapes. */
 const DIGIT_SET = parseAlphabet(DIGITS);
@@ -378,6 +380,10 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
             flex: 1;
             min-height: 0;
             overflow-y: auto;
+            /* Room between what is in here and the scrollbar, which is drawn
+               inside this box: without it the sample text's border and the
+               shape choices run right up against the bar. */
+            padding-right: 12px;
             /*
               A column, so that the licence at the foot can claim the leftover
               space above it and sit on the bottom edge of the pane. Nothing in
@@ -405,7 +411,13 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
               gap: 10px;
             `}
           >
-            {licenseAtTop && <LicenseCallout font={font} />}
+            {licenseAtTop && (
+              <LicenseCallout
+                font={font}
+                fontData={fontData}
+                postscriptName={postscriptName}
+              />
+            )}
 
             {showsDownloadCallout && (
               <Callout
@@ -573,7 +585,7 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
           >
             {vouchedFor && (
               <Callout variant="vouched">
-                <b>Supports {languageName || "your language"}</b>
+                <b>Known to support {languageName || "your language"}</b>
                 {font.supportsLanguageSource && (
                   <>
                     {" "}
@@ -592,7 +604,13 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
                 )}
               </Callout>
             )}
-            {licenseAtFoot && <LicenseCallout font={font} />}
+            {licenseAtFoot && (
+              <LicenseCallout
+                font={font}
+                fontData={fontData}
+                postscriptName={postscriptName}
+              />
+            )}
           </div>
         )}
       </div>
@@ -667,11 +685,19 @@ export const FontDetailsPane: React.FunctionComponent<FontDetailsPaneProps> = ({
               <Typography
                 variant="caption"
                 css={css`
+                  display: flex;
+                  align-items: center;
+                  gap: 4px;
                   line-height: 1.2;
                   opacity: 0.85;
                   text-transform: none;
                 `}
               >
+                {/* The arrow makes the second line read as a cost rather than a
+                    measurement — "3.4 MB" alone could be the size of the font
+                    on screen. It sits out while the fetch is running, where the
+                    word already says what is happening. */}
+                {!choosing && <DownloadNeededIcon size={12} />}
                 {choosing
                   ? "Downloading…"
                   : `${formatDownloadSize(useDownloadSizeBytes ?? 0)} Download`}
@@ -836,35 +862,37 @@ const AlphabetWantedHint: React.FunctionComponent<{
 /**
  * The quiet "i" after a licence sentence.
  *
- * Where the font says where its licence lives (`name` ID 14) the icon takes the
- * reader there, in a new tab. Where it doesn't — which is most installed fonts;
- * see `licenseExplanation` — the same icon opens a small panel saying what we
- * know and how we know it. The alternative was a plain sentence about what the
- * user may publish, which invites the question and then refuses to take it.
+ * It always opens a panel, never a web page. Sending the reader straight out to
+ * `name` ID 14 looked helpful and mostly wasn't: Microsoft's fonts point at the
+ * Windows font catalogue, a list of typefaces that never mentions permission at
+ * all, so the one control offering to explain the warning led away from the
+ * answer. The panel says what the user may do, then why we think so, and only
+ * then offers somewhere to go — labelled with what is actually on the other end.
+ *
+ * Under all of that, who made the font. The two belong in one panel because they
+ * are one question asked twice: a user told "ask whoever made this font" needs a
+ * name to ask, and until now the only place to find one was Bloom's separate font
+ * information pane — or, for the copyright line, a developer-only `alert()`.
  */
 const LicenseInfo: React.FunctionComponent<{
   font: FontInfo;
-}> = ({ font }) => {
+  /** The font's bytes, to read the credits off when the host hasn't supplied them. */
+  fontData?: ArrayBuffer;
+  postscriptName?: string;
+}> = ({ font, fontData, postscriptName }) => {
   const [anchor, setAnchor] = useState<HTMLElement | undefined>(undefined);
-
-  if (font.licenseUrl) {
-    return (
-      <SourceInfo
-        tooltip="Click to read this font's license."
-        ariaLabel="Read this font's license"
-        url={font.licenseUrl}
-      />
-    );
-  }
+  const theme = useTheme();
+  const { advice, provenance, link } = licenseMessage(font);
+  const credits = useFontCredits(font, fontData, postscriptName);
 
   return (
     <>
-      <Tooltip title="Click to see what we know about this font's license.">
+      <Tooltip title="Click to learn what you can do with this font, and who made it.">
         <Link
           component="button"
           type="button"
           color="inherit"
-          aria-label="About this font's license"
+          aria-label="About this font's license and who made it"
           onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
             setAnchor(e.currentTarget)
           }
@@ -880,79 +908,208 @@ const LicenseInfo: React.FunctionComponent<{
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
       >
         <div
-          css={css`
-            max-width: 300px;
-            padding: 12px 14px;
-            font-size: 12.5px;
-            line-height: 1.45;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-          `}
+          css={[
+            css`
+              max-width: 300px;
+              /* A copyright notice can run to a paragraph, and a few fonts put
+                 their whole licence in one. Rather than let the panel grow past
+                 the window, it scrolls. */
+              max-height: 60vh;
+              overflow-y: auto;
+              padding: 12px 14px;
+              font-size: 12.5px;
+              line-height: 1.45;
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+            `,
+            scrollbarCss,
+          ]}
         >
-          {licenseExplanation(font).map((line) => (
-            <span key={line}>{line}</span>
-          ))}
+          {/* `licenseNotes` is the host's own sentence and is already on the
+              row this panel hangs off, so it isn't repeated here. */}
+          {advice && <span>{advice}</span>}
+          <span
+            css={css`
+              color: ${theme.palette.text.secondary};
+            `}
+          >
+            {provenance}
+          </span>
+          {link ? (
+            <Link href={link.url} target="_blank" rel="noreferrer">
+              {link.label}
+            </Link>
+          ) : (
+            <span
+              css={css`
+                color: ${theme.palette.text.secondary};
+              `}
+            >
+              {NO_LICENSE_PAGE}
+            </span>
+          )}
+          {credits && <FontCreditsBlock credits={credits} />}
         </div>
       </Popover>
     </>
   );
 };
 
-const LicenseCallout: React.FunctionComponent<{
-  font: FontInfo;
-  className?: string;
-}> = ({ font, className }) => {
-  const license = font.license ?? "unknown";
-  const info = (
-    <>
-      {" "}
-      <LicenseInfo font={font} />
-    </>
-  );
+/**
+ * Who made the font, at the foot of the licence panel and behind a rule, because
+ * it is a different question from the one the panel was opened to answer.
+ *
+ * Only what the font says. Every line is absent for a font that doesn't say it,
+ * and a font that says none of it loses the block and the rule with it — which is
+ * most of the fonts on a Windows machine.
+ */
+const FontCreditsBlock: React.FunctionComponent<{ credits: FontCredits }> = ({
+  credits,
+}) => {
+  const theme = useTheme();
+  const {
+    copyright,
+    version,
+    designer,
+    designerUrl,
+    manufacturer,
+    manufacturerUrl,
+  } = credits;
 
-  if (license === "open") {
-    return (
-      <Callout variant="open-license" className={className}>
-        This font&apos;s license allows printing, ebooks, apps, and publishing
-        to web.
-        {info}
-      </Callout>
-    );
-  }
-
-  if (license === "limits-apply") {
-    return (
-      <Callout variant="warn" className={className}>
-        Limits apply to this font&apos;s license.
-        {info}
-        {font.licenseNotes && (
-          <>
-            <br />
-            {font.licenseNotes}
-          </>
-        )}
-      </Callout>
-    );
-  }
-
-  if (license === "system-restricted") {
-    return (
-      <Callout variant="error" className={className}>
-        This font came with your computer and may not be shared. It may work on
-        this computer only.
-      </Callout>
-    );
-  }
+  // Foundries routinely write the same name in both fields — SIL is its own
+  // designer on half its fonts — and saying it twice reads as two organizations.
+  const separateManufacturer =
+    manufacturer && manufacturer !== designer ? manufacturer : undefined;
 
   return (
-    <Callout variant="unknown" className={className}>
-      We don&apos;t know the rules for this font. You can print with it, but
-      check its license before publishing.
-      {info}
+    <>
+      <Divider
+        css={css`
+          margin: 2px 0;
+        `}
+      />
+      <div
+        css={css`
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          /* Long URLs and unbroken copyright strings must not widen the panel. */
+          overflow-wrap: anywhere;
+        `}
+      >
+        {designer && (
+          <span>
+            Designed by <MaybeLink text={designer} url={designerUrl} />
+          </span>
+        )}
+        {separateManufacturer && (
+          <span>
+            Published by{" "}
+            <MaybeLink text={separateManufacturer} url={manufacturerUrl} />
+          </span>
+        )}
+        {/* The designer's page, where the designer themselves went unnamed. A
+            bare address is worth more than nothing: it is somewhere to ask. */}
+        {!designer && designerUrl && (
+          <MaybeLink text={designerUrl} url={designerUrl} />
+        )}
+        {!separateManufacturer && !manufacturer && manufacturerUrl && (
+          <MaybeLink text={manufacturerUrl} url={manufacturerUrl} />
+        )}
+        {version && <span>Version {version}</span>}
+        {copyright && (
+          <span
+            css={css`
+              color: ${theme.palette.text.secondary};
+            `}
+          >
+            {copyright}
+          </span>
+        )}
+      </div>
+    </>
+  );
+};
+
+/** A name that links to its own page where the font gave one, plain text where it didn't. */
+const MaybeLink: React.FunctionComponent<{ text: string; url?: string }> = ({
+  text,
+  url,
+}) =>
+  url ? (
+    <Link href={url} target="_blank" rel="noreferrer">
+      {text}
+    </Link>
+  ) : (
+    <>{text}</>
+  );
+
+/**
+ * What the font says about who made it: the host's word where it has one, and
+ * otherwise the font's own `name` table.
+ *
+ * Read here rather than in the sweep, and not cached, for the reason cvXX features
+ * aren't: this is asked about one font — the one on screen, whose bytes are in
+ * hand — where the sweep runs over every family the machine has.
+ */
+function useFontCredits(
+  font: FontInfo,
+  fontData: ArrayBuffer | undefined,
+  postscriptName: string | undefined
+): FontCredits | undefined {
+  return useMemo(() => {
+    if (font.credits) return font.credits;
+    if (!fontData) return undefined;
+    try {
+      return readFontCredits(fontData, postscriptName);
+    } catch {
+      // A font we can't parse simply has no credits to show; everything else in
+      // the panel still stands, since it was worked out from other things.
+      return undefined;
+    }
+  }, [font.credits, fontData, postscriptName]);
+}
+
+const LicenseCallout: React.FunctionComponent<{
+  font: FontInfo;
+  fontData?: ArrayBuffer;
+  postscriptName?: string;
+  className?: string;
+}> = ({ font, fontData, postscriptName, className }) => {
+  const license = font.license ?? "unknown";
+  const { headline } = licenseMessage(font);
+
+  return (
+    <Callout variant={calloutVariantFor(license)} className={className}>
+      {headline}{" "}
+      <LicenseInfo
+        font={font}
+        fontData={fontData}
+        postscriptName={postscriptName}
+      />
+      {font.licenseNotes && (
+        <>
+          <br />
+          {font.licenseNotes}
+        </>
+      )}
     </Callout>
   );
 };
+
+function calloutVariantFor(license: FontLicenseCategory): CalloutVariant {
+  switch (license) {
+    case "open":
+      return "open-license";
+    case "limits-apply":
+      return "warn";
+    case "system-restricted":
+      return "error";
+    case "unknown":
+      return "unknown";
+  }
+}
 
 /**
  * Which characters the font has. The sweep works this out for installed fonts as

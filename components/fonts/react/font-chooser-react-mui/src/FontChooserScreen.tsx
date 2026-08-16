@@ -32,7 +32,9 @@ import {
   FamilyScan,
   LocalFontFamily,
   coversAlphabet,
+  declaredScanOf,
   fetchFontFileSize,
+  hasDeclaredLicense,
   mergeCoverageRanges,
   createGflanguagesSampleTextProvider,
   isLocalFontAccessSupported,
@@ -332,8 +334,7 @@ export const FontChooserScreen: React.FunctionComponent<
   // ahead of the catalog in the array so that where both name a family, the
   // catalog's fields (its reasons, its urls) win the merge.
   const catalog = useMemo(
-    () =>
-      recentFonts?.length ? [...recentFonts, ...(fonts ?? [])] : fonts,
+    () => (recentFonts?.length ? [...recentFonts, ...(fonts ?? [])] : fonts),
     [recentFonts, fonts]
   );
 
@@ -572,9 +573,7 @@ export const FontChooserScreen: React.FunctionComponent<
       } catch (error) {
         // The choice didn't take. The dialog stays up wearing the reason, and
         // the button still works: a retry is a fresh fetch.
-        setChooseError(
-          error instanceof Error ? error.message : String(error)
-        );
+        setChooseError(error instanceof Error ? error.message : String(error));
         return;
       } finally {
         setChoosing(false);
@@ -690,7 +689,10 @@ export const FontChooserScreen: React.FunctionComponent<
       files.map((file, index) =>
         // The PostScript name picks a face out of a collection, and only the
         // primary bytes can be one; the extra subset files are single fonts.
-        readCoverageRanges(new Blob([file]), index === 0 ? postscriptName : undefined)
+        readCoverageRanges(
+          new Blob([file]),
+          index === 0 ? postscriptName : undefined
+        )
       )
     )
       .then((all) => {
@@ -726,7 +728,16 @@ export const FontChooserScreen: React.FunctionComponent<
     source.current = { font: selection, url: downloadUrl };
   }, [selection, downloadUrl, retry]);
 
+  // Which listing run's answer is still wanted. Two can be in flight at once —
+  // the host's `getLocalFonts` arriving or changing re-runs the effect below
+  // while the first run is still enumerating — and they do not finish in the
+  // order they started: an enumeration of the machine's several hundred families
+  // takes seconds, one that only reads a host's own bundle takes none. Without
+  // this, which list the user ended up looking at came down to that race, which
+  // is what "sometimes my fonts are there and sometimes they aren't" was.
+  const listRun = useRef(0);
   const listFonts = async () => {
+    const run = ++listRun.current;
     setListing(true);
     setListError(undefined);
     // Last visit's list first: enumeration costs seconds where the cache costs
@@ -740,15 +751,23 @@ export const FontChooserScreen: React.FunctionComponent<
     }
     try {
       const families = await (getLocalFonts ?? queryLocalFontFamilies)();
+      if (run !== listRun.current) return;
       setLocal(families);
-      writeCachedLocalFontList(families);
+      // Only the machine's own fonts are remembered. A host's own files —
+      // an app's bundled fonts, marked `location: "disk"` — are the host's to
+      // supply and cost it nothing to supply again, and writing them here put
+      // them in a cache that is read back before the host has said anything:
+      // switch the host's bundle off and last visit's bundled families came
+      // straight back, listed as though they were installed.
+      writeCachedLocalFontList(families.filter(isMachineFont));
       // Listing the fonts is also the moment the page gains permission to read
       // their bytes, so a load that failed before this is worth another try.
       if (!fontData) retry();
     } catch (e) {
+      if (run !== listRun.current) return;
       setListError((e as Error).message);
     } finally {
-      setListing(false);
+      if (run === listRun.current) setListing(false);
     }
   };
 
@@ -803,6 +822,15 @@ export const FontChooserScreen: React.FunctionComponent<
     // Coverage an earlier visit read; see `cachedCoverage`. Replaced wholesale,
     // so a change of list drops entries for fonts no longer on it.
     setCachedCoverage(readCachedCoverages(local));
+    // What the host has told us about its own files, which is an answer now
+    // rather than one that arrives when a sweep gets round to the font. This is
+    // ahead of everything below because it does not depend on being able to read
+    // font bytes at all: a host that ships fonts on a browser without the Local
+    // Font Access API still knows what they are.
+    const declared = declaredScans(local);
+    if (Object.keys(declared).length > 0) {
+      setScanned((previous) => mergeScans(previous, declared));
+    }
     if (!isLocalFontAccessSupported()) {
       setLicensesFor(local);
       return;
@@ -812,11 +840,16 @@ export const FontChooserScreen: React.FunctionComponent<
     pruneLicenseCache();
     pruneCoverageCache();
     pruneLocalFontListCache();
-    const cached = readCachedLicenses(local);
+    // Only for the fonts nobody has spoken for. Asking about a declared family
+    // too would mean a cache entry left by an older visit — when the host's own
+    // files were cached like any other — coming back over the top of what the
+    // host says now.
+    const undeclared = local.filter((family) => !hasDeclaredLicense(family));
+    const cached = readCachedLicenses(undeclared);
     if (Object.keys(cached).length > 0) {
       setScanned((previous) => mergeScans(previous, cached));
     }
-    const unread = local.filter((family) => !cached[family.family]);
+    const unread = undeclared.filter((family) => !cached[family.family]);
     if (unread.length === 0) {
       setLicensesFor(local);
       return;
@@ -887,6 +920,7 @@ export const FontChooserScreen: React.FunctionComponent<
     supported: isLocalFontAccessSupported(),
     hostSupplies: !!getLocalFonts,
     localCount: local.length,
+    machineCount: local.filter(isMachineFont).length,
     listing,
   });
 
@@ -967,13 +1001,15 @@ export const FontChooserScreen: React.FunctionComponent<
             searchingMoreFonts={searchingMoreFonts}
             moreFontsExplanation={moreFontsExplanation}
             network={network}
-            header={
-              offerListing && (
+            notice={
+              offerListing ? (
                 <LocalFontsPrompt
                   onList={listFonts}
                   listing={listing}
                   error={listError}
                 />
+              ) : (
+                listing && <ListingLocalFontsNote />
               )
             }
           />
@@ -1156,11 +1192,40 @@ const LoadingBar: React.FunctionComponent<{ active: boolean }> = ({
 type ScanState = Record<string, FamilyScan>;
 type SetScanState = React.Dispatch<React.SetStateAction<ScanState>>;
 
+/**
+ * Whether a listed family is one the machine itself has installed, as against a
+ * file the host app supplied out of its own storage. An entry that says nothing
+ * about where it came from is installed — that is what the Local Font Access API
+ * lists, and what a host that never thought about it means.
+ */
+function isMachineFont(family: LocalFontFamily): boolean {
+  return family.location !== "disk";
+}
+
 const NOTHING_READ_YET: FamilyScan = {
   variants: [],
   coverage: new Uint32Array(),
   detailsRead: false,
 };
+
+/**
+ * What the host has already said about the families it listed, by family name.
+ *
+ * The sweep honours the same declarations and would report them back, but only
+ * once it reaches each font; seeding them costs nothing and means a list of
+ * shipped fonts is licensed and covered on the first render rather than the
+ * first batch.
+ */
+function declaredScans(
+  families: LocalFontFamily[]
+): Record<string, Partial<FamilyScan>> {
+  const found: Record<string, Partial<FamilyScan>> = {};
+  for (const family of families) {
+    const declared = declaredScanOf(family);
+    if (declared) found[family.family] = declared;
+  }
+  return found;
+}
 
 /**
  * Fold what a pass found into what we already knew, field by field. The two passes
@@ -1226,10 +1291,18 @@ function readDetails(
     (family, found) => {
       batch.collect(family, found);
       // Coverage keeps between visits. Empty is what a failed read looks like
-      // too, and remembering a failure would hide the font for good.
-      if (found.coverage.length > 0) {
-        const listed = byName.get(family);
-        if (listed) writeCachedCoverage(listed, found.coverage);
+      // too, and remembering a failure would hide the font for good. A coverage
+      // the host declared is not remembered at all: this cache exists to save
+      // re-reading the machine's fonts, and the host will say the same thing
+      // again for free next visit — where a stale entry for a bundle switched
+      // off since would be a font nobody has, listed as covered.
+      const listed = byName.get(family);
+      if (
+        listed &&
+        found.coverage.length > 0 &&
+        listed.declared?.coverage === undefined
+      ) {
+        writeCachedCoverage(listed, found.coverage);
       }
     },
     {
@@ -1245,8 +1318,36 @@ function readDetails(
 }
 
 /**
- * The nudge at the top of the list while the machine's own fonts are still
- * missing from it. Until the user clicks this, fonts they already have can only
+ * What is still coming, while it is still coming.
+ *
+ * Enumerating a machine's fonts takes seconds, and the list is not empty
+ * meanwhile — the host's few recommendations are already in it. Without this the
+ * screen looks finished and wrong: a short list of fonts that plainly isn't the
+ * user's font collection, with nothing to say more is on the way, and then
+ * hundreds of entries arriving under a pointer that had settled.
+ */
+const ListingLocalFontsNote: React.FunctionComponent = () => {
+  const theme = useTheme();
+  return (
+    <div
+      css={css`
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: ${theme.palette.text.secondary};
+      `}
+    >
+      <CircularProgress size={12} />
+      <span>Getting fonts from this computer…</span>
+    </div>
+  );
+};
+
+/**
+ * The nudge under the list while the machine's own fonts are still missing from
+ * it. Until the user clicks this, fonts they already have can only
  * appear as entries the host app offers to download, which is worse than saying
  * plainly that we haven't looked yet.
  */
