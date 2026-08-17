@@ -15,6 +15,9 @@ import { lingui } from "@lingui/vite-plugin";
 //   npx vite build --config vite.demo.config.ts
 //   npx vercel deploy --prod --prebuilt --yes
 //
+// The build bakes in whatever VITE_SUPABASE_* values are in `.env` (see
+// .env.example); without them the deployed demo collects nothing.
+//
 // The output goes to .vercel/output/, Vercel's Build Output API layout, so that
 // `--prebuilt` uploads these files and runs nothing on Vercel's side. That is
 // not just a speed choice: deploying a plain folder makes the Vercel CLI copy

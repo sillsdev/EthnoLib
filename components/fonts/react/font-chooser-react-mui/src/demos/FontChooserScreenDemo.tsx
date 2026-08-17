@@ -42,6 +42,8 @@ import { createBundledSampleTextProvider } from "@ethnolib/font-core/bundled";
 import { FontChooserScreen } from "../FontChooserScreen";
 import type { NetworkAvailability } from "../types";
 import { LanguageChooserDemoDialog } from "./LanguageChooserDemoDialog";
+import { FeedbackButton } from "./FeedbackButton";
+import { reportLanguageTried } from "./collection";
 import {
   useSuggestedFonts,
   type SuggestionTimings,
@@ -1234,11 +1236,20 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
             <ResizeGrip onResize={onCardResize} />
           </Paper>
 
+          <FeedbackButton
+            languageTag={languageTag || undefined}
+            fontFamily={font || undefined}
+          />
+
           {choosingLanguage && (
             <LanguageChooserDemoDialog
               open={choosingLanguage}
               initialLanguageTag={languageTag || undefined}
               onSelected={(tag, name, scriptCode) => {
+                // Only a language somebody deliberately picked. Reporting the
+                // one the demo opens on would file the same default under
+                // every visitor and tell us nothing about what they came for.
+                reportLanguageTried(tag, name, scriptCode);
                 setLanguageTag(tag);
                 setLanguageName(name);
                 setLanguageScript(scriptCode ?? "");
