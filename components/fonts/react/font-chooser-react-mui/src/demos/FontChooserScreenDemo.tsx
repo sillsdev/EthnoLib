@@ -747,18 +747,31 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
               background-color: ${theme.palette.background.default};
             `}
           >
-            <Typography
-              variant="h2"
+            <div
               css={css`
-                font-size: 13px;
-                font-weight: 600;
-                letter-spacing: 0.06em;
-                text-transform: uppercase;
-                color: ${theme.palette.text.secondary};
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
               `}
             >
-              Font Chooser Demo
-            </Typography>
+              <Typography
+                variant="h2"
+                css={css`
+                  font-size: 13px;
+                  font-weight: 600;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: ${theme.palette.text.secondary};
+                `}
+              >
+                Font Chooser Demo
+              </Typography>
+              <FeedbackButton
+                languageTag={languageTag || undefined}
+                fontFamily={font || undefined}
+              />
+            </div>
 
             <div
               css={css`
@@ -1235,11 +1248,6 @@ export const FontChooserScreenDemo: React.FunctionComponent = () => {
             />
             <ResizeGrip onResize={onCardResize} />
           </Paper>
-
-          <FeedbackButton
-            languageTag={languageTag || undefined}
-            fontFamily={font || undefined}
-          />
 
           {choosingLanguage && (
             <LanguageChooserDemoDialog

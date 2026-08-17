@@ -15,10 +15,11 @@ import { collectionConfigured, sendFeedback } from "./collection";
 /**
  * The demo's way of hearing back from the people we send it to.
  *
- * It sits directly under the chooser card, in the same centred column, so it
- * reads as "now tell us what you thought of that" — the next thing after the
- * thing you came to look at. It was floating bottom-right at first, which put
- * it out in the margin where it looked like unrelated page furniture.
+ * It sits in the top-right of the harness box, opposite the demo's title: the
+ * one corner of the page with nothing in it, and inside the drawn box that
+ * marks what belongs to the harness rather than to the component under test.
+ * Earlier tries floated it bottom-right of the window and then centred it under
+ * the card; both read as page furniture unrelated to the demo.
  *
  * This is demo harness, not part of the published component. A host app would
  * have its own feedback channel.
@@ -74,12 +75,12 @@ export const FeedbackButton: React.FunctionComponent<{
         color="secondary"
         onClick={() => setOpen(true)}
         css={css`
-          display: block;
-          margin: 20px auto 8px;
-          border-radius: 22px;
-          padding: 10px 24px;
+          flex-shrink: 0;
+          border-radius: 20px;
+          padding: 6px 18px;
           font-weight: 600;
           text-transform: none;
+          white-space: nowrap;
         `}
       >
         Send feedback to John
