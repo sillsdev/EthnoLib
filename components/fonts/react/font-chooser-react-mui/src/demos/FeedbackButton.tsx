@@ -125,12 +125,18 @@ export const FeedbackButton: React.FunctionComponent<{
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 disabled={state === "sending"}
+                css={css`
+                  /* DialogContent clips its overflow, and an outlined field's
+                     floating label sits above the field's own box — so the top
+                     field loses the top of its label without a little room
+                     made for it. */
+                  margin-top: 8px;
+                `}
               />
               <TextField
                 fullWidth
                 type="email"
                 label="Email (optional)"
-                placeholder="Only if you would like a reply"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 disabled={state === "sending"}
