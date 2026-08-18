@@ -5,6 +5,32 @@ what it finds. [`population-plan.md`](population-plan.md) sketched this stage;
 this is the mechanics, the two selection algorithms, and the sanity check that
 has to pass before it runs against anything real.
 
+## Status
+
+`tools/importBloomBooks.mjs` and `tools/lib/bloom.mjs` exist and have run, over
+**nine writing systems chosen by hand** (`ace-Latn ace-Arab aca-Latn acn-Latn
+guq-Latn acz-Latn acr-Latn ach-Latn act-Latn`) rather than over the library. Of
+this document, what is built is the data path, the book filters, the lang-attribute
+extraction, the alphabet harvest and the font harvest. What is **not** built:
+
+- **The language-choosing algorithm.** `TARGET_SYSTEMS` in the script is a hand
+  written list; nothing merges Bloom's language table, resolves scripts or sorts
+  by what is missing. The 500-writing-system prize below is still a measurement,
+  not a run.
+- **`--compare` and the six-language sanity check.** It did not gate the first
+  run, which was nine tags deliberately, and the bar proposed below has therefore
+  not been tested. It remains the right thing to do before any wide run.
+- **Sample-text harvest.**
+
+Two mechanical corrections this document's own text needs, both found by running
+it: `$not` is not implemented by Bloom's Parse server (see "Choosing books"), and
+because the target list names writing systems, the script-mismatch response is
+finer than "skip the language" — each script partition of a language's text is
+filed under whichever target tag names that script, and a partition no target
+names is counted and reported.
+
+Counts from the run are in [`../tools/README.md`](../tools/README.md).
+
 The prize, measured rather than guessed: **500 writing systems that BloomLibrary
 has published books in and this database has no alphabet claim for at all**, 287
 of them with five or more books. Bislama (374 books), Kreyòl (281), Oko (263),
@@ -129,7 +155,12 @@ GET /classes/books
                                        className: "language" } },
            harvestState: "Done",          // bloomdigital exists
            inCirculation: { $ne: false },
-           copyright: { $not: { $regex: "Bible", $options: "i" } } }
+           // $not is NOT implemented by this Parse server — it answers
+           // `400 bad constraint: $not`. A negative lookahead does the same
+           // work inside one $regex, and the $or keeps a book that carries no
+           // copyright field at all, which a bare regex would drop silently.
+           $or: [ { copyright: { $regex: "^((?!Bible).)*$", $options: "is" } },
+                  { copyright: { $exists: false } } ] }
   keys:  title,copyright,baseUrl,tags,features,langPointers,updatedAt,objectId
   order: objectId                          // deterministic, so re-runs agree
   limit: <cap>                             // never the whole result set
@@ -165,7 +196,8 @@ count crosses the threshold or the books run out:
   apply:
 
   ```
-  copyright: { $not: { $regex: "Bible", $options: "i" } }
+  $or: [ { copyright: { $regex: "^((?!Bible).)*$", $options: "is" } },
+         { copyright: { $exists: false } } ]
   ```
 
   This is not the topic tags by another route. 3,879 of the library's 29,264
@@ -255,11 +287,35 @@ So, per book:
 
 **Alphabet.** Aggregate all the language's text, take grapheme clusters that are
 letters (Unicode `L*`, keeping attached `M*` combining marks on their base),
-discard digits, punctuation and whitespace. Keep both cases as separate entries —
-the schema says case is information. Apply a **frequency floor** so a single
-typo or a loanword hapax does not become a letter, and record the floor and the
-per-character frequencies in the evidence `details` so the floor is auditable and
-tunable rather than baked in.
+discard digits, punctuation and whitespace, with one exception: an
+apostrophe-shaped character with a letter immediately before it is a letter, not
+punctuation. Achi's `b' ch' k' q' t' tz'` and glottal stops in a great many
+orthographies are spelled that way, and a scan that throws them out files an
+alphabet its own readers would not recognise.
+
+Then **fold** the inventory before applying the floor, because folding decides
+what an entry is: lower case, and one apostrophe. Both are the convention every
+source these claims sit beside follows — an SLDR exemplar set lists `a`, not `A`
+and `a`, and writes the apostrophe as U+02BC — so an unfolded claim cannot
+accumulate support alongside an SLDR one for the same alphabet, it can only sit
+next to it looking different. Books spell the apostrophe with whatever key was
+pressed, U+0027 and U+2019 inside one book, so folding is also what stops one
+letter arriving as two.
+
+Neither folding may lose what the text held: the evidence writes out every
+uppercase form found with its count, and every apostrophe codepoint with its
+count, so the raw observation is recoverable from the row.
+
+Apply a **frequency floor** so a single typo or a loanword hapax does not become
+a letter, and record the floor and the per-character frequencies in the evidence
+`details` so the floor is auditable and tunable rather than baked in.
+
+**One book, two catalogue entries.** The same upload reaches the library twice
+when two accounts publish it, each with its own `objectId` and book page and both
+pointing at one harvested folder. Nothing before reading the text tells them
+apart, and reading both counts every letter twice. Books whose extracted text is
+identical to a book already read are dropped, first in `objectId` order kept, and
+the dropped ids named in the evidence.
 
 State the limitation in `details`, in the words
 [`population-plan.md`](population-plan.md) already chose: derived from N books'
@@ -292,7 +348,7 @@ way approving CLDR is. If Bloom claims should ever be usable, the predicate need
 a rule about `source.type = 'book'`, not a list of titles. Worth knowing before
 someone tries.
 
-## The sanity check, which runs first
+## The sanity check, which a wide run should wait on
 
 Run the walker against languages where SLDR already gave us an answer, and
 compare. There are **134 languages with 20+ Bloom books and an existing SLDR
@@ -340,13 +396,15 @@ mode that writes nothing and prints the table above.
 ## Order of work
 
 1. `lib/bloom.mjs` — Parse queries, harvester URL, per-language text extraction.
-   Testable on its own, and the part most likely to be wrong.
-2. `--compare` mode and the six-language table. **Stop here and read it.**
-3. Font harvest, which is the least controversial output and the biggest gap
-   (zero rows today).
-4. Alphabet harvest, gated on step 2.
+   Testable on its own, and the part most likely to be wrong. **Built.**
+2. Font harvest, which is the least controversial output. **Built.**
+3. Alphabet harvest. **Built**, and it went in without step 4 having run, which is
+   the deviation to be aware of: the nine-tag run was small and deliberate, so the
+   inventories it produced are readable by eye, and no bar was cleared.
+4. `--compare` mode and the six-language table. **Not built**, and still what a
+   wide run should wait on.
 5. Sample-text harvest, last, because it carries the content risk and the least
-   urgency.
+   urgency. **Not built.**
 
 ## Open questions
 

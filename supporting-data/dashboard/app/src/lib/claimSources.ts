@@ -3,7 +3,7 @@
 // headings already say what kind of claim something is, but where it came from
 // is invisible until you open the evidence — this makes it visible at a glance.
 
-import type { Evidence } from "../data";
+import type { Evidence, Source } from "../data";
 
 export type SourceKey = "sil" | "lff" | "google" | "bloom" | "other";
 
@@ -24,7 +24,13 @@ export const SOURCE_ORDER: SourceKey[] = [
   "other",
 ];
 
-function keyOfTitle(title: string | null): SourceKey {
+function keyOfSource(source: Source | null): SourceKey {
+  // A Bloom-scanned book's source title is the book's own title, so only the
+  // type and URL identify it as BloomLibrary evidence.
+  if (source?.type === "book" || /bloomlibrary\.org/i.test(source?.url ?? "")) {
+    return "bloom";
+  }
+  const title = source?.title ?? null;
   if (!title) return "other";
   if (/bloom/i.test(title)) return "bloom";
   if (/google|gflanguages/i.test(title)) return "google";
@@ -42,7 +48,7 @@ function keyOfTitle(title: string | null): SourceKey {
 export function sourceKeysOf(evidence: Evidence[]): SourceKey[] {
   const keys: SourceKey[] = [];
   for (const row of evidence) {
-    const key = keyOfTitle(row.source?.title ?? null);
+    const key = keyOfSource(row.source);
     if (!keys.includes(key)) keys.push(key);
   }
   return keys.length ? keys : ["other"];

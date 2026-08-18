@@ -62,8 +62,17 @@ rank — see the religious-content note below.
 
 ## Stage 4 — BloomLibrary.org walker
 
-The most valuable and the most careful stage. For each language BloomLibrary
-knows, walk (a sample of) its books and extract three kinds of evidence:
+`importBloomBooks.mjs`, with the BloomLibrary reads in `tools/lib/bloom.mjs`.
+The most valuable and the most careful stage, and the one whose reach is
+currently smallest: it has run over **nine writing systems chosen by hand, not
+the library**, and it files **alphabets and fonts only**. `TARGET_SYSTEMS` at the
+top of the script is the list, the algorithm for choosing which languages to walk
+is not implemented, and sample-text harvest is not built. The mechanics, and the
+argument about how good this stage's own output is, are in
+[`bloom-walker-plan.md`](bloom-walker-plan.md); the run's counts are in
+[`../tools/README.md`](../tools/README.md).
+
+The three kinds of evidence a book carries:
 
 - **Alphabet**: the character inventory of enough page text is evidence for an
   alphabet claim (corroborating an existing claim, or a new claim where Bloom
@@ -72,19 +81,29 @@ knows, walk (a sample of) its books and extract three kinds of evidence:
   letters and include loanword characters").
 - **Fonts used**: the font families named in a book's styles are font_support
   claims — someone chose that font for that language and published with it.
-- **Sample text candidates**: short passages that read well. **Religious
-  content is the risk here**: much Bloom content is scripture-adjacent, and a
-  scripture passage as *the* sample text for a language can offend. The walker
-  must carry the book's topic/tags into the evidence details, default-exclude
-  books tagged religious/Bible/spiritual from sample-text harvesting (they
-  remain fine as alphabet and font evidence). And in any case no harvested
-  passage becomes a UI-visible sample by import alone — see the note above
-  about rank.
+- **Sample text candidates**: short passages that read well. **Not built.**
+  Religious content is the risk that keeps it last: much Bloom content is
+  scripture-adjacent, and a scripture passage as *the* sample text for a language
+  can offend the people the data is for. Whoever builds it should carry the book's
+  topic tags into the evidence details and exclude `topic:Bible`,
+  `topic:Spiritual` and `topic:Primer` from this harvest alone — and note that no
+  harvested passage becomes a UI-visible sample by import anyway, per the rank
+  note above.
+
+Religious content shapes the other two outputs as well, more bluntly than a topic
+filter would: **a book whose `copyright` mentions "Bible" is excluded for every
+purpose**, alphabets and fonts included. 3,879 of the library's 29,264 harvested
+books match, and 2,925 of those carry neither `topic:Bible` nor
+`topic:Spiritual`, so the tags alone would not have found them. It costs real
+evidence — for some languages it is the entire corpus — so the importer reports
+per language how many books it removed, and a language filtered down to nothing
+is visible as an excluded language rather than as a language with no data. Two of
+the nine in the first run are exactly that.
 
 Each claim's evidence cites the specific book (title + bloomlibrary.org URL) as
-its source, so a disputed claim can be traced to the very book it came from.
-Mechanics (which Bloom API, how much text per book, sampling) are for the
-implementation plan; likely the harvester's artifacts rather than scraping HTML.
+its source, so a disputed claim can be traced to the very book it came from. The
+text comes from the harvester's already-unpacked `bloomdigital` copy of the book,
+one GET per book, not from scraping bloomlibrary.org.
 
 ## Stage 5 — bundled Language Font Finder recommendations
 

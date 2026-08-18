@@ -1,12 +1,9 @@
 # Importers
 
 Scripts that file claims into the Ethnolib-Support database: four from data this
-repo already ships, and one from a live read of the Language Font Finder service.
-They implement stages 1–3, 5 and 6 of
-[`../docs/population-plan.md`](../docs/population-plan.md). Stage 4 — the
-BloomLibrary walker, planned in
-[`../docs/bloom-walker-plan.md`](../docs/bloom-walker-plan.md) — is the one that
-is not built yet.
+repo already ships, and two from live reads — the Language Font Finder service,
+and BloomLibrary. They implement stages 1–6 of
+[`../docs/population-plan.md`](../docs/population-plan.md).
 
 **One snapshot per question.** font-core bundles four, and stages 1-3 and 5 read
 all four: alphabets, sample texts, the families a language recommends, and the
@@ -50,6 +47,7 @@ What every importer does and does not do:
 node supporting-data/tools/importLangtagsLanguages.mjs --dry-run
 node supporting-data/tools/importSldrAlphabets.mjs --dry-run
 node supporting-data/tools/importGflanguagesSampleTexts.mjs --dry-run
+node supporting-data/tools/importBloomBooks.mjs --dry-run
 node supporting-data/tools/importLanguageFonts.mjs --dry-run
 node supporting-data/tools/importLffAnswers.mjs --dry-run
 ```
@@ -60,8 +58,8 @@ all, so its report is what a real run would do.
 | flag | |
 | --- | --- |
 | `--dry-run` | read everything, write nothing |
-| `--only a,b` | just these tags — the source's key (`aa`, `aa_Latn`) or the tag it resolves to (`aa-Latn`); stage 6, whose source is a list of writing systems, also takes a bare language subtag (`dmk`) and asks about every script langtags gives it |
-| `--limit N` | stop after N source entries |
+| `--only a,b` | just these tags — the source's key (`aa`, `aa_Latn`) or the tag it resolves to (`aa-Latn`); stage 6, whose source is a list of writing systems, also takes a bare language subtag (`dmk`) and asks about every script langtags gives it; stage 4 takes either a target tag (`ace-Arab`) or the bare code (`ace`) and filters within its target list |
+| `--limit N` | stop after N source entries — except stage 4, where it is the cap on books read per language (default 40) |
 | `--verbose` | a line per entry |
 | `--langtags <path>` | langtags.json somewhere other than the language chooser's copy |
 | `--font-core <dir>` | the `font-core` package holding the bundled snapshots (stages 2, 3 and 5; stage 6 reads no snapshot) |
@@ -105,6 +103,74 @@ claim's `orthography_label`. Evidence cites Google Fonts' language data and the 
 passage came from. Some passages are scripture or prayer excerpts; they are
 recorded as they are, which is safe because an import cannot make anything
 visible — what a user is shown stays a human decision.
+
+**4 — `importBloomBooks.mjs`.** Alphabet and `font_support` claims from the text
+and stylesheets of published BloomLibrary books, read live: the Parse catalogue
+(`server.bloomlibrary.org/parse/classes`) for which books exist, and the
+harvester's `bloomdigital` copy of each book for its HTML and its
+`defaultLangStyles.css`. The mechanics and the argument behind them are in
+[`../docs/bloom-walker-plan.md`](../docs/bloom-walker-plan.md).
+
+**It has run over nine writing systems, not the library.** `TARGET_SYSTEMS` at
+the top of the script is that list, and widening the run means replacing it: the
+plan's algorithm for choosing which of BloomLibrary's ~1,077 resolvable
+languages to walk is not implemented. **Sample-text harvest is not built
+either** — it is the third output the plan describes, and the one carrying the
+content risk that much of the library is scripture-adjacent.
+
+Four things are particular to this stage:
+
+- **The script comes from the text, not the catalogue.** Bloom's language rows
+  carry no script; `isoCode` is a bare `ace`, and langtags' default for it is a
+  guess that is wrong for any language Bloom publishes in a second script. So
+  the harvested characters are partitioned by Unicode script property and each
+  partition is filed under whichever target tag names that script (`ace` text in
+  Arabic script → `ace-Arab`). Characters in a script no target names are
+  counted and reported, and nothing is filed for them. That is why the target
+  list names writing systems while the catalogue query takes bare codes.
+- **The `lang` attribute is the only thing separating the languages.** The
+  catalogue returns books where the target language is *any* of the book's
+  languages, so filtering books by language is not filtering text by language.
+  Front and back matter come out first — their credits and licence blocks carry
+  the *vernacular* `lang` while holding English words — then `bloom-editable`
+  divs whose `lang` exactly equals the code, with Bloom's `z`/`*`/`""`
+  sentinels dropped.
+- **A frequency floor, recorded rather than baked in.** One occurrence in
+  10,000, never below 2. The floor, every kept character's count, and every
+  character left below it all go into the evidence `details`, so the number is
+  auditable and tunable. The `details` also names what the method cannot do:
+  derived from the books' text, may miss rare letters and include loanword
+  characters, and multigraphs are unrecoverable this way.
+- **`$not` is not available.** The plan's server-side copyright filter,
+  `{"copyright": {"$not": {"$regex": "Bible"}}}`, comes back
+  `400 bad constraint: $not` from this Parse server. A negative-lookahead regex
+  does the same work in one `$regex`, `$or`'d with `$exists: false` so a book
+  carrying no copyright field is kept rather than silently dropped.
+
+Ran 2026-08-18 over `ace-Latn ace-Arab aca-Latn acn-Latn guq-Latn acz-Latn
+acr-Latn ach-Latn act-Latn` — 9 writing systems, 8 language codes. 14 books
+listed, 12 excluded by the copyright filter, 2 read. **One writing system got
+claims: `acr-Latn`** (Achi) — one alphabet claim of 39 grapheme clusters from
+212,162 Latin letter occurrences at a floor of 22, and two `font_support`
+claims, `Andika New Basic` (new) and `Andika` (already claimed by stages 5 and
+6, so that row now carries an SLDR page, a Font Finder answer and a book). 4
+evidence rows in all.
+
+The other eight are all zero, and for two distinct reasons worth keeping
+separate:
+
+- **`ace` and `ach` have 6 harvested books each and every one is excluded by the
+  copyright filter** — the whole corpus for both is Bible for Children. This is
+  the case the plan predicted: a language whose entire corpus is filtered is
+  visible as an excluded language rather than as a language with no data.
+- **`aca`, `acn`, `guq`, `acz` and `act` have no BloomLibrary language row at
+  all.** Nothing has been published in them.
+
+Two facts about the `acr` corpus that the counts alone would hide, both recorded
+in the evidence: the two books are one Achi dictionary uploaded twice (same book
+guid, byte-identical text, so **1 distinct original title**), and both are
+`computedLevel:4`, so the decodable-reader level bias the plan worries about does
+not apply to this particular inventory.
 
 **5 — `importLanguageFonts.mjs`.** `font_support` claims from two snapshots. From
 `languageFonts.json`, the Language Font Finder's data: for each of 2,187 tags, the
@@ -211,3 +277,10 @@ same plain-fetch, GET-then-POST find-or-create, and — importantly — the same
 import spelled one differently from the browser, the same alphabet submitted
 twice would land in two rows and support for it would fragment instead of
 accumulating. Change one, change both.
+
+`lib/bloom.mjs` is stage 4's half: the two BloomLibrary endpoints, the harvester
+URL derivation, the div walk that pulls a book's text apart by `lang`, the
+stylesheet parse, and the script partition. It is a separate file because it is
+the part most likely to be wrong and the part worth reading on its own — and
+because `harvesterBase` is a copy of blorg's `getHarvesterBaseUrlFromBaseUrl`
+(`src/model/BookUrlUtils.ts`), which is another pair to keep in step.
