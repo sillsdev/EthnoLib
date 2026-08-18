@@ -1,0 +1,149 @@
+/* Runs tab only. Every colour comes from the tokens in styles.css, so light and
+   dark both follow from that one palette; the tints below are colour-mixes of
+   those tokens rather than new hex values. Nothing is carried by colour alone —
+   an unfinished run also says "did not finish" in words, and a skipped count
+   still prints its own label. */
+
+.run-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.run-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.15rem 1.25rem 1.25rem;
+}
+
+/* A run with no finished row: the left edge marks it, the chip names it. */
+.run-card.unfinished {
+  border-inline-start: 3px solid var(--series-2);
+  background: color-mix(in oklab, var(--series-2) 6%, var(--surface-1));
+}
+
+.run-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+}
+.run-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.run-tool {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.run-chip {
+  margin: 0;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--series-2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: color-mix(in oklab, var(--series-2) 16%, var(--surface-1));
+}
+
+.run-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.5rem 1.25rem;
+  margin: 0.9rem 0 0;
+  padding-block-start: 0.9rem;
+  border-block-start: 1px solid var(--hairline);
+}
+.run-fact dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.run-fact dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.run-fact code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95em;
+}
+
+.run-counts-lede,
+.run-unfinished-note {
+  margin: 1rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+.run-unfinished-note code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.run-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+  gap: 0 1.25rem;
+  margin: 0.55rem 0 0;
+}
+.run-count {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.3rem 0.45rem;
+  border-block-end: 1px solid var(--hairline);
+  font-size: 0.875rem;
+}
+.run-count dt {
+  color: var(--text-secondary);
+}
+.run-count dd {
+  margin: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* Counts naming work the importer passed over. */
+.run-count.warn {
+  background: color-mix(in oklab, var(--series-2) 7%, transparent);
+  border-radius: 4px;
+}
+.run-count.warn dt {
+  color: var(--text-primary);
+}
+
+.run-count-value {
+  font-weight: 600;
+}
+.run-delta {
+  margin-inline-start: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+/* A count key the previous run did not have, so there is no delta to give. */
+.run-delta-new {
+  font-style: italic;
+  color: var(--text-secondary);
+}
+.run-delta::before {
+  content: "(";
+}
+.run-delta::after {
+  content: ")";
+}
+
+.run-notes {
+  margin: 1rem 0 0;
+  padding-block-start: 0.9rem;
+  border-block-start: 1px solid var(--hairline);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,26 @@
+{
+  "name": "supporting-data-dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Static dashboard for the EthnoLib supporting-data claim database. Not part of the repo's npm workspaces: it has its own dependency tree and its own build.",
+  "scripts": {
+    "bake": "node ../export-data.mjs",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.14.10",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "~5.6.3",
+    "vite": "^8.2.1"
+  }
+}

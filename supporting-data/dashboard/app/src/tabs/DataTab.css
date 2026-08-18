@@ -1,0 +1,404 @@
+/* The data grid. Only the tokens declared in styles.css are used here, so light
+   and dark come for free, and the table inherits that file's th/td rhythm.
+
+   The claim kinds keep their dashboard colours (1 alphabet, 2 sample text,
+   3 fonts) and carry them on a chip's leading edge, never as a fill: the point of
+   these cells is that you can read the characters inside them. */
+
+.data-tab .sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.data-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: baseline;
+  margin-block-end: 1rem;
+}
+.search input {
+  inline-size: min(22rem, 70vw);
+  padding: 0.45rem 0.65rem;
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.search input:focus-visible {
+  outline: 2px solid var(--series-1);
+  outline-offset: 1px;
+}
+.result-count {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.source-legend {
+  margin: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.85rem;
+  align-items: baseline;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+.legend-item {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.legend-swatch {
+  inline-size: 0.65rem;
+  block-size: 0.65rem;
+  border-radius: 2px;
+  background: var(--chip-hue, var(--text-muted));
+}
+
+/* Eight columns do not fit the 60rem prose measure, so the grid alone widens
+   rightward from the page's left edge, stopping short of the body padding. On a
+   narrow page the max() collapses to 100%, leaving the wrap to scroll. */
+.data-wide {
+  --wide: max(100%, min(calc(100vw - 2 * clamp(1rem, 4vw, 3rem)), 84rem));
+  inline-size: var(--wide);
+}
+
+/* The grid scrolls in its own box rather than the page: 2,300 rows are easier to
+   read against a header that stays put, and a sticky header only sticks to a box
+   that actually scrolls. */
+.grid-scroll {
+  max-block-size: 80vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.grid {
+  font-size: 0.875rem;
+  /* The body is virtualized: rows mount and unmount while scrolling, and auto
+     table layout would recompute every column width each time. Fixed layout
+     keeps the columns still no matter which rows happen to exist. */
+  table-layout: fixed;
+  inline-size: 100%;
+}
+.grid .spacer > td {
+  padding: 0;
+  border: 0;
+}
+.grid thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--surface-1);
+  vertical-align: bottom;
+  /* border-collapse drops a sticky cell's own border once it detaches. */
+  box-shadow: 0 1px 0 var(--hairline);
+}
+.grid .sort {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+.grid .sort:hover {
+  color: var(--text-primary);
+}
+.grid .sort-mark {
+  color: var(--text-muted);
+  font-size: 0.75em;
+}
+.grid th[aria-sort] .sort {
+  color: var(--text-primary);
+}
+.grid th[aria-sort] .sort-mark {
+  color: var(--series-1);
+}
+
+.grid tbody tr:not(.detail-row) {
+  cursor: pointer;
+}
+.grid tbody tr:not(.detail-row):hover {
+  background: color-mix(in oklab, var(--series-1) 6%, var(--surface-1));
+}
+.grid tbody tr.open {
+  background: color-mix(in oklab, var(--series-1) 9%, var(--surface-1));
+}
+
+.grid .col-expander {
+  inline-size: 1.75rem;
+  padding-inline-end: 0;
+}
+.expander {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0.1rem 0.25rem;
+  font: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.expander:hover {
+  color: var(--text-primary);
+}
+/* Under table-layout: fixed only the header row's widths count, and columns
+   without one share what's left (alphabets, ranges, fonts). */
+.grid th.col-name {
+  inline-size: 9rem;
+}
+.grid .col-name {
+  font-weight: 500;
+}
+.grid th.col-bcp47 {
+  inline-size: 6.5rem;
+}
+.grid .col-bcp47 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.grid th.col-sampleTexts,
+.grid th.col-features {
+  inline-size: 11rem;
+}
+.tag,
+.range-token,
+.features code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+.tag {
+  color: var(--text-secondary);
+}
+
+.empty,
+.no-rows {
+  color: var(--text-muted);
+}
+.no-rows {
+  padding-block: 1.5rem;
+}
+
+/* ------------------------------------------------------------------- chips */
+
+.chips,
+.range-sets,
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.range-sets,
+.features {
+  flex-direction: column;
+  align-items: start;
+}
+.chip {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: baseline;
+  max-inline-size: 100%;
+  padding: 0.15rem 0.4rem 0.15rem 0.35rem;
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--chip-hue, var(--text-muted));
+  border-radius: 4px;
+  background: var(--plane);
+  line-height: 1.35;
+}
+/* Provenance: the edge (and legend swatch) says who the evidence came from. */
+.src-sil {
+  --chip-hue: var(--source-sil);
+}
+.src-google {
+  --chip-hue: var(--source-google);
+}
+.src-bloom {
+  --chip-hue: var(--source-bloom);
+}
+.src-other {
+  --chip-hue: var(--source-other);
+}
+.chip-label {
+  overflow-wrap: anywhere;
+}
+.chip-badge {
+  flex: none;
+  padding: 0 0.3rem;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--text-muted) 22%, var(--surface-1));
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+.chip-count {
+  flex: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.4rem;
+  align-items: baseline;
+}
+.range-token {
+  padding: 0 0.25rem;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--series-1) 10%, var(--surface-1));
+  white-space: nowrap;
+}
+.feature-line code {
+  white-space: nowrap;
+}
+.feature-font {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+.more {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------ expanded detail row */
+
+.grid tr.detail-row > td {
+  padding: 0;
+  background: var(--plane);
+  border-block-start: 1px solid var(--hairline);
+}
+.detail-panel {
+  padding: 1rem 1.15rem 1.25rem;
+}
+.detail-heading {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.claim-group {
+  margin-block-end: 1.25rem;
+}
+.claim-group:last-child {
+  margin-block-end: 0;
+}
+.claim-group h4 {
+  margin: 0 0 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.empty-group {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.claims {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+.claim {
+  padding: 0.7rem 0.85rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--chip-hue, var(--text-muted));
+  border-radius: 8px;
+}
+.claim-heading {
+  display: flex;
+  gap: 0.45rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+  margin: 0 0 0.4rem;
+  font-weight: 600;
+}
+.claim-characters,
+.claim-text {
+  margin: 0 0 0.4rem;
+  overflow-wrap: anywhere;
+}
+.claim-text {
+  white-space: pre-wrap;
+  max-inline-size: 44rem;
+}
+.claim-ranges,
+.claim-features {
+  margin: 0 0 0.4rem;
+  color: var(--text-secondary);
+}
+.claim-truncated,
+.claim-rank {
+  margin: 0 0 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+.claim-rank .rank-value {
+  color: var(--text-secondary);
+}
+.claim-rank .rank-note {
+  margin-inline-start: 0.5rem;
+  color: var(--text-secondary);
+}
+.evidence-label {
+  margin: 0.5rem 0 0.3rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.evidence,
+.evidence-empty {
+  margin: 0;
+  font-size: 0.875rem;
+}
+.evidence {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+.evidence > li {
+  display: grid;
+  gap: 0.1rem;
+  padding-inline-start: 0.7rem;
+  border-inline-start: 1px solid var(--hairline);
+}
+.evidence-source a {
+  color: var(--series-1);
+}
+.evidence-type {
+  margin-inline-start: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+.evidence-details {
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.evidence-via,
+.evidence-empty {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}

@@ -1,29 +1,39 @@
 # Dashboard
 
-A single static page showing how much of the writing-system world this database
-actually has an answer for. Built by a script, not served by an app:
+A small React app (Vite, TypeScript, TanStack Table) with three tabs:
+
+- **Dashboard** — how much of the writing-system world this database has an
+  answer for: the coverage headline, per-kind tiles, and a by-script table.
+- **Data** — a grid, one row per writing system, showing every claim (alphabets,
+  computed character ranges, sample texts, OpenType features, suggested fonts).
+  Expanding a row lists each claim with its evidence: which source said it,
+  linked to the exact file it came from.
+- **Runs** — the `import_run` log: each importer run with its counts, the delta
+  against that tool's previous run, and any run that never wrote a `finished`
+  row.
 
 ```sh
-node supporting-data/dashboard/build.mjs            # writes dashboard/dist/index.html
-node supporting-data/dashboard/build.mjs --out some/dir
+cd supporting-data/dashboard/app
+npm ci
+npm run bake    # export-data.mjs: database -> app/public/data/*.json
+npm run dev     # serve locally
+npm run build   # tsc + vite build -> app/dist
 ```
 
-Open the file directly, or serve the directory; it has no scripts and makes no
-requests, so either works.
-
-| file           |                                              |
-| -------------- | -------------------------------------------- |
-| `coverage.mjs` | the queries and the arithmetic               |
-| `page.mjs`     | the HTML                                     |
-| `build.mjs`    | the entry point: read, render, write, report |
+| file              |                                                          |
+| ----------------- | -------------------------------------------------------- |
+| `export-data.mjs` | bakes the database into the JSON files the app loads     |
+| `coverage.mjs`    | the queries and the coverage arithmetic                  |
+| `stamp.mjs`       | branch/commit/timestamp for the footer                   |
+| `app/`            | the React app (self-contained; not an npm workspace)     |
 
 ## Baked, not live
 
-The numbers are read at build time and written into the file. A viewer's browser
-talks to nothing, which means the page cannot go stale-but-look-live, cannot leak
-a slow query into someone's first paint, and needs no key in the markup — but it
-also means **the page is only as fresh as the last build**, and it says so in its
-own footer alongside the branch and commit it came from.
+The data is read at bake time and shipped as static JSON. A viewer's browser
+talks only to the static site, which means the page cannot go stale-but-look-live,
+cannot leak a slow query into someone's first paint, and needs no key in the
+markup — but it also means **the site is only as fresh as the last bake**, and
+the footer says so, alongside the branch and commit it came from.
 
 The importers, not the code, are what change the numbers, so
 [the workflow](../../.github/workflows/supporting-data-dashboard.yml) offers
@@ -33,18 +43,18 @@ side branch never fires, so there isn't one yet.
 
 ## Publishing
 
-`.github/workflows/supporting-data-dashboard.yml` builds the page and deploys it
-to GitHub Pages. **While this is experimental, any branch that pushes a change
-under `supporting-data/dashboard/` publishes**, and Pages serves one site per
-repository, so the newest push wins. The footer is the only way to tell whose
-push you are looking at. Narrow the trigger when this reaches the default branch.
+`.github/workflows/supporting-data-dashboard.yml` bakes the data, builds the app,
+and deploys `app/dist` to GitHub Pages. **While this is experimental, any branch
+that pushes a change under `supporting-data/dashboard/` publishes**, and Pages
+serves one site per repository, so the newest push wins. The footer is the only
+way to tell whose push you are looking at. Narrow the trigger when this reaches
+the default branch.
 
-The build needs no secrets and no `npm install`: the database's publishable key
-is the script default in `../tools/lib/langdata.mjs` (the same key the font
-chooser demo ships to every browser), and the generator uses nothing but node's
-own library. It is also strictly read-only — `coverage.mjs` has its own small GET
-helper rather than borrowing the importers' client, so a page build cannot write
-to the database even by accident.
+The bake needs no secrets: the database's publishable key is the script default
+in `../tools/lib/langdata.mjs` (the same key the font chooser demo ships to every
+browser). It is also strictly read-only — `coverage.mjs` has its own small GET
+helper rather than borrowing the importers' client, and `export-data.mjs` reads
+through it, so a bake cannot write to the database even by accident.
 
 ## What it counts, and why the denominator matters
 

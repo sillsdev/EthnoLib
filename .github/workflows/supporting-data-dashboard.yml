@@ -1,11 +1,11 @@
-# Publish the supporting-data coverage dashboard to GitHub Pages on every push.
+# Publish the supporting-data dashboard app to GitHub Pages on every push.
 #
-# The page is generated, not live: the build reads the Ethnolib-Support database
-# and bakes the numbers into one static HTML file, so a push is what refreshes
-# it. The build needs no secrets — the database's publishable key is the script
-# default in supporting-data/tools/lib/langdata.mjs, the same key the demo ships
-# to every browser — and no npm install, because the generator uses nothing but
-# node's own library.
+# The site is baked, not live: export-data.mjs reads the Ethnolib-Support
+# database and writes JSON files into the app, `vite build` bundles them, and a
+# viewer's browser talks only to Pages — so a push (or a manual dispatch) is what
+# refreshes the numbers. The build needs no secrets: the database's publishable
+# key is the script default in supporting-data/tools/lib/langdata.mjs, the same
+# key the demo ships to every browser.
 #
 # WHILE THIS IS EXPERIMENTAL, ANY BRANCH THAT GETS PUSHED PUBLISHES. GitHub Pages
 # serves one site per repository, so the newest push wins and there is no history
@@ -44,12 +44,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Build the dashboard
-        run: node supporting-data/dashboard/build.mjs --out dashboard-dist
+          cache: npm
+          cache-dependency-path: supporting-data/dashboard/app/package-lock.json
+      - name: Install
+        run: npm ci
+        working-directory: supporting-data/dashboard/app
+      - name: Bake the data
+        run: npm run bake
+        working-directory: supporting-data/dashboard/app
+      - name: Build the app
+        run: npm run build
+        working-directory: supporting-data/dashboard/app
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dashboard-dist
+          path: supporting-data/dashboard/app/dist
 
   deploy:
     needs: build

@@ -12,7 +12,7 @@
 import { SUPPORT_URL, SUPPORT_ANON_KEY } from "../tools/lib/langdata.mjs";
 
 /** PostgREST's own ceiling per response, so also our page size. */
-const PAGE = 1000;
+export const PAGE = 1000;
 
 /**
  * Tags whose "script" says there isn't one. They are legitimate langtags
@@ -22,7 +22,12 @@ const PAGE = 1000;
  */
 const NON_SCRIPTS = new Set(["Zxxx", "Zyyy", "Zzzz"]);
 
-async function getAllRows(table, select) {
+/**
+ * Every row of one table, a page at a time. Exported so export-data.mjs reads
+ * the database through this same helper rather than its own — the point of the
+ * helper is that it can only GET, and that guarantee is worth sharing.
+ */
+export async function getAllRows(table, select) {
   const rows = [];
   for (let offset = 0; ; offset += PAGE) {
     const url =

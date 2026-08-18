@@ -1,0 +1,348 @@
+/* Adapted from the retired baked page's inline <style>, so the React app looks
+   like the page it replaces.
+
+   Colours, mark specs and the meter/stat-tile contract follow the data-viz house
+   rules: categorical slots 1–3 for the three claim kinds (validated for
+   colour-vision separation as a set, in both modes), hairline chrome, and every
+   value printed as text beside its bar so nothing is carried by colour alone. */
+
+:root {
+  color-scheme: light;
+  --plane: #f9f9f7;
+  --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --hairline: #e1e0d9;
+  --border: rgba(11, 11, 11, 0.1);
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  /* Provenance hues: who a claim's evidence came from. */
+  --source-sil: #0e7c7b;
+  --source-google: #4285f4;
+  --source-bloom: #d65649;
+  --source-other: #898781;
+}
+
+/* The dark palette is spelled twice on purpose: once for the reader who has told
+   their OS, once for a `data-theme="dark"` override that must win either way. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --plane: #0d0d0d;
+    --surface-1: #1a1a19;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --hairline: #2c2c2a;
+    --border: rgba(255, 255, 255, 0.1);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --source-sil: #1a9c9a;
+    --source-google: #5b95f5;
+    --source-bloom: #e0685c;
+    --source-other: #898781;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plane: #0d0d0d;
+  --surface-1: #1a1a19;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+  --hairline: #2c2c2a;
+  --border: rgba(255, 255, 255, 0.1);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --source-sil: #1a9c9a;
+  --source-google: #5b95f5;
+  --source-bloom: #e0685c;
+  --source-other: #898781;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 3rem) 4rem;
+  background: var(--plane);
+  color: var(--text-primary);
+  font: 400 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+main {
+  max-inline-size: 60rem;
+  margin: 0;
+}
+h1 {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.4rem;
+}
+.lede {
+  margin: 0 0 2.5rem;
+  max-inline-size: 46rem;
+  color: var(--text-secondary);
+}
+.lede strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Tab bar: buttons, not links, because the tab is app state that happens to be
+   mirrored into the URL hash. */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 1.1rem 0 2rem;
+  border-block-end: 1px solid var(--hairline);
+}
+.tab {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-block-end: 2px solid transparent;
+  margin-block-end: -1px;
+  padding: 0.5rem 0.85rem;
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+}
+.tab:hover {
+  color: var(--text-primary);
+  background: var(--surface-1);
+}
+.tab[aria-current="page"] {
+  color: var(--text-primary);
+  font-weight: 600;
+  border-block-end-color: var(--series-1);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--series-1);
+  outline-offset: 2px;
+}
+
+.hero {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem 1.5rem 1.75rem;
+  margin-bottom: 1rem;
+}
+.hero .label {
+  margin: 0;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.hero .figure {
+  margin: 0.35rem 0 0;
+  font-size: clamp(2.75rem, 9vw, 3.75rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.hero .figure-detail {
+  margin: 0.35rem 0 0;
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+.hero p.sub {
+  margin: 0.75rem 0 0;
+  max-inline-size: 42rem;
+  color: var(--text-secondary);
+}
+
+.callout {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--text-muted);
+  border-radius: 10px;
+  padding: 0.9rem 1.15rem;
+  margin-bottom: 2.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+.callout strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+h2 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0 0.9rem;
+}
+.tiles {
+  display: grid;
+  gap: 0.875rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  margin-bottom: 2.5rem;
+}
+.tile {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.15rem 1.25rem 1.25rem;
+}
+.tile h3 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.tile .value {
+  margin: 0.5rem 0 0;
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+.tile .value .of {
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--text-secondary);
+}
+.tile .share {
+  margin: 0.2rem 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+.tile .note {
+  margin: 0.7rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* Fill grows from a single baseline, square where it starts and rounded at the
+   data end; the track is the fill's own hue pulled most of the way to the
+   surface, so an empty meter still reads as the same measure. */
+.meter {
+  block-size: 8px;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--fill) 14%, var(--surface-1));
+  overflow: hidden;
+}
+.meter-fill {
+  block-size: 100%;
+  min-inline-size: 0;
+  border-radius: 0 4px 4px 0;
+  background: var(--fill);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.9375rem;
+}
+caption {
+  caption-side: top;
+  text-align: start;
+  padding: 0 0 0.9rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+th,
+td {
+  padding: 0.7rem 0.9rem;
+  text-align: start;
+  vertical-align: top;
+}
+thead th {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-block-end: 1px solid var(--hairline);
+  white-space: nowrap;
+}
+thead th .swatch {
+  display: inline-block;
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 2px;
+  margin-inline-end: 0.4rem;
+  vertical-align: 0.05em;
+}
+tbody th {
+  font-weight: 500;
+  white-space: nowrap;
+}
+.script-code {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.8125rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  margin-inline-start: 0.45rem;
+}
+tbody tr + tr th,
+tbody tr + tr td {
+  border-block-start: 1px solid var(--hairline);
+}
+tbody tr.other th,
+tbody tr.other td {
+  color: var(--text-secondary);
+}
+td.num {
+  font-variant-numeric: tabular-nums;
+  min-inline-size: 6.5rem;
+}
+.cell-value {
+  font-weight: 500;
+}
+.cell-share {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  margin-inline-start: 0.35rem;
+}
+td.num .meter {
+  margin-block-start: 0.4rem;
+  max-inline-size: 6rem;
+}
+
+/* Loading and error states, and the Stage 3/4 placeholders. */
+.status {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  margin: 0;
+}
+.status.error {
+  color: var(--text-primary);
+}
+
+footer {
+  margin-block-start: 3rem;
+  padding-block-start: 1.25rem;
+  border-block-start: 1px solid var(--hairline);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+footer p {
+  margin: 0 0 0.4rem;
+}
+footer code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95em;
+}
+footer a {
+  color: inherit;
+}
