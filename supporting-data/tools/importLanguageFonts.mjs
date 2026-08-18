@@ -72,6 +72,30 @@ const entries = Object.entries(bundled.languages ?? {});
 const families = bundled.families ?? {};
 const index = tagIndex(loadLangtags(options.langtags));
 
+// ---------------------------------------------------------------------------
+// The fourth snapshot: what SLDR sets, not just which font it names.
+//
+// `<sil:font name="Charis" features="cv44=0 cv46=1">` says two things, and until
+// now this importer read only the first. The second is the OpenType feature
+// settings for that font in that language - which capital Eng, which open O -
+// and font-core keeps it in a snapshot of its own, `fontFeatureDefaults.json`.
+// It goes on the same font_support row, because a setting is only meaningful for
+// the font it names: cv43 is Charis's forty-third feature, and Noto Sans's forty-
+// third is a different thing or nothing at all.
+//
+// Named after the standard on purpose. The attribute carries stylistic sets
+// (ssXX) as well as character variants (cvXX), and ssXX matters - Mixtec
+// languages are among those that need one - so `character_variants` would have
+// excluded data we are already storing.
+// ---------------------------------------------------------------------------
+const { path: featuresPath, data: featureSnapshot } = readBundled(
+  "fontFeatureDefaults.json",
+  options.fontCore
+);
+
+const { lookup: featuresByPair, ignored: ignoredFeatureEntries } =
+  buildFeatureLookup(featureSnapshot);
+
 // How many of the snapshot's languages name each family.
 //
 // This is a measure of how SPECIFIC a recommendation is, and nothing else. It is
@@ -136,6 +160,17 @@ const run = runDescriptor({
   tool: "importLanguageFonts.mjs",
   source: SOURCE_TITLE,
   sourceGeneratedAt: bundled.generatedAt,
+  // Read from the languageFonts.json snapshot committed to this repo, not from
+  // the Language Font Finder itself. The snapshot is a few days old, which is
+  // why this run was allowed to use it; a later run should query LFF directly so
+  // that source_generated_at means "when we last asked" rather than "when
+  // somebody last refreshed the file".
+  notes:
+    `Filled font_support from two snapshots committed to this repo: ` +
+    `${bundledPath} (which families a language recommends) and ${featuresPath} ` +
+    `(the OpenType settings SLDR gives for each), generated ` +
+    `${bundled.generatedAt ?? "at an unrecorded time"}. Not a live read of the ` +
+    `Language Font Finder.`,
 });
 await client.recordRun("started", run);
 
@@ -153,11 +188,31 @@ const counts = {
   "font_support claims already there": 0,
   "evidence rows added": 0,
   "evidence already cited this page": 0,
+  "claims carrying OpenType settings": 0,
+  "OpenType settings ignored (entries disagreed)": ignoredFeatureEntries,
 };
 
 const unresolved = [];
 const touched = new Set();
 let done = 0;
+
+// ---------------------------------------------------------------------------
+// Plan first, then write in batches.
+//
+// Nothing below writes while it walks the snapshot. It works out everything the
+// snapshot asks for, then files it a chunk at a time: one POST per 500 rows
+// rather than one POST per row. That is the difference between about forty
+// requests and about seventeen thousand, for the same 8,400 claims and 8,400
+// evidence rows.
+//
+// The order of the batches is forced by foreign keys. A claim needs its language
+// and font ids, and an evidence row needs its claim id, so each batch has to come
+// back before the next can be built. Four dependent round trips, not four
+// thousand.
+// ---------------------------------------------------------------------------
+
+/** Everything the snapshot asks for, resolved but not yet written. */
+const wanted = [];
 
 for (const [sldrTag, familyIds] of entries) {
   if (options.limit !== undefined && done >= options.limit) break;
@@ -186,10 +241,7 @@ for (const [sldrTag, familyIds] of entries) {
     continue;
   }
 
-  const languageId = await ensureLanguage(resolved);
   touched.add(resolved.tag);
-
-  const sourceId = await ensureSource(SOURCE_TITLE, sldrPageUrl(sldrTag));
 
   for (const familyId of familyIds) {
     const family = families[familyId];
@@ -197,20 +249,29 @@ for (const [sldrTag, familyIds] of entries) {
       // The snapshot drops families it may not offer, and a language rule can
       // still name one. Nothing to claim; the chooser would not show it either.
       counts["skipped (family not in snapshot)"]++;
-      unresolved.push(`${sldrTag} → ${familyId} (not in snapshot)`);
+      unresolved.push(`${sldrTag} -> ${familyId} (not in snapshot)`);
       continue;
     }
-
-    const fontId = await ensureFont(family.family);
-    const claimId = await ensureClaim(languageId, fontId);
-    await addEvidence(
-      claimId,
-      sourceId,
-      details(sldrTag, resolved, familyId, family, bundled)
-    );
-    client.log(`${sldrTag} → ${resolved.tag}: ${family.family}`);
+    const otFeatures =
+      featuresByPair.get(`${resolved.tag}\u0000${family.family.trim()}`) ?? null;
+    if (otFeatures) counts["claims carrying OpenType settings"]++;
+    wanted.push({
+      tag: resolved.tag,
+      name: resolved.name?.trim() || null,
+      sourceUrl: sldrPageUrl(sldrTag),
+      sourceTitle: SOURCE_TITLE,
+      familyName: family.family.trim(),
+      opentypeFeatures: otFeatures,
+      details: details(sldrTag, resolved, familyId, family, bundled),
+      log:
+        `${sldrTag} -> ${resolved.tag}: ${family.family}` +
+        (otFeatures ? ` [${featureText(otFeatures)}]` : ""),
+    });
   }
 }
+
+await fileWanted(wanted);
+for (const item of wanted) client.log(item.log);
 
 // The script fallbacks, either filed or merely counted.
 const fallbackReport = await handleScriptDefaults();
@@ -219,8 +280,9 @@ counts["writing systems touched"] = touched.size;
 
 await client.recordRun("finished", { ...run, counts });
 
-report("Stage 5 — Language Font Finder recommendations", counts, client);
+report("Stage 5 - Language Font Finder recommendations", counts, client);
 console.log(`  from ${bundledPath}`);
+console.log(`  and  ${featuresPath}`);
 console.log(`  (${client.stats.reads} reads, ${client.stats.writes} writes)`);
 for (const line of fallbackReport) console.log(`  ${line}`);
 if (unresolved.length > 0) {
@@ -228,87 +290,228 @@ if (unresolved.length > 0) {
 }
 
 /**
- * find-or-create against the cache, falling back to the client's own
- * look-again when an insert loses a race.
+ * File a list of wanted claims: languages, sources and fonts first so the ids
+ * exist, then the claims, then the evidence. Both the per-language path and the
+ * `--script-defaults` path go through here, so neither can quietly go back to
+ * writing a row at a time.
+ *
+ * `createLanguages: false` for the fallbacks, which must never bring a writing
+ * system into existence.
  */
-async function cachedEnsure(cache, key, table, findQuery, row, onCreate) {
-  const hit = cache.get(key);
-  if (hit !== undefined) return hit;
-  const id = await client.insertRow(table, row);
-  if (id !== undefined) {
-    cache.set(key, id);
+async function fileWanted(items, { createLanguages = true } = {}) {
+  if (items.length === 0) return;
+
+  await ensureAll({
+    cache: existing.languages,
+    table: "language",
+    select: "id,bcp47",
+    keyOf: (row) => row.bcp47.trim().toLowerCase(),
+    needed: items.map((item) => ({
+      key: item.tag.trim().toLowerCase(),
+      row: { bcp47: item.tag, name: item.name },
+      find: `bcp47=ilike.${client.q(item.tag)}`,
+    })),
+    onCreate: () => counts["language rows created"]++,
+    create: createLanguages,
+  });
+
+  await ensureAll({
+    cache: existing.sources,
+    table: "source",
+    select: "id,url",
+    keyOf: (row) => row.url,
+    needed: items.map((item) => ({
+      key: item.sourceUrl,
+      row: { title: item.sourceTitle, url: item.sourceUrl, type: "dataset" },
+      find: `url=eq.${client.q(item.sourceUrl)}`,
+    })),
+  });
+
+  await ensureAll({
+    cache: existing.fonts,
+    table: "font",
+    select: "id,family_name",
+    keyOf: (row) => row.family_name.trim().toLowerCase(),
+    needed: items.map((item) => ({
+      key: item.familyName.toLowerCase(),
+      row: { family_name: item.familyName },
+      find: `family_name=ilike.${client.q(item.familyName)}`,
+    })),
+    onCreate: () => counts["font rows created"]++,
+  });
+
+  // Ids in hand, so a wanted claim is now a pair of numbers. An item whose
+  // language row does not exist is dropped here rather than earlier, because only
+  // the fallback path can produce one and only it cares.
+  const pairs = [];
+  for (const item of items) {
+    const languageId = existing.languages.get(item.tag.trim().toLowerCase());
+    if (languageId === undefined) continue;
+    pairs.push({
+      languageId,
+      fontId: existing.fonts.get(item.familyName.toLowerCase()),
+      sourceId: existing.sources.get(item.sourceUrl),
+      opentypeFeatures: item.opentypeFeatures ?? null,
+      details: item.details,
+    });
+  }
+
+  await ensureAll({
+    cache: existing.claims,
+    table: "font_support",
+    select: "id,language_id,font_id",
+    keyOf: (row) => `${row.language_id}:${row.font_id}`,
+    needed: pairs.map((pair) => ({
+      key: `${pair.languageId}:${pair.fontId}`,
+      row: {
+        language_id: pair.languageId,
+        font_id: pair.fontId,
+        opentype_features: pair.opentypeFeatures,
+      },
+      find: `language_id=eq.${pair.languageId}&font_id=eq.${pair.fontId}`,
+    })),
+    onCreate: () => counts["font_support claims created"]++,
+    onHit: () => counts["font_support claims already there"]++,
+  });
+
+  const evidence = [];
+  for (const pair of pairs) {
+    const claimId = existing.claims.get(`${pair.languageId}:${pair.fontId}`);
+    const key = `${claimId}:${pair.sourceId}`;
+    if (existing.evidence.has(key)) {
+      counts["evidence already cited this page"]++;
+      continue;
+    }
+    existing.evidence.add(key);
+    evidence.push({
+      font_support_id: claimId,
+      source_id: pair.sourceId,
+      contributor_id: null,
+      details: pair.details,
+      submitted_via: "import",
+      session_id: null,
+    });
+  }
+
+  // Evidence rows have no identity to dedupe on and nothing reads them back, so
+  // these go out with `return=minimal` - the cheapest write in the file.
+  for (let i = 0; i < evidence.length; i += 500) {
+    const result = await client.insertRows(
+      "font_support_evidence",
+      evidence.slice(i, i + 500)
+    );
+    counts["evidence rows added"] += result.inserted;
+  }
+}
+
+/**
+ * Find-or-create for a whole set at once: cache hits cost nothing, the misses go
+ * out in one batch per 500 rows, and only a row lost to a race falls back to a
+ * request of its own.
+ *
+ * The batch is deduped by key first. The snapshot names Charis for 1,873
+ * languages, so without that the font batch would send 1,873 identical rows and
+ * collide with itself.
+ */
+async function ensureAll({
+  cache,
+  table,
+  select,
+  keyOf,
+  needed,
+  onCreate,
+  onHit,
+  create = true,
+}) {
+  const missing = new Map();
+  for (const item of needed) {
+    if (cache.has(item.key)) {
+      onHit?.();
+      continue;
+    }
+    if (!missing.has(item.key)) missing.set(item.key, item);
+  }
+  if (missing.size === 0 || !create) return;
+
+  const created = await client.insertRowsReturning(
+    table,
+    [...missing.values()].map((item) => item.row),
+    select
+  );
+  for (const row of created) {
+    cache.set(keyOf(row), row.id);
     onCreate?.();
-    return id;
   }
-  const again = await client.ensureRow(table, findQuery, row);
-  cache.set(key, again.id);
-  if (again.created) onCreate?.();
-  return again.id;
-}
 
-async function ensureLanguage(resolved) {
-  return cachedEnsure(
-    existing.languages,
-    resolved.tag.trim().toLowerCase(),
-    "language",
-    `bcp47=ilike.${client.q(resolved.tag)}`,
-    { bcp47: resolved.tag, name: resolved.name?.trim() || null },
-    () => counts["language rows created"]++
-  );
-}
-
-async function ensureFont(familyName) {
-  const name = familyName.trim();
-  return cachedEnsure(
-    existing.fonts,
-    name.toLowerCase(),
-    "font",
-    `family_name=ilike.${client.q(name)}`,
-    { family_name: name },
-    () => counts["font rows created"]++
-  );
-}
-
-async function ensureClaim(languageId, fontId) {
-  const key = `${languageId}:${fontId}`;
-  if (existing.claims.has(key)) {
-    counts["font_support claims already there"]++;
-    return existing.claims.get(key);
+  // A row missing from the response lost a race: somebody else inserted the same
+  // identity between our read and our write. Ask for it by name.
+  for (const item of missing.values()) {
+    if (cache.has(item.key)) continue;
+    const found = await client.ensureRow(table, item.find, item.row);
+    cache.set(item.key, found.id);
+    if (found.created) onCreate?.();
   }
-  return cachedEnsure(
-    existing.claims,
-    key,
-    "font_support",
-    `language_id=eq.${languageId}&font_id=eq.${fontId}`,
-    { language_id: languageId, font_id: fontId, details: null },
-    () => counts["font_support claims created"]++
-  );
 }
 
-async function ensureSource(title, url) {
-  return cachedEnsure(existing.sources, url, "source", `url=eq.${client.q(url)}`, {
-    title,
-    url,
-    type: "dataset",
-  });
-}
-
-async function addEvidence(claimId, sourceId, detailsText) {
-  const key = `${claimId}:${sourceId}`;
-  if (existing.evidence.has(key)) {
-    counts["evidence already cited this page"]++;
-    return;
+/**
+ * `${writing system}\0${font family}` -> the settings SLDR gives for that pair.
+ *
+ * Two SLDR entries can land on one writing system, `man` and `man-Latn-GN` both
+ * being Mandingo in Latin script here, and they do not always agree. Where they
+ * disagree, take the least-qualified entry: a regioned entry is a statement about
+ * one country, and a row here has no region to carry that, so promoting it would
+ * widen a scoped claim into a general one. Same instinct as the tie-break in
+ * 002-approved-sources.sql, which prefers a claim with no orthography label.
+ * Still tied after that and the pair is left with no settings rather than picked
+ * from arbitrarily.
+ *
+ * Kept in step with the backfill in sql/003-opentype-features.sql, which had to
+ * make the same choice for the rows that already existed.
+ */
+function buildFeatureLookup(snapshot) {
+  const candidates = new Map();
+  for (const [sldrTag, fonts] of Object.entries(snapshot.defaults ?? {})) {
+    const resolved = resolveWritingSystem(sldrTag, index);
+    if (!resolved || NON_SCRIPTS.has(resolved.script)) continue;
+    for (const font of fonts) {
+      const features = font.features ?? {};
+      if (Object.keys(features).length === 0) continue;
+      const key = `${resolved.tag}\u0000${font.fontName}`;
+      if (!candidates.has(key)) candidates.set(key, []);
+      candidates.get(key).push({ sldrTag, features });
+    }
   }
-  await client.insertRow("font_support_evidence", {
-    font_support_id: claimId,
-    source_id: sourceId,
-    contributor_id: null,
-    details: detailsText,
-    submitted_via: "import",
-    session_id: null,
-  });
-  existing.evidence.add(key);
-  counts["evidence rows added"]++;
+
+  const lookup = new Map();
+  let ignored = 0;
+  for (const [key, found] of candidates) {
+    if (found.length === 1) {
+      lookup.set(key, found[0].features);
+      continue;
+    }
+    const spelled = new Set(found.map((f) => JSON.stringify(f.features)));
+    if (spelled.size === 1) {
+      lookup.set(key, found[0].features);
+      continue;
+    }
+    const subtags = (f) => f.sldrTag.split(/[-_]/).length;
+    const fewest = Math.min(...found.map(subtags));
+    const best = found.filter((f) => subtags(f) === fewest);
+    if (new Set(best.map((f) => JSON.stringify(f.features))).size === 1) {
+      lookup.set(key, best[0].features);
+      ignored += found.length - best.length;
+    } else {
+      ignored += found.length;
+    }
+  }
+  return { lookup, ignored };
+}
+
+/** SLDR's own spelling of a settings object, for the --verbose line. */
+function featureText(features) {
+  return Object.entries(features)
+    .map(([tag, value]) => `${tag}=${value}`)
+    .join(" ");
 }
 
 /**
@@ -404,41 +607,46 @@ async function handleScriptDefaults() {
     ];
   }
 
-  const fallbackSourceId = await ensureSource(FALLBACK_TITLE, FALLBACK_URL);
-  let claims = 0;
-  let already = 0;
-  let evidence = 0;
   const before = {
     created: counts["font_support claims created"],
     there: counts["font_support claims already there"],
     evidence: counts["evidence rows added"],
   };
+
+  const items = [];
   for (const { script, ids, targets } of plan) {
     for (const system of targets) {
-      // Never create a language row for a fallback: a script's default is not a
-      // reason to believe a writing system exists in this database.
-      const languageId = existing.languages.get(system.tag.trim().toLowerCase());
-      if (languageId === undefined) continue;
       for (const id of ids) {
         const family = families[id];
         if (!family?.family) continue;
-        const fontId = await ensureFont(family.family);
-        const claimId = await ensureClaim(languageId, fontId);
-        await addEvidence(
-          claimId,
-          fallbackSourceId,
-          `Language Font Finder fallback for the ${script} script, not a recommendation for ` +
+        items.push({
+          tag: system.tag,
+          name: system.name?.trim() || null,
+          sourceUrl: FALLBACK_URL,
+          sourceTitle: FALLBACK_TITLE,
+          familyName: family.family.trim(),
+          opentypeFeatures: null,
+          details:
+            `Language Font Finder fallback for the ${script} script, not a recommendation for ` +
             `${system.tag}: nobody has written a font rule for this language, and this is what ` +
             `the Font Finder answers for its script. Family ${id}` +
             (family.license ? `; licence ${family.license}` : "") +
-            (bundled.generatedAt ? `; snapshot ${bundled.generatedAt}` : "")
-        );
+            (bundled.generatedAt ? `; snapshot ${bundled.generatedAt}` : ""),
+          log: `${system.tag}: ${family.family} (${script} fallback)`,
+        });
       }
     }
   }
-  claims = counts["font_support claims created"] - before.created;
-  already = counts["font_support claims already there"] - before.there;
-  evidence = counts["evidence rows added"] - before.evidence;
+
+  // createLanguages: false is the load-bearing part. A script's default is not a
+  // reason to believe a writing system exists, so a fallback whose language row
+  // is absent is dropped rather than inventing one.
+  await fileWanted(items, { createLanguages: false });
+  for (const item of items) client.log(item.log);
+
+  const claims = counts["font_support claims created"] - before.created;
+  const already = counts["font_support claims already there"] - before.there;
+  const evidence = counts["evidence rows added"] - before.evidence;
   return [
     `script fallbacks: filed for ${plan.length} scripts` +
       ` (${claims} claims created, ${already} already there, ${evidence} evidence rows,` +

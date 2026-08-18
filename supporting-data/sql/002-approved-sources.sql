@@ -155,7 +155,7 @@ create or replace view public.usable_sample_texts
 -- system and that is not a conflict, so no distinct on here.
 create or replace view public.usable_fonts
   with (security_invoker = on) as
-  select l.bcp47, f.family_name, fs.details, fs.rank,
+  select l.bcp47, f.family_name, fs.opentype_features, fs.rank,
          fs.id as font_support_id, fs.created_at
   from public.font_support fs
   join public.language l on l.id = fs.language_id

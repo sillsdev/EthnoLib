@@ -184,6 +184,71 @@ export function createClient({ dryRun = false, verbose = false } = {}) {
     return { inserted, conflicted };
   }
 
+  /**
+   * Batch insert that hands the new rows back, chunked, for the case that makes
+   * a per-row POST untenable: stage 5 files about 8,400 claims and as many
+   * evidence rows, and one request each is 17,000 round trips.
+   *
+   * `select` names the columns to return, and must include whatever the caller
+   * needs to match a returned row to the row it sent — PostgREST preserves the
+   * order it was given, but relying on that alone is fragile, so callers match
+   * on their own identity columns.
+   *
+   * Conflicts are the caller's problem, as in `insertRows`: it has already read
+   * what exists, so a 409 means something appeared underneath it. The chunk is
+   * then retried one row at a time, and the rows that conflict are simply
+   * missing from the result — the caller looks them up.
+   */
+  async function insertRowsReturning(table, rows, select, chunkSize = 500) {
+    const out = [];
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      const chunk = rows.slice(i, i + chunkSize);
+      if (dryRun) {
+        for (const row of chunk) out.push({ ...row, id: nextSyntheticId-- });
+        continue;
+      }
+      stats.writes++;
+      const response = await fetch(
+        `${SUPPORT_URL}/rest/v1/${table}?select=${select}`,
+        {
+          method: "POST",
+          headers: { ...headers(), Prefer: "return=representation" },
+          body: JSON.stringify(chunk),
+        }
+      );
+      if (response.ok) {
+        out.push(...(await response.json()));
+        continue;
+      }
+      if (response.status !== 409) {
+        throw new Error(
+          `${table} batch insert failed: ${response.status} ${await response.text()}`
+        );
+      }
+      // One row in the chunk collided; the whole chunk was rolled back, so
+      // replay it singly rather than losing the innocent rows with it.
+      for (const row of chunk) {
+        const single = await fetch(
+          `${SUPPORT_URL}/rest/v1/${table}?select=${select}`,
+          {
+            method: "POST",
+            headers: { ...headers(), Prefer: "return=representation" },
+            body: JSON.stringify(row),
+          }
+        );
+        stats.writes++;
+        if (single.status === 409) continue;
+        if (!single.ok) {
+          throw new Error(
+            `${table} insert failed: ${single.status} ${await single.text()}`
+          );
+        }
+        out.push(...(await single.json()));
+      }
+    }
+    return out;
+  }
+
   /** find-or-create, retrying the find once after a lost race's 409. */
   async function ensureRow(table, findQuery, row) {
     if (dryRun) {
@@ -334,6 +399,7 @@ export function createClient({ dryRun = false, verbose = false } = {}) {
     getAllRows,
     insertRow,
     insertRows,
+    insertRowsReturning,
     ensureRow,
     ensureClaim,
     ensureLanguage,
@@ -400,13 +466,17 @@ export function parseArgs(argv = process.argv.slice(2)) {
  * data set, which snapshot, and the flags it ran with — that last one so a
  * `--only aa` run is never read later as a full import.
  */
-export function runDescriptor({ tool, source, sourceGeneratedAt }) {
+export function runDescriptor({ tool, source, sourceGeneratedAt, notes }) {
   return {
     runKey: randomUUID(),
     tool,
     source,
     sourceGeneratedAt,
     invokedAs: process.argv.slice(2).join(" ") || "(no flags)",
+    // Where the data came in from, when that is not obvious from `source` — an
+    // upstream API, or, as here, a snapshot committed to this repo. Operational
+    // provenance, not an opinion about the data: see supporting-data/CLAUDE.md.
+    notes: notes ?? null,
   };
 }
 

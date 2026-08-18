@@ -6,12 +6,15 @@ already have. They implement stages 1–3 and 5 of
 BloomLibrary walker) is not built yet, and is planned in
 [`../docs/bloom-walker-plan.md`](../docs/bloom-walker-plan.md).
 
-**One snapshot per question.** font-core bundles three, and there is one importer
-for each: alphabets, sample texts, and the fonts a language recommends. That last
-one is stage 5, written after the first three had already run against the live
-database with `font_support` still sitting at zero rows — the source was there all
-along and nothing read it. If a fourth snapshot appears, check whether it wants a
-stage before concluding the database has nothing to say about it.
+**One snapshot per question.** font-core bundles four, and stages 1-3 and 5 read
+all four: alphabets, sample texts, the families a language recommends, and the
+OpenType feature settings SLDR gives for each of those families. Two of them were
+missed in turn. `languageFonts.json` had no importer at all, which is why
+`font_support` sat at zero rows after the first three stages ran; then
+`fontFeatureDefaults.json` was missed the same way, and the warning printed here
+about "if a fourth snapshot appears" was already out of date when it was written.
+The habit worth keeping: list the directory, then check each file against the
+importers, rather than trusting a count written down earlier.
 
 What every importer does and does not do:
 
@@ -27,6 +30,11 @@ What every importer does and does not do:
 - **Records, not assesses.** An evidence `details` string says what the source
   said, which file it came from, and when the snapshot was taken. No judgement of
   the source's answer goes in the row.
+- **Batches its writes.** Reads happen once up front, and rows go out 500 to a
+  POST. Stage 5 files 8,380 claims and 9,870 evidence rows in 41 requests; the
+  same work one row at a time was 17,000 requests and over twenty minutes.
+  `insertRowsReturning` in `lib/langdata.mjs` is the helper, and it hands ids
+  back so the next batch can reference them.
 - **Says what it did.** Every run ends in a counts report, including what was
   skipped and why, and writes that report to the `import_run` table. That last
   part is what makes "we checked and found nothing new" visible: every other
@@ -96,13 +104,44 @@ passage came from. Some passages are scripture or prayer excerpts; they are
 recorded as they are, which is safe because an import cannot make anything
 visible — what a user is shown stays a human decision.
 
-**5 — `importLanguageFonts.mjs`.** `font_support` claims from font-core's bundled
+**5 — `importLanguageFonts.mjs`.** `font_support` claims from two snapshots. From
 `languageFonts.json`, the Language Font Finder's data: for each of 2,187 tags, the
 families SLDR's `<sil:font>` elements name for that language, already trimmed to
 what we may actually hand a user. About 1,854 writing systems and 8,380 claims.
+From `fontFeatureDefaults.json`, the rest of the same XML attribute: the OpenType
+feature settings for that font in that language, written to
+`font_support.opentype_features` as tag -> value. 519 of the 2,187 tags carry any,
+covering 509 writing systems and 1,404 (writing system, font) pairs.
+
+Three things about those settings:
+
+- **They belong to the pair, not to the language.** `cv43` is Charis's
+  forty-third feature; Noto Sans's forty-third is something else or nothing. So
+  the settings sit on the claim that already names both a language and a font.
+  What the language actually needs — a particular capital Y, say, whatever font
+  renders it — is a different claim we have not modelled yet.
+- **Named after the standard, on purpose.** The attribute carries stylistic sets
+  (`ssXX`) as well as character variants (`cvXX`), and the sets matter: Annapurna
+  SIL takes `ss01 ss08 ss09 ss10` for Nepali. `character_variants` would have been
+  a name that excluded data already in the column.
+- **Stored exactly as given.** An integer per tag, 1-based into the font's own
+  named forms, 0 meaning the font's default. Nothing is translated, because the
+  names live in the font binary and the same tag means different things in
+  different fonts. Making these legible is a real problem and a separate one.
 Evidence cites the same per-language SLDR page stage 2 cites, because the
 recommendations live in the same XML file as the exemplars — so one source row
 supports both an alphabet claim and a font claim, which is exactly what happened.
+Ran 2026-08-18: 8,380 claims across 1,854 writing systems, 9,870 evidence rows
+(more evidence than claims because several SLDR entries, `aa` and `aa_ET` say,
+resolve to one writing system and each cites its own page).
+
+**Read the bundled snapshot once, then go upstream.** That run used
+`languageFonts.json` as committed, on the grounds that it was refreshed on
+2026-08-15 and so was current. That was a one-off. A snapshot in the repo tells
+you when somebody last regenerated a file, not when anybody last asked the
+Language Font Finder anything, and `import_run.source_generated_at` cannot mean
+the second while the input is the first. Future runs should query LFF directly;
+until then every run says which route it took in `import_run.notes`.
 
 Two details worth knowing before reading the output:
 

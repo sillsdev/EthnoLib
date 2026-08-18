@@ -96,9 +96,14 @@ create table if not exists public.font_support (
   created_at  timestamptz not null default now(),
   language_id bigint not null references public.language (id),
   font_id     bigint not null references public.font (id),
-  -- Room for the parts that aren't boolean: needed OpenType features, "renders
-  -- but the local letterforms are wrong", which weights were checked.
-  details     text,
+  -- The OpenType feature settings SLDR records on <sil:font features="...">,
+  -- as tag -> value: {"cv43": 0, "cv46": 1}. Stylistic sets (ssXX) live here too,
+  -- which is why the column is named after the standard rather than after
+  -- character variants. The value picks one of the font's own named forms,
+  -- 1-based, and 0 means the font's default; the names themselves are in the
+  -- font binary, not here. null means the source named none. See
+  -- sql/003-opentype-features.sql for the rename this column went through.
+  opentype_features jsonb,
   rank        text not null default 'normal',
   rank_note   text
 );
@@ -527,7 +532,8 @@ create or replace view public.preferred_sample_texts
 create or replace view public.preferred_fonts
   with (security_invoker = on) as
   select
-    l.bcp47, f.family_name, fs.details, fs.id as font_support_id, fs.created_at
+    l.bcp47, f.family_name, fs.opentype_features,
+    fs.id as font_support_id, fs.created_at
   from public.font_support fs
   join public.language l on l.id = fs.language_id
   join public.font f on f.id = fs.font_id

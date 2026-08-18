@@ -103,6 +103,22 @@ Evidence cites the SLDR page for the language — the same source rows stage 2
 creates, since the recommendations sit in the same XML file as the exemplars, so
 one page ends up supporting both an alphabet claim and a font claim.
 
+A second omission surfaced the same way: `fontFeatureDefaults.json`, the fourth
+bundled snapshot, holds the other half of the same `<sil:font>` attribute — the
+OpenType feature settings SLDR records for that font in that language — and
+nothing read it either. It now lands in `font_support.opentype_features`, the
+column previously called `details` (see
+[`../sql/003-opentype-features.sql`](../sql/003-opentype-features.sql) for the
+rename and why the name follows the standard rather than saying "character
+variants"). 519 tags carry settings, 1,404 (writing system, font) pairs in all.
+
+Ran on 2026-08-18 against the committed snapshot, which was three days old at
+the time. The snapshot was a deliberate shortcut for that one run: it says when a
+file was regenerated, not when anyone last asked the Language Font Finder
+anything, so a repeat should read LFF directly and let
+`import_run.source_generated_at` mean what it claims. Each run records which
+route it took in `import_run.notes`.
+
 Two things the importer records rather than decides:
 
 - **How specific a recommendation is.** Five families — Charis, Noto Sans, Noto
