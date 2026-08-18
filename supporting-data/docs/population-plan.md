@@ -117,7 +117,11 @@ the time. The snapshot was a deliberate shortcut for that one run: it says when 
 file was regenerated, not when anyone last asked the Language Font Finder
 anything, so a repeat should read LFF directly and let
 `import_run.source_generated_at` mean what it claims. Each run records which
-route it took in `import_run.notes`.
+route it took in `import_run.notes`. Which languages get asked about is a
+separate question with its own answer:
+[`lff-and-the-language-list.md`](lff-and-the-language-list.md) records why the loop
+runs over SLDR's ~2,200 LDML files rather than langtags' 8,500 writing systems, and
+what was measured to check that.
 
 Two things the importer records rather than decides:
 

@@ -100,8 +100,12 @@ endorsement submissions exist in the same module, awaiting UI.
   sources we already have — each import being evidence rows citing its source,
   never anonymous truth. Four exist: langtags writing systems (rows only, so
   coverage has a denominator), SLDR alphabets, gflanguages sample texts, and the
-  Language Font Finder's per-language font recommendations. More to come from
-  CLDR exemplars and similar.
+  Language Font Finder's per-language font recommendations, including the
+  OpenType feature settings SLDR gives for each. More to come from CLDR exemplars
+  and similar. The importers iterate SLDR's ~2,200 LDML files rather than langtags'
+  8,500 writing systems, which looks like leaving coverage on the table and is not:
+  [`docs/lff-and-the-language-list.md`](docs/lff-and-the-language-list.md) has the
+  measurements.
 - **BloomLibrary scouring**: a script that reads BloomLibrary.org books to find
   corroborating evidence for existing claims, and new claims where a Bloom book
   is the only evidence we have. Planned in

@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 
+import { AboutTab } from "./tabs/AboutTab";
 import { DashboardTab } from "./tabs/DashboardTab";
 import { DataTab } from "./tabs/DataTab";
 import { RunsTab } from "./tabs/RunsTab";
 
 const TABS = [
+  { id: "about", label: "About" },
   { id: "dashboard", label: "Dashboard" },
   { id: "data", label: "Data" },
   { id: "runs", label: "Collection runs" },
@@ -18,7 +20,7 @@ const isTabId = (value: string): value is TabId =>
 /** The tab named by the URL hash, so a link to one tab opens on that tab. */
 function tabFromHash(): TabId {
   const name = window.location.hash.replace(/^#/, "");
-  return isTabId(name) ? name : "dashboard";
+  return isTabId(name) ? name : "about";
 }
 
 export function App() {
@@ -56,6 +58,7 @@ export function App() {
         ))}
       </nav>
 
+      {tab === "about" && <AboutTab />}
       {tab === "dashboard" && <DashboardTab />}
       {tab === "data" && <DataTab />}
       {tab === "runs" && <RunsTab />}

@@ -143,6 +143,11 @@ Language Font Finder anything, and `import_run.source_generated_at` cannot mean
 the second while the input is the first. Future runs should query LFF directly;
 until then every run says which route it took in `import_run.notes`.
 
+That does not change *which* languages get asked about. The live API is per-tag
+(`/lang/{tag}`), so a live importer still needs a list to iterate, and the honest
+list is still SLDR's file inventory rather than langtags — tested, with numbers, in
+[`../docs/lff-and-the-language-list.md`](../docs/lff-and-the-language-list.md).
+
 Two details worth knowing before reading the output:
 
 - **Five families are recommended almost everywhere**, and that is a fact about
