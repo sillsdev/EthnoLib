@@ -17,13 +17,12 @@
 //  - `languages` — 2,187 tags, each with the families SLDR's `<sil:font>`
 //    elements name for that language. Somebody wrote that down about that
 //    language, so it is a claim, and it is what this importer files.
-//  - `scriptDefaults` — 157 scripts, each with what the Font Finder falls back
-//    on when nobody has written a rule for a language. That is a statement about
-//    a script, and this database has no script entity to hang it on; filing it
-//    against every language of that script would assert something nobody
-//    asserted. Skipped and counted by default; `--script-defaults` files it
-//    anyway, against existing language rows only and with its own source, so it
-//    can never be mistaken for a per-language recommendation.
+//  - `scriptDefaults` — what the Font Finder falls back on when nobody has
+//    written a rule for a language. Not filed here: what the Font Finder
+//    answers for a tag is the service's statement rather than SLDR's, and the
+//    live importer (population-plan.md stage 6) caches those answers
+//    whole under the service's own source, so the two kinds of statement are
+//    never mistaken for each other.
 //
 // Evidence cites the SLDR page for the language, the same source rows stage 2
 // creates — the recommendations live in the same XML file as the exemplars, so
@@ -40,7 +39,6 @@ import {
   loadLangtags,
   tagIndex,
   resolveWritingSystem,
-  writingSystems,
   NON_SCRIPTS,
 } from "./lib/langtags.mjs";
 import {
@@ -51,9 +49,6 @@ import {
 } from "./lib/langdata.mjs";
 
 const SOURCE_TITLE = "SIL Locale Data Repository (SLDR)";
-const FALLBACK_TITLE = "SIL Language Font Finder (script fallbacks)";
-const FALLBACK_URL =
-  "https://github.com/silnrsi/langfontfinder/blob/main/data/fallback.json";
 
 /** Same page URL as stage 2, so the two stages share one source row per file. */
 function sldrPageUrl(sldrTag) {
@@ -160,11 +155,11 @@ const run = runDescriptor({
   tool: "importLanguageFonts.mjs",
   source: SOURCE_TITLE,
   sourceGeneratedAt: bundled.generatedAt,
-  // Read from the languageFonts.json snapshot committed to this repo, not from
-  // the Language Font Finder itself. The snapshot is a few days old, which is
-  // why this run was allowed to use it; a later run should query LFF directly so
-  // that source_generated_at means "when we last asked" rather than "when
-  // somebody last refreshed the file".
+  // Read from the languageFonts.json snapshot committed to this repo, which is
+  // generated from SLDR's <sil:font> elements — the claims filed here are
+  // SLDR's statements. The Font Finder service's own per-tag answers are a
+  // different statement and a separate source, cached by the stage 6 importer
+  // (population-plan.md).
   notes:
     `Filled font_support from two snapshots committed to this repo: ` +
     `${bundledPath} (which families a language recommends) and ${featuresPath} ` +
@@ -273,9 +268,6 @@ for (const [sldrTag, familyIds] of entries) {
 await fileWanted(wanted);
 for (const item of wanted) client.log(item.log);
 
-// The script fallbacks, either filed or merely counted.
-const fallbackReport = await handleScriptDefaults();
-
 counts["writing systems touched"] = touched.size;
 
 await client.recordRun("finished", { ...run, counts });
@@ -284,21 +276,16 @@ report("Stage 5 - Language Font Finder recommendations", counts, client);
 console.log(`  from ${bundledPath}`);
 console.log(`  and  ${featuresPath}`);
 console.log(`  (${client.stats.reads} reads, ${client.stats.writes} writes)`);
-for (const line of fallbackReport) console.log(`  ${line}`);
 if (unresolved.length > 0) {
   console.log(`  skipped: ${unresolved.join(", ")}`);
 }
 
 /**
  * File a list of wanted claims: languages, sources and fonts first so the ids
- * exist, then the claims, then the evidence. Both the per-language path and the
- * `--script-defaults` path go through here, so neither can quietly go back to
- * writing a row at a time.
- *
- * `createLanguages: false` for the fallbacks, which must never bring a writing
- * system into existence.
+ * exist, then the claims, then the evidence — one batch per table rather than
+ * a request per row.
  */
-async function fileWanted(items, { createLanguages = true } = {}) {
+async function fileWanted(items) {
   if (items.length === 0) return;
 
   await ensureAll({
@@ -312,7 +299,6 @@ async function fileWanted(items, { createLanguages = true } = {}) {
       find: `bcp47=ilike.${client.q(item.tag)}`,
     })),
     onCreate: () => counts["language rows created"]++,
-    create: createLanguages,
   });
 
   await ensureAll({
@@ -340,15 +326,11 @@ async function fileWanted(items, { createLanguages = true } = {}) {
     onCreate: () => counts["font rows created"]++,
   });
 
-  // Ids in hand, so a wanted claim is now a pair of numbers. An item whose
-  // language row does not exist is dropped here rather than earlier, because only
-  // the fallback path can produce one and only it cares.
+  // Ids in hand, so a wanted claim is now a pair of numbers.
   const pairs = [];
   for (const item of items) {
-    const languageId = existing.languages.get(item.tag.trim().toLowerCase());
-    if (languageId === undefined) continue;
     pairs.push({
-      languageId,
+      languageId: existing.languages.get(item.tag.trim().toLowerCase()),
       fontId: existing.fonts.get(item.familyName.toLowerCase()),
       sourceId: existing.sources.get(item.sourceUrl),
       opentypeFeatures: item.opentypeFeatures ?? null,
@@ -413,16 +395,7 @@ async function fileWanted(items, { createLanguages = true } = {}) {
  * languages, so without that the font batch would send 1,873 identical rows and
  * collide with itself.
  */
-async function ensureAll({
-  cache,
-  table,
-  select,
-  keyOf,
-  needed,
-  onCreate,
-  onHit,
-  create = true,
-}) {
+async function ensureAll({ cache, table, select, keyOf, needed, onCreate, onHit }) {
   const missing = new Map();
   for (const item of needed) {
     if (cache.has(item.key)) {
@@ -431,7 +404,7 @@ async function ensureAll({
     }
     if (!missing.has(item.key)) missing.set(item.key, item);
   }
-  if (missing.size === 0 || !create) return;
+  if (missing.size === 0) return;
 
   const created = await client.insertRowsReturning(
     table,
@@ -538,119 +511,3 @@ function details(sldrTag, resolved, familyId, family, snapshot) {
   return parts.join("; ");
 }
 
-/**
- * The per-script fallbacks: what the Font Finder answers for a language nobody
- * has written a rule for.
- *
- * Off by default, because a fallback is a statement about a script and every
- * row here has to name a language, so filing them means asserting for each
- * language of a script something that was only ever said about the script. With
- * `--script-defaults` they are filed anyway — against writing systems that
- * already exist as language rows and have no per-language rule of their own,
- * never creating a language row, and citing fallback.json rather than an SLDR
- * page so the two can always be told apart. That source is deliberately not on
- * the approved list, so these claims stay gathered and unserved until somebody
- * decides they should not be.
- *
- * Region-conditioned rules are skipped either way. A writing system has no
- * region, so choosing among Arabic's per-region answers (Harmattan for Cameroon
- * and Nigeria, Awami Nastaliq for Pakistan) would be this importer inventing a
- * preference nobody expressed.
- */
-async function handleScriptDefaults() {
-  const scriptDefaults = bundled.scriptDefaults ?? {};
-  const withRule = new Set();
-  for (const [sldrTag] of entries) {
-    const resolved = resolveWritingSystem(sldrTag, index);
-    if (resolved) withRule.add(resolved.tag.toLowerCase());
-  }
-
-  // Every writing system langtags knows, so a fallback reaches the languages
-  // that need it rather than only the ones some other stage happened to touch.
-  const systems = [...writingSystems(loadLangtags(options.langtags)).values()];
-  const byScript = new Map();
-  for (const system of systems) {
-    if (NON_SCRIPTS.has(system.script)) continue;
-    if (withRule.has(system.tag.toLowerCase())) continue;
-    if (!byScript.has(system.script)) byScript.set(system.script, []);
-    byScript.get(system.script).push(system);
-  }
-
-  let candidatePairs = 0;
-  let candidateSystems = 0;
-  let regionSkipped = 0;
-  const plan = [];
-  for (const [script, rules] of Object.entries(scriptDefaults)) {
-    const ids = new Set();
-    for (const rule of rules) {
-      if (rule.regions?.length) {
-        regionSkipped++;
-        continue;
-      }
-      for (const roleIds of Object.values(rule.roles ?? {})) {
-        for (const id of roleIds) ids.add(id);
-      }
-    }
-    const targets = byScript.get(script) ?? [];
-    if (ids.size === 0 || targets.length === 0) continue;
-    candidateSystems += targets.length;
-    candidatePairs += targets.length * ids.size;
-    plan.push({ script, ids: [...ids], targets });
-  }
-
-  if (!options.scriptDefaults) {
-    return [
-      `script fallbacks: not filed (${Object.keys(scriptDefaults).length} scripts).`,
-      `  would add about ${candidatePairs} claims across ${candidateSystems} writing systems` +
-        ` that have no per-language rule; ${regionSkipped} region-conditioned rules would be skipped.`,
-      "  pass --script-defaults to file them, with their own source and unserved by default.",
-    ];
-  }
-
-  const before = {
-    created: counts["font_support claims created"],
-    there: counts["font_support claims already there"],
-    evidence: counts["evidence rows added"],
-  };
-
-  const items = [];
-  for (const { script, ids, targets } of plan) {
-    for (const system of targets) {
-      for (const id of ids) {
-        const family = families[id];
-        if (!family?.family) continue;
-        items.push({
-          tag: system.tag,
-          name: system.name?.trim() || null,
-          sourceUrl: FALLBACK_URL,
-          sourceTitle: FALLBACK_TITLE,
-          familyName: family.family.trim(),
-          opentypeFeatures: null,
-          details:
-            `Language Font Finder fallback for the ${script} script, not a recommendation for ` +
-            `${system.tag}: nobody has written a font rule for this language, and this is what ` +
-            `the Font Finder answers for its script. Family ${id}` +
-            (family.license ? `; licence ${family.license}` : "") +
-            (bundled.generatedAt ? `; snapshot ${bundled.generatedAt}` : ""),
-          log: `${system.tag}: ${family.family} (${script} fallback)`,
-        });
-      }
-    }
-  }
-
-  // createLanguages: false is the load-bearing part. A script's default is not a
-  // reason to believe a writing system exists, so a fallback whose language row
-  // is absent is dropped rather than inventing one.
-  await fileWanted(items, { createLanguages: false });
-  for (const item of items) client.log(item.log);
-
-  const claims = counts["font_support claims created"] - before.created;
-  const already = counts["font_support claims already there"] - before.there;
-  const evidence = counts["evidence rows added"] - before.evidence;
-  return [
-    `script fallbacks: filed for ${plan.length} scripts` +
-      ` (${claims} claims created, ${already} already there, ${evidence} evidence rows,` +
-      ` ${regionSkipped} region-conditioned rules skipped).`,
-    `  cited as "${FALLBACK_TITLE}", which is not an approved source, so these stay unserved.`,
-  ];
-}

@@ -150,14 +150,28 @@ function TodayDiagram() {
       <ArrowheadDefs id="about-arrow-today" />
 
       <Node x={6} y={24} w={190} h={48} title="SIL langtags" sub={["every known writing system"]} />
-      <Node x={6} y={88} w={190} h={48} title="SLDR" sub={["alphabets"]} />
-      <Node x={6} y={152} w={190} h={48} title="Google Fonts gflanguages" sub={["sample texts"]} />
-      <Node x={6} y={216} w={190} h={48} title="Language Font Finder" sub={["font recommendations"]} />
+      <Node
+        x={6}
+        y={88}
+        w={190}
+        h={58}
+        title="SLDR"
+        sub={["alphabets, per-language", "font recommendations"]}
+      />
+      <Node x={6} y={156} w={190} h={48} title="Google Fonts gflanguages" sub={["sample texts"]} />
+      <Node
+        x={6}
+        y={216}
+        w={190}
+        h={58}
+        title="Language Font Finder"
+        sub={["its answer for", "any language tag"]}
+      />
 
       <Arrow from={[196, 48]} to={[262, 138]} marker="about-arrow-today" />
-      <Arrow from={[196, 112]} to={[262, 142]} marker="about-arrow-today" />
-      <Arrow from={[196, 176]} to={[262, 146]} marker="about-arrow-today" />
-      <Arrow from={[196, 240]} to={[262, 150]} marker="about-arrow-today" />
+      <Arrow from={[196, 117]} to={[262, 142]} marker="about-arrow-today" />
+      <Arrow from={[196, 180]} to={[262, 146]} marker="about-arrow-today" />
+      <Arrow from={[196, 245]} to={[262, 150]} marker="about-arrow-today" />
 
       <Node
         x={262}
@@ -318,12 +332,15 @@ export function AboutTab() {
       <TodayDiagram />
       <p className="about-body">
         Importers read sources we already trust and file what each one says as
-        claims, every claim citing the exact file it came from. SIL's langtags
+        claims, every claim citing the exact file or query it came from. SIL's langtags
         supplies the list of writing systems itself, so coverage has a
-        denominator. The rest of this dashboard is baked from the same
-        database. The snapshot export that merges usable claims into the
-        bundled JSON is planned, not yet built; the diagram shows where it
-        will sit.
+        denominator. Fonts have two sources on purpose: the
+        recommendations SLDR records per language, and the Language Font
+        Finder service's answer for any tag, cached verbatim as its own source
+        so that neither is ever presented with the other's weight. The rest of
+        this dashboard is baked from the same database. One piece is planned
+        rather than built: the snapshot export that merges usable claims into
+        the bundled JSON.
       </p>
 
       <h2>Gathering via crowd sourcing, in the future</h2>

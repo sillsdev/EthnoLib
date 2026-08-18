@@ -20,6 +20,7 @@
   --series-3: #1baf7a;
   /* Provenance hues: who a claim's evidence came from. */
   --source-sil: #0e7c7b;
+  --source-lff: #7a5bd0;
   --source-google: #4285f4;
   --source-bloom: #d65649;
   --source-other: #898781;
@@ -41,6 +42,7 @@
     --series-2: #d95926;
     --series-3: #199e70;
     --source-sil: #1a9c9a;
+    --source-lff: #977ce6;
     --source-google: #5b95f5;
     --source-bloom: #e0685c;
     --source-other: #898781;
@@ -59,6 +61,7 @@
   --series-2: #d95926;
   --series-3: #199e70;
   --source-sil: #1a9c9a;
+  --source-lff: #977ce6;
   --source-google: #5b95f5;
   --source-bloom: #e0685c;
   --source-other: #898781;

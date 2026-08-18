@@ -225,6 +225,9 @@
 .src-sil {
   --chip-hue: var(--source-sil);
 }
+.src-lff {
+  --chip-hue: var(--source-lff);
+}
 .src-google {
   --chip-hue: var(--source-google);
 }

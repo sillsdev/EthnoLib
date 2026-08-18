@@ -5,22 +5,34 @@
 
 import type { Evidence } from "../data";
 
-export type SourceKey = "sil" | "google" | "bloom" | "other";
+export type SourceKey = "sil" | "lff" | "google" | "bloom" | "other";
 
 export const SOURCE_LABELS: Record<SourceKey, string> = {
   sil: "SIL (SLDR)",
+  lff: "Language Font Finder",
   google: "Google (gflanguages)",
   bloom: "BloomLibrary scan",
   other: "other / contributor",
 };
 
 /** Legend order; only the keys present in the data are shown. */
-export const SOURCE_ORDER: SourceKey[] = ["sil", "google", "bloom", "other"];
+export const SOURCE_ORDER: SourceKey[] = [
+  "sil",
+  "lff",
+  "google",
+  "bloom",
+  "other",
+];
 
 function keyOfTitle(title: string | null): SourceKey {
   if (!title) return "other";
   if (/bloom/i.test(title)) return "bloom";
   if (/google|gflanguages/i.test(title)) return "google";
+  // Before the generic SIL match: a font recommendation someone recorded for a
+  // language in SLDR and the Font Finder service's answer for a tag are
+  // different statements, and merging their colours would present one with the
+  // other's weight.
+  if (/font finder|langfontfinder/i.test(title)) return "lff";
   if (/\bSIL\b|SLDR/i.test(title)) return "sil";
   return "other";
 }

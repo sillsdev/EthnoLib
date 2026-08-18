@@ -421,7 +421,6 @@ export function createClient({ dryRun = false, verbose = false } = {}) {
  *   --langtags <path>    langtags.json elsewhere
  *   --font-core <dir>    the font-core package holding the bundled snapshots
  *   --skip-nonscripts    (stage 1) leave out Zxxx/Zyyy/Zzzz "no script" tags
- *   --script-defaults    (stage 5) also file the per-script font fallbacks
  *   --verbose            a line per entry
  */
 export function parseArgs(argv = process.argv.slice(2)) {
@@ -432,7 +431,6 @@ export function parseArgs(argv = process.argv.slice(2)) {
     langtags: undefined,
     fontCore: undefined,
     skipNonScripts: false,
-    scriptDefaults: false,
     verbose: false,
   };
   for (let at = 0; at < argv.length; at++) {
@@ -444,7 +442,6 @@ export function parseArgs(argv = process.argv.slice(2)) {
     };
     if (arg === "--dry-run") options.dryRun = true;
     else if (arg === "--skip-nonscripts") options.skipNonScripts = true;
-    else if (arg === "--script-defaults") options.scriptDefaults = true;
     else if (arg === "--verbose") options.verbose = true;
     else if (arg === "--only")
       options.only = new Set(

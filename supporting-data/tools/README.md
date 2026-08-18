@@ -1,10 +1,12 @@
 # Importers
 
-Scripts that file claims into the Ethnolib-Support database from sources we
-already have. They implement stages 1–3 and 5 of
-[`../docs/population-plan.md`](../docs/population-plan.md); stage 4 (the
-BloomLibrary walker) is not built yet, and is planned in
-[`../docs/bloom-walker-plan.md`](../docs/bloom-walker-plan.md).
+Scripts that file claims into the Ethnolib-Support database: four from data this
+repo already ships, and one from a live read of the Language Font Finder service.
+They implement stages 1–3, 5 and 6 of
+[`../docs/population-plan.md`](../docs/population-plan.md). Stage 4 — the
+BloomLibrary walker, planned in
+[`../docs/bloom-walker-plan.md`](../docs/bloom-walker-plan.md) — is the one that
+is not built yet.
 
 **One snapshot per question.** font-core bundles four, and stages 1-3 and 5 read
 all four: alphabets, sample texts, the families a language recommends, and the
@@ -49,6 +51,7 @@ node supporting-data/tools/importLangtagsLanguages.mjs --dry-run
 node supporting-data/tools/importSldrAlphabets.mjs --dry-run
 node supporting-data/tools/importGflanguagesSampleTexts.mjs --dry-run
 node supporting-data/tools/importLanguageFonts.mjs --dry-run
+node supporting-data/tools/importLffAnswers.mjs --dry-run
 ```
 
 Drop `--dry-run` to write. `--dry-run` does every read for real and no write at
@@ -57,13 +60,12 @@ all, so its report is what a real run would do.
 | flag | |
 | --- | --- |
 | `--dry-run` | read everything, write nothing |
-| `--only a,b` | just these tags — the source's key (`aa`, `aa_Latn`) or the tag it resolves to (`aa-Latn`) |
+| `--only a,b` | just these tags — the source's key (`aa`, `aa_Latn`) or the tag it resolves to (`aa-Latn`); stage 6, whose source is a list of writing systems, also takes a bare language subtag (`dmk`) and asks about every script langtags gives it |
 | `--limit N` | stop after N source entries |
 | `--verbose` | a line per entry |
 | `--langtags <path>` | langtags.json somewhere other than the language chooser's copy |
-| `--font-core <dir>` | the `font-core` package holding the bundled snapshots (stages 2–3) |
+| `--font-core <dir>` | the `font-core` package holding the bundled snapshots (stages 2, 3 and 5; stage 6 reads no snapshot) |
 | `--skip-nonscripts` | stage 1 only: leave out the `Zxxx`/`Zyyy`/`Zzzz` "no script" tags |
-| `--script-defaults` | stage 5 only: also file the per-script font fallbacks (see below) |
 
 The database is the Supabase project **Ethnolib-Support**; its URL and
 publishable key are the script defaults, and `ETHNOLIB_SUPPORT_URL` /
@@ -135,18 +137,14 @@ Ran 2026-08-18: 8,380 claims across 1,854 writing systems, 9,870 evidence rows
 (more evidence than claims because several SLDR entries, `aa` and `aa_ET` say,
 resolve to one writing system and each cites its own page).
 
-**Read the bundled snapshot once, then go upstream.** That run used
-`languageFonts.json` as committed, on the grounds that it was refreshed on
-2026-08-15 and so was current. That was a one-off. A snapshot in the repo tells
-you when somebody last regenerated a file, not when anybody last asked the
-Language Font Finder anything, and `import_run.source_generated_at` cannot mean
-the second while the input is the first. Future runs should query LFF directly;
-until then every run says which route it took in `import_run.notes`.
-
-That does not change *which* languages get asked about. The live API is per-tag
-(`/lang/{tag}`), so a live importer still needs a list to iterate, and the honest
-list is still SLDR's file inventory rather than langtags — tested, with numbers, in
-[`../docs/lff-and-the-language-list.md`](../docs/lff-and-the-language-list.md).
+**SLDR's statements, whatever route the bytes take.** That run used
+`languageFonts.json` as committed, refreshed on 2026-08-15; every run says
+which route it took in `import_run.notes`. Either way the claims this stage
+files are SLDR's per-language statements and cite SLDR pages. What the
+Language Font Finder service itself answers when asked about a tag is a
+different statement and a separate source, cached by stage 6 —
+[`../docs/lff-and-the-language-list.md`](../docs/lff-and-the-language-list.md)
+records how the two sources relate and why they are kept apart.
 
 Two details worth knowing before reading the output:
 
@@ -159,15 +157,45 @@ Two details worth knowing before reading the output:
   genuinely cover nearly every Latin orthography, and SLDR and the Font Finder are
   maintained by the people best placed to know; a broad recommendation from them
   is expertise expressed broadly. Do not build a ranking that penalises it.
-- **Script fallbacks are not filed by default.** The snapshot's `scriptDefaults`
-  half is what the Font Finder answers when nobody has written a rule for a
-  language. That is a statement about a script, so filing it per language would
-  assert something nobody said, and it would add roughly 33,500 claims across
-  6,496 writing systems — four times the per-language import. `--script-defaults`
-  files them anyway, against existing language rows only, citing `fallback.json`
-  under its own source title. That title is deliberately not an approved source,
-  so those claims stay gathered and unserved. Region-conditioned rules (Arabic has
-  four) are skipped either way: a writing system has no region to match.
+- **Script fallbacks are not filed.** The snapshot's `scriptDefaults` half is
+  what the Font Finder answers when nobody has written a rule for a language.
+  That is the service's statement rather than SLDR's, and stage 6 is where the
+  service's answers get cached — whole, verbatim, and under their own source.
+  This stage spreading pieces of the service's published data across languages
+  would blur exactly the line the two sources exist to keep.
+
+**6 — `importLffAnswers.mjs`.** A cache of what the Language Font Finder service
+answers when asked about a tag. It walks every writing system langtags knows,
+asks `https://lff.api.languagetechnology.org/lang/{tag}`, and files a
+`font_support` claim for each family the response's `families` map names, under
+the display name the response gives it. Evidence cites the service, the exact
+query URL, and the moment we asked — never an SLDR page, because the two are
+different statements and one claim can carry both kinds of evidence
+([`../docs/lff-and-the-language-list.md`](../docs/lff-and-the-language-list.md)).
+Needs nothing but langtags.json and a network connection.
+
+Ran 2026-08-18: 8,500 tags asked, 8,444 answered, 56 answered `404`, no request
+failures. 28,142 claims created and 36,517 evidence rows, across 8,444 writing
+systems; 8,375 of the answers named a (writing system, font) pair stage 5 had
+already claimed, so those claims now carry both kinds of evidence. 123 families
+the service names had no `font` row yet.
+
+Three things worth knowing:
+
+- **Verbatim, and that word is load-bearing.** Every family named gets a claim.
+  Nothing is filtered, trimmed or ranked, and nothing is rebuilt out of the
+  service's published data files. The service is the authority on its own
+  answers, so an importer deciding which of them count would turn a cache into
+  an opinion.
+- **The response does not say what kind of answer it is.** Where SLDR holds font
+  information for the language the service returns that; where it does not, the
+  service works from the tag's script and region. Nothing in the JSON
+  distinguishes the two, so the evidence records the facts the response does
+  give — the family id, whether it appeared in `defaultfamily` and under which
+  roles, the API version — and no more.
+- **It is somebody's public service.** Three requests in flight, a pause between
+  launches, one retry on a 5xx or a network failure. A tag that still fails is
+  counted and listed at the end; the run does not abort and does not guess.
 
 ## Related
 

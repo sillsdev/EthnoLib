@@ -108,7 +108,7 @@ function useColumns(): ColumnDef<GridRow>[] {
       },
       {
         id: "name",
-        header: "Name",
+        header: "Language",
         accessorFn: (row) => row.lang.name,
         // Some rows have no name (58 of them, historic-script variants); they
         // sort after the named ones rather than crashing localeCompare.
@@ -283,8 +283,9 @@ export function DataTab() {
     [rows, needle]
   );
 
-  // Which provenance colours the legend needs to explain: only the ones the
-  // loaded data actually uses.
+  // The named sources always appear in the legend, so a reader learns the
+  // colour scheme before every source has data; only the catch-all "other"
+  // waits until something actually uses it.
   const presentSources = useMemo(() => {
     const seen = new Set<SourceKey>();
     for (const row of rows)
@@ -295,7 +296,7 @@ export function DataTab() {
       ])
         for (const claim of claims)
           for (const key of sourceKeysOf(claim.evidence)) seen.add(key);
-    return SOURCE_ORDER.filter((key) => seen.has(key));
+    return SOURCE_ORDER.filter((key) => key !== "other" || seen.has(key));
   }, [rows]);
 
   const columns = useColumns();
@@ -376,7 +377,7 @@ export function DataTab() {
           {count(filtered.length)} of {count(rows.length)} writing systems
         </p>
         <p className="source-legend">
-          Edge colour marks the source:
+          Source legend:
           {presentSources.map((key) => (
             <span key={key} className={`legend-item src-${key}`}>
               <span className="legend-swatch" aria-hidden="true" />

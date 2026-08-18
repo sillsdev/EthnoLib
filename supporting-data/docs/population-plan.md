@@ -12,7 +12,8 @@ is usable when an approved source stands behind it, which today means SLDR or
 Google Fonts language data (see
 [`approved-sources.md`](approved-sources.md)). Stages 2, 3 and 5 therefore
 produce claims a user can see, because SLDR and gflanguages are on that list.
-Stage 4 does not, because a BloomLibrary book is not.
+Stage 4 does not, because a BloomLibrary book is not; neither does stage 6,
+unless someone decides the Language Font Finder service belongs on the list.
 
 All importers follow the same rules:
 
@@ -113,15 +114,12 @@ rename and why the name follows the standard rather than saying "character
 variants"). 519 tags carry settings, 1,404 (writing system, font) pairs in all.
 
 Ran on 2026-08-18 against the committed snapshot, which was three days old at
-the time. The snapshot was a deliberate shortcut for that one run: it says when a
-file was regenerated, not when anyone last asked the Language Font Finder
-anything, so a repeat should read LFF directly and let
-`import_run.source_generated_at` mean what it claims. Each run records which
-route it took in `import_run.notes`. Which languages get asked about is a
-separate question with its own answer:
-[`lff-and-the-language-list.md`](lff-and-the-language-list.md) records why the loop
-runs over SLDR's ~2,200 LDML files rather than langtags' 8,500 writing systems, and
-what was measured to check that.
+the time; each run records which route it took in `import_run.notes`. Whatever
+route the bytes take, the claims this stage files are SLDR's statements and
+cite SLDR pages. What the Language Font Finder service itself answers when
+asked about a tag is a different statement, and stage 6 is where it is cached;
+[`lff-and-the-language-list.md`](lff-and-the-language-list.md) records how the
+two sources relate and why they are kept apart.
 
 Two things the importer records rather than decides:
 
@@ -136,16 +134,58 @@ Two things the importer records rather than decides:
   better-informed source to appeal to. The number is recorded because specificity
   helps with ordering — Annapurna SIL is more particularly Nepali's font than Noto
   Sans is — not because breadth is a demerit.
-- **What it will not file.** The snapshot's other half, `scriptDefaults`, is what
-  the Font Finder answers for a language nobody wrote a rule for. That is a
-  statement about a script, and there is no script entity here to hang it on;
-  spreading it across every language of a script would assert for 6,496 writing
-  systems something only ever said about 157 scripts, and would add roughly
-  33,500 claims — four times the per-language import. Off by default, available
-  behind `--script-defaults`, and cited to `fallback.json` under its own source
-  title so it can never be mistaken for a per-language recommendation. Rules
-  conditioned on region are skipped either way, because a writing system has no
-  region to match against.
+- **What it will not file.** The snapshot's other half, `scriptDefaults`, is
+  what the Font Finder answers for a language nobody wrote a rule for. That is
+  the service's statement rather than SLDR's, so it belongs to stage 6, which
+  caches the service's answers whole and under their own source. This stage
+  spreading pieces of the service's published data across languages would blur
+  exactly the line the two sources exist to keep.
+
+## Stage 6 — Language Font Finder live answers
+
+The Language Font Finder is a service, and its API answers for any tag:
+`GET https://lff.api.languagetechnology.org/lang/{tag}` returns the font
+families it recommends for that tag. Per its maintainers, where SLDR has
+explicit font information for the language it returns that; where SLDR has
+none, it works from the tag itself — script and region, resolved through
+langtags — and answers anyway. So the service always has an answer, and for
+most of langtags' 8,500 writing systems that answer is not a per-language
+attestation.
+
+`tools/importLffAnswers.mjs` caches those answers for offline use: it iterates
+every writing system langtags knows (stage 1's list), asks the service, and
+files a `font_support` claim per family the response's `families` map names —
+verbatim, with no filtering and no reconstructing what the service would say
+from its published data files. The service is the authority on its own answers;
+this database is a cache of them.
+
+Evidence cites the service — source title `SIL Language Font Finder`, the
+per-tag query URL, the family id, whether the response listed it in
+`defaultfamily` and under which roles, the API version that answered, and the
+date asked — and never an SLDR page. That keeps two
+different statements distinguishable forever: a recommendation somebody
+recorded for that language in SLDR (stage 5's claims), and what the service
+answers when asked about a tag. One claim may carry both kinds of evidence,
+and a UI that wants to present the first more strongly than the second reads
+the difference off the sources. The Font Finder service is not on the
+approved-source list; whether it should be is a decision not yet made.
+
+Practicalities: a full run is ~8,500 requests against somebody's public
+service, so it deserves a gentle rate and a heads-up to the maintainers before
+the first one. The importer asks three tags at a time with a pause between
+launches, retries once on a 5xx or a network failure, and counts and lists a tag
+whose request still fails rather than aborting the run or guessing at an answer.
+
+Ran on 2026-08-18: 8,500 writing systems asked, 8,444 answered, 56 answered
+`404`, no request failures and no retry that failed twice. 28,142 new
+`font_support` claims, 36,517 evidence rows and 123 new `font` rows; 8,375 of the
+answers landed on claims stage 5 had already filed, which is the two kinds of
+evidence meeting on one claim exactly as intended. The 404s are writing systems
+langtags carries and the service does not answer for — historic and undeciphered
+scripts (`xiv-Inds`, `elx-Pelm`, `ka-Geok`), Fraktur and Gaelic Latin variants
+(`de-Latf`, `ga-Latg`), constructed languages (`tlh-Piqd`, `qya-Teng`), and the
+`zxx-Zmth`/`zxx-Zsym` notation tags. They are counted apart from failures,
+because a 404 is an answer and a timeout is not.
 
 ## Coverage over time
 
