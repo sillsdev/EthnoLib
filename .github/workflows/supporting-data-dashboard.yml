@@ -1,0 +1,62 @@
+# Publish the supporting-data coverage dashboard to GitHub Pages on every push.
+#
+# The page is generated, not live: the build reads the Ethnolib-Support database
+# and bakes the numbers into one static HTML file, so a push is what refreshes
+# it. The build needs no secrets — the database's publishable key is the script
+# default in supporting-data/tools/lib/langdata.mjs, the same key the demo ships
+# to every browser — and no npm install, because the generator uses nothing but
+# node's own library.
+#
+# WHILE THIS IS EXPERIMENTAL, ANY BRANCH THAT GETS PUSHED PUBLISHES. GitHub Pages
+# serves one site per repository, so the newest push wins and there is no history
+# of what the previous branch's page looked like. The page prints the branch and
+# commit it was built from in its footer, which is the only way a reader can tell
+# whose push they are looking at. Narrow the `branches:` list below once this
+# lands on main.
+name: Supporting data dashboard
+
+on:
+  push:
+    paths:
+      - "supporting-data/dashboard/**"
+      - "supporting-data/tools/lib/langdata.mjs"
+      - ".github/workflows/supporting-data-dashboard.yml"
+  # The numbers change when an importer runs, not when the code changes, so the
+  # page needs a way to be rebuilt without a commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One publish at a time, and never cancel one midway: a cancelled deploy can
+# leave the Pages site pointing at a half-uploaded artifact.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the dashboard
+        run: node supporting-data/dashboard/build.mjs --out dashboard-dist
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard-dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
