@@ -38,7 +38,6 @@ import {
 } from "./lib/langtags.mjs";
 import {
   createClient,
-  keyTooBigForIndex,
   parseArgs,
   report,
   runDescriptor,
@@ -73,7 +72,7 @@ const counts = {
   "skipped (not in --only)": 0,
   "skipped (key names no script)": 0,
   "skipped (empty passage)": 0,
-  "skipped (passage too long to index)": 0,
+  "skipped (passage refused as too long)": 0,
   "writing systems touched": 0,
   "language rows created": 0,
   "sample text claims created": 0,
@@ -117,14 +116,6 @@ for (const [key, passage] of Object.entries(bundled.samples ?? {})) {
   }
 
   const identity = textKey(text);
-  if (keyTooBigForIndex(identity)) {
-    // A sample text's identity IS the passage, and the unique index over it
-    // tops out around 2.7KB. Two of gflanguages' passages run past that; they
-    // are lost until the schema indexes a hash of the key instead.
-    counts["skipped (passage too long to index)"]++;
-    skipped.push(`${key} (${Buffer.byteLength(identity, "utf8")} bytes, too long to index)`);
-    continue;
-  }
 
   const language = await client.ensureLanguage(tag, nameFor(tag));
   if (language.created) counts["language rows created"]++;
@@ -138,9 +129,11 @@ for (const [key, passage] of Object.entries(bundled.samples ?? {})) {
     // orthography, and guessing would be worse than leaving it open.
     orthography_label: parsed.orthographyLabel ?? null,
   });
-  if (claim.tooBigToIndex) {
-    counts["skipped (passage too long to index)"]++;
-    skipped.push(`${key} (refused by the identity index)`);
+  if (claim.refusedAsTooLong) {
+    // sample_text_not_a_novel_check: 3000 characters, an editorial limit on
+    // what a passage may be rather than anything the index imposes.
+    counts["skipped (passage refused as too long)"]++;
+    skipped.push(`${key} (${identity.length} characters, refused as too long)`);
     continue;
   }
   if (claim.created) counts["sample text claims created"]++;

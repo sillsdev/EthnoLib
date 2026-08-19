@@ -50,6 +50,16 @@ space-separated `characters` shape, file an alphabet claim with evidence
 get one from langtags (stage 1's lookup); entries that still can't be
 script-qualified are skipped and counted.
 
+Seven entries were skipped for a different reason until
+[`supabase/migrations/20260819104500_hash_identity_indexes.sql`](../../supabase/migrations/20260819104500_hash_identity_indexes.sql):
+the identity index held the key itself, a btree row tops out at 2704 bytes, and
+SLDR's Korean is 44KB. Six of the seven are the Han and Hangul inventories SLDR
+writes into the field a Latin alphabet uses; the seventh is the Yi syllabary,
+which is an alphabet by any reading and was lost purely to the byte count. The
+dashboard's Overlap tab was reporting all seven as writing systems SLDR has no
+alphabet for, which is not what SLDR says. The index now holds a hash, so length
+decides nothing; re-run this stage after applying that file.
+
 ## Stage 3 — bundled Google sample texts
 
 `bundled/sampleTexts.json` (from gflanguages via Google Fonts, keyed

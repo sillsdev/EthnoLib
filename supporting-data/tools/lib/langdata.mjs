@@ -52,34 +52,15 @@ export function textKey(text) {
   return text.normalize("NFC").replace(/\s+/g, " ").trim();
 }
 
-/**
- * How many bytes of identity key the database can actually index.
- *
- * `alphabet_identity_idx` and `sample_text_identity_idx` are btree indexes over
- * (language_id, key), and a btree index row cannot exceed 2704 bytes — a third
- * of a page. Over that the INSERT fails outright with "index row size exceeds
- * maximum", so an importer has to skip such a claim and say it did.
- *
- * The database now says this itself — `alphabet_key_indexable_check` and
- * `sample_text_key_indexable_check` refuse a longer key with a readable message
- * instead of the index's "index row size exceeds maximum" — and 2600 is that
- * constraint's number, leaving room for the bigint and the tuple's headers.
- * Keeping the same number here means an importer skips such a claim before
- * spending a request on it; `ensureClaim` still counts a refusal from the
- * database as the same kind of skip, in case the two ever drift apart.
- *
- * What this costs is small but real, and worth knowing: the SLDR lists Han and
- * Hangul inventories in the same field a Latin alphabet uses (`ko` is 11,172
- * entries, 44KB), and a few sample-text passages run long. If we ever want
- * those, the fix is a schema one — index a hash of the key rather than the key
- * — and it belongs to whoever owns create-tables.sql, not to an importer.
- */
-export const INDEXABLE_KEY_BYTES = 2600;
-
-/** Whether this identity key is too long for the unique index to hold. */
-export function keyTooBigForIndex(key) {
-  return Buffer.byteLength(key, "utf8") > INDEXABLE_KEY_BYTES;
-}
+// There used to be a length ceiling here, mirroring one the database imposed:
+// the identity indexes held the key itself, a btree row cannot exceed 2704
+// bytes, and anything longer could not be stored.
+// supabase/migrations/20260819104500_hash_identity_indexes.sql made those
+// indexes hold a hash instead, so length no longer decides
+// whether a claim can exist. What remains is `alphabet_not_a_novel_check` and
+// `sample_text_not_a_novel_check`, which are editorial limits on the content
+// rather than mechanical limits on the index; `ensureClaim` counts a refusal
+// from either and carries on.
 
 /** A claim is about a writing system, so the tag has to say which script. */
 export function tagHasScript(bcp47) {
@@ -304,14 +285,16 @@ export function createClient({ dryRun = false, verbose = false } = {}) {
     try {
       inserted = await insertRow(table, row);
     } catch (error) {
-      // The key refused for its length, by the check constraint or — if the two
-      // ever drift apart — by the index itself. One claim is lost and counted;
-      // the run carries on.
+      // Refused for its length: by the content check, or by the index itself on
+      // a database that has not had
+      // supabase/migrations/20260819104500_hash_identity_indexes.sql run
+      // against it. One claim is lost and counted; the run carries on.
       if (
         /index row (size|requires)/.test(error.message) ||
-        /_key_indexable_check/.test(error.message)
+        /_key_indexable_check/.test(error.message) ||
+        /_not_a_novel_check/.test(error.message)
       ) {
-        return { id: undefined, created: false, tooBigToIndex: true };
+        return { id: undefined, created: false, refusedAsTooLong: true };
       }
       throw error;
     }
@@ -422,6 +405,12 @@ export function createClient({ dryRun = false, verbose = false } = {}) {
  *   --font-core <dir>    the font-core package holding the bundled snapshots
  *   --skip-nonscripts    (stage 1) leave out Zxxx/Zyyy/Zzzz "no script" tags
  *   --verbose            a line per entry
+ *   --prefix a           (stage 4) every source language code starting with this;
+ *                        several may be given, comma-separated (`--prefix tpi,ceb`)
+ *   --review             (stage 4) write the per-book review report
+ *   --review-out <path>  where that report goes, overriding the default
+ *   --compare-sldr       for every alphabet filed, print how it differs from
+ *                        the SLDR's exemplars for the same writing system
  */
 export function parseArgs(argv = process.argv.slice(2)) {
   const options = {
@@ -432,6 +421,10 @@ export function parseArgs(argv = process.argv.slice(2)) {
     fontCore: undefined,
     skipNonScripts: false,
     verbose: false,
+    prefix: undefined,
+    review: false,
+    reviewOut: undefined,
+    compareSldr: false,
   };
   for (let at = 0; at < argv.length; at++) {
     const arg = argv[at];
@@ -453,6 +446,14 @@ export function parseArgs(argv = process.argv.slice(2)) {
     else if (arg === "--limit") options.limit = Number(value());
     else if (arg === "--langtags") options.langtags = value();
     else if (arg === "--font-core") options.fontCore = value();
+    else if (arg === "--review") options.review = true;
+    else if (arg === "--compare-sldr") options.compareSldr = true;
+    else if (arg === "--review-out") options.reviewOut = value();
+    else if (arg === "--prefix")
+      options.prefix = value()
+        .split(",")
+        .map((one) => one.trim().toLowerCase())
+        .filter(Boolean);
     else throw new Error(`unknown option: ${arg}`);
   }
   return options;

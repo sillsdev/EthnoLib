@@ -36,7 +36,6 @@ import { parseUnicodeSetToAlphabet } from "./lib/unicodeSet.mjs";
 import {
   alphabetKey,
   createClient,
-  keyTooBigForIndex,
   parseArgs,
   report,
   runDescriptor,
@@ -77,7 +76,7 @@ const counts = {
   "skipped (not in --only)": 0,
   "skipped (no script known)": 0,
   "skipped (nothing parsed out)": 0,
-  "skipped (script inventory, not an alphabet)": 0,
+  "skipped (refused as too long)": 0,
   "writing systems touched": 0,
   "language rows created": 0,
   "alphabet claims created": 0,
@@ -120,18 +119,6 @@ for (const [sldrTag, exemplars] of Object.entries(bundled.alphabets ?? {})) {
   }
 
   const key = alphabetKey(characters);
-  if (keyTooBigForIndex(key)) {
-    // The SLDR writes a Han or Hangul inventory into the same field a Latin
-    // alphabet uses: `ko` is 11,172 syllables and 44KB, and the unique index
-    // that gives a claim its identity cannot hold that. font-core's own parser
-    // says why this is no loss — "a set that names thousands of Han characters
-    // is telling us about a script rather than an alphabet" — but `ii` (the Yi
-    // syllabary, 1,165 real syllables) is caught by the same ceiling, so this
-    // is a mechanical limit and not a judgement.
-    counts["skipped (script inventory, not an alphabet)"]++;
-    unresolved.push(`${sldrTag} (${key.split(" ").length} entries, too big to index)`);
-    continue;
-  }
 
   const language = await client.ensureLanguage(resolved.tag, resolved.name);
   if (language.created) counts["language rows created"]++;
@@ -143,11 +130,18 @@ for (const [sldrTag, exemplars] of Object.entries(bundled.alphabets ?? {})) {
     characters_key: key,
     orthography_label: orthographyLabelFrom(sldrTag) ?? null,
   });
-  if (claim.tooBigToIndex) {
-    // Refused by the identity index at the margin; same loss as the pre-check
-    // above, discovered a few bytes later.
-    counts["skipped (script inventory, not an alphabet)"]++;
-    unresolved.push(`${sldrTag} (refused by the identity index)`);
+  if (claim.refusedAsTooLong) {
+    // The SLDR writes a Han or Hangul inventory into the same field a Latin
+    // alphabet uses — `ko` is 11,172 syllables — and the database has an
+    // editorial ceiling on how long a claim's content may be. Until
+    // supabase/migrations/20260819104500_hash_identity_indexes.sql has been
+    // run the ceiling is much lower
+    // and the unique index refuses these too, which is what the message will
+    // say.
+    counts["skipped (refused as too long)"]++;
+    unresolved.push(
+      `${sldrTag} (${key.split(" ").length} entries, refused as too long)`
+    );
     continue;
   }
   if (claim.created) counts["alphabet claims created"]++;

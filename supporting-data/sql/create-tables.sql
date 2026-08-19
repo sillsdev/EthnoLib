@@ -246,32 +246,14 @@ begin
     alter table public.sample_text add constraint sample_text_not_a_novel_check
       check (char_length(text) <= 3000);
   end if;
-  -- The same door stands open on the alphabet field, so the same limit closes
-  -- it. Nothing real comes close: the largest genuine inventory here is a
-  -- syllabary of about 1,200 entries.
+  -- The same door stands open on the alphabet field, so a limit closes it here
+  -- too, but a much looser one. An alphabet field is not always an alphabet: the
+  -- SLDR writes Han and Hangul inventories into it, and its Korean entry is
+  -- 11,172 syllables and 22,343 characters. 25,000 is past the largest set any
+  -- source we read publishes and still turns away a pasted novel.
   if not exists (select 1 from pg_constraint where conname = 'alphabet_not_a_novel_check') then
     alter table public.alphabet add constraint alphabet_not_a_novel_check
-      check (char_length(characters) <= 3000);
-  end if;
-  -- And the limit the database imposes on itself whether we like it or not.
-  -- alphabet_identity_idx and sample_text_identity_idx are btree indexes over
-  -- (language_id, key), and a btree index row cannot exceed 2704 bytes. Past
-  -- that the INSERT fails with "index row size exceeds maximum", which tells a
-  -- contributor nothing. Saying it as a check instead makes the refusal
-  -- readable, and 2600 leaves room for the bigint and the tuple's headers.
-  --
-  -- Counted in bytes because that is what the index counts. It therefore falls
-  -- hardest on the scripts that spend three bytes a character, which is a real
-  -- unfairness and the reason the fix worth making later is to index a hash of
-  -- the key rather than the key: then length stops mattering and both limits
-  -- above become editorial choices rather than mechanical ones.
-  if not exists (select 1 from pg_constraint where conname = 'alphabet_key_indexable_check') then
-    alter table public.alphabet add constraint alphabet_key_indexable_check
-      check (octet_length(characters_key) <= 2600);
-  end if;
-  if not exists (select 1 from pg_constraint where conname = 'sample_text_key_indexable_check') then
-    alter table public.sample_text add constraint sample_text_key_indexable_check
-      check (octet_length(text_key) <= 2600);
+      check (char_length(characters) <= 25000);
   end if;
   if not exists (select 1 from pg_constraint where conname = 'font_family_name_nonempty_check') then
     alter table public.font add constraint font_family_name_nonempty_check
@@ -295,12 +277,33 @@ end $$;
 -- Identity of each kind of row: one language per tag, one claim per distinct
 -- value per language, one support row per (language, font). The client GETs
 -- before POSTing; these indexes make a lost race a 409 instead of a duplicate.
+--
+-- The two claim indexes hold a hash of the key rather than the key. A btree
+-- index row cannot exceed 2704 bytes, and indexing the key itself meant an
+-- inventory over that size could not be stored at all — which cost us seven SLDR
+-- entries, the Yi syllabary among them, and fell hardest on the scripts that
+-- spend three bytes a character. A hash is fixed-width, so length no longer
+-- decides anything. See
+-- supabase/migrations/20260819104500_hash_identity_indexes.sql.
+--
+-- sha256() takes bytea and convert_to() is how text gets there, but convert_to
+-- is STABLE — its answer depends on the server encoding — and an index
+-- expression must be IMMUTABLE. The wrapper is declared immutable, which holds
+-- exactly as long as this database stays UTF8. Supabase offers no other.
+create or replace function public.identity_hash(key text)
+  returns bytea
+  language sql
+  immutable
+  strict
+  parallel safe
+as $$ select sha256(convert_to(key, 'UTF8')) $$;
+
 create unique index if not exists language_bcp47_idx
   on public.language (lower(btrim(bcp47)));
 create unique index if not exists alphabet_identity_idx
-  on public.alphabet (language_id, characters_key);
+  on public.alphabet (language_id, public.identity_hash(characters_key));
 create unique index if not exists sample_text_identity_idx
-  on public.sample_text (language_id, text_key);
+  on public.sample_text (language_id, public.identity_hash(text_key));
 create unique index if not exists font_family_name_idx
   on public.font (lower(btrim(family_name)));
 create unique index if not exists font_support_identity_idx
