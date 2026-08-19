@@ -1,0 +1,343 @@
+/* The experiment tab: eighteen alphabets set beside the SLDR's, one section each.
+
+   The diagram is two semi-transparent sheets laid over each other, so the third
+   colour is produced by the mix rather than assigned — the same idea as the
+   overlap diagram on the Sources tab, which says an overlap is the mix of the
+   hues that meet there rather than a colour of its own.
+
+   The two hues here are NOT this app's provenance hues. SIL teal and BloomLibrary
+   red are near-complementary, so their mix has chroma 0.017 and the overlap
+   renders as plain grey, which reads as "neither source" exactly where it means
+   "both". Blue and magenta mix to a true purple. Measured against
+   validate_palette.js, the rendered trio passes colour-vision separation on both
+   adjacent pairs (ΔE 20.1 light, 16.8 dark), the normal-vision floor and contrast;
+   it fails only the lightness band, which multiply and screen make unavoidable and
+   which the overlap being darker is the whole point of. Every region prints its
+   count as text, so nothing is carried by colour alone. */
+
+.experiment {
+  --x-sheet-a: 31 95 189;
+  --x-sheet-b: 194 24 91;
+  --x-sheet-alpha: 0.7;
+  --x-sheet-blend: multiply;
+  --x-on-side: #12100e;
+  --x-on-overlap: #ffffff;
+  /* The colours as rendered, for the legend and the chip outlines. */
+  --x-shown-a: #618ed0;
+  --x-shown-b: #d35c8b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .experiment {
+    --x-sheet-a: 111 168 242;
+    --x-sheet-b: 240 127 190;
+    --x-sheet-alpha: 0.8;
+    --x-sheet-blend: screen;
+    --x-on-side: #14130f;
+    --x-on-overlap: #14130f;
+    --x-shown-a: #5e8cc7;
+    --x-shown-b: #c56b9d;
+  }
+}
+:root[data-theme="dark"] .experiment {
+  --x-sheet-a: 111 168 242;
+  --x-sheet-b: 240 127 190;
+  --x-sheet-alpha: 0.8;
+  --x-sheet-blend: screen;
+  --x-on-side: #14130f;
+  --x-on-overlap: #14130f;
+  --x-shown-a: #5e8cc7;
+  --x-shown-b: #c56b9d;
+}
+
+.experiment .x-body {
+  margin: 0 0 1rem;
+  max-inline-size: 46rem;
+  color: var(--text-secondary);
+}
+
+.experiment .x-verdict {
+  max-inline-size: 46rem;
+  margin: 0 0 2.5rem;
+  padding: 1.25rem 1.4rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  color: var(--text-secondary);
+}
+.experiment .x-verdict p {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ diagram */
+
+.experiment .x-venn {
+  margin: 0 0 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.experiment .x-span-row {
+  position: relative;
+  block-size: 1.15rem;
+}
+.experiment .x-span {
+  position: absolute;
+  inset-block: 0;
+}
+/* A hairline under the SLDR's span and over the books', so each label's reach is
+   visible without a second colour. */
+.experiment .x-span::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  block-size: 2px;
+}
+.experiment .x-span.x-sldr::before {
+  inset-block-end: 0;
+  background: var(--x-shown-a);
+}
+.experiment .x-span.x-books::before {
+  inset-block-start: 0;
+  background: var(--x-shown-b);
+}
+.experiment .x-span span {
+  position: absolute;
+  inset-inline-start: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.experiment .x-span.x-sldr span {
+  inset-block-start: 0;
+}
+.experiment .x-span.x-books span {
+  inset-block-end: 0;
+}
+
+/* `isolation` keeps the blend inside this box, so the sheets mix with each other
+   and the page behind them and with nothing else on the page. */
+.experiment .x-sheets {
+  position: relative;
+  block-size: 2.7rem;
+  isolation: isolate;
+}
+.experiment .x-sheet {
+  position: absolute;
+  inset-block: 0;
+  border-radius: 3px;
+  mix-blend-mode: var(--x-sheet-blend);
+}
+.experiment .x-sheet.x-a {
+  background: rgb(var(--x-sheet-a) / var(--x-sheet-alpha));
+}
+.experiment .x-sheet.x-b {
+  background: rgb(var(--x-sheet-b) / var(--x-sheet-alpha));
+}
+/* The counts sit above the sheets, outside the blend, so they stay legible. */
+.experiment .x-labels {
+  position: absolute;
+  inset: 0;
+}
+.experiment .x-tag {
+  position: absolute;
+  inset-block: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.experiment .x-tag.x-side {
+  color: var(--x-on-side);
+}
+.experiment .x-tag.x-mid {
+  color: var(--x-on-overlap);
+}
+
+.experiment .x-legend {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+.experiment .x-sheet-key {
+  position: relative;
+  display: inline-block;
+  inline-size: 3.4rem;
+  block-size: 0.9rem;
+  isolation: isolate;
+  vertical-align: -2px;
+  margin-inline-end: 0.45rem;
+}
+.experiment .x-sheet-key .x-sheet {
+  border-radius: 2px;
+}
+.experiment .x-sheet-key .x-sheet.x-a {
+  inset-inline-start: 0;
+  inline-size: 62%;
+}
+.experiment .x-sheet-key .x-sheet.x-b {
+  inset-inline-start: 38%;
+  inline-size: 62%;
+}
+
+/* ------------------------------------------------------- one writing system */
+
+.experiment .x-lang {
+  padding-block-start: 1.6rem;
+  margin-block-end: 0.4rem;
+  border-block-start: 1px solid var(--hairline);
+}
+.experiment .x-lang h3 {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+.experiment .x-meta {
+  margin: 0.15rem 0 0.9rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+.experiment .x-meta code {
+  font-size: 1em;
+}
+
+.experiment .x-alphabets {
+  display: grid;
+  gap: 0.875rem;
+  grid-template-columns: 1fr;
+  margin-block-end: 1rem;
+}
+@media (min-width: 46rem) {
+  .experiment .x-alphabets {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.experiment .x-alpha {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 0.95rem 0.95rem;
+}
+.experiment .x-alpha h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.experiment .x-alpha h4 em {
+  display: block;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 0.8125rem;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-block-start: 0.15rem;
+}
+.experiment .x-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.experiment .x-chip {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1rem;
+  line-height: 1.5;
+  min-inline-size: 1.6rem;
+  text-align: center;
+  padding: 0.05rem 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--text-primary) 6%, transparent);
+}
+.experiment .x-chip.x-own {
+  font-weight: 600;
+}
+.experiment .x-chip.x-sldr-own {
+  border-color: var(--x-shown-a);
+  background: color-mix(in oklab, var(--x-shown-a) 20%, transparent);
+}
+.experiment .x-chip.x-books-own {
+  border-color: var(--x-shown-b);
+  background: color-mix(in oklab, var(--x-shown-b) 20%, transparent);
+}
+
+.experiment .x-reading {
+  margin: 0;
+  max-inline-size: 46rem;
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------------------ closing */
+
+.experiment .x-reasons {
+  max-inline-size: 46rem;
+  margin: 0 0 2rem;
+  padding-inline-start: 1.2rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.experiment .x-reasons strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.experiment .x-table {
+  border-block-start: 1px solid var(--hairline);
+  padding-block-start: 0.8rem;
+  margin-block-end: 1.5rem;
+}
+.experiment .x-table summary {
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+.experiment .x-scroller {
+  overflow-x: auto;
+  margin-block-start: 0.8rem;
+}
+.experiment .x-scroller table {
+  border-collapse: collapse;
+  inline-size: 100%;
+  font-size: 0.875rem;
+}
+.experiment .x-scroller th,
+.experiment .x-scroller td {
+  text-align: start;
+  padding: 0.4rem 0.7rem 0.4rem 0;
+  border-block-end: 1px solid var(--hairline);
+  white-space: nowrap;
+}
+.experiment .x-scroller th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.experiment .x-scroller .num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  padding-inline-end: 0;
+}
+
+.experiment .x-foot {
+  max-inline-size: 46rem;
+  margin: 0;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--hairline);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}

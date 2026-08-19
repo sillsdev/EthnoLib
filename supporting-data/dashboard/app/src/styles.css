@@ -23,7 +23,10 @@
   --source-lff: #7a5bd0;
   --source-google: #4285f4;
   --source-bloom: #d65649;
+  --source-ebible: #8a6d1f;
   --source-other: #898781;
+  /* For a caution box: something is off about the data, but not broken. */
+  --caution: #a8730a;
 }
 
 /* The dark palette is spelled twice on purpose: once for the reader who has told
@@ -45,7 +48,9 @@
     --source-lff: #977ce6;
     --source-google: #5b95f5;
     --source-bloom: #e0685c;
+    --source-ebible: #c2a04a;
     --source-other: #898781;
+    --caution: #d99b2b;
   }
 }
 :root[data-theme="dark"] {
@@ -64,7 +69,9 @@
   --source-lff: #977ce6;
   --source-google: #5b95f5;
   --source-bloom: #e0685c;
+  --source-ebible: #c2a04a;
   --source-other: #898781;
+  --caution: #d99b2b;
 }
 
 * {
@@ -180,6 +187,18 @@ h1 {
 .callout strong {
   color: var(--text-primary);
   font-weight: 600;
+}
+/* Same box, saying "read this before you trust the numbers above it". The
+   amber edge is the only difference, and it carries nothing the words don't. */
+.callout.caution {
+  border-inline-start-color: var(--caution);
+  background: color-mix(in oklab, var(--caution) 7%, var(--surface-1));
+}
+.callout code {
+  font-size: 0.9em;
+  padding: 0.05em 0.3em;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--text-primary) 8%, transparent);
 }
 
 h2 {

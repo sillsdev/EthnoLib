@@ -119,11 +119,16 @@ endorsement submissions exist in the same module, awaiting UI.
   `usable_alphabets` exists to query; see
   [`docs/bundle-projection.md`](docs/bundle-projection.md) for the loop rule it
   must obey.
-- **Dashboard** (`dashboard/`, see its README): a single static page, generated at
+- **Dashboard** (`dashboard/`, see its README): a static site, generated at
   build time and published to GitHub Pages, showing how many writing systems have
-  each kind of claim out of the langtags denominator, broken down by script. What
-  it does _not_ show yet: where the evidence came from, and what is waiting for a
-  rank.
+  each kind of claim out of the langtags denominator, broken down by script. A
+  Sources tab describes every source the project reads: what each one answers, how
+  it is read, whether it is approved, and what it has actually filed. That tab
+  closes by drawing the same denominator against the three places an alphabet
+  could come from — the SLDR, which has already answered for some writing systems,
+  and BloomLibrary and eBible.org, which have published something in others — with
+  every region clickable and listed. What the site does _not_ show yet: what is
+  waiting for a rank.
 
 ## Deliberately out of scope (for now)
 

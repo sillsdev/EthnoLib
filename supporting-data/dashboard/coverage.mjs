@@ -26,13 +26,16 @@ const NON_SCRIPTS = new Set(["Zxxx", "Zyyy", "Zzzz"]);
  * Every row of one table, a page at a time. Exported so export-data.mjs reads
  * the database through this same helper rather than its own — the point of the
  * helper is that it can only GET, and that guarantee is worth sharing.
+ *
+ * Paging needs a stable order, and `id` is it for every table with one.
+ * `approved_source` is keyed by title instead, so the column is a parameter.
  */
-export async function getAllRows(table, select) {
+export async function getAllRows(table, select, order = "id") {
   const rows = [];
   for (let offset = 0; ; offset += PAGE) {
     const url =
       `${SUPPORT_URL}/rest/v1/${table}` +
-      `?select=${select}&order=id.asc&limit=${PAGE}&offset=${offset}`;
+      `?select=${select}&order=${order}.asc&limit=${PAGE}&offset=${offset}`;
     const response = await fetch(url, {
       headers: {
         apikey: SUPPORT_ANON_KEY,

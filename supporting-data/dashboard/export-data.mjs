@@ -14,6 +14,8 @@ import { fileURLToPath } from "node:url";
 
 import { gatherCoverage, getAllRows } from "./coverage.mjs";
 import { buildStamp } from "./stamp.mjs";
+import { tallySources } from "./sources.mjs";
+import { gatherVenn } from "./venn.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -65,7 +67,8 @@ function byLanguage(claims) {
 async function gatherLanguages() {
   // Four independent reads; the join happens here rather than in one giant
   // embedded query so a claim table growing does not slow the others down.
-  const [languages, alphabets, sampleTexts, fontSupport] = await Promise.all([
+  const [approved, languages, alphabets, sampleTexts, fontSupport] = await Promise.all([
+    getAllRows("approved_source", "title", "title"),
     getAllRows("language", "id,bcp47,name"),
     getAllRows(
       "alphabet",
@@ -141,6 +144,12 @@ async function gatherLanguages() {
 
   return {
     entries,
+    // What each source has put in, from the rows just read rather than from a
+    // second pass over the same tables.
+    sources: tallySources(
+      { alphabets, sampleTexts, fontSupport },
+      approved.map((row) => row.title)
+    ),
     totals: {
       languages: languages.length,
       withClaims: entries.length,
@@ -163,10 +172,11 @@ async function gatherLanguages() {
 
 const { out } = parseArgs(process.argv.slice(2));
 
-const [languages, coverage, runs] = await Promise.all([
+const [languages, coverage, runs, venn] = await Promise.all([
   gatherLanguages(),
   gatherCoverage(),
   getAllRows("import_run", "*"),
+  gatherVenn(),
 ]);
 const stamp = buildStamp();
 
@@ -176,6 +186,8 @@ const files = [
   ["languages.json", languages.entries],
   ["runs.json", runs],
   ["coverage.json", coverage],
+  ["venn.json", venn],
+  ["sources.json", languages.sources],
   [
     "meta.json",
     { generatedAt: stamp.generatedAt, branch: stamp.ref, commit: stamp.commit },
@@ -205,6 +217,24 @@ console.log(`  evidence rows        ${totals.evidence}`);
 console.log(`  import runs          ${runs.length}`);
 console.log(
   `  coverage headline    ${coverage.anyCovered} of ${coverage.denominator.writingSystems} writing systems`
+);
+console.log(
+  `  evidence by source   ` +
+    Object.entries(languages.sources)
+      .map(
+        ([key, entry]) =>
+          `${key} ${
+            entry.evidence.alphabets +
+            entry.evidence.sampleTexts +
+            entry.evidence.fonts
+          }`
+      )
+      .join(", ")
+);
+console.log(
+  `  alphabet sources     SLDR ${venn.sets.sldr.covered}, BloomLibrary ` +
+    `${venn.sets.bloom.covered}, eBible ${venn.sets.ebible.covered}; ` +
+    `${venn.corpusOnly} writing systems have a corpus and no SLDR alphabet`
 );
 console.log(
   `\n  wrote ${files.length} files to ${out} (${(totalBytes / 1024 / 1024).toFixed(2)} MiB)`

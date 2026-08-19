@@ -1,9 +1,39 @@
 # Dashboard
 
-A small React app (Vite, TypeScript, TanStack Table) with three tabs:
+A small React app (Vite, TypeScript, TanStack Table). Its tabs:
 
 - **Dashboard** — how much of the writing-system world this database has an
   answer for: the coverage headline, per-kind tiles, and a by-script table.
+- **Sources** — every source this project reads, one card each: what it can
+  answer, how it is read, whether it is an **approved source** (the only rule
+  that decides what a user is ever shown), and what it has actually filed. The
+  counts under each card are baked by `sources.mjs` from the claim rows
+  themselves, so a card cannot go on describing a contribution that has stopped
+  being true. Sources that file no claims at all are here too, in their own
+  group: BloomLibrary's language table, eBible's catalogue, and github.com, which
+  hosts the files SLDR and gflanguages claims cite.
+
+  Its last section is the overlap picture: where an alphabet for a writing system
+  could come from, as three circles — the writing systems the SLDR has already
+  given us an alphabet for, the ones BloomLibrary publishes books in, and the ones
+  eBible.org lists a translation in — drawn inside a fourth that is the whole
+  langtags denominator. Everything outside the SLDR circle and inside another is
+  the point of the picture. Circle areas and pairwise overlaps are to scale; the
+  middle where all three meet cannot be, and the caption says so.
+
+  The page shows the same data two ways and keeps them apart, because conflating
+  them is how "eBible" comes to mean 1,128 in one place and 146 in another: the
+  cards above the diagram are whole **sets**, overlaps included, plus their union;
+  the diagram and its legend are **regions**, which exclude each other and carry
+  "only" in their names. Both are clickable and both drive the list underneath.
+
+  A caution box above the diagram says the one thing the picture cannot: the
+  three sources do not always file a language under the same code. SLDR writes an
+  alphabet for a macrolanguage where BloomLibrary and eBible publish under one of
+  its members — `ps-Arab` against `pbt-Arab` — so some of what reads as an SLDR
+  gap is a tag gap. `venn.mjs` counts those from langtags' own `macrolang` field
+  and never merges them; whether one alphabet covers both codes is a question
+  about the languages.
 - **Data** — a grid, one row per writing system, showing every claim (alphabets,
   computed character ranges, sample texts, OpenType features, suggested fonts).
   Expanding a row lists each claim with its evidence: which source said it,
@@ -24,6 +54,9 @@ npm run build   # tsc + vite build -> app/dist
 | ----------------- | -------------------------------------------------------- |
 | `export-data.mjs` | bakes the database into the JSON files the app loads     |
 | `coverage.mjs`    | the queries and the coverage arithmetic                  |
+| `venn.mjs`        | the three sets the overlap diagram draws, and their definitions |
+| `sources.mjs`     | what each source has filed, tallied from the rows already read |
+| `ebible.mjs`      | eBible.org's translation catalogue, read for its index only |
 | `stamp.mjs`       | branch/commit/timestamp for the footer                   |
 | `app/`            | the React app (self-contained; not an npm workspace)     |
 
@@ -49,6 +82,11 @@ that pushes a change under `supporting-data/dashboard/` publishes**, and Pages
 serves one site per repository, so the newest push wins. The footer is the only
 way to tell whose push you are looking at. Narrow the trigger when this reaches
 the default branch.
+
+The bake reads two things that are not the database, both for the overlap diagram
+and both catalogues rather than content: BloomLibrary's public language table (the
+same endpoint and app id the importer uses, no auth, one small paged GET) and
+eBible.org's `translations.csv`. No book file and no scripture text is fetched.
 
 The bake needs no secrets: the database's publishable key is the script default
 in `../tools/lib/langdata.mjs` (the same key the font chooser demo ships to every

@@ -3,13 +3,20 @@ import { useEffect, useState } from "react";
 import { AboutTab } from "./tabs/AboutTab";
 import { DashboardTab } from "./tabs/DashboardTab";
 import { DataTab } from "./tabs/DataTab";
+import { ExperimentTab } from "./tabs/ExperimentTab";
 import { RunsTab } from "./tabs/RunsTab";
+import { SourcesTab } from "./tabs/SourcesTab";
 
 const TABS = [
   { id: "about", label: "About" },
   { id: "dashboard", label: "Dashboard" },
+  { id: "sources", label: "Sources" },
   { id: "data", label: "Data" },
   { id: "runs", label: "Collection runs" },
+  {
+    id: "experiment",
+    label: "Experiment scanning BloomLibrary.org for alphabets",
+  },
 ] as const;
 
 export type TabId = (typeof TABS)[number]["id"];
@@ -20,6 +27,9 @@ const isTabId = (value: string): value is TabId =>
 /** The tab named by the URL hash, so a link to one tab opens on that tab. */
 function tabFromHash(): TabId {
   const name = window.location.hash.replace(/^#/, "");
+  // The Sources tab was called Overlap while it was only the diagram, and links
+  // to #overlap are already out there.
+  if (name === "overlap") return "sources";
   return isTabId(name) ? name : "about";
 }
 
@@ -60,8 +70,10 @@ export function App() {
 
       {tab === "about" && <AboutTab />}
       {tab === "dashboard" && <DashboardTab />}
+      {tab === "sources" && <SourcesTab />}
       {tab === "data" && <DataTab />}
       {tab === "runs" && <RunsTab />}
+      {tab === "experiment" && <ExperimentTab />}
     </main>
   );
 }

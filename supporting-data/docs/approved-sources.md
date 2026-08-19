@@ -1,11 +1,15 @@
 # What makes a claim usable
 
 The short version: **a claim is usable if an approved source stands behind it**,
-and today the approved list is exactly two entries — SIL's SLDR and Google
-Fonts' language data. That is provenance, not judgement, which is why it can be
-settled now while the harder question stays open.
+and today the approved list is three entries — SIL's SLDR, SIL's Language Font
+Finder, and Google Fonts' language data. That is provenance, not judgement, which
+is why it can be settled now while the harder question stays open.
 
-Implemented by [`../sql/002-approved-sources.sql`](../sql/002-approved-sources.sql).
+Implemented by [`../sql/002-approved-sources.sql`](../sql/002-approved-sources.sql);
+the Font Finder was added later by
+[`supabase/migrations/20260819104600_approve_language_font_finder.sql`](../../supabase/migrations/20260819104600_approve_language_font_finder.sql),
+having been missing rather than excluded — the table was written before its
+importer existed.
 
 ## Why this isn't the rank decision
 
@@ -63,10 +67,10 @@ insert into public.approved_source (title, note)
 values ('Unicode CLDR', 'CLDR exemplar characters; the other reference our UIs already followed.');
 ```
 
-Title, not source row, because there are 2,719 `source` rows and two titles —
-each row names the individual upstream file it came from, and they all share a
-dataset title. So approving a dataset approves every file in it, past and
-future, and a re-import needs no blessing.
+Title, not source row, because there are over eleven thousand `source` rows and a
+handful of titles — each row names the individual upstream file or query it came
+from, and they all share their dataset's title. So approving a dataset approves
+every file in it, past and future, and a re-import needs no blessing.
 
 Approval is deliberately **not** a column on `source`. `source` is
 anon-insertable; a `trusted` boolean there would let anyone mint a trusted
