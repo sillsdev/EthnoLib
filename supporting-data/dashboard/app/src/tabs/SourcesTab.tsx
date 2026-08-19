@@ -10,7 +10,12 @@
 import type { ReactNode } from "react";
 
 import { count, plural } from "../lib/format";
-import { useDataset, type SourceTallies, type Venn } from "../data";
+import {
+  useDataset,
+  type SourceTallies,
+  type SourceTally,
+  type Venn,
+} from "../data";
 import { OverlapSection } from "./OverlapSection";
 
 import "./SourcesTab.css";
@@ -19,8 +24,19 @@ import "./SourcesTab.css";
  * Where a source stands in the pipeline. Only `approved` claims are ever served
  * to a user (docs/approved-sources.md); `gathered` is filed and held; `context`
  * never becomes a claim at all.
+ *
+ * Never written down here. Approval is a row in `approved_source`, so a card
+ * says what the database says: a source with a tally is approved or gathered
+ * according to that row, and a source with no tally files nothing and is
+ * context. Hard-coding it once meant the Font Finder went on reading "gathered"
+ * after it had been approved.
  */
 type Standing = "approved" | "gathered" | "context";
+
+function standingOf(card: SourceCard, tally?: SourceTally): Standing {
+  if (!card.tally) return "context";
+  return tally?.approved ? "approved" : "gathered";
+}
 
 const STANDING_LABEL: Record<Standing, string> = {
   approved: "Approved source",
@@ -39,7 +55,6 @@ type SourceCard = {
   name: string;
   /** Colour, matching the provenance hue the rest of the app uses. */
   swatch: string;
-  standing: Standing;
   /** Key into sources.json, for the sources that file claims. */
   tally?: string;
   answers: ReactNode;
@@ -54,7 +69,6 @@ const THE_LIST: SourceCard[] = [
     id: "langtags",
     name: "SIL langtags",
     swatch: "var(--source-sil)",
-    standing: "context",
     answers: (
       <>
         Which writing systems exist at all. Every coverage figure on this site
@@ -82,7 +96,6 @@ const THE_LIST: SourceCard[] = [
     id: "sldr",
     name: "SIL Locale Data Repository (SLDR)",
     swatch: "var(--source-sil)",
-    standing: "approved",
     tally: "sil",
     answers: (
       <>
@@ -104,7 +117,6 @@ const THE_LIST: SourceCard[] = [
     id: "lff",
     name: "SIL Language Font Finder",
     swatch: "var(--source-lff)",
-    standing: "gathered",
     tally: "lff",
     answers: <>Which fonts the service itself recommends for a language tag.</>,
     read: (
@@ -126,7 +138,6 @@ const THE_LIST: SourceCard[] = [
     id: "gflanguages",
     name: "Google Fonts language data (gflanguages)",
     swatch: "var(--source-google)",
-    standing: "approved",
     tally: "google",
     answers: <>A few sentences of sample text per language.</>,
     read: (
@@ -148,7 +159,6 @@ const THE_LIST: SourceCard[] = [
     id: "bloom-books",
     name: "BloomLibrary.org books",
     swatch: "var(--source-bloom)",
-    standing: "gathered",
     tally: "bloom",
     answers: (
       <>
@@ -177,7 +187,6 @@ const THE_LIST: SourceCard[] = [
     id: "bloom-catalogue",
     name: "BloomLibrary.org language catalogue",
     swatch: "var(--source-bloom)",
-    standing: "context",
     answers: (
       <>
         How many books exist per language code — where a harvest would find
@@ -199,7 +208,6 @@ const THE_LIST: SourceCard[] = [
     id: "ebible",
     name: "eBible.org catalogue",
     swatch: "var(--source-ebible)",
-    standing: "context",
     answers: <>Which languages have a published scripture translation.</>,
     read: (
       <>
@@ -222,7 +230,6 @@ const THE_LIST: SourceCard[] = [
     id: "github",
     name: "github.com",
     swatch: "var(--source-other)",
-    standing: "context",
     answers: (
       <>
         Nothing of its own. It is where SLDR's XML and gflanguages'{" "}
@@ -270,6 +277,7 @@ function Card({
   venn: Venn;
 }) {
   const tally = card.tally ? tallies[card.tally] : undefined;
+  const standing = standingOf(card, tally);
   const claims = tally
     ? [
         [tally.claims.alphabets, "alphabet"],
@@ -283,11 +291,11 @@ function Card({
       <header>
         <span className="swatch" style={{ background: card.swatch }} />
         <h3>{card.name}</h3>
-        <span className={`standing standing-${card.standing}`}>
-          {STANDING_LABEL[card.standing]}
+        <span className={`standing standing-${standing}`}>
+          {STANDING_LABEL[standing]}
         </span>
       </header>
-      <p className="source-standing-note">{STANDING_NOTE[card.standing]}</p>
+      <p className="source-standing-note">{STANDING_NOTE[standing]}</p>
 
       <dl>
         <dt>Answers</dt>

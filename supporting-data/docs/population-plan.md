@@ -196,8 +196,8 @@ different statements distinguishable forever: a recommendation somebody
 recorded for that language in SLDR (stage 5's claims), and what the service
 answers when asked about a tag. One claim may carry both kinds of evidence,
 and a UI that wants to present the first more strongly than the second reads
-the difference off the sources. The Font Finder service is not on the
-approved-source list; whether it should be is a decision not yet made.
+the difference off the sources. Both are approved sources, which is a statement
+about provenance and not a ruling that they agree.
 
 Practicalities: a full run is ~8,500 requests against somebody's public
 service, so it deserves a gentle rate and a heads-up to the maintainers before

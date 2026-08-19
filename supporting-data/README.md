@@ -59,8 +59,8 @@ provenance, with judgement layered on top rather than baked in.
 
 - **Approved sources — the decision we could make.** What the UIs read in the
   meantime needs no judgement at all: a claim is usable if an **approved
-  source** stands behind it, which today means SLDR or Google Fonts' language
-  data. That is provenance, not a verdict, so it could be settled without
+  source** stands behind it, which today means SLDR, SIL's Language Font Finder
+  or Google Fonts' language data. That is provenance, not a verdict, so it could be settled without
   settling `rank`. The `usable_*` views are that read path
   ([`docs/approved-sources.md`](docs/approved-sources.md)); `rank` still decides
   nothing except that `deprecated` strikes a claim out. Crowd-sourced claims are

@@ -53,9 +53,9 @@ answered this for your tag" has been told more than anybody meant to say.
 - **The two sources stay separate.** One claim may carry both kinds of
   evidence, and a UI that wants to present an SLDR-recorded recommendation
   more strongly than a service answer reads the difference off the sources.
-  Neither import marks anything preferred, and whether the service joins the
-  approved-source list ([`approved-sources.md`](approved-sources.md)) is a
-  decision not yet made.
+  Neither import marks anything preferred. Both sources are on the
+  approved-source list ([`approved-sources.md`](approved-sources.md)), which
+  approves them separately and does not merge them.
 
 A full stage 6 run is roughly 8,500 requests to collect what is, underneath,
 far fewer distinct facts. That inefficiency is accepted on purpose: caching
