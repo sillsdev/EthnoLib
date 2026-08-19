@@ -73,6 +73,31 @@ export function titleCaseScript(subtag) {
 }
 
 /**
+ * A source's own tag, rewritten to name the script we actually observed, with
+ * everything else it carried left in place: `ar-SA` + Arab → `ar-Arab-SA`,
+ * `ahk-Laoo-x-Ershee` + Latn → `ahk-Latn-x-Ershee`, `ace` + Arab → `ace-Arab`.
+ *
+ * Two rules meet here. The script comes from the text, because a source that
+ * omits it is not evidence about it and one that states it can still be
+ * carrying text in another. And the rest of the tag survives, because a region
+ * or private-use subtag is a distinction somebody drew on purpose and this
+ * project is not the place it gets dropped.
+ *
+ * The database also requires a script subtag on every language row, so a tag
+ * like `ar-SA` cannot be stored as it stands; this is what makes it storable
+ * without discarding the `SA`.
+ */
+export function retagWithScript(tag, script) {
+  const parts = String(tag).split("-").filter(Boolean);
+  const named = titleCaseScript(script);
+  if (isScriptSubtag(parts[1])) {
+    parts[1] = named;
+    return parts.join("-");
+  }
+  return [parts[0], named, ...parts.slice(1)].join("-");
+}
+
+/**
  * Every tag spelling langtags knows — the short `tag`, the alternates in
  * `tags`, and `full` — pointing at the writing system it belongs to. Lowercased
  * keys, because tag case is a convention and not a guarantee.

@@ -85,16 +85,60 @@ export const booksInLanguage = (isoCode) => ({
 });
 
 /**
+ * Every language code in Bloom's table that starts with `prefix`, merged the
+ * same way `languageRows` merges, and sorted by code.
+ *
+ * This is what a wide run walks instead of a hand-written list of tags. The
+ * catalogue is the only thing that knows which codes have books, and it is
+ * keyed by Bloom's `isoCode`, which is not always an ISO 639 code: it carries
+ * region and private-use subtags too (`ase-ML`, `ahk-Laoo-x-Ershee`), so the
+ * caller cannot assume a bare language code here.
+ */
+export async function languageCodesStartingWith(prefix) {
+  return mergeLanguageRows(
+    await parseQuery("language", {
+      // Anchored, case-insensitive: Bloom's table spells some codes in mixed
+      // case, and a prefix run asking for `a` means to include them.
+      where: { isoCode: { $regex: `^${prefix}`, $options: "i" } },
+      keys: "isoCode,name,usageCount",
+      limit: 1000,
+    })
+  );
+}
+
+/**
  * Bloom's language rows for these codes, merged by isoCode with usageCount
  * summed. The table holds more than one row for the same code, so not merging
  * would split a language's books across two entries and understate both counts.
  */
 export async function languageRows(isoCodes) {
-  const answer = await parseQuery("language", {
-    where: { isoCode: { $in: isoCodes } },
-    keys: "isoCode,name,usageCount",
-    limit: 1000,
-  });
+  const merged = new Map();
+  for (let at = 0; at < isoCodes.length; at += CODES_PER_QUERY) {
+    const answer = await parseQuery("language", {
+      where: { isoCode: { $in: isoCodes.slice(at, at + CODES_PER_QUERY) } },
+      keys: "isoCode,name,usageCount",
+      limit: 1000,
+    });
+    for (const [code, row] of mergeLanguageRows(answer)) {
+      const seen = merged.get(code);
+      if (seen) {
+        seen.usageCount += row.usageCount;
+        seen.rows += row.rows;
+      } else merged.set(code, row);
+    }
+  }
+  return new Map([...merged.entries()].sort(([a], [b]) => (a < b ? -1 : 1)));
+}
+
+/**
+ * Codes per `$in` query. Parse takes its `where` clause in the query string, and
+ * a long enough URL comes back 404 from in front of the server rather than as a
+ * Parse error, so a list that is too long looks like a missing class. The ceiling
+ * measured against the live server sits between 50 and 80 codes; 40 leaves room.
+ */
+const CODES_PER_QUERY = 40;
+
+function mergeLanguageRows(answer) {
   const merged = new Map();
   for (const row of answer.results ?? []) {
     const code = String(row.isoCode ?? "").trim();
@@ -112,7 +156,7 @@ export async function languageRows(isoCodes) {
       });
     }
   }
-  return merged;
+  return new Map([...merged.entries()].sort(([a], [b]) => (a < b ? -1 : 1)));
 }
 
 /** How many books the language has before and after the copyright filter. */
@@ -448,6 +492,58 @@ export function scriptOf(character) {
 
 const LETTER = /\p{L}/u;
 const MARK = /\p{M}/u;
+/**
+ * Characters Unicode assigns to no script in particular. For a letter this means
+ * one that several scripts share — Akha's tone marks, the Arabic tatweel — and
+ * `letterClustersByScript` files those under the script of the letter before
+ * them. `Script=Common` is the property that says "shared", as distinct from
+ * `Inherited`, which combining marks carry and which means "ask my base".
+ */
+const SCRIPT_NEUTRAL = /\p{Script=Common}/u;
+
+/**
+ * Whether this character is a letter with no script of its own, and so is filed
+ * under the script of whatever letter precedes it. Callers checking that a filed
+ * inventory holds only its own script have to exempt these, or they flag the
+ * tone marks the rule above deliberately admitted.
+ */
+export function isScriptNeutralLetter(character) {
+  return LETTER.test(character) && SCRIPT_NEUTRAL.test(character);
+}
+/**
+ * Scripts whose combining marks are an entry of their own rather than part of
+ * the letter they sit on.
+ *
+ * Which way round this goes is the orthography's business, not Unicode's, and
+ * the SLDR's exemplar sets already answer it for every script we care about: a
+ * set either lists a bare mark as an entry or lists the letter-plus-mark
+ * combination, and it is consistent within a script. Counting both kinds across
+ * all 1,891 SLDR sets gives the list below — every script where bare marks
+ * outnumber letter-plus-mark entries at least two to one. Devanagari is 741 bare
+ * to 362 joined, Arabic 450 to 27, Thai 56 to 0. Latin goes the other way, 616 to
+ * 1,136, and so do Myanmar, Hebrew, Tifinagh and Osage, so they are absent here.
+ *
+ * The list is hardcoded rather than derived at run time because font-core's
+ * snapshot is not on every branch of this repo and a normal run must not need it.
+ * `--compare-sldr` is what re-derives it: scripts/marks-by-script is the same
+ * count, and any drift shows up as SLDR entries the books can never match.
+ *
+ * What each choice costs. Splitting a Devanagari cluster means no entry reads as
+ * a syllable a person would look for, and a conjunct the SLDR does list whole
+ * (Bengali `ক্ষ`) appears only as its parts. Not splitting Latin keeps Jarai's
+ * `ơ̆` — U+01A1 with a combining breve, which Unicode has no single character for
+ * and the SLDR lists as one entry — instead of filing a bare breve beside it.
+ * Measured on the gflanguages sample text, splitting took Thai from 35 of its 73
+ * SLDR exemplars, with 47 entries the SLDR has never listed, to 48 of 73 with
+ * none; Nepali, Bengali, Khmer and Hindi moved the same way.
+ */
+const MARKS_ARE_SEPARATE_ENTRIES = new Set([
+  "Adlm", "Arab", "Beng", "Cakm", "Cyrl", "Deva", "Ethi", "Gujr", "Guru",
+  "Kali", "Khmr", "Knda", "Lana", "Laoo", "Limb", "Mlym", "Mtei", "Nkoo",
+  "Orya", "Rohg", "Sinh", "Sylo", "Syrc", "Taml", "Tavt", "Telu", "Thaa",
+  "Thai", "Tibt",
+]);
+
 const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
 /**
@@ -484,10 +580,23 @@ const APOSTROPHES = new Set([
 /**
  * Grapheme clusters that are letters, counted per script.
  *
- * A cluster keeps the combining marks attached to its base (`\p{M}` after a
- * `\p{L}`), because in an abugida the mark is part of the letter as written and
- * splitting it produces entries no reader would recognise. Digits, punctuation
- * and whitespace are discarded.
+ * A combining mark is its own entry, listed beside the base it was written on
+ * rather than joined to it, because that is the inventory the SLDR's exemplars
+ * describe and these claims exist to be comparable with them. Measured on the
+ * gflanguages sample text against the SLDR's own sets: joining marks to their
+ * bases put 35 of Thai's 73 exemplars in reach and invented 47 entries the SLDR
+ * has never listed, and Nepali, Bengali, Khmer and Hindi were worse. Splitting
+ * them reaches 48 of 73 for Thai and invents nothing, and the same holds in
+ * every Brahmic script tried. Latin is untouched either way: NFC has already
+ * composed its accented letters into single characters before this runs.
+ *
+ * The cost is real and it is the smaller one. An abugida's syllable is written as
+ * a base plus its marks, so a reader looking for `ที่` will not find it here, and
+ * a conjunct the SLDR does list as one entry (Bengali `ক্ষ`) turns up only as the
+ * three characters it is written with. What is gained is that every entry filed is
+ * a character the orthography's own exemplar list names.
+ *
+ * Digits, punctuation and whitespace are discarded.
  *
  * The apostrophe exception. An apostrophe-shaped character is counted when a
  * letter comes immediately before it, and discarded otherwise. That is the line
@@ -498,6 +607,21 @@ const APOSTROPHES = new Set([
  * contributes a few false counts, which is why the count of every variant is
  * written into the evidence rather than only the verdict. The apostrophe is
  * filed under the script of the letter before it, since it has none of its own.
+ *
+ * Script-neutral letters, treated the same way and for the same reason. Akha
+ * writes tone with modifier letters — `Iˬsuˆ dawˬ oeˇ` — and Unicode gives those
+ * Script=Common, because many languages borrow them. Left to the script test
+ * below they went to `unidentified` and were dropped, which threw away 22.8% of
+ * Akha's letters and filed an alphabet missing the marks that tell its words
+ * apart. So a Script=Common letter is counted when a letter comes immediately
+ * before it, under that letter's script, and discarded otherwise. This is the
+ * apostrophe rule exactly, and it also catches the Arabic tatweel, which is a
+ * justification stretch rather than a letter and now shows up in the evidence
+ * with its count where a reader can see it and judge it.
+ *
+ * Not the same as an untested script. A letter belonging to a real script this
+ * file does not test still goes to `unidentified`: it has a script of its own,
+ * and lending it the previous letter's would be a guess.
  *
  * Case is kept here and folded later, by `foldClusters`: this function reports
  * what the text contains, and what an alphabet claim should list is a separate
@@ -530,13 +654,25 @@ export function letterClustersByScript(text) {
       afterLetter = undefined;
       continue;
     }
-    // Anything past the base that is neither a letter nor a mark (a ZWJ-joined
-    // oddity, say) is not part of a letter as written.
-    const cluster = [...segment]
-      .filter((character, at) => at === 0 || MARK.test(character))
-      .join("");
+    if (SCRIPT_NEUTRAL.test(base)) {
+      if (afterLetter) count(afterLetter, base);
+      afterLetter = undefined;
+      continue;
+    }
     const script = scriptOf(base) ?? "unidentified";
-    count(script, cluster);
+    if (MARKS_ARE_SEPARATE_ENTRIES.has(script)) {
+      count(script, base);
+      for (const character of [...segment].slice(1)) {
+        if (MARK.test(character)) count(script, character);
+      }
+    } else {
+      // Anything past the base that is neither a letter nor a mark (a ZWJ-joined
+      // oddity, say) is not part of a letter as written.
+      count(
+        script,
+        [...segment].filter((character, at) => at === 0 || MARK.test(character)).join("")
+      );
+    }
     afterLetter = script;
   }
   return byScript;
@@ -571,11 +707,15 @@ export function foldClusters(clusters) {
 }
 
 /**
- * One cluster's folded form. Lowercasing is skipped where it would change the
- * length — Turkish İ lowercases to two codepoints, ẞ to `ss` — because a
+ * One cluster's folded form, exported because anything compared against a filed
+ * inventory has to be folded the same way first. The SLDR writes the saltillo
+ * U+A78C where a book's author typed U+02BC or U+2019, so an unfolded comparison
+ * reports a difference that is one letter spelled two ways.
+ *
+ * Lowercasing is skipped where it would change the length — Turkish İ lowercases to two codepoints, ẞ to `ss` — because a
  * one-letter entry that becomes two is no longer a letter.
  */
-function foldCluster(cluster) {
+export function foldCluster(cluster) {
   const canonical = [...cluster]
     .map((character) => (APOSTROPHES.has(character) ? CANONICAL_APOSTROPHE : character))
     .join("");
@@ -594,4 +734,44 @@ function foldCluster(cluster) {
  */
 export function frequencyFloor(totalOccurrences) {
   return Math.max(2, Math.ceil(totalOccurrences / 10_000));
+}
+
+/**
+ * How fast the inventory stopped growing: for each book in the order they were
+ * read, how many of the entries the claim ended up listing had been seen by
+ * then.
+ *
+ * The book cap is a guess — forty, from the plan — and nothing so far says
+ * whether forty books find letters that ten would have missed. This is the
+ * measurement that would answer it: if the last new entry keeps turning up in
+ * book two, the cap is far too high, and if it keeps turning up in book forty,
+ * the cap is too low and the inventories are incomplete. Recorded per claim, so
+ * the answer accumulates over runs instead of being re-guessed.
+ *
+ * `perBook` is the folded entries each book contributed, in read order; `kept`
+ * is the inventory the claim lists. Only kept entries are counted, because an
+ * entry that fell below the frequency floor is not something more books would
+ * have been needed to find.
+ */
+export function inventoryGrowth(perBook, kept) {
+  const wanted = new Set(kept);
+  const seen = new Set();
+  const coverage = [];
+  let lastNewAt = 0;
+  for (let at = 0; at < perBook.length; at++) {
+    const before = seen.size;
+    for (const entry of perBook[at]) {
+      if (wanted.has(entry)) seen.add(entry);
+    }
+    if (seen.size > before) lastNewAt = at + 1;
+    coverage.push(seen.size);
+  }
+  return {
+    total: wanted.size,
+    coverage,
+    // 1-based book number that last added an entry, so "1" means every later
+    // book was redundant for this inventory.
+    lastNewAt,
+    firstBook: coverage[0] ?? 0,
+  };
 }

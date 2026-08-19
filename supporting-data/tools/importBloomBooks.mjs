@@ -4,21 +4,45 @@
 //
 //   node supporting-data/tools/importBloomBooks.mjs --dry-run
 //   node supporting-data/tools/importBloomBooks.mjs --dry-run --only acr --verbose
-//   node supporting-data/tools/importBloomBooks.mjs --only acr-Latn
+//   node supporting-data/tools/importBloomBooks.mjs --prefix a --dry-run --review
+//   node supporting-data/tools/importBloomBooks.mjs --prefix a
+//   node supporting-data/tools/importBloomBooks.mjs --prefix ne,th,km --dry-run --compare-sldr --font-core <path to font-core>
 //
-// Scope. TARGET_SYSTEMS below is the list of writing systems this walks, and it
-// is nine of them, not the library. The plan's algorithm for choosing which
-// languages to walk (merge the language table, resolve scripts, sort by what is
-// missing) is not implemented; widening the run means replacing that list. Under
-// approved-sources.md nothing filed here reaches a user either way: a book is
-// not an approved source, so these claims gather and wait.
+// Scope, and the two ways of choosing it. `--prefix a` walks every language code
+// in BloomLibrary's own language table that starts with `a`, which is what the
+// plan meant by choosing languages from the catalogue rather than by hand.
+// Without it, TARGET_SYSTEMS below is the list, and it is nine writing systems
+// picked by hand. Under approved-sources.md nothing filed here reaches a user
+// either way: a book is not an approved source, so these claims gather and wait.
 //
 // What it files, and what it does not. Fonts and alphabets. Sample text is the
 // third thing the plan describes and it is NOT built — much of the library is
 // scripture-adjacent, and that harvest carries a content risk the other two do
 // not.
 //
-// What an alphabet entry is. Lower case, and one apostrophe. The sources these
+// Letters with no script of their own. Akha writes tone with modifier letters
+// that Unicode assigns to no script, and dropping them threw away 22.8% of
+// Akha's letters and filed an alphabet missing the marks that tell its words
+// apart. Those are now counted under the script of the letter before them, which
+// is the rule the apostrophe already used. See lib/bloom.mjs.
+//
+// What an alphabet entry is. In Devanagari, Thai, Khmer, Arabic and the other
+// scripts listed in lib/bloom.mjs, a combining mark is an entry of its own; in
+// Latin and the rest it stays on the letter it was written on. That is not a
+// choice about writing systems, it is what the SLDR's own exemplar sets do, and
+// these claims exist to be comparable with them. Measured against the SLDR:
+// splitting marks took Thai from 35 of its 73 exemplars to 59 and dropped 200-odd
+// entries the SLDR has never listed to none; Nepali, Bengali and Khmer moved the
+// same way, and no Latin-script language changed. `--compare-sldr` is how that
+// was measured and how it stays honest; docs/sldr-comparison.md has the numbers.
+//
+// What it cannot find. An alphabet whose letters are digraphs is beyond reach
+// from text alone: Hausa's `sh` and `ts`, K'iche's `ch` and `tzʼ` are two
+// characters in the file and nothing in the text says they are one letter. Those
+// claims are inventories of characters, and the SLDR entries they cannot match
+// are reported by `--compare-sldr` rather than passed over.
+//
+// Lower case, and one apostrophe. The sources these
 // claims sit beside list the lower case only, and write the orthographic
 // apostrophe as U+02BC, so an inventory that carries A and a separately, or ' and
 // U+2019 separately, cannot accumulate support alongside an SLDR claim for the
@@ -26,19 +50,42 @@
 // counts behind them. See lib/bloom.mjs for where the apostrophe stops being
 // punctuation.
 //
-// The script problem, which is why the target list names writing systems.
-// Bloom's language rows carry no script: `isoCode` is a bare `ace`, and langtags
-// would supply Latin by default, which is simply wrong for a language Bloom also
-// publishes in Arabic. So the script comes from the text — characters are
-// partitioned by Unicode script property and each partition is filed under
-// whichever target tag names that script. Text in a script no target names is
-// counted and reported, and nothing is filed for it.
+// The script problem, and why the text decides it. Bloom's language rows carry
+// no script: `isoCode` is a bare `ace`, and langtags would supply Latin by
+// default, which is simply wrong for a language Bloom also publishes in Arabic.
+// So the script comes from the text — characters are partitioned by Unicode
+// script property, and each partition is filed under the source's own tag
+// rewritten to name that script (`retagWithScript`).
+//
+// Finding a script is not evidence the language uses it, which is the other half.
+// Books carry dates, URLs and English notes inside their vernacular text, so a
+// Latin bucket appears in Amharic and Arabic books holding nothing but the
+// English alphabet. Two rules keep those out, both in `systemFor` and the loop
+// that calls it: the rarity threshold is measured against everything the
+// language's books carry rather than against one bucket, so four stray
+// characters cannot clear a bar of their own making; and a script is filed only
+// when langtags lists it for that language, or, when langtags has no entry for
+// the language at all, only for its largest bucket. What was refused, and why,
+// goes into the evidence of the claims that were filed.
+//
+// Codes that are not bare language codes. Bloom's table holds `ase-ML` and
+// `ahk-Laoo-x-Ershee` as well as `ace`. Those extra subtags are distinctions
+// somebody drew on purpose, so they survive into the tag a claim is filed under,
+// with the observed script put in the script position. The database requires a
+// script subtag on every language row, which is also why `ar-SA` cannot be
+// stored as it stands and becomes `ar-Arab-SA`.
 //
 // The lang attribute is the whole game. The catalogue returns books where the
 // target language is ANY of the book's languages, so `bloom-editable` divs whose
 // lang exactly equals the code are the only text that counts, and front and back
 // matter come out first because their credits and licence blocks carry the
 // vernacular lang while holding English words.
+//
+// Checking the output. `--review` writes a per-book report — what each book
+// contributed, and a short excerpt of its text — for a person or a model to read
+// through; see reviewReportPath below for where it goes and why. The invariants
+// in `invariantProblems` run on every claim whether or not `--review` is on,
+// because they cost nothing.
 //
 // Nothing sets rank. Re-runnable: an alphabet claim dedupes by its inventory and
 // a font claim by (writing system, font), and evidence is skipped when the claim
@@ -49,6 +96,9 @@
 // It is somebody's public library. Three requests in flight at most, a pause
 // between launches, one retry on a 5xx or a network failure.
 
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   bookCounts,
   bookPageUrl,
@@ -57,12 +107,16 @@ import {
   digitalHtmlUrl,
   editableLangs,
   fetchText,
+  foldCluster,
   foldClusters,
   fontFamiliesByLang,
   frequencyFloor,
   harvesterBase,
   hasProblemTag,
+  inventoryGrowth,
+  isScriptNeutralLetter,
   langStylesUrl,
+  languageCodesStartingWith,
   languageRows,
   letterClustersByScript,
   listBooks,
@@ -71,13 +125,17 @@ import {
 } from "./lib/bloom.mjs";
 import {
   loadLangtags,
+  NON_SCRIPTS,
   resolveWritingSystem,
+  retagWithScript,
   tagIndex,
+  writingSystems,
 } from "./lib/langtags.mjs";
+import { readBundled } from "./lib/fontCore.mjs";
+import { parseUnicodeSetToAlphabet } from "./lib/unicodeSet.mjs";
 import {
   alphabetKey,
   createClient,
-  keyTooBigForIndex,
   parseArgs,
   report,
   runDescriptor,
@@ -94,10 +152,10 @@ const SOURCE_TYPE = "book";
 const SUBMITTED_VIA = "book found on BloomLibrary.org";
 
 /**
- * The writing systems this run covers, chosen by hand. Nine tags across eight
- * languages; `ace` appears twice because Acehnese is written in both Latin and
- * Arabic script and which of the two a book's text is in is a question only the
- * text can answer.
+ * The writing systems a run walks when `--prefix` is not given, chosen by hand.
+ * Nine tags across eight languages; `ace` appears twice because Acehnese is
+ * written in both Latin and Arabic script and which of the two a book's text is
+ * in is a question only the text can answer.
  */
 const TARGET_SYSTEMS = [
   "ace-Latn",
@@ -111,41 +169,88 @@ const TARGET_SYSTEMS = [
   "act-Latn",
 ];
 
-/** Books read per language. A ceiling, not a target; the plan's number. */
+/**
+ * Books read per language. A ceiling, not a target; the plan's number, and a
+ * guess — nothing yet says whether forty books find letters that ten would have
+ * missed. `inventoryGrowth` is the measurement that will answer it: every
+ * alphabet claim records which book last added a letter to it, so a later run
+ * can set this number from the evidence instead of from the plan.
+ */
 const DEFAULT_BOOK_CAP = 40;
 
 /** At most this many book fetches in flight, and this long between launches. */
 const CONCURRENCY = 3;
 const LAUNCH_GAP_MS = 150;
 
+/**
+ * A book whose text is more than this share of a writing system's letter
+ * occurrences is reported by the invariants. Not an error: a corpus of two books
+ * is half one book by definition. It is worth seeing when a claim about a
+ * language rests mostly on one upload.
+ */
+const DOMINANT_BOOK_SHARE = 0.4;
+
+/** More codepoints than this in one alphabet entry means the segmentation ran away. */
+const MAX_CLUSTER_LENGTH = 4;
+
+/**
+ * At most this much of a book's text goes into the review report. Long enough
+ * that a sentence or two is readable, which is what tells a reader whether the
+ * extraction picked up the vernacular or an English credits block; short enough
+ * that the report is not a copy of somebody's book.
+ */
+const REVIEW_EXCERPT_CHARS = 300;
+
 const options = parseArgs();
 const client = createClient(options);
 const bookCap = options.limit ?? DEFAULT_BOOK_CAP;
 const readAt = new Date();
 
-const index = tagIndex(loadLangtags(options.langtags));
-
-// One entry per bare language code, holding the target tags asked for it. The
-// book catalogue is keyed by bare code; the claims are not.
-const targets = new Map();
-for (const tag of TARGET_SYSTEMS) {
-  const resolved = resolveWritingSystem(tag, index);
-  const [code] = tag.split("-");
-  const script = tag.split("-")[1];
-  if (
-    options.only &&
-    !options.only.has(tag.toLowerCase()) &&
-    !options.only.has(code.toLowerCase())
-  ) {
-    continue;
+const langtagEntries = loadLangtags(options.langtags);
+const index = tagIndex(langtagEntries);
+/** Map of `language-Script` → langtags' record for it, the known-pairing test. */
+const knownSystems = writingSystems(langtagEntries);
+/** Every script langtags lists for a bare language code. */
+const scriptsByLanguage = new Map();
+for (const system of knownSystems.values()) {
+  if (!scriptsByLanguage.has(system.language)) {
+    scriptsByLanguage.set(system.language, new Set());
   }
-  if (!targets.has(code)) targets.set(code, { code, byScript: new Map() });
-  targets.get(code).byScript.set(script, {
-    tag,
-    script,
-    name: resolved?.name,
-  });
+  scriptsByLanguage.get(system.language).add(system.script);
 }
+
+/**
+ * The SLDR's own exemplars, keyed by the writing system they resolve to, for
+ * `--compare-sldr`. Read from the same font-core snapshot and through the same
+ * parser importSldrAlphabets.mjs uses, so a difference reported here is a real
+ * difference between the two answers and not two spellings of one answer.
+ *
+ * A writing system can have several SLDR entries: `cak-Latn` has five, one plain
+ * and four named for a town or a dialect. All of them are kept, because which one
+ * a set of books matches is the thing worth learning.
+ */
+const sldrAlphabets = new Map();
+if (options.compareSldr) {
+  const { data: bundled } = readBundled("alphabets.json", options.fontCore);
+  for (const [sldrTag, exemplars] of Object.entries(bundled.alphabets ?? {})) {
+    const resolved = resolveWritingSystem(sldrTag, index);
+    if (!resolved) continue;
+    const characters = parseUnicodeSetToAlphabet(exemplars);
+    if (!characters.trim()) continue;
+    const list = sldrAlphabets.get(resolved.tag) ?? [];
+    list.push({
+      sldrTag,
+      // Folded exactly as our own entries are, or the saltillo the SLDR writes
+      // for Mam and the U+02BC a book's author typed read as two letters.
+      entries: new Set(
+        alphabetKey(characters).split(" ").filter(Boolean).map(foldCluster)
+      ),
+    });
+    sldrAlphabets.set(resolved.tag, list);
+  }
+}
+
+const targets = await chooseTargets();
 
 const run = runDescriptor({
   tool: "importBloomBooks.mjs",
@@ -153,22 +258,25 @@ const run = runDescriptor({
   // A live read of the catalogue and of the harvester's book files, so the
   // moment we read is the only date the input has.
   sourceGeneratedAt: readAt.toISOString(),
-  notes:
-    `Walked ${targets.size} BloomLibrary language code(s) covering ` +
-    `${[...targets.values()].reduce((n, t) => n + t.byScript.size, 0)} writing ` +
-    `system(s), at most ${bookCap} books each, and filed alphabet and ` +
-    `font_support claims from the text and defaultLangStyles.css of the ` +
-    `harvester's bloomdigital version of each book. Nine writing systems by ` +
-    `hand, not the library; no sample text is harvested by this tool.`,
+  notes: options.prefix
+    ? `Walked every BloomLibrary language code starting with "${options.prefix.join('", "')}" ` +
+      `(${targets.size} of them), at most ${bookCap} books each, and filed ` +
+      `alphabet and font_support claims from the text and defaultLangStyles.css ` +
+      `of the harvester's bloomdigital version of each book. The script each ` +
+      `claim is filed under comes from the text. No sample text is harvested by ` +
+      `this tool.`
+    : `Walked ${targets.size} BloomLibrary language code(s) covering ` +
+      `${[...targets.values()].reduce((n, t) => n + (t.wanted?.size ?? 0), 0)} writing ` +
+      `system(s), at most ${bookCap} books each, and filed alphabet and ` +
+      `font_support claims from the text and defaultLangStyles.css of the ` +
+      `harvester's bloomdigital version of each book. Nine writing systems by ` +
+      `hand, not the library; no sample text is harvested by this tool.`,
 });
 await client.recordRun("started", run);
 
 const counts = {
-  "writing systems targeted": [...targets.values()].reduce(
-    (total, target) => total + target.byScript.size,
-    0
-  ),
   "language codes walked": targets.size,
+  "codes skipped as unwritten or signed": 0,
   "codes with no BloomLibrary language row": 0,
   "codes with no books after filtering": 0,
   "books listed": 0,
@@ -179,7 +287,11 @@ const counts = {
   "books with no text under the target lang": 0,
   "books carrying text already read from another entry": 0,
   "letter occurrences harvested": 0,
-  "letter occurrences in a script no target names": 0,
+  "script buckets refused": 0,
+  "letter occurrences in a refused script": 0,
+  "letter occurrences in no script we test": 0,
+  "writing systems filed under": 0,
+  "writing systems langtags does not list": 0,
   "language rows created": 0,
   "font rows created": 0,
   "alphabet claims created": 0,
@@ -190,23 +302,30 @@ const counts = {
   "font_support claims already there": 0,
   "font_support evidence rows added": 0,
   "font_support evidence already cited this book": 0,
+  "invariant problems found": 0,
 };
 
 /** Per language code, what the run saw. Printed, and recorded with the run. */
 const perCode = {};
 /** Books whose harvester files did not come back: id plus what went wrong. */
 const unreadable = [];
-/** Scripts found in the text that no target tag names. */
+/** Scripts found in the text that this run refused to file, and why. */
 const unclaimedScripts = [];
 /** Catalogue entries dropped for carrying text a book already read carried. */
 const duplicateEntries = [];
-
-const bloomLanguages = await languageRows([...targets.keys()]);
+/** What the invariants flagged, across every claim this run filed. */
+const invariantFindings = [];
+/** One `--compare-sldr` line per alphabet filed that the SLDR also answers. */
+const sldrComparisons = [];
+/** One entry per book read, for `--review` to write out. */
+const reviewBooks = [];
 
 for (const target of targets.values()) {
   const summary = {
-    "target writing systems": [...target.byScript.values()].map((s) => s.tag),
-    "BloomLibrary language row": undefined,
+    "BloomLibrary language row": target.hasRow
+      ? `${target.name ?? "(unnamed)"}, usageCount ${target.usageCount}` +
+        (target.rows > 1 ? ` across ${target.rows} merged rows` : "")
+      : undefined,
     "books listed": 0,
     "books excluded by the copyright filter": 0,
     "books skipped for a system:problem tag": 0,
@@ -217,10 +336,12 @@ for (const target of targets.values()) {
     "filed under": {},
     "not filed": [],
   };
+  if (target.wanted) {
+    summary["target writing systems"] = [...target.wanted.values()].map((s) => s.tag);
+  }
   perCode[target.code] = summary;
 
-  const bloomLanguage = bloomLanguages.get(target.code);
-  if (!bloomLanguage) {
+  if (!target.hasRow) {
     // No row in Bloom's language table at all, which is a different fact from
     // "a language with no usable books" and is reported as itself.
     counts["codes with no BloomLibrary language row"]++;
@@ -229,9 +350,27 @@ for (const target of targets.values()) {
     client.log(`${target.code}: no BloomLibrary language row`);
     continue;
   }
-  summary["BloomLibrary language row"] =
-    `${bloomLanguage.name ?? "(unnamed)"}, usageCount ${bloomLanguage.usageCount}` +
-    (bloomLanguage.rows > 1 ? ` across ${bloomLanguage.rows} merged rows` : "");
+
+  // A language with no written form has no alphabet to find, and a sign
+  // language's books carry their text in some other language: the running text
+  // under `ase` is an English or French gloss, so an inventory derived from it
+  // would describe that language while wearing the sign language's name. The
+  // test is langtags' own — every script it lists for the code is SignWriting or
+  // one of the "no script" codes — rather than a list of codes to avoid.
+  const onlyUnwritten = unwrittenOrSigned(target.code);
+  if (onlyUnwritten) {
+    counts["codes skipped as unwritten or signed"]++;
+    // The catalogue is not even asked, so the report must not print book counts
+    // for this code: a "0 listed" would read as "no books" when what happened is
+    // that we never looked.
+    summary.skipped = true;
+    summary["not filed"].push(
+      `langtags lists only ${onlyUnwritten} for this code, so any running text ` +
+        `its books carry is a gloss in another language`
+    );
+    client.log(`${target.code}: skipped, ${onlyUnwritten} only`);
+    continue;
+  }
 
   const catalogue = await bookCounts(target.code);
   const excluded = catalogue.listed - catalogue.afterCopyrightFilter;
@@ -239,6 +378,7 @@ for (const target of targets.values()) {
   summary["books excluded by the copyright filter"] = excluded;
   counts["books listed"] += catalogue.listed;
   counts["books excluded by the copyright filter"] += excluded;
+  target.catalogue = catalogue;
 
   const listed = await listBooks(target.code, bookCap);
   const usable = [];
@@ -301,33 +441,101 @@ for (const target of targets.values()) {
 
   if (corpus.length === 0) {
     summary["not filed"].push(
-      `${read.length} book(s) read, none carrying text under lang="${target.code}"`
+      read.length === 1
+        ? `1 book read, carrying no text under lang="${target.code}"`
+        : `${read.length} books read, none carrying text under lang="${target.code}"`
     );
     continue;
   }
 
+  // Per book once, because the growth curve, the dominance check, the font
+  // filing and the review report all need it and it is the expensive part.
+  for (const book of corpus) book.byScript = letterClustersByScript(book.text);
+  if (options.review) {
+    for (const book of corpus) reviewBooks.push(reviewEntry(target, book));
+  }
+
   const byScript = letterClustersByScript(corpus.map((book) => book.text).join("\n"));
+
+  // Every script's total before any of them is judged, because both decisions
+  // that follow need the whole picture.
+  //
+  // The rarity threshold is one of them. It used to be computed from each
+  // script's own total, which meant a bucket of four stray characters set its
+  // threshold at two and a character appearing twice became an alphabet: that is
+  // how Amharic acquired a Malayalam alphabet from one character in one book.
+  // Computed across everything the language's books carry, the same four
+  // characters are measured against Amharic's 379,593 letters and disappear.
+  const occurrencesByScript = new Map();
   for (const [script, clusters] of byScript) {
-    const occurrences = [...clusters.values()].reduce((a, b) => a + b, 0);
+    occurrencesByScript.set(
+      script,
+      [...clusters.values()].reduce((a, b) => a + b, 0)
+    );
+  }
+  const totalOccurrences = [...occurrencesByScript.values()].reduce((a, b) => a + b, 0);
+  const floor = frequencyFloor(totalOccurrences);
+  counts["letter occurrences harvested"] += totalOccurrences;
+  for (const [script, occurrences] of occurrencesByScript) {
     summary["letter occurrences by script"][script] = occurrences;
-    counts["letter occurrences harvested"] += occurrences;
-    if (!target.byScript.has(script)) {
-      // Interesting news rather than an error: this language's books carry text
-      // in a script no target tag names, so there is no writing system to file
-      // it against. Counted and listed, never folded into another tag.
-      counts["letter occurrences in a script no target names"] += occurrences;
-      unclaimedScripts.push(`${target.code}: ${occurrences} in ${script}`);
+  }
+  // The fallback for a language langtags has never heard of: its biggest script
+  // is the one its books are written in, and the rest is something else.
+  let biggest;
+  for (const [script, occurrences] of occurrencesByScript) {
+    if (script === "unidentified") continue;
+    if (biggest === undefined || occurrences > occurrencesByScript.get(biggest)) {
+      biggest = script;
+    }
+  }
+
+  // Decide every script before filing any of them, so each claim's evidence can
+  // name what else was found and refused.
+  const admitted = [];
+  const refusals = [];
+  for (const [script, occurrences] of occurrencesByScript) {
+    if (script === "unidentified") {
+      // Letters belonging to a real script lib/bloom.mjs does not test. There is
+      // no tag to file them under and inventing one would be a guess.
+      counts["letter occurrences in no script we test"] += occurrences;
       summary["not filed"].push(
-        `${occurrences} letter occurrences in ${script}, which no target tag names`
+        `${occurrences} letter occurrences in no script this tool tests`
       );
       continue;
     }
-    const system = target.byScript.get(script);
-    await fileAlphabet(target, system, clusters, corpus, occurrences, summary, repeats);
+    const system = systemFor(target, script, biggest);
+    if (system.refusedBecause) {
+      counts["script buckets refused"]++;
+      counts["letter occurrences in a refused script"] += occurrences;
+      refusals.push(`${occurrences} in ${script}, ${system.refusedBecause}`);
+      unclaimedScripts.push(`${target.code}: ${occurrences} in ${script}`);
+      summary["not filed"].push(
+        `${occurrences} letter occurrences in ${script}: ${system.refusedBecause}`
+      );
+      continue;
+    }
+    admitted.push({ script, system, clusters: byScript.get(script), occurrences });
+  }
+
+  for (const { system, clusters, occurrences } of admitted) {
+    if (!system.langtagsKnows) counts["writing systems langtags does not list"]++;
+    counts["writing systems filed under"]++;
+    await fileAlphabet({
+      target,
+      system,
+      clusters,
+      corpus,
+      occurrences,
+      totalOccurrences,
+      floor,
+      refusals,
+      summary,
+      repeats,
+    });
     await fileFonts(target, system, corpus, summary);
   }
 
-  for (const system of target.byScript.values()) {
+  for (const system of target.wanted?.values() ?? []) {
     if (!byScript.has(system.script)) {
       summary["not filed"].push(
         `${system.tag}: no ${system.script}-script text in the books read`
@@ -337,17 +545,32 @@ for (const target of targets.values()) {
 }
 
 counts["books whose files could not be read"] = unreadable.length;
+counts["invariant problems found"] = invariantFindings.length;
 
 const recorded = { ...counts, "per language code": perCode };
 await client.recordRun("finished", { ...run, counts: recorded });
 
 report("Stage 4 — BloomLibrary books", counts, client);
-console.log(`  read BloomLibrary at ${readAt.toISOString()}, at most ${bookCap} books per language`);
+console.log(
+  `  read BloomLibrary at ${readAt.toISOString()}, at most ${bookCap} book(s) per language` +
+    (options.prefix
+      ? `, every language code starting with "${options.prefix.join('", "')}"`
+      : "")
+);
 console.log(`  (${client.stats.reads} reads, ${client.stats.writes} writes)`);
 console.log("\nPer language code:");
 for (const [code, summary] of Object.entries(perCode)) {
-  console.log(`  ${code}  ${summary["target writing systems"].join(" ")}`);
+  console.log(
+    `  ${code}` +
+      (summary["target writing systems"]
+        ? `  ${summary["target writing systems"].join(" ")}`
+        : "")
+  );
   console.log(`    BloomLibrary language row: ${summary["BloomLibrary language row"]}`);
+  if (summary.skipped) {
+    for (const line of summary["not filed"]) console.log(`    not filed: ${line}`);
+    continue;
+  }
   console.log(
     `    books: ${summary["books listed"]} listed, ` +
       `${summary["books excluded by the copyright filter"]} excluded by copyright, ` +
@@ -377,7 +600,140 @@ if (duplicateEntries.length > 0) {
   console.log(`  catalogue entries carrying text already read: ${duplicateEntries.join("; ")}`);
 }
 if (unclaimedScripts.length > 0) {
-  console.log(`  text in a script no target names: ${unclaimedScripts.join("; ")}`);
+  console.log(`  letters found and not filed: ${unclaimedScripts.join("; ")}`);
+}
+if (invariantFindings.length > 0) {
+  console.log(`\nInvariants flagged ${invariantFindings.length}:`);
+  for (const finding of invariantFindings) console.log(`  ${finding}`);
+} else {
+  console.log("\nInvariants: nothing flagged.");
+}
+if (options.compareSldr) {
+  if (sldrComparisons.length > 0) {
+    console.log(`\nAgainst the SLDR, ${plural(sldrComparisons.length, "comparison")}:`);
+    for (const line of sldrComparisons) console.log(`  ${line}`);
+  } else {
+    console.log("\nAgainst the SLDR: none of the filed writing systems has an SLDR entry.");
+  }
+}
+if (options.review) writeReviewReport();
+
+/**
+ * Which language codes this run walks, and which scripts it will accept for
+ * each. `wanted` undefined means "whatever the text is in", which is the only
+ * possible answer when the codes came from the catalogue rather than a list.
+ */
+async function chooseTargets() {
+  const chosen = new Map();
+  const wantedByOnly = (code, tag) =>
+    !options.only ||
+    options.only.has(String(code).toLowerCase()) ||
+    (tag !== undefined && options.only.has(tag.toLowerCase()));
+
+  if (options.prefix) {
+    const rows = new Map();
+    for (const prefix of options.prefix) {
+      for (const [code, row] of await languageCodesStartingWith(prefix)) rows.set(code, row);
+    }
+    for (const row of rows.values()) {
+      if (!wantedByOnly(row.isoCode)) continue;
+      chosen.set(row.isoCode, {
+        code: row.isoCode,
+        // These codes came out of the language table, so the row exists by
+        // construction; `name` can still be missing, which is a different fact.
+        hasRow: true,
+        name: row.name,
+        usageCount: row.usageCount,
+        rows: row.rows,
+        wanted: undefined,
+      });
+    }
+    return chosen;
+  }
+
+  for (const tag of TARGET_SYSTEMS) {
+    const resolved = resolveWritingSystem(tag, index);
+    const [code] = tag.split("-");
+    const script = tag.split("-")[1];
+    if (!wantedByOnly(code, tag)) continue;
+    if (!chosen.has(code)) chosen.set(code, { code, wanted: new Map() });
+    chosen.get(code).wanted.set(script, {
+      tag,
+      script,
+      name: resolved?.name,
+      langtagsKnows: knownSystems.has(`${code}-${script}`),
+    });
+  }
+  // The hand-picked path takes its language names from Bloom's table too, so
+  // the "no language row" report means the same thing in both modes.
+  const rows = await languageRows([...chosen.keys()]);
+  for (const target of chosen.values()) {
+    const row = rows.get(target.code);
+    target.hasRow = row !== undefined;
+    target.name = row?.name;
+    target.usageCount = row?.usageCount;
+    target.rows = row?.rows;
+  }
+  return chosen;
+}
+
+/**
+ * The writing system a script gets filed under, or the reason this run will not
+ * file it.
+ *
+ * Finding a script in the text is not evidence that the language is written in
+ * it. Books carry dates, URLs and English warnings inside their vernacular text,
+ * so a Latin bucket turns up in Amharic and Arabic books holding nothing but the
+ * English alphabet. langtags is the authority already trusted everywhere else
+ * here, and it answers exactly this: Amharic is `Arab Brai Ethi`, so a Latin
+ * bucket is refused; Akha is `Laoo Latn Mymr Thai`, so its Latin is filed.
+ *
+ * When langtags has no entry for the language at all — `arb` is one — there is
+ * nothing to ask, and only the biggest script is filed. That keeps the alphabet
+ * the books are actually written in and drops the incidental rest.
+ */
+function systemFor(target, script, biggest) {
+  if (target.wanted) {
+    const wanted = target.wanted.get(script);
+    return (
+      wanted ?? { refusedBecause: `no target writing system of this run names ${script}` }
+    );
+  }
+  const bare = target.code.split("-")[0];
+  const listed = scriptsByLanguage.get(bare);
+  if (listed && !listed.has(script)) {
+    return {
+      refusedBecause:
+        `langtags lists ${[...listed].sort().join(" ")} for ${bare}, not ${script}`,
+    };
+  }
+  if (!listed && script !== biggest) {
+    return {
+      refusedBecause:
+        `langtags has no entry for ${bare}, so only its largest script ` +
+        `(${biggest}) is filed`,
+    };
+  }
+  const known = knownSystems.get(`${bare}-${script}`);
+  return {
+    tag: retagWithScript(target.code, script),
+    script,
+    name: known?.name,
+    langtagsKnows: Boolean(known),
+  };
+}
+
+/**
+ * The scripts langtags lists for a code, when every one of them says the
+ * language has no written form of its own: SignWriting, or one of the "no
+ * script" codes. Returns them for the report, or undefined.
+ */
+function unwrittenOrSigned(code) {
+  const scripts = scriptsByLanguage.get(code.split("-")[0]);
+  if (!scripts || scripts.size === 0) return undefined;
+  const all = [...scripts].sort();
+  const unwritten = all.every((script) => script === "Sgnw" || NON_SCRIPTS.has(script));
+  return unwritten ? all.join(" and ") : undefined;
 }
 
 /**
@@ -446,11 +802,21 @@ async function readBooks(books, code) {
  * One alphabet claim per writing system, from the whole corpus, with an evidence
  * row per book that contributed text in this script.
  */
-async function fileAlphabet(target, system, clusters, corpus, occurrences, summary, repeats) {
+async function fileAlphabet({
+  target,
+  system,
+  clusters,
+  corpus,
+  occurrences,
+  totalOccurrences,
+  floor,
+  refusals,
+  summary,
+  repeats,
+}) {
   // Fold before the floor, not after: `a` and `A` are one letter, and each has
   // to reach the floor as that letter rather than separately.
   const { counts: entries, variants } = foldClusters(clusters);
-  const floor = frequencyFloor(occurrences);
   const kept = [...entries.entries()]
     .filter(([, count]) => count >= floor)
     .map(([cluster]) => cluster)
@@ -468,12 +834,19 @@ async function fileAlphabet(target, system, clusters, corpus, occurrences, summa
 
   const characters = kept.join(" ");
   const key = alphabetKey(characters);
-  if (keyTooBigForIndex(key)) {
-    summary["not filed"].push(
-      `${system.tag}: ${kept.length} entries, too big for the identity index`
-    );
-    return;
-  }
+
+  // Which books carried this script, in read order, and what each contributed:
+  // the growth curve and the dominance check both need it.
+  const witnesses = corpus.filter((book) => book.byScript.has(system.script));
+  const growth = inventoryGrowth(
+    witnesses.map((book) =>
+      new Set(foldClusters(book.byScript.get(system.script)).counts.keys())
+    ),
+    kept
+  );
+
+  const problems = invariantProblems(target, system, kept, witnesses, occurrences);
+  for (const problem of problems) invariantFindings.push(`${system.tag}: ${problem}`);
 
   const language = await client.ensureLanguage(system.tag, system.name);
   if (language.created) counts["language rows created"]++;
@@ -484,35 +857,42 @@ async function fileAlphabet(target, system, clusters, corpus, occurrences, summa
     characters_key: key,
     orthography_label: null,
   });
-  if (claim.tooBigToIndex) {
-    summary["not filed"].push(`${system.tag}: refused by the identity index`);
+  if (claim.refusedAsTooLong) {
+    summary["not filed"].push(
+      `${system.tag}: ${kept.length} entries, refused as too long`
+    );
     return;
   }
   if (claim.created) counts["alphabet claims created"]++;
   else counts["alphabet claims already there"]++;
 
   summary["filed under"][system.tag] =
-    `alphabet of ${kept.length} entries from ${corpus.length} book(s), ` +
+    `alphabet of ${kept.length} entries from ${plural(witnesses.length, "book")}, ` +
     `floor ${floor}: ${characters}`;
+
+  if (options.compareSldr) compareWithSldr(system, kept, entries);
 
   // --verbose prints the sentence every one of this claim's evidence rows will
   // carry, which is where the folding and the frequencies can be read before a
   // real run writes them.
-  const shared = corpusFacts(
+  const shared = corpusFacts({
     target,
     system,
-    corpus,
+    corpus: witnesses,
     occurrences,
+    totalOccurrences,
     entries,
     variants,
     floor,
     kept,
     below,
-    repeats
-  );
+    repeats,
+    growth,
+    refusals,
+  });
   client.log(`${system.tag} evidence: ${shared}`);
   const rows = [];
-  for (const book of corpus) {
+  for (const book of witnesses) {
     const source = await client.ensureSource(book.title, bookPageUrl(book.objectId), SOURCE_TYPE);
     if (
       await client.hasEvidenceFrom("alphabet_evidence", "alphabet_id", claim.id, source.id)
@@ -547,7 +927,7 @@ async function fileFonts(target, system, corpus, summary) {
     // A stylesheet rule is per language code, and a code can be written in more
     // than one script, so the claim goes under the writing system THIS book's
     // own text is in rather than under every target tag for the code.
-    if (!letterClustersByScript(book.text).has(system.script)) continue;
+    if (!book.byScript.has(system.script)) continue;
     if (!named.has(family)) named.set(family, []);
     named.get(family).push(book);
   }
@@ -557,6 +937,10 @@ async function fileFonts(target, system, corpus, summary) {
     );
     return;
   }
+
+  // The denominator the evidence quotes: books whose text is in this script, so
+  // "1 of 12" cannot be read as one book out of the whole library.
+  const inScript = corpus.filter((book) => book.byScript.has(system.script)).length;
 
   const language = await client.ensureLanguage(system.tag, system.name);
   if (language.created) counts["language rows created"]++;
@@ -581,7 +965,7 @@ async function fileFonts(target, system, corpus, summary) {
     );
     if (claim.created) counts["font_support claims created"]++;
     else counts["font_support claims already there"]++;
-    filed.push(`${family} (${books.length} book(s))`);
+    filed.push(`${family} (${plural(books.length, "book")} of ${inScript})`);
 
     const rows = [];
     for (const book of books) {
@@ -605,7 +989,7 @@ async function fileFonts(target, system, corpus, summary) {
         font_support_id: claim.id,
         source_id: source.id,
         contributor_id: null,
-        details: fontFacts(book, target, system, family),
+        details: fontFacts(book, target, system, family, books.length, inScript),
         submitted_via: SUBMITTED_VIA,
         session_id: null,
       });
@@ -626,25 +1010,34 @@ async function fileFonts(target, system, corpus, summary) {
  * sentence on every book's evidence row for this claim, because the claim came
  * from all of them together.
  *
- * The level mix and the distinct-original count are here because neither is
- * recoverable later: early-literacy books deliberately restrict their alphabet,
- * and much of the library is one shell book translated many times, so "found in
- * 30 books" must not be readable as thirty independent witnesses when it is one
- * book thirty times. Facts only, per supporting-data/CLAUDE.md — the limitations
- * named at the end are properties of the method, not a verdict on the books.
+ * It opens with how many books there were, and how many the library holds,
+ * because that is the first thing anybody reading a claim needs and the thing
+ * they cannot recover later: a claim from one book and a claim from forty are
+ * different claims, and a row that leaves the reader to work out which is which
+ * will be read as the stronger one.
+ *
+ * The level mix and the distinct-original count are here for the same reason:
+ * early-literacy books deliberately restrict their alphabet, and much of the
+ * library is one shell book translated many times, so "found in 30 books" must
+ * not be readable as thirty independent witnesses when it is one book thirty
+ * times. Facts only, per supporting-data/CLAUDE.md — the limitations named at
+ * the end are properties of the method, not a verdict on the books.
  */
-function corpusFacts(
+function corpusFacts({
   target,
   system,
   corpus,
   occurrences,
+  totalOccurrences,
   entries,
   variants,
   floor,
   kept,
   below,
-  repeats
-) {
+  repeats,
+  growth,
+  refusals,
+}) {
   const levels = new Map();
   for (const book of corpus) {
     const level = book.level === undefined ? "unstated" : String(book.level);
@@ -655,15 +1048,42 @@ function corpusFacts(
     .map((cluster) => `${cluster}=${entries.get(cluster)}`)
     .join(" ");
   const parts = [
-    `Inventory derived from the text ${corpus.length} book(s) carry under ` +
-      `lang="${target.code}", filed as ${system.tag} because those characters are ` +
-      `in ${system.script} script`,
-    `computedLevel mix ${[...levels.entries()].map(([level, n]) => `${level}:${n}`).join(" ")}`,
-    `${originals.size} distinct original title(s)`,
-    `${occurrences} letter occurrences in ${system.script}, ${entries.size} distinct entries after folding`,
-    `frequency floor ${floor} occurrences (one in 10,000, minimum 2)`,
-    `${kept.length} at or above the floor, with counts ${frequencies}`,
+    `From ${plural(corpus.length, "book")}`,
+    corpus.length === 1
+      ? `inventory derived from the text tagged lang="${target.code}" in that book, ` +
+        `filed as ${system.tag} because those characters are in ${system.script} script`
+      : `inventory derived from the text tagged lang="${target.code}" in those books, ` +
+        `filed as ${system.tag} because those characters are in ${system.script} script`,
+    catalogueFact(target),
   ];
+  if (!system.langtagsKnows) {
+    // Said plainly, because a reader comparing this claim with langtags will
+    // otherwise assume the pairing is one langtags endorses.
+    parts.push(
+      `langtags lists no ${system.tag} writing system; the script is the one this ` +
+        `text is written in`
+    );
+  }
+  parts.push(
+    `computedLevel mix ${[...levels.entries()].map(([level, n]) => `${level}:${n}`).join(" ")}`,
+    `${plural(originals.size, "distinct original title")}`,
+    `${occurrences} letter occurrences in ${system.script}, ${entries.size} distinct entries after folding`,
+    // Says what the number was computed from, because the same claim filed under
+    // the old per-script rule would carry a different one.
+    `frequency floor ${floor} occurrences, one in 10,000 of the ${totalOccurrences} ` +
+      `letter occurrences these books carry under lang="${target.code}" in any ` +
+      `script, minimum 2`,
+    `${kept.length} at or above the floor, with counts ${frequencies}`,
+    growthFact(growth)
+  );
+  if (refusals.length > 0) {
+    // What else was in the text and did not become a claim. On the row, because
+    // a reader looking at one script's alphabet cannot otherwise tell whether
+    // the books held only that script or whether something was set aside.
+    parts.push(
+      `other letters in these books, found and not filed: ${refusals.join("; ")}`
+    );
+  }
   if (repeats.length > 0) {
     parts.push(
       `catalogue entries left out for carrying text identical to a book already ` +
@@ -687,11 +1107,41 @@ function corpusFacts(
   return parts.join("; ") + ".";
 }
 
+/** How much of the language the library holds, next to how much was read. */
+function catalogueFact(target) {
+  const catalogue = target.catalogue;
+  if (!catalogue) return "BloomLibrary book counts for this code were not read";
+  const usable = catalogue.afterCopyrightFilter;
+  const excluded = catalogue.listed - usable;
+  return (
+    `BloomLibrary holds ${plural(usable, "harvested, in-circulation book")} for ` +
+    `lang="${target.code}" after the copyright filter` +
+    (excluded > 0 ? `, with ${plural(excluded, "more")} excluded by it` : "") +
+    `, and this run read at most ${bookCap}`
+  );
+}
+
+/**
+ * Where the inventory stopped growing, which is the fact that says whether the
+ * book cap is doing anything. Written as a count and a position, not as a
+ * judgement about whether more books were needed.
+ */
+function growthFact(growth) {
+  if (growth.coverage.length <= 1) {
+    return `the single book carried all ${growth.total} entries`;
+  }
+  return (
+    `of the ${growth.total} entries listed, the first book carried ` +
+    `${growth.firstBook} and the last new one appeared in book ` +
+    `${growth.lastNewAt} of ${growth.coverage.length} in read order`
+  );
+}
+
 /** What this particular book contributed, on the evidence row that cites it. */
 function bookFacts(book, system) {
   const parts = [
     `This row cites "${book.title}" (${book.objectId})`,
-    `${book.blocks} bloom-editable block(s) outside the front and back matter`,
+    `${plural(book.blocks, "bloom-editable block")} outside the front and back matter`,
     `${book.text.length} characters of text`,
   ];
   if (book.level !== undefined) parts.push(`computedLevel ${book.level}`);
@@ -712,13 +1162,16 @@ function bookFacts(book, system) {
  * unconsidered is a reading of the author's intent, and it belongs to whoever
  * queries this data rather than to the row.
  */
-function fontFacts(book, target, system, family) {
+function fontFacts(book, target, system, namedBy, inScript) {
   const others = [];
   for (const [lang, otherFamily] of book.fontFamilies) {
     if (lang === target.code) continue;
     others.push(`${lang}: ${otherFamily}`);
   }
+  const family = book.fontFamilies.get(target.code);
   const parts = [
+    `From ${namedBy} of the ${plural(inScript, "book")} read whose text is in ` +
+      `${system.script} script`,
     `defaultLangStyles.css in this book's bloomdigital version sets ` +
       `[lang='${target.code}'] font-family: ${family}`,
     `the book's text under that lang is in ${system.script} script, so the claim is filed as ${system.tag}`,
@@ -766,4 +1219,214 @@ function foldingFacts(variants) {
     );
   }
   return parts;
+}
+
+/**
+ * The cheap checks, run on every claim whether or not `--review` is on.
+ *
+ * These are the mistakes worth catching automatically because they are
+ * mechanical: a digit in an alphabet, a Latin letter inside an Arabic
+ * inventory, an entry too long to be one letter. Nothing here goes into the
+ * database — a flagged claim is still filed, because the flag is our doubt
+ * about our own extraction and not a fact about the source.
+ */
+/**
+ * How the alphabet just filed differs from the SLDR's exemplars for the same
+ * writing system, one line per SLDR entry, closest first.
+ *
+ * This writes nothing and decides nothing. A difference is not a fault on either
+ * side: an SLDR entry is one linguist's description of an orthography at one
+ * time, and a shelf of books is what people published, so a letter the SLDR
+ * lists and the books never use, or a letter the books use and the SLDR never
+ * listed, are both ordinary. The reason to measure it is that the books whose
+ * answer we can check are the only place a fault in the reading of the books
+ * shows up as something other than a plausible-looking alphabet.
+ *
+ * Our side is compared after folding and after the frequency floor — the entries
+ * that would actually be filed. Both sides go through alphabetKey, so the
+ * comparison is of letters and not of spacing or order. Occurrence counts ride
+ * along on the entries only we have, because that is what separates a letter the
+ * books really use from a stray character that cleared the floor.
+ */
+function compareWithSldr(system, kept, entries) {
+  const candidates = sldrAlphabets.get(system.tag);
+  if (!candidates) return;
+
+  const ours = new Set(alphabetKey(kept.join(" ")).split(" ").filter(Boolean));
+  const lines = [];
+  for (const candidate of candidates) {
+    const shared = [...ours].filter((entry) => candidate.entries.has(entry));
+    const sldrOnly = [...candidate.entries].filter((entry) => !ours.has(entry)).sort();
+    const oursOnly = [...ours]
+      .filter((entry) => !candidate.entries.has(entry))
+      .sort((a, b) => (entries.get(b) ?? 0) - (entries.get(a) ?? 0));
+    lines.push({
+      distance: sldrOnly.length + oursOnly.length,
+      text:
+        `${system.tag} vs SLDR ${candidate.sldrTag}: ` +
+        `${shared.length} of the SLDR's ${candidate.entries.size} entries also came out of the books` +
+        (sldrOnly.length > 0
+          ? `; in the SLDR, absent from the books: ${sldrOnly.join(" ")}`
+          : "; nothing the SLDR lists is missing from the books") +
+        (oursOnly.length > 0
+          ? `; in the books, absent from the SLDR: ${oursOnly
+              .map((entry) => `${entry} (${entries.get(entry) ?? 0})`)
+              .join(" ")}`
+          : "; the books added nothing the SLDR does not list"),
+    });
+  }
+  lines.sort((a, b) => a.distance - b.distance);
+  for (const line of lines) sldrComparisons.push(line.text);
+}
+
+function invariantProblems(target, system, kept, witnesses, occurrences) {
+  const problems = [];
+
+  const digits = kept.filter((entry) => /\p{Nd}/u.test(entry));
+  if (digits.length > 0) {
+    problems.push(`inventory contains digits: ${digits.join(" ")}`);
+  }
+
+  const runaway = kept.filter((entry) => [...entry].length > MAX_CLUSTER_LENGTH);
+  if (runaway.length > 0) {
+    problems.push(
+      `${runaway.length} entries longer than ${MAX_CLUSTER_LENGTH} codepoints: ${runaway.join(" ")}`
+    );
+  }
+
+  // A partition is supposed to hold one script's characters only; anything else
+  // means the partitioning or the apostrophe rule let something through.
+  const foreign = kept.filter((entry) => {
+    const base = [...entry][0];
+    // Three kinds of entry are filed under a neighbouring letter's script on
+    // purpose: the apostrophe, the letters Unicode gives no script of their own,
+    // and a combining mark, whose Script property is `Inherited` precisely
+    // because the answer is "ask the letter I am written on".
+    if (base === CANONICAL_APOSTROPHE) return false;
+    if (isScriptNeutralLetter(base)) return false;
+    if (/\p{M}/u.test(base)) return false;
+    return scriptOfEntry(base) !== system.script;
+  });
+  if (foreign.length > 0) {
+    problems.push(
+      `${foreign.length} entries are not ${system.script}: ${foreign.join(" ")}`
+    );
+  }
+
+  if (witnesses.length > 2) {
+    for (const book of witnesses) {
+      const own = [...(book.byScript.get(system.script)?.values() ?? [])].reduce(
+        (a, b) => a + b,
+        0
+      );
+      const share = occurrences === 0 ? 0 : own / occurrences;
+      if (share > DOMINANT_BOOK_SHARE) {
+        problems.push(
+          `"${book.title}" (${book.objectId}) is ${(share * 100).toFixed(0)}% of the ` +
+            `${system.script} letter occurrences across ${witnesses.length} books`
+        );
+      }
+    }
+  }
+
+  return problems;
+}
+
+/**
+ * The script of one character, asked of the same partitioner the run used, so
+ * the invariant cannot disagree with the filing for a reason of its own.
+ */
+function scriptOfEntry(character) {
+  const [script] = [...letterClustersByScript(character).keys()];
+  return script;
+}
+
+/**
+ * One book's contribution, for a person or a model to read through: what we
+ * derived, and a short excerpt of what we derived it from.
+ *
+ * The excerpt is the point and also the only thing here that is somebody else's
+ * writing. It is capped, it is never written to the database, and the report it
+ * lands in is kept out of git — see reviewReportPath. It earns its place by
+ * being the only way to see the failure the derived facts hide: front matter or
+ * an English gloss extracted under a vernacular lang looks like a perfectly
+ * ordinary Latin inventory.
+ */
+function reviewEntry(target, book) {
+  const scripts = {};
+  for (const [script, clusters] of book.byScript) {
+    const folded = [...foldClusters(clusters).counts.entries()].sort(
+      (a, b) => b[1] - a[1]
+    );
+    scripts[script] = {
+      occurrences: folded.reduce((n, [, count]) => n + count, 0),
+      entries: folded.map(([entry, count]) => `${entry}=${count}`).join(" "),
+    };
+  }
+  return {
+    code: target.code,
+    objectId: book.objectId,
+    title: book.title,
+    originalTitle: book.originalTitle,
+    bookPage: bookPageUrl(book.objectId),
+    copyright: book.copyright,
+    computedLevel: book.level,
+    tags: book.tags,
+    blocks: book.blocks,
+    characters: book.text.length,
+    otherLangs: book.otherLangs,
+    fontFamilyForThisLang: book.fontFamilies.get(target.code),
+    fontFamiliesByLang: Object.fromEntries(book.fontFamilies),
+    stylesheetRead: book.cssRead,
+    scripts,
+    excerpt: book.text.replace(/\s+/g, " ").trim().slice(0, REVIEW_EXCERPT_CHARS),
+  };
+}
+
+/**
+ * Where the review report goes: inside the project, so it is next to the tool
+ * that wrote it while somebody is debugging, and gitignored, because it is the
+ * one file here that holds other people's book text.
+ */
+function reviewReportPath() {
+  if (options.reviewOut) return options.reviewOut;
+  const stamp = readAt.toISOString().replace(/[:.]/g, "-");
+  return join(
+    dirname(dirname(fileURLToPath(import.meta.url))),
+    "review",
+    `bloom-books-${stamp}.json`
+  );
+}
+
+function writeReviewReport() {
+  const path = reviewReportPath();
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(
+    path,
+    JSON.stringify(
+      {
+        tool: "importBloomBooks.mjs",
+        readAt: readAt.toISOString(),
+        dryRun: Boolean(options.dryRun),
+        prefix: options.prefix,
+        bookCap,
+        excerptChars: REVIEW_EXCERPT_CHARS,
+        counts,
+        invariantFindings,
+        books: reviewBooks,
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+  console.log(
+    `\n  review report: ${reviewBooks.length} book(s) → ${path}` +
+      `\n  (holds up to ${REVIEW_EXCERPT_CHARS} characters of each book's text; not for git)`
+  );
+}
+
+/** "1 book", "3 books" — the evidence rows are read by people. */
+function plural(n, noun, many = `${noun}s`) {
+  return `${n} ${n === 1 ? noun : many}`;
 }

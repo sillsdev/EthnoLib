@@ -155,3 +155,8 @@ locales/*/messages.ts
 # Baked from the database by supporting-data/dashboard/export-data.mjs on every
 # build. Several MiB of generated JSON; regenerate it, don't commit it.
 supporting-data/dashboard/app/public/data/
+
+# Per-book review reports from supporting-data/tools/importBloomBooks.mjs
+# --review. They carry short excerpts of other people's published books, so
+# they stay on the machine that made them.
+supporting-data/review/
