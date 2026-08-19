@@ -131,6 +131,36 @@
   color: var(--series-1);
 }
 
+/* The headers of the claim columns filter instead of sorting: on means "only
+   rows that have something here". The ring fills in when it is on. */
+.grid .filter {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: baseline;
+  text-align: start;
+}
+.grid .filter:hover {
+  color: var(--text-primary);
+}
+.grid .filter-mark {
+  color: var(--text-muted);
+  font-size: 0.7em;
+}
+.grid .filter[aria-pressed="true"] {
+  color: var(--text-primary);
+}
+.grid .filter[aria-pressed="true"] .filter-mark {
+  color: var(--series-1);
+}
+
 .grid tbody tr:not(.detail-row) {
   cursor: pointer;
 }

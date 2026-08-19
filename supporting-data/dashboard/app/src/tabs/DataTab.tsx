@@ -81,6 +81,37 @@ const firstWords = (text: string) => {
 
 const Empty = () => <span className="empty">—</span>;
 
+/** The columns whose header doubles as a filter: click it and the grid keeps
+ * only the rows that have something in that column. They combine with each
+ * other and with the search box (every active one has to be satisfied). */
+const FILTERS: { id: string; noun: string; has: (row: GridRow) => boolean }[] = [
+  {
+    id: "alphabets",
+    noun: "an alphabet",
+    has: (row) => row.lang.alphabets.length > 0,
+  },
+  {
+    id: "ranges",
+    noun: "character ranges",
+    has: (row) => row.ranges.some((set) => set.ranges.length || set.clusters.length),
+  },
+  {
+    id: "sampleTexts",
+    noun: "a sample text",
+    has: (row) => row.lang.sampleTexts.length > 0,
+  },
+  {
+    id: "features",
+    noun: "OpenType features",
+    has: (row) => row.features.length > 0,
+  },
+  {
+    id: "fonts",
+    noun: "a suggested font",
+    has: (row) => row.lang.fonts.length > 0,
+  },
+];
+
 function useColumns(): ColumnDef<GridRow>[] {
   return useMemo(
     () => [
@@ -269,6 +300,15 @@ export function DataTab() {
     { id: "name", desc: false },
   ]);
   const [expanded, setExpanded] = useState<ExpandedState>({});
+  // Column ids whose header filter is on, in no particular order.
+  const [filters, setFilters] = useState<string[]>([]);
+
+  const toggleFilter = (id: string) =>
+    setFilters((current) =>
+      current.includes(id)
+        ? current.filter((other) => other !== id)
+        : [...current, id]
+    );
 
   const rows = useMemo(
     () => (languages.state === "ready" ? buildRows(languages.data) : []),
@@ -278,10 +318,15 @@ export function DataTab() {
   // Re-listing 2,300 rows on every keystroke would make the box feel gummy, so
   // the input updates immediately and the grid catches up behind it.
   const needle = useDeferredValue(query).trim().toLowerCase();
-  const filtered = useMemo(
-    () => (needle ? rows.filter((row) => row.haystack.includes(needle)) : rows),
-    [rows, needle]
-  );
+  const filtered = useMemo(() => {
+    const active = FILTERS.filter((filter) => filters.includes(filter.id));
+    if (!needle && !active.length) return rows;
+    return rows.filter(
+      (row) =>
+        (!needle || row.haystack.includes(needle)) &&
+        active.every((filter) => filter.has(row))
+    );
+  }, [rows, needle, filters]);
 
   // The named sources always appear in the legend, so a reader learns the
   // colour scheme before every source has data; only the catch-all "other"
@@ -395,6 +440,10 @@ export function DataTab() {
                 {group.headers.map((header) => {
                   const sortable = header.column.getCanSort();
                   const direction = header.column.getIsSorted();
+                  const filter = FILTERS.find(
+                    (entry) => entry.id === header.column.id
+                  );
+                  const filtering = filters.includes(header.column.id);
                   return (
                     <th
                       key={header.id}
@@ -424,6 +473,26 @@ export function DataTab() {
                               : direction === "desc"
                                 ? "▼"
                                 : "↕"}
+                          </span>
+                        </button>
+                      ) : filter ? (
+                        <button
+                          type="button"
+                          className="filter"
+                          aria-pressed={filtering}
+                          title={
+                            filtering
+                              ? "Show every row again"
+                              : `Show only rows that have ${filter.noun}`
+                          }
+                          onClick={() => toggleFilter(filter.id)}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          <span className="filter-mark" aria-hidden="true">
+                            {filtering ? "◉" : "○"}
                           </span>
                         </button>
                       ) : (
@@ -486,8 +555,9 @@ export function DataTab() {
             {!displayRows.length && (
               <tr>
                 <td colSpan={columnCount} className="no-rows">
-                  Nothing matches “{query}”. The search looks at the language name
-                  and the BCP-47 tag.
+                  {filters.length
+                    ? "No writing system has all of those at once."
+                    : `Nothing matches “${query}”. The search looks at the language name and the BCP-47 tag.`}
                 </td>
               </tr>
             )}
