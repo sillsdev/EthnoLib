@@ -10,6 +10,20 @@ export async function loadLanguageChooser(page) {
   await page.goto("/", { waitUntil: "load" });
 }
 
+// Loads src/demos/HostIntegrationDemo.tsx, which renders LanguageChooser with host-supplied
+// actionButtons and no rightPanelComponent -- the arrangement Bloom ships -- and puts everything
+// onSelectionChange reports on screen. The chooser itself is the same component here, so the
+// card/search helpers below work in this demo too.
+export async function loadHostIntegrationDemo(page) {
+  await page.goto("/?demo=host-integration", { waitUntil: "load" });
+}
+
+export async function createPageAndLoadHostIntegrationDemo(browser) {
+  const page = await browser.newPage();
+  await loadHostIntegrationDemo(page);
+  return page;
+}
+
 export function scriptCardTestId(scriptCode: string) {
   return `script-card-${scriptCode}`;
 }

@@ -13,7 +13,9 @@ import {
   isValidBcp47Tag,
   languageForManuallyEnteredTag,
   UNLISTED_LANGUAGE,
+  defaultDisplayName,
 } from "./languageTagUtils";
+import { demarcateResults } from "./matchingSubstringDemarcation";
 
 import { defaultSearchResultModifier } from "./searchResultModifiers";
 import { parseLangtagFromLangChooser } from "./searchForLanguage";
@@ -38,6 +40,7 @@ import {
   SERBIAN_LANGUAGE,
   ARABIC_MACROLANGUAGE,
   AYMARA_MACROLANGUAGE,
+  createTestLanguageEntry,
 } from "./testUtils";
 
 describe("Tag creation", () => {
@@ -847,5 +850,105 @@ describe("formatting dialect codes", () => {
     expect(formatDialectCode(" hi-there-12-5 6-12345@{}(* 6789 ")).toEqual(
       "hi-there-12-56-12345678"
     );
+  });
+});
+
+describe("defaultDisplayName", () => {
+  // Helper for the fixtures, whose scripts are listed in an order we don't want tests to depend on
+  function scriptOf(language: ILanguage, scriptCode: string): IScript {
+    const script = language.scripts.find((s) => s.code === scriptCode);
+    expect(script, `${scriptCode} script of ${language.exonym}`).toBeDefined();
+    return script as IScript;
+  }
+
+  it("should return empty string when there is no language", () => {
+    expect(defaultDisplayName(undefined)).toEqual("");
+    expect(
+      defaultDisplayName(undefined, { code: "Latn", name: "Latin" })
+    ).toEqual("");
+  });
+
+  it("should use the autonym when no script is given", () => {
+    expect(defaultDisplayName(BOSNIAN_LANGUAGE)).toEqual("Bosanski jezik");
+    expect(defaultDisplayName(SERBIAN_LANGUAGE)).toEqual("српски");
+  });
+
+  it("should fall back to the exonym when there is no script and no autonym", () => {
+    expect(defaultDisplayName(ENGLISH_LANGUAGE)).toEqual("English");
+    expect(defaultDisplayName(NORTHERN_UZBEK_LANGUAGE)).toEqual(
+      "Northern Uzbek"
+    );
+  });
+
+  // This precedence is the whole point of passing the script: choosing a different script for a
+  // language is what changes the name we display for it, e.g. Serbian shows as "српски" in
+  // Cyrillic but "srpski" in Latin.
+  it("should prefer the script's languageNameInScript over the autonym", () => {
+    expect(
+      defaultDisplayName(SERBIAN_LANGUAGE, scriptOf(SERBIAN_LANGUAGE, "Latn"))
+    ).toEqual("srpski");
+    expect(
+      defaultDisplayName(SERBIAN_LANGUAGE, scriptOf(SERBIAN_LANGUAGE, "Cyrl"))
+    ).toEqual("српски");
+    expect(
+      defaultDisplayName(BOSNIAN_LANGUAGE, scriptOf(BOSNIAN_LANGUAGE, "Cyrl"))
+    ).toEqual("босански");
+  });
+
+  it("should fall back to the autonym for a script with no languageNameInScript", () => {
+    // Norwegian's Braille and Runic entries carry no languageNameInScript
+    expect(
+      defaultDisplayName(
+        NORWEGIAN_MACROLANGUAGE,
+        scriptOf(NORWEGIAN_MACROLANGUAGE, "Brai")
+      )
+    ).toEqual("Norsk");
+    expect(
+      defaultDisplayName(BOSNIAN_LANGUAGE, scriptOf(BOSNIAN_LANGUAGE, "Arab"))
+    ).toEqual("Bosanski jezik");
+  });
+
+  it("should fall back to the exonym for a script with no languageNameInScript on a language with no autonym", () => {
+    expect(
+      defaultDisplayName(ENGLISH_LANGUAGE, scriptOf(ENGLISH_LANGUAGE, "Latn"))
+    ).toEqual("English");
+  });
+
+  it("should return empty string for the unlisted language, even with a script", () => {
+    expect(defaultDisplayName(UNLISTED_LANGUAGE)).toEqual("");
+    expect(
+      defaultDisplayName(UNLISTED_LANGUAGE, { code: "Latn", name: "Latin" })
+    ).toEqual("");
+  });
+
+  it("should return empty string for a manually entered tag language", () => {
+    const manualLanguage = languageForManuallyEnteredTag("qxy-Latn-ZZ");
+    expect(defaultDisplayName(manualLanguage)).toEqual("");
+    expect(
+      defaultDisplayName(manualLanguage, { code: "Latn", name: "Latin" })
+    ).toEqual("");
+  });
+
+  it("should strip the match demarcation that search results carry", () => {
+    // Languages coming out of a search have the matched substring marked for bolding,
+    // e.g. searching "san" marks Bosnian's autonym as "Bo[san]ski jezik"
+    const [demarcatedBosnian] = demarcateResults([BOSNIAN_LANGUAGE], "san");
+    expect(demarcatedBosnian.autonym).toEqual("Bo[san]ski jezik");
+    expect(defaultDisplayName(demarcatedBosnian)).toEqual("Bosanski jezik");
+
+    expect(
+      defaultDisplayName(demarcatedBosnian, {
+        code: "Cyrl",
+        name: "Cyrillic",
+        languageNameInScript: "бо[сан]ски",
+      })
+    ).toEqual("босански");
+
+    const demarcatedExonymOnlyLanguage = createTestLanguageEntry({
+      exonym: "E[ngl]ish",
+      iso639_3_code: "eng",
+      languageSubtag: "en",
+    });
+    expect(defaultDisplayName(demarcatedExonymOnlyLanguage)).toEqual("English");
   });
 });
