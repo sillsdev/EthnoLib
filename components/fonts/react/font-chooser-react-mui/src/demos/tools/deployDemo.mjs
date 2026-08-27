@@ -55,10 +55,9 @@ if (wantsProd && !allowAnyBranch) {
 }
 
 run("npx", ["vite", "build", "--config", "vite.demo.config.ts"]);
-run("npx", [
-  "vercel",
-  "deploy",
-  "--prebuilt",
-  "--yes",
-  ...(wantsProd ? ["--prod"] : []),
-]);
+
+// `vercel` has to come from the PATH, not from npx: the Vercel CLI is not a
+// dependency of this repo, and our .npmrc (--strict-allow-scripts) refuses the
+// install scripts of the esbuild and fsevents it brings with it. Install it
+// once with `npm i -g vercel` or `volta install vercel`.
+run("vercel", ["deploy", "--prebuilt", "--yes", ...(wantsProd ? ["--prod"] : [])]);
