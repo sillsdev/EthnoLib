@@ -12,8 +12,12 @@ import { lingui } from "@lingui/vite-plugin";
 // here is part of the published package.
 //
 // Deploy with:
-//   npx vite build --config vite.demo.config.ts
-//   npx vercel deploy --prod --prebuilt --yes
+//   npm run deploy-demo            (preview URL)
+//   npm run deploy-demo -- --prod  (the production URL reviewers are given)
+//
+// That script (src/demos/tools/deployDemo.mjs) runs the build and the deploy,
+// and refuses --prod from a branch other than the one that owns the demo,
+// since a --prod deploy from any checkout replaces the production URL.
 //
 // The build bakes in whatever VITE_SUPABASE_* values are in `.env` (see
 // .env.example); without them the deployed demo collects nothing.

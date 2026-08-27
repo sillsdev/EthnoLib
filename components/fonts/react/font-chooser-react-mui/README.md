@@ -162,6 +162,30 @@ For hosts that want the Google Fonts catalog instead, `fetchGoogleFontsCatalog` 
 `@ethnolib/font-core` is still there; see [Google Fonts](#google-fonts) above for
 the key it needs.
 
+## Deploying the demo
+
+The demo is deployed to Vercel by hand, as the project
+[font-chooser-react-mui](https://vercel.com/hattonjohn/font-chooser-react-mui);
+the link lives in `.vercel/project.json`, which is gitignored, so a check for
+Vercel anything at the repo root finds nothing. From this directory:
+
+```sh
+npm run deploy-demo            # a preview URL of its own
+npm run deploy-demo -- --prod  # https://font-chooser-react-mui.vercel.app
+```
+
+Both build with `vite.demo.config.ts` and upload the result with
+`vercel deploy --prebuilt`, which is required: a plain folder deploy makes
+Vercel try to `npm install` our workspace-only packages, which are not on npm.
+For the same reason a push never deploys — `vercel.json` at the repo root sets
+`git.deploymentEnabled` to `false`, because a build on Vercel's side cannot
+work.
+
+There is one production URL for the whole repository, so `--prod` from any
+checkout replaces what reviewers see. `deploy-demo` therefore refuses `--prod`
+unless the current branch is the one named in `PROD_BRANCH` in
+`src/demos/tools/deployDemo.mjs`. Pass `--allow-any-branch` to overrule it.
+
 ## Status
 
 All strings are hardcoded English. Lingui localization is deferred, matching the

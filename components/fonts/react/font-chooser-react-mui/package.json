@@ -20,6 +20,7 @@
   "scripts": {
     "dev": "vite --open",
     "fetch-fonts": "node src/demos/tools/fetchMinimumFontBundle.mjs",
+    "deploy-demo": "node src/demos/tools/deployDemo.mjs",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit",
     "prebuild": "npm run typecheck",
     "build": "nx vite:build",
