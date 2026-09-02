@@ -819,7 +819,8 @@ describe("isValidBcp47Tag checking is sane", () => {
   });
 
   it("should return false for more than three extlang subtags", () => {
-    expect(isValidBcp47Tag("abcdefgh-abc-def-ghi-jkl")).toBeFalsy();
+    // en- (2-letter primary) can carry extlangs, so this exercises the 3-extlang
+    // limit specifically: four extlangs is one too many.
     expect(isValidBcp47Tag("en-abc-def-ghi-jkl")).toBeFalsy();
   });
 
