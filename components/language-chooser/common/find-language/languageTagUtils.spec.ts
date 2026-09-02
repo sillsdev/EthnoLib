@@ -797,6 +797,53 @@ describe("isValidBcp47Tag checking is sane", () => {
       isValidBcp47Tag("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     ).toBeFalsy();
   });
+
+  // The following cases are ported from libpalaso's IetfLanguageTag tests
+  // (SIL.WritingSystems.Tests/IetfLanguageTagTests.cs) to check that our
+  // *syntactic* validator agrees with libpalaso on tag well-formedness.
+  // Note: libpalaso's IetfLanguageTag.IsValid additionally validates subtags
+  // against the IANA/ISO registries (so e.g. "zzz" is invalid there), which is
+  // deliberately out of scope for this syntactic check - see the "unrecognized
+  // tags in the right format" case above.
+  it("should return true for well-formed tags with each subtag position filled", () => {
+    expect(isValidBcp47Tag("tpi-AR")).toBeTruthy(); // language-region
+    expect(isValidBcp47Tag("qed-Lepc-x-rubbish")).toBeTruthy(); // language-script-privateuse
+    expect(isValidBcp47Tag("qed")).toBeTruthy(); // private-use range language
+    // language-script-region-variant-privateuse
+    expect(isValidBcp47Tag("tpi-Lepc-BR-fonipa-x-blah")).toBeTruthy();
+  });
+
+  it("should return true for extlang subtags (up to the 3-extlang maximum)", () => {
+    expect(isValidBcp47Tag("en-abc")).toBeTruthy();
+    expect(isValidBcp47Tag("en-abc-def-ghi")).toBeTruthy();
+  });
+
+  it("should return false for more than three extlang subtags", () => {
+    // en- (2-letter primary) can carry extlangs, so this exercises the 3-extlang
+    // limit specifically: four extlangs is one too many.
+    expect(isValidBcp47Tag("en-abc-def-ghi-jkl")).toBeFalsy();
+  });
+
+  it("should return true for tags with Unicode and transform extensions", () => {
+    expect(isValidBcp47Tag("en-US-u-ca-gregory")).toBeTruthy();
+    expect(isValidBcp47Tag("de-DE-u-co-phonebk")).toBeTruthy();
+    expect(isValidBcp47Tag("en-t-jp")).toBeTruthy();
+  });
+
+  it("should return true/false for private-use subtags per the 8-char length limit", () => {
+    expect(isValidBcp47Tag("x-abcdefgh")).toBeTruthy(); // 8 chars, at the limit
+    expect(isValidBcp47Tag("x-abcdefghijklmnop")).toBeFalsy(); // 16 chars, too long
+  });
+
+  it("should return false for empty subtags and illegal characters", () => {
+    expect(isValidBcp47Tag("a")).toBeFalsy(); // single character
+    expect(isValidBcp47Tag("-")).toBeFalsy();
+    expect(isValidBcp47Tag("--")).toBeFalsy();
+    expect(isValidBcp47Tag("---")).toBeFalsy();
+    expect(isValidBcp47Tag("en--US")).toBeFalsy(); // empty subtag in the middle
+    expect(isValidBcp47Tag("en-Latn-US-x-")).toBeFalsy(); // trailing empty private use
+    expect(isValidBcp47Tag("qed-?~")).toBeFalsy(); // illegal characters
+  });
 });
 
 describe("sanity checks for isUnlistedLanguage and isManuallyEnteredTagLanguage", () => {

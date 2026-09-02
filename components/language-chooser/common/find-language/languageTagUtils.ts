@@ -223,6 +223,8 @@ export function isManuallyEnteredTagLanguage(
   );
 }
 
+// Checks *syntactic* validity of a BCP-47 tag (well-formed subtags), not whether the
+// language/region/script subtags are registered in the IANA Language Subtag Registry.
 export function isValidBcp47Tag(tag: string | undefined): boolean {
   // from https://stackoverflow.com/questions/7035825/regular-expression-for-a-language-tag-as-defined-by-bcp47
   const bcp47Regex =
